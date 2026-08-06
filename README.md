@@ -4,7 +4,7 @@ Research and engineering workspace for using the Vivante VIP9000 NPU together wi
 
 The primary target device is an Orange Pi Zero 3W with an Allwinner A733 and 12 GB of system memory. The intended long-term result is a maintainable `ggml`/`llama.cpp` backend or companion execution path that can offload useful transformer workloads to the NPU while retaining reliable CPU fallback.
 
-> Status: **research bootstrap**. No performance, compatibility, or licensing claim should be treated as final until it is reproduced on the target board and recorded in this repository.
+> Status: **NPU capability research**. No performance, compatibility, or licensing claim should be treated as final until it is reproduced on the target board and recorded in this repository.
 
 ## Mission
 
@@ -25,22 +25,24 @@ The working hypothesis is a hybrid backend:
 - Unsupported or inefficient nodes remain on the optimized Arm CPU backend.
 - Data movement is measured explicitly. Offload is accepted only when end-to-end latency, throughput, energy, or CPU availability improves.
 
-This is a hypothesis, not a commitment. Operator-level offload, subgraph offload, and model-specific execution will all be evaluated.
+This is a hypothesis, not a commitment. Operator-level offload, subgraph offload, precompiled NBG dispatch, and model-specific execution will all be evaluated.
 
 ## Repository map
 
 ```text
-AGENTS.md                         Project rules and research protocol
-benchmarks/README.md              Benchmark definitions and result format
-docs/architecture/backend-plan.md Backend design and phased implementation
-docs/hardware/a733.md             A733 hardware facts and validation checklist
-docs/hardware/orange-pi-zero-3w.md Target-board inventory
-docs/legal/licensing.md           Licensing and redistribution matrix
-docs/npu/tim-vx.md                TIM-VX/VIPLite integration notes
-docs/research/related-work.md      Relevant projects and prior art
-experiments/README.md              Experiment template and reproducibility rules
-research/open-questions.md         Unresolved technical and legal questions
-references/sources.md              Curated primary and secondary sources
+AGENTS.md                                      Project rules and research protocol
+benchmarks/README.md                           Benchmark definitions and result format
+docs/architecture/backend-plan.md              Backend design and phased implementation
+docs/hardware/a733.md                          A733 hardware facts and validation checklist
+docs/hardware/orange-pi-zero-3w.md             Target-board inventory
+docs/legal/licensing.md                        Licensing and redistribution matrix
+docs/npu/vip9000-stack-and-capabilities.md     SDK/runtime layers and preliminary capability map
+docs/research/llm-operation-compatibility.md   Transformer/ggml operation mapping
+docs/research/related-work.md                  Relevant projects and prior art
+experiments/E001-vip9000-capability-probe/     First target-side SDK/operator experiment
+experiments/README.md                           Experiment template and reproducibility rules
+research/open-questions.md                      Unresolved technical and legal questions
+references/sources.md                           Curated primary and secondary sources
 ```
 
 ## Initial milestones
@@ -88,10 +90,13 @@ See [`docs/legal/licensing.md`](docs/legal/licensing.md).
 
 ## Current evidence snapshot
 
-Confirmed from primary upstream sources:
+Confirmed in current upstream source:
 
-- Allwinner describes A733 as an SoC with 2× Cortex-A76, 6× Cortex-A55, a PowerVR BXM GPU, a 3-TOPS NPU, and LPDDR4/LPDDR4X/LPDDR5 support.
-- TIM-VX is a permissively licensed C++ integration layer for VeriSilicon ML accelerators, but it still requires a VeriSilicon OpenVX SDK; platform-specific SDKs are obtained from the relevant SoC vendor.
-- `llama.cpp` exposes a backend device, buffer, scheduler, capability-check, graph-compute, and dynamic-backend-loading API suitable for an experimental accelerator backend.
+- TIM-VX is a permissively licensed C++ graph integration layer, but a platform-specific VeriSilicon OpenVX SDK still comes from the SoC vendor.
+- Its public tensor vocabulary includes FP16/FP32, INT8 and INT4 types, per-tensor and per-channel quantization, constant/variable/transient tensors, host handles, DMA-buffer descriptors, graph compilation and binary-graph export.
+- The operator catalogue includes MatMul/Dense, Softmax, LayerNormalization, Gather, GELU/Swish, reductions and the other common building blocks of a transformer.
+- Current internal source includes dedicated RMSNorm and RoPE operations, but their public accessibility and support in the exact Allwinner SDK remain unverified.
+- `llama.cpp` exposes backend devices, buffers, capability predicates, graph execution, synchronization and dynamic backend loading suitable for an experimental accelerator plugin.
+- Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet autoregressive LLM decode performance.
 
-Board-specific behavior and SDK licensing remain to be verified from the actual Orange Pi Zero 3W package.
+The next hard gate is [`E001`](experiments/E001-vip9000-capability-probe/README.md): target-verified SDK, operation, shape, type, memory and overhead measurements.
