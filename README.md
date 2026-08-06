@@ -4,45 +4,52 @@ Research and engineering workspace for using the Vivante VIP9000 NPU together wi
 
 The primary target device is an Orange Pi Zero 3W with an Allwinner A733 and 12 GB of system memory. The intended long-term result is a maintainable `ggml`/`llama.cpp` backend or companion execution path that can offload useful transformer workloads to the NPU while retaining reliable CPU fallback.
 
-> Status: **NPU capability research**. No performance, compatibility, or licensing claim should be treated as final until it is reproduced on the target board and recorded in this repository.
+> Status: **NPU and packed-ternary capability research**. No performance, compatibility, or licensing claim should be treated as final until it is reproduced on the target board and recorded in this repository.
 
 ## Mission
 
 1. Inventory the exact A733/VIP9000 hardware, drivers, runtime libraries, SDK, and legal terms available on the target board.
 2. Establish reproducible CPU-only `llama.cpp` baselines.
 3. Characterize the NPU: supported data types, operators, tensor layouts, shape restrictions, compilation flow, memory-transfer cost, and concurrency behavior.
-4. Prototype a `ggml` accelerator backend with transparent CPU fallback.
-5. Determine the most effective partition between CPU and NPU for prompt processing and token decoding.
-6. Publish reproducible benchmarks, correctness checks, patches, and integration notes.
+4. Determine whether Ternary Bonsai packed weights can be consumed directly by custom OpenCL/EVIS kernels without model-wide INT4 expansion.
+5. Prototype a `ggml` accelerator backend with transparent CPU fallback.
+6. Determine the most effective partition between CPU, programmable PPU/EVIS and native NN cores for prompt processing and token decoding.
+7. Publish reproducible benchmarks, correctness checks, patches, and integration notes.
 
 ## Preferred technical direction
 
-The working hypothesis is a hybrid backend:
+The working hypothesis is a heterogeneous backend:
 
 - `ggml` remains responsible for model loading, graph construction, scheduling, tokenization, sampling, and CPU fallback.
-- TIM-VX, VIPLite, or the board-vendor Vivante runtime compiles supported operations or subgraphs for VIP9000.
-- Compiled graphs are cached and reused; model execution must not invoke an ONNX conversion pipeline per token.
-- Unsupported or inefficient nodes remain on the optimized Arm CPU backend.
-- Data movement is measured explicitly. Offload is accepted only when end-to-end latency, throughput, energy, or CPU availability improves.
+- Optimized AArch64 CPU kernels remain the mandatory reference and may remain the best token-at-a-time ternary decode path.
+- The programmable VIP PPU/EVIS path handles custom packed low-bit kernels, packing/layout work, RoPE and normalization candidates.
+- TIM-VX, VIPLite, or the board-vendor Vivante runtime compiles supported large fixed-shape operations or subgraphs for the eight native NN cores.
+- Compiled graphs and kernels are cached and reused; model execution must not invoke an ONNX conversion pipeline per token.
+- Unsupported or inefficient nodes remain on the CPU.
+- Data movement is measured explicitly. Offload is accepted only when end-to-end latency, throughput, energy, memory footprint, or CPU availability improves.
 
-This is a hypothesis, not a commitment. Operator-level offload, subgraph offload, precompiled NBG dispatch, and model-specific execution will all be evaluated.
+This is a hypothesis, not a commitment. Operator-level offload, subgraph offload, precompiled NBG dispatch, direct packed-ternary PPU kernels and model-specific execution will all be evaluated.
 
 ## Repository map
 
 ```text
-AGENTS.md                                      Project rules and research protocol
-benchmarks/README.md                           Benchmark definitions and result format
-docs/architecture/backend-plan.md              Backend design and phased implementation
-docs/hardware/a733.md                          A733 hardware facts and validation checklist
-docs/hardware/orange-pi-zero-3w.md             Target-board inventory
-docs/legal/licensing.md                        Licensing and redistribution matrix
-docs/npu/vip9000-stack-and-capabilities.md     SDK/runtime layers and preliminary capability map
-docs/research/llm-operation-compatibility.md   Transformer/ggml operation mapping
-docs/research/related-work.md                  Relevant projects and prior art
-experiments/E001-vip9000-capability-probe/     First target-side SDK/operator experiment
-experiments/README.md                           Experiment template and reproducibility rules
-research/open-questions.md                      Unresolved technical and legal questions
-references/sources.md                           Curated primary and secondary sources
+AGENTS.md                                             Project rules and research protocol
+benchmarks/README.md                                  Benchmark definitions and result format
+docs/architecture/backend-plan.md                     Backend design and phased implementation
+docs/hardware/a733.md                                 A733 hardware facts and validation checklist
+docs/hardware/orange-pi-zero-3w.md                    Target-board inventory
+docs/legal/licensing.md                               Licensing and redistribution matrix
+docs/npu/vip9000-stack-and-capabilities.md            SDK/runtime layers and preliminary capability map
+docs/npu/ternary-bonsai-custom-kernel-feasibility.md  Direct packed-ternary feasibility assessment
+docs/npu/a733-vip9000-strengths-for-bonsai.md          CPU/PPU/NN strengths and likely partitioning
+docs/research/llm-operation-compatibility.md          Transformer/ggml operation mapping
+docs/research/related-work.md                         Relevant projects and prior art
+experiments/E001-vip9000-capability-probe/             Target-side SDK/operator experiment
+experiments/E002-packed-ternary-kernel/                Packed Q2_0 OpenCL/EVIS and native-NN study
+experiments/README.md                                  Experiment template and reproducibility rules
+research/decisions/002-packed-ternary-research-direction.md Research direction record
+research/open-questions.md                             Unresolved technical and legal questions
+references/sources.md                                  Curated primary and secondary sources
 ```
 
 ## Initial milestones
@@ -56,30 +63,38 @@ references/sources.md                           Curated primary and secondary so
 ### M1 — Reproducible baselines
 
 - Build upstream `llama.cpp` on the target board.
-- Benchmark representative small GGUF models on CPU.
+- Benchmark representative Ternary Bonsai GGUF files on optimized AArch64 CPU.
 - Capture CPU topology, clocks, thermals, memory bandwidth, power mode, and build flags.
 
 ### M2 — Minimal NPU execution
 
 - Compile and execute a tiny known-correct graph on VIP9000.
+- Compile and execute a custom OpenCL operation.
+- Determine whether the VXC/EVIS compiler path is available in the exact SDK.
 - Measure cold compilation, warm execution, host↔NPU transfer, and numerical error.
-- Test at least matrix multiplication, elementwise operations, normalization candidates, and supported quantized types.
 
-### M3 — `ggml` proof of concept
+### M3 — Packed ternary proof of concept
+
+- Consume Q2_0 group-64 and Bonsai group-128 packed bytes directly.
+- Implement portable OpenCL and EVIS bit-unpack/dot-product paths.
+- Compare direct PPU GEMV/GEMM, PPU tile-unpack plus native NN GEMM, CPU NEON, native INT8 and optional INT4.
+- Preserve long-lived packed model storage.
+
+### M4 — `ggml` proof of concept
 
 - Register an accelerator device through the `ggml` backend API.
-- Implement buffer management, capability checks, graph execution, synchronization, and CPU fallback.
-- Offload one useful operation or repeatable subgraph with correctness tests.
+- Implement buffer management, capability checks, graph execution, synchronization, compiled-kernel caching and CPU fallback.
+- Offload one useful packed operation or repeatable subgraph with correctness tests.
 
-### M4 — Transformer path
+### M5 — Transformer partition
 
-- Evaluate MLP, projection, embedding, attention, and full-block partitioning separately.
-- Compare prefill and decode behavior; they have different shapes and bottlenecks.
-- Add compiled-graph caching and cost-aware partitioning.
+- Evaluate MLP, projections, RoPE, normalization, attention and full-block partitioning separately.
+- Compare prefill, decode, batched decode and speculative decode; they have different shapes and bottlenecks.
+- Add cost-aware CPU/PPU/NN scheduling.
 
-### M5 — Real model benchmark
+### M6 — Real model benchmark
 
-- Run a selected GGUF or model-specific graph end to end.
+- Run a selected Bonsai GGUF or model-specific graph end to end.
 - Report prompt-processing throughput, decode throughput, time-to-first-token, memory, power, CPU load, NPU utilization, and output-quality checks.
 
 ## Safety and licensing
@@ -90,13 +105,18 @@ See [`docs/legal/licensing.md`](docs/legal/licensing.md).
 
 ## Current evidence snapshot
 
-Confirmed in current upstream source:
+Confirmed from official, BSP and upstream source:
 
-- TIM-VX is a permissively licensed C++ graph integration layer, but a platform-specific VeriSilicon OpenVX SDK still comes from the SoC vendor.
-- Its public tensor vocabulary includes FP16/FP32, INT8 and INT4 types, per-tensor and per-channel quantization, constant/variable/transient tensors, host handles, DMA-buffer descriptors, graph compilation and binary-graph export.
-- The operator catalogue includes MatMul/Dense, Softmax, LayerNormalization, Gather, GELU/Swish, reductions and the other common building blocks of a transformer.
-- Current internal source includes dedicated RMSNorm and RoPE operations, but their public accessibility and support in the exact Allwinner SDK remain unverified.
-- `llama.cpp` exposes backend devices, buffers, capability predicates, graph execution, synchronization and dynamic backend loading suitable for an experimental accelerator plugin.
-- Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet autoregressive LLM decode performance.
+- The exact A733 product ID `0x1000003b` reports eight active NN cores, one programmable shader/PPU core, EVIS, 256 shader threads and 512 KiB VIP SRAM.
+- The target reports NN GEMM, FP16 ALU, FP32 I/O, a stream processor and an early 4-bit feature, but no packed 4-bit coefficient mode, no group quantization, no dynamic shapes, no tensor DMA and no high-performance decode feature.
+- VeriSilicon describes the VIP9000 PPU as a 128-bit vector engine with OpenCL and EVIS, with programmable instructions and possible parallel execution with NN accelerators.
+- The A733 SDK tree includes OpenVX, CLC, VSC and NNVXC compiler/runtime libraries, while TIM-VX demonstrates both public custom OpenCL operations and internal VXC/EVIS source kernels.
+- Current `llama.cpp` Q2_0 stores four 2-bit values per byte plus an FP16 group scale; Prism Ternary Bonsai uses the same core idea with group-128 release files.
+- A direct packed-ternary PPU kernel is technically plausible, but it should not be assumed to use all eight NN cores.
+- A tile-unpack-to-native-NN path may exploit the eight cores but risks losing the memory advantage through intermediate traffic.
+- Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet optimal autoregressive LLM decode.
 
-The next hard gate is [`E001`](experiments/E001-vip9000-capability-probe/README.md): target-verified SDK, operation, shape, type, memory and overhead measurements.
+The next hard gates are:
+
+- [`E001`](experiments/E001-vip9000-capability-probe/README.md): target-verified SDK, operation, shape, type, memory and overhead measurements.
+- [`E002`](experiments/E002-packed-ternary-kernel/README.md): direct Q2_0 packed execution, EVIS capability and CPU/PPU/NN performance comparison.
