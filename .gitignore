@@ -1,0 +1,59 @@
+# Proprietary/vendor assets
+vendor/
+sdk/
+models/
+artifacts/private/
+
+# Generated accelerator artifacts
+*.nb
+*.nbg
+*.bin
+*.blob
+
+# Native binaries and libraries
+*.so
+*.so.*
+*.a
+*.ko
+*.o
+*.out
+
+# Build outputs
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+
+# Models and large tensor files
+*.gguf
+*.safetensors
+*.onnx
+*.tflite
+*.npy
+*.npz
+*.pt
+*.pth
+
+# Benchmark scratch data
+benchmarks/results/local/
+experiments/**/results/local/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
