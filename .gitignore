@@ -51,9 +51,14 @@ venv/
 # Benchmark scratch data
 benchmarks/results/local/
 experiments/**/results/local/
+benchmarks/results/.*.lock
+benchmarks/results/.*.tmp
+benchmarks/results/.*.backup
+benchmarks/models/.*.tmp
 
 # Editors and OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+

@@ -264,6 +264,10 @@ A speedup with unexplained severe quality loss is a failed result.
 - Record thermals before and after.
 - Do not compare runs with different model files, context lengths, batch sizes, or sampling settings without clearly labeling the difference.
 - Keep raw machine-readable results under `benchmarks/results/` when they contain no secrets.
+- Wrap every model command with `tooling/profile_command.py` unless the experiment explains why that profiler cannot observe the required boundary.
+- Record every model test, including failed, unqualified, and rejected runs, with `tooling/record_model_result.py`; the JSONL ledger is canonical and the matching per-model Markdown table is the human index.
+- Treat steady-state decode tokens per second as the primary optimization metric. Keep prompt/prefill throughput and TTFT separate.
+- A speed result may be `qualified` only when it names a pinned CPU reference and its declared quality threshold passes.
 
 ## 8. Code rules
 
@@ -293,7 +297,7 @@ Do not silently replace contradictory evidence. Record the contradiction.
 
 ## 10. Initial success criteria
 
-The first meaningful success is not “the NPU is used.” It is one of:
+The first meaningful success is not “the NPU is used.” For repeated Bonsai model work, the primary success is higher steady-state decode throughput without failing the declared quality guardrail. Other meaningful successes include:
 
 - lower time-to-first-token
 - higher prompt-processing throughput
@@ -313,3 +317,4 @@ The result must be reproducible on the target device and compared with an optimi
 5. Build upstream `llama.cpp` and record CPU baselines.
 6. Implement a persistent NPU matrix-multiplication microbenchmark.
 7. Inspect `ggml` backend APIs at a pinned upstream commit.
+

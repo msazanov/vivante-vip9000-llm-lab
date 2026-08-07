@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "run_id": "synthetic-example-unqualified-001",
+  "date": "2026-08-07",
+  "experiment": "SYNTHETIC_EXAMPLE_NOT_MEASURED",
+  "model": {
+    "id": "prism-ml/Ternary-Bonsai-27B-gguf",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "quantization": "synthetic-unresolved-format",
+    "size_bytes": 1
+  },
+  "configuration": {
+    "backend": "synthetic",
+    "partition": "not-a-target-run",
+    "context": 1,
+    "batch": 1,
+    "ubatch": 1,
+    "threads": 1
+  },
+  "software": {
+    "repository_commit": "unresolved",
+    "runtime": "unresolved",
+    "runtime_commit": "unresolved",
+    "compiler": "unresolved",
+    "sdk": "unresolved",
+    "driver": "unresolved",
+    "kernel": "unresolved",
+    "command": "unresolved"
+  },
+  "workload": {
+    "tokenizer": "synthetic-tokenizer",
+    "prompt_suite": "synthetic-prompt-suite",
+    "prompt_tokens": 1,
+    "generated_tokens": 1,
+    "seed": 0,
+    "deterministic": false,
+    "warmup_iterations": 0
+  },
+  "performance": {
+    "prompt_tps": null,
+    "decode_tps": null,
+    "ttft_ms": null,
+    "peak_rss_mib": null,
+    "repetitions": 0,
+    "statistics": {
+      "prompt_tps": {
+        "median": null,
+        "p10": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "cv": null,
+        "samples": []
+      },
+      "decode_tps": {
+        "median": null,
+        "p10": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "cv": null,
+        "samples": []
+      },
+      "ttft_ms": {
+        "median": null,
+        "p10": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "cv": null,
+        "samples": []
+      }
+    }
+  },
+  "quality": {
+    "method": "not-run-synthetic-example",
+    "reference_run_id": "",
+    "metric": "not-run",
+    "value": null,
+    "threshold": null,
+    "passed": null
+  },
+  "status": "unqualified",
+  "raw_result": "benchmarks/results/synthetic-example-unqualified-001/summary.json",
+  "notes": "Synthetic schema example only; numbers are illustrative and are not a benchmark claim."
+}

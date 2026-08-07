@@ -16,6 +16,12 @@ The primary target device is an Orange Pi Zero 3W with an Allwinner A733 and 12 
 6. Determine the most effective partition between CPU, programmable PPU/EVIS and native NN cores for prompt processing and token decoding.
 7. Publish reproducible benchmarks, correctness checks, patches, and integration notes.
 
+## Optimization objective
+
+The primary metric is steady-state decode throughput in tokens per second. Prompt-processing throughput and time to first token are measured and optimized separately. A speed result is eligible for promotion only when it is compared with a pinned CPU reference and passes a declared quality guardrail; faster output with missing quality data remains `unqualified`, and a quality regression remains recorded as `rejected`.
+
+Profiling is part of every experiment from its first run. Raw command output, process and board telemetry, runtime phase timings, copies, memory, clocks, thermals, repetition statistics and quality evidence are retained according to [`docs/profiling/profiling-contract.md`](docs/profiling/profiling-contract.md).
+
 ## Preferred technical direction
 
 The working hypothesis is a heterogeneous backend:
@@ -34,22 +40,27 @@ This is a hypothesis, not a commitment. Operator-level offload, subgraph offload
 
 ```text
 AGENTS.md                                             Project rules and research protocol
-benchmarks/README.md                                  Benchmark definitions and result format
+benchmarks/README.md                                  Benchmark and quality contract
+benchmarks/models/                                   Per-model append-only test tables
 docs/architecture/backend-plan.md                     Backend design and phased implementation
+docs/evidence/orange-rag-prior-tests.md               Sanitized prior local evidence boundary
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
-docs/hardware/orange-pi-zero-3w.md                    Target-board inventory
+docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
 docs/legal/licensing.md                               Licensing and redistribution matrix
 docs/npu/vip9000-stack-and-capabilities.md            SDK/runtime layers and preliminary capability map
 docs/npu/ternary-bonsai-custom-kernel-feasibility.md  Direct packed-ternary feasibility assessment
 docs/npu/a733-vip9000-strengths-for-bonsai.md          CPU/PPU/NN strengths and likely partitioning
+docs/profiling/profiling-contract.md                   Required metrics and promotion gates
 docs/research/llm-operation-compatibility.md          Transformer/ggml operation mapping
 docs/research/related-work.md                         Relevant projects and prior art
-experiments/E001-vip9000-capability-probe/             Target-side SDK/operator experiment
-experiments/E002-packed-ternary-kernel/                Packed Q2_0 OpenCL/EVIS and native-NN study
-experiments/README.md                                  Experiment template and reproducibility rules
+docs/toolchain/inventory.md                           Sanitized compiler/runtime/tool inventory
+experiments/E001-vip9000-capability-probe/            Target-side SDK/operator experiment
+experiments/E002-packed-ternary-kernel/               Packed Q2_0 OpenCL/EVIS and native-NN study
+experiments/README.md                                 Experiment template and reproducibility rules
 research/decisions/002-packed-ternary-research-direction.md Research direction record
-research/open-questions.md                             Unresolved technical and legal questions
-references/sources.md                                  Curated primary and secondary sources
+research/open-questions.md                            Unresolved technical and legal questions
+references/sources.md                                 Curated primary and secondary sources
+tooling/README.md                                     Inventory, profiling and result-recording commands
 ```
 
 ## Initial milestones
