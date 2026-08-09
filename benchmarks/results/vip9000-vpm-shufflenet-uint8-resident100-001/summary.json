@@ -1,0 +1,13 @@
+{
+  "schema_version": "vip9000-capability-run/v1",
+  "run_id": "vip9000-vpm-shufflenet-uint8-resident100-001",
+  "date": "2026-08-09",
+  "experiment": "Resident 100-loop NPU throughput attempt",
+  "status": "failed-before-launch",
+  "exit_code": 2,
+  "requested_profiler_interval_ms": 5,
+  "error": "profile_command.py: --interval-ms must be at least 10",
+  "hardware_touched": false,
+  "raw_run_directory_created": false,
+  "superseded_by": "vip9000-vpm-shufflenet-uint8-resident100-002"
+}

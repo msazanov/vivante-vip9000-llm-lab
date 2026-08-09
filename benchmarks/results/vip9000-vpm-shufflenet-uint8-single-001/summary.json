@@ -1,0 +1,93 @@
+{
+  "schema_version": "vip9000-capability-run/v1",
+  "run_id": "vip9000-vpm-shufflenet-uint8-single-001",
+  "date": "2026-08-09",
+  "experiment": "Guarded single execution of recovered ShuffleNetV2 UINT8 NBG",
+  "status": "execution-compatible-unqualified",
+  "target": {
+    "board": "Orange Pi Zero 3W, Allwinner A733, 12 GiB",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "device": "/dev/vipcore",
+    "module": "vipcore 1.13.0",
+    "driver_abi": "0x00020003",
+    "driver_software": "2.0.3.2-AW-2024-08-30",
+    "cid": "0x1000003b",
+    "device_count": 1,
+    "logical_core_count": 1,
+    "npu_governor": "performance",
+    "npu_available_hz": [492000000, 852000000, 1008000000],
+    "npu_run_hz": 1008000000
+  },
+  "assets": {
+    "executable": {"name": "vpm_run", "size_bytes": 38696, "sha256": "dbcea3266070d51a4e0b3aac19540814d065f3727a6045ee96e25f9464371407"},
+    "network": {"name": "network_binary.nb", "identity": "ShuffleNetV2_uint8_NCHW", "size_bytes": 964224, "sha256": "fc0d50bdc863e4dfc74eef6dad9d34655c560e759a2f426979a01c505fa9b95f"},
+    "input": {"name": "input_0.dat", "size_bytes": 150528, "sha256": "d38c22c2007db314572c9ddfeb513a9f3d11ec99e8deec0f65bc91481502f1b9"},
+    "sample": {"name": "sample.txt", "size_bytes": 53, "sha256": "d4b17023e90a99561735240e5ba4de8090d51f99e5d6b7dd68b9336afb490017"},
+    "libNBGlinker.so": {"size_bytes": 174560, "sha256": "de93bb4a7d86af67bc4ca597d12228b9b21b062601b18f33ca30393a2af4a842"},
+    "libVIPhal.so": {"size_bytes": 39248, "sha256": "648444a26a1aeaec0182c0ba348b7a453134b8ccdf8282a211ce4c0f5e5e51a0"}
+  },
+  "configuration": {
+    "repository_commit": "bd13f12df932984a8f94a2cc5bea749f0628db62",
+    "profiler_affinity": "CPU 6",
+    "guard_affinity": "CPU 6",
+    "host_workload_affinity": "CPU 7",
+    "device_index": 0,
+    "core_index": 0,
+    "loop_count": 1,
+    "internal_timeout_ms": 30000,
+    "external_timeout_s": 30,
+    "profiler_interval_ms": 10,
+    "thermal_guard_interval_ms": 10,
+    "thermal_guard_limit_millidegrees_c": 85000,
+    "preload": false,
+    "npd": false,
+    "layer_profile_dump": false,
+    "operator_segment": false,
+    "command": "taskset -c 7 timeout --signal=TERM --kill-after=2s 30s env LD_LIBRARY_PATH=/usr/lib ./vpm_run -s sample.txt -l 1 -d 0 -t 30000 -b 0 -c 0"
+  },
+  "network": {
+    "create_us": 852,
+    "prepare_us": 408,
+    "input_read_us": 8332,
+    "host_run_us": 3212,
+    "device_inference_us": 2964,
+    "device_cycles": 2954514,
+    "memory_pool_bytes": 1092352,
+    "input": {"shape": [224, 224, 3, 1], "data_format": 2, "quant_format": 2, "scale": 0.003922, "zero_point": 0, "name": "input[0]"},
+    "output": {"reported_dimensions": [2, 1, 0, 0], "data_format": 2, "scale": 0.001625, "zero_point": 128, "name": "uid_1_out_0"}
+  },
+  "profiling": {
+    "exit_code": 0,
+    "elapsed_ns": 239392882,
+    "phase_events": ["profiler_start", "profiler_complete"],
+    "telemetry_samples": 17,
+    "thermal_guard_samples": 5,
+    "workload_peak_rss_kib": 1408,
+    "mem_available_kib_min": 11530552,
+    "swap_used_kib_delta": 0,
+    "hottest_cpu_peak_millidegrees_c": 40052,
+    "npu_peak_millidegrees_c": 37324,
+    "pwm_fan_state": 4,
+    "cpufreq_cooling_max_state": 0,
+    "kernel_journal_interval_utc": "2026-08-09T19:47:59.147829+00:00/2026-08-09T19:47:59.387313+00:00",
+    "kernel_normal_npu_frequency_events": 1,
+    "kernel_fault_matches": 0
+  },
+  "quality": {
+    "golden_present": false,
+    "output_saved": false,
+    "correctness_verified": false,
+    "reason": "The recovered fixture contains no golden output; this run proves target execution compatibility only."
+  },
+  "raw_evidence": {
+    "location": "target and external local evidence store; proprietary assets excluded from Git",
+    "sha256": {
+      "metadata.json": "30fb23e775f91774abfac12baf1daa1db4bf39c814ea973d85f6801e7cb0331f",
+      "stdout.log": "b0d71bb2c576b98a2c914933e891ebb5232a46c080d045a5a47157a6de8303b3",
+      "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "phases.jsonl": "4ee0e9b28469557669421fb5e80a2292ca1899e49fab3e303c7b893398b54102",
+      "telemetry.jsonl": "90c8b903b944abba579a47c1a6242c1a56ed025457322f456862c93de657cf79",
+      "thermal-guard.jsonl": "b1040551b4f13a9cc4e9d0d519f9b72806c7fa4f96eff6de29dd3dccfc2106b1"
+    }
+  }
+}

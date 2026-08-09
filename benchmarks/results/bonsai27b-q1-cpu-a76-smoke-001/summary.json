@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "run_id": "bonsai27b-q1-cpu-a76-smoke-001",
+  "date": "2026-08-09",
+  "experiment": "Initial A76 llama-cli generation smoke",
+  "model": {"id": "prism-ml/Bonsai-27B-gguf", "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0", "quantization": "GGML Q1_0 type 41, group 128", "size_bytes": 3803452480},
+  "configuration": {"backend": "cpu", "partition": "A76 CPUs 6-7; collectors unpinned", "context": 512, "batch": 512, "ubatch": 512, "threads": 2},
+  "software": {
+    "repository_commit": "f408367c2cedb0a322e0455c2c6241cc3e7d3b6e",
+    "runtime": "PrismML llama.cpp build 9594",
+    "runtime_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "compiler": "GCC 12.2.0, Release, armv8.2-a+dotprod",
+    "sdk": "none; CPU path",
+    "driver": "llama.cpp CPU backend; NPU unused",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "command": "taskset -c 6,7 llama-cli -c 512 -b 512 -ub 512 -t 2 -tb 2 --cpu-strict 1 --cpu-strict-batch 1 -n 8 --seed 0 --temp 0 --top-k 1 --top-p 1 --no-conversation --no-display-prompt --simple-io --perf -p <smoke-prompt>"
+  },
+  "workload": {"tokenizer": "embedded GGUF tokenizer", "prompt_suite": "single short-sentence CPU smoke prompt", "prompt_tokens": 0, "generated_tokens": 8, "seed": 0, "deterministic": true, "warmup_iterations": 0},
+  "performance": {
+    "prompt_tps": null, "decode_tps": null, "ttft_ms": null, "peak_rss_mib": 7353.69921875, "repetitions": 0,
+    "statistics": {
+      "prompt_tps": {"median": null, "p10": null, "p90": null, "min": null, "max": null, "cv": null, "samples": []},
+      "decode_tps": {"median": null, "p10": null, "p90": null, "min": null, "max": null, "cv": null, "samples": []},
+      "ttft_ms": {"median": null, "p10": null, "p90": null, "min": null, "max": null, "cv": null, "samples": []}
+    }
+  },
+  "quality": {"method": "not-run-invalid-cli-interaction", "reference_run_id": "", "metric": "deterministic-token-agreement", "value": null, "threshold": 1.0, "passed": null},
+  "status": "failed",
+  "raw_result": "benchmarks/results/bonsai27b-q1-cpu-a76-smoke-001/summary.json",
+  "notes": "Terminated with status 143 after the pinned llama-cli interface entered an EOF/prompt-output loop instead of a bounded non-interactive generation. The 9.86 MB compressed stdout is retained externally and not interpreted as model output. This established that llama-completion, not llama-cli, is required for the pinned runtime.",
+  "evidence": {
+    "elapsed_ns": 137517084013, "thermal_guard_samples": 1365, "thermal_peak_millidegrees_c": 61132, "peak_rss_kib": 7530188, "cpufreq_cooling_max_state": 0, "pwm_fan_max_state": 4, "phase_evidence": "missing-empty",
+    "raw_sha256": {
+      "metadata.json": "dcb40eb1c05ed3c29f50d4a488bcbcfff6fad8ac13a09f3d03d87d4ac4dbadbb",
+      "stdout.log.gz": "14a77b5daa3a05d6efa05f63c8e2fcbca7b05c18b24c90f9d714b5717c8e8787",
+      "stderr.log": "f26d43b9b9cea8b10113dc2a0250467df2da13c699d76528c75f937ac6d5b843",
+      "phases.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "telemetry.jsonl": "7ca685df33f1bad8ba56d6e1f5ed71bfdd60ab5271cf23151e32e9e84ce879b8",
+      "thermal-guard.jsonl": "caf117d8b6889f8d8a27d70cbdb28afd861b19b948f03dbc75673677d501f050"
+    }
+  }
+}

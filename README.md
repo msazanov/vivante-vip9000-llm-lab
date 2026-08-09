@@ -47,6 +47,8 @@ docs/evidence/orange-rag-prior-tests.md               Sanitized prior local evid
 docs/evidence/a733-fan-policy-2026-08-09.md            Installed 30 °C fan policy evidence
 docs/evidence/a733-extra-cooler-thermal-baseline-2026-08-09.md Clean sustained CPU thermal baseline
 docs/evidence/prism-cpu-reference-build-2026-08-09.md Pinned native runtime and first model execution
+docs/evidence/a733-cpu-optimization-matrix-2026-08-09.md Source-audited CPU A/B matrix
+docs/evidence/vip9000-next-capability-probe-2026-08-09.md Verified SDK assets and next NPU probe
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
 docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
 docs/legal/licensing.md                               Licensing and redistribution matrix
@@ -126,6 +128,12 @@ Confirmed from official, BSP and upstream source:
 - VeriSilicon describes the VIP9000 PPU as a 128-bit vector engine with OpenCL and EVIS, with programmable instructions and possible parallel execution with NN accelerators.
 - The A733 SDK tree includes OpenVX, CLC, VSC and NNVXC compiler/runtime libraries, while TIM-VX demonstrates both public custom OpenCL operations and internal VXC/EVIS source kernels.
 - Current `llama.cpp` Q2_0 stores four 2-bit values per byte plus an FP16 group scale; Prism Ternary Bonsai uses the same core idea with group-128 release files.
+- The target VIPLite runtime is now execution-verified: driver 2.0.3.2-AW,
+  CID `0x1000003b`, one runtime-visible device/logical core, and a recovered
+  ShuffleNetV2 UINT8 NBG completed 99 measured resident loops at 2.846 ms
+  median host run time and 2.803 ms median device profile time. The fixture has
+  no golden output, so this is compatibility/performance evidence rather than
+  a correctness qualification.
 - A direct packed-ternary PPU kernel is technically plausible, but it should not be assumed to use all eight NN cores.
 - A tile-unpack-to-native-NN path may exploit the eight cores but risks losing the memory advantage through intermediate traffic.
 - Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet optimal autoregressive LLM decode.

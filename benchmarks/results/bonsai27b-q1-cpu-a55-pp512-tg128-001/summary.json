@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "run_id": "bonsai27b-q1-cpu-a55-pp512-tg128-001",
+  "date": "2026-08-09",
+  "experiment": "CPU baseline: isolated A55 cluster, pp512/tg128",
+  "model": {
+    "id": "prism-ml/Bonsai-27B-gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "quantization": "GGML Q1_0 type 41, group 128",
+    "size_bytes": 3803452480
+  },
+  "configuration": {
+    "backend": "cpu",
+    "partition": "A55 CPUs 0-5; profiler and guard CPU 7",
+    "context": 512,
+    "batch": 512,
+    "ubatch": 512,
+    "threads": 6
+  },
+  "software": {
+    "repository_commit": "bd13f12df932984a8f94a2cc5bea749f0628db62",
+    "runtime": "PrismML llama.cpp build 9594",
+    "runtime_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "compiler": "GCC 12.2.0, Release, armv8.2-a+dotprod",
+    "sdk": "none; CPU reference path",
+    "driver": "llama.cpp CPU backend; NPU unused",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "command": "taskset -c 0-5 llama-bench -p 512 -n 128 -r 5 --delay 1 -b 512 -ub 512 -t 6 -C 0x3f --cpu-strict 1 -ngl 0 -mmp 1 --progress -o jsonl"
+  },
+  "workload": {
+    "tokenizer": "embedded GGUF tokenizer from pinned model artifact",
+    "prompt_suite": "llama-bench synthetic pp512 and tg128 throughput workloads",
+    "prompt_tokens": 512,
+    "generated_tokens": 128,
+    "seed": 0,
+    "deterministic": true,
+    "warmup_iterations": 1
+  },
+  "performance": {
+    "prompt_tps": 1.44464,
+    "decode_tps": 0.726175,
+    "ttft_ms": null,
+    "peak_rss_mib": 7308.15234375,
+    "repetitions": 5,
+    "statistics": {
+      "prompt_tps": {
+        "median": 1.44464,
+        "p10": 1.443938,
+        "p90": 1.444666,
+        "min": 1.44389,
+        "max": 1.44467,
+        "cv": 0.000269684549979174,
+        "samples": [1.44466, 1.44467, 1.44401, 1.44389, 1.44464]
+      },
+      "decode_tps": {
+        "median": 0.726175,
+        "p10": 0.7257002,
+        "p90": 0.7263472,
+        "min": 0.725669,
+        "max": 0.726362,
+        "cv": 0.0004491615200630041,
+        "samples": [0.726325, 0.726362, 0.725669, 0.725747, 0.726175]
+      },
+      "ttft_ms": {
+        "median": null,
+        "p10": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "cv": null,
+        "samples": []
+      }
+    }
+  },
+  "quality": {
+    "method": "not-run-throughput-only",
+    "reference_run_id": "",
+    "metric": "deterministic-token-agreement",
+    "value": null,
+    "threshold": 1.0,
+    "passed": null
+  },
+  "status": "unqualified",
+  "raw_result": "benchmarks/results/bonsai27b-q1-cpu-a55-pp512-tg128-001/summary.json",
+  "notes": "Exit 0, complete profiler lifecycle, and five stable repetitions per workload. Compared with the isolated A76 baseline, median prefill was 8.733% lower while median decode was 11.747% higher. Extra cooler installed; peak CPU-zone temperature 63.612 C, cpufreq cooling stayed 0, fan median/max state 4, swap delta 0, and the exact kernel interval contained no throttle, OOM, or accelerator fault matches. Missing TTFT and quality evidence keeps the result unqualified. Requested affinities and live CPU placement were observed, but this run predates durable effective /proc affinity capture.",
+  "evidence": {
+    "elapsed_ns": 3067786390744,
+    "telemetry_samples": 29393,
+    "thermal_guard_samples": 30677,
+    "thermal_guard_limit_millidegrees_c": 85000,
+    "thermal_guard_termination": "child_exit_0",
+    "thermal_peak_millidegrees_c": 63612,
+    "thermal_median_millidegrees_c": 56854,
+    "thermal_p90_millidegrees_c": 59272,
+    "thermal_by_type": {
+      "cpub_thermal_zone": {"start": 35154, "min": 34968, "median": 56854, "p90": 59272, "max": 63612, "end": 50654},
+      "cpul_thermal_zone": {"start": 36022, "min": 35216, "median": 54622, "p90": 57474, "max": 62806, "end": 51398},
+      "ddr_thermal_zone": {"start": 36580, "min": 33976, "median": 51646, "p90": 52886, "max": 56172, "end": 48918},
+      "gpu_thermal_zone": {"start": 35588, "min": 34534, "median": 53506, "p90": 54932, "max": 58342, "end": 49228},
+      "npu_thermal_zone": {"start": 36332, "min": 33852, "median": 49786, "p90": 50964, "max": 54870, "end": 45260},
+      "skin_zone": {"start": 31204, "min": 31043, "median": 34924, "p90": 35494, "max": 36561, "end": 34279}
+    },
+    "peak_rss_kib": 7483548,
+    "mem_available_kib_min": 7421152,
+    "swap_used_kib_delta": 0,
+    "cpufreq_cooling_max_state": 0,
+    "pwm_fan_median_state": 4,
+    "pwm_fan_max_state": 4,
+    "cpu_policy0_observed_khz": 1794000,
+    "cpu_policy6_observed_max_khz": 2002000,
+    "npu_observed_hz": 1008000000,
+    "kernel_journal_interval_utc": "2026-08-09T18:49:19.883784+00:00/2026-08-09T19:40:27.670252+00:00",
+    "kernel_throttle_oom_accelerator_matches": 0,
+    "phase_evidence": "complete",
+    "raw_sha256": {
+      "metadata.json": "a3c2cde5eb1bd50c719c4e5573d28eab81d7ab6375eb0e8091828ac21840e267",
+      "stdout.log": "877c857f8799608b34b3fa27f28eff62e68dc5280e3a6495862a815acd50999c",
+      "stderr.log": "63a0f59d06f0f5353761bab11cff0859f806bbb8e2c92e71552851ee2416fedd",
+      "phases.jsonl": "7243a1c055c09b95e84cf94055f782bb9d9c383607c9452dd363901425df2ab8",
+      "telemetry.jsonl": "765343f2f7bb0767e410f64c371d61381bfb9eaa780c602deb31eec88144d32c",
+      "thermal-guard.jsonl": "e54a396b68a2d00c61853652e4b16904772c719f6a4fc49484f53020fba0b559"
+    }
+  }
+}

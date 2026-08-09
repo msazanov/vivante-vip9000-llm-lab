@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "run_id": "bonsai27b-q1-cpu-a76-smoke-002",
+  "date": "2026-08-09",
+  "experiment": "A76 llama-completion bounded generation smoke",
+  "model": {"id": "prism-ml/Bonsai-27B-gguf", "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0", "quantization": "GGML Q1_0 type 41, group 128", "size_bytes": 3803452480},
+  "configuration": {"backend": "cpu", "partition": "A76 CPUs 6-7; collectors unpinned", "context": 512, "batch": 512, "ubatch": 512, "threads": 2},
+  "software": {
+    "repository_commit": "f408367c2cedb0a322e0455c2c6241cc3e7d3b6e",
+    "runtime": "PrismML llama.cpp build 9594",
+    "runtime_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "compiler": "GCC 12.2.0, Release, armv8.2-a+dotprod",
+    "sdk": "none; CPU path",
+    "driver": "llama.cpp CPU backend; NPU unused",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "command": "taskset -c 6,7 llama-completion -c 512 -b 512 -ub 512 -t 2 -tb 2 --cpu-strict 1 --cpu-strict-batch 1 -n 8 --seed 0 --temp 0 --top-k 1 --top-p 1 --no-display-prompt --perf -p <smoke-prompt>"
+  },
+  "workload": {"tokenizer": "embedded GGUF tokenizer", "prompt_suite": "single short-sentence CPU smoke prompt", "prompt_tokens": 19, "generated_tokens": 8, "seed": 0, "deterministic": true, "warmup_iterations": 1},
+  "performance": {
+    "prompt_tps": 1.30, "decode_tps": 0.63, "ttft_ms": null, "peak_rss_mib": 7188.48828125, "repetitions": 1,
+    "statistics": {
+      "prompt_tps": {"median": 1.30, "p10": 1.30, "p90": 1.30, "min": 1.30, "max": 1.30, "cv": 0.0, "samples": [1.30]},
+      "decode_tps": {"median": 0.63, "p10": 0.63, "p90": 0.63, "min": 0.63, "max": 0.63, "cv": 0.0, "samples": [0.63]},
+      "ttft_ms": {"median": null, "p10": null, "p90": null, "min": null, "max": null, "cv": null, "samples": []}
+    }
+  },
+  "quality": {"method": "not-run-truncated-thinking-output", "reference_run_id": "", "metric": "deterministic-token-agreement", "value": null, "threshold": 1.0, "passed": null},
+  "status": "unqualified",
+  "raw_result": "benchmarks/results/bonsai27b-q1-cpu-a76-smoke-002/summary.json",
+  "notes": "Exit 0 proved bounded llama-completion execution. The eight-token cap ended inside a <think> block and did not produce the requested sentence, so no quality claim is possible. Reported performance is a single smoke observation: 19 prompt tokens at 1.30 tok/s and seven evaluated generation steps at 0.63 tok/s; TTFT was not isolated.",
+  "evidence": {
+    "elapsed_ns": 55242733696, "thermal_guard_samples": 551, "thermal_peak_millidegrees_c": 60140, "peak_rss_kib": 7361012, "cpufreq_cooling_max_state": 0, "pwm_fan_max_state": 4, "phase_evidence": "missing-empty",
+    "raw_sha256": {
+      "metadata.json": "4e3c5503c1c5dd63bbbeca400bc889d8f91a7957459a2eb5df6aafcbe2a6320f",
+      "stdout.log": "a7514e8196ec963459785822b3fcf25b1743096a4bdd5ec746225a7c9a29be19",
+      "stderr.log": "5fea750a861c761ed6788b41c138e9bf002a1d0eeb62ca24813933601d4542ed",
+      "phases.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "telemetry.jsonl": "93965d06e560fca14d12c7a569590874a300cff34b9229344e6df6695207c7b0",
+      "thermal-guard.jsonl": "3b9accdf1e0dfdb0d6526bbe21a0dd58d4fc06151551f79cc5440b91e98b33d5"
+    }
+  }
+}

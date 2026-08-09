@@ -1,0 +1,78 @@
+{
+  "schema_version": "vip9000-capability-run/v1",
+  "run_id": "vip9000-vpm-shufflenet-uint8-output-001",
+  "date": "2026-08-09",
+  "experiment": "Guarded ShuffleNetV2 output capture with top-5/text diagnostics",
+  "status": "output-captured-unqualified",
+  "target": {
+    "board": "Orange Pi Zero 3W, Allwinner A733, 12 GiB",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "device": "/dev/vipcore",
+    "module": "vipcore 1.13.0",
+    "driver_abi": "0x00020003",
+    "driver_software": "2.0.3.2-AW-2024-08-30",
+    "cid": "0x1000003b",
+    "device_count": 1,
+    "logical_core_count": 1
+  },
+  "asset_sha256": {
+    "vpm_run": "dbcea3266070d51a4e0b3aac19540814d065f3727a6045ee96e25f9464371407",
+    "network_binary.nb": "fc0d50bdc863e4dfc74eef6dad9d34655c560e759a2f426979a01c505fa9b95f",
+    "input_0.dat": "d38c22c2007db314572c9ddfeb513a9f3d11ec99e8deec0f65bc91481502f1b9",
+    "libNBGlinker.so": "de93bb4a7d86af67bc4ca597d12228b9b21b062601b18f33ca30393a2af4a842",
+    "libVIPhal.so": "648444a26a1aeaec0182c0ba348b7a453134b8ccdf8282a211ce4c0f5e5e51a0"
+  },
+  "configuration": {
+    "repository_commit": "bd13f12df932984a8f94a2cc5bea749f0628db62",
+    "profiler_guard_affinity": "CPU 6",
+    "host_workload_affinity": "CPU 7",
+    "device_core": 0,
+    "loops": 1,
+    "preload": false,
+    "npd": false,
+    "show_top5": true,
+    "save_txt": true,
+    "command": "taskset -c 7 timeout --signal=TERM --kill-after=2s 30s env LD_LIBRARY_PATH=/usr/lib ./vpm_run -s sample.txt -l 1 -d 0 -t 30000 -b 0 -c 0 --show_top5 1 --save_txt 1"
+  },
+  "timing": {
+    "network_create_us": 859,
+    "network_prepare_us": 411,
+    "input_read_us": 221,
+    "host_run_us": 3086,
+    "device_inference_us": 2863,
+    "device_cycles": 2829953,
+    "profiled_process_elapsed_ns": 178937639
+  },
+  "output": {
+    "values": [-0.2080624550580978, 0.2064369618892670],
+    "text_size_bytes": 39,
+    "text_sha256": "77bea7d9f2ac874cac7d1d27f8c19d321c610d5a460716c6fd3fe09ba33959bb",
+    "golden_present": false,
+    "correctness_verified": false,
+    "note": "The built-in top-5 printer emits three sentinel -1 rows for this two-element output; the saved text contains only the two real values."
+  },
+  "profiling": {
+    "exit_code": 0,
+    "phase_events": ["profiler_start", "profiler_complete"],
+    "telemetry_samples": 13,
+    "thermal_guard_samples": 2,
+    "workload_peak_rss_kib": 1280,
+    "mem_available_kib_min": 11578840,
+    "swap_used_kib_delta": 0,
+    "hottest_cpu_peak_millidegrees_c": 36766,
+    "npu_peak_millidegrees_c": 35216,
+    "pwm_fan_state": 4,
+    "cpufreq_cooling_max_state": 0,
+    "kernel_journal_interval_utc": "2026-08-09T19:50:54.776360+00:00/2026-08-09T19:50:54.955369+00:00",
+    "kernel_normal_npu_frequency_events": 1,
+    "kernel_fault_matches": 0
+  },
+  "raw_sha256": {
+    "metadata.json": "1be4fd07d2f7d1098ec10880c1925b706919813be7c9ac09b892bd59644e2074",
+    "stdout.log": "f36ed41133d14642e8f09f8ec07e2e244f6c825c34e4a46de0e82916ff045bb4",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "phases.jsonl": "2e3b5b43e12f10f7ef8f56b1e5da2e9571557f6d822d9f08d3bd6611b8711777",
+    "telemetry.jsonl": "8b30b3f46c7a6a72b5514fe8a4325721860721c920951190885a7987a4866d75",
+    "thermal-guard.jsonl": "8fdd08c78c89293819e2783afb33deaa2ac9ffae9ec0ff2b5d1b7ecd91ba96a0"
+  }
+}

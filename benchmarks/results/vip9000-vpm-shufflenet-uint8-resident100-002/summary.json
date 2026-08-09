@@ -1,0 +1,116 @@
+{
+  "schema_version": "vip9000-capability-run/v1",
+  "run_id": "vip9000-vpm-shufflenet-uint8-resident100-002",
+  "date": "2026-08-09",
+  "experiment": "Resident ShuffleNetV2 UINT8 NPU throughput, one warm-up plus 99 measured loops",
+  "status": "performance-observed-unqualified",
+  "target": {
+    "board": "Orange Pi Zero 3W, Allwinner A733, 12 GiB",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "device": "/dev/vipcore",
+    "module": "vipcore 1.13.0",
+    "driver_abi": "0x00020003",
+    "driver_software": "2.0.3.2-AW-2024-08-30",
+    "cid": "0x1000003b",
+    "device_count": 1,
+    "logical_core_count": 1
+  },
+  "asset_sha256": {
+    "vpm_run": "dbcea3266070d51a4e0b3aac19540814d065f3727a6045ee96e25f9464371407",
+    "network_binary.nb": "fc0d50bdc863e4dfc74eef6dad9d34655c560e759a2f426979a01c505fa9b95f",
+    "input_0.dat": "d38c22c2007db314572c9ddfeb513a9f3d11ec99e8deec0f65bc91481502f1b9",
+    "libNBGlinker.so": "de93bb4a7d86af67bc4ca597d12228b9b21b062601b18f33ca30393a2af4a842",
+    "libVIPhal.so": "648444a26a1aeaec0182c0ba348b7a453134b8ccdf8282a211ce4c0f5e5e51a0"
+  },
+  "configuration": {
+    "repository_commit": "bd13f12df932984a8f94a2cc5bea749f0628db62",
+    "profiler_guard_affinity": "CPU 6",
+    "host_workload_affinity": "CPU 7",
+    "device_core": 0,
+    "npu_hz": 1008000000,
+    "loops": 100,
+    "warmup_loops": 1,
+    "measured_loops": 99,
+    "profiler_interval_ms": 10,
+    "preload": false,
+    "npd": false,
+    "bypass_output": true,
+    "command": "taskset -c 7 timeout --signal=TERM --kill-after=2s 30s env LD_LIBRARY_PATH=/usr/lib ./vpm_run -s sample.txt -l 100 -d 0 -t 30000 -b 1 -c 0"
+  },
+  "setup": {
+    "network_create_us": 839,
+    "network_prepare_us": 413,
+    "input_read_us": 218,
+    "child_process_elapsed_ms": 303.03413,
+    "thermal_guard_lifecycle_ms": 311.846564,
+    "profiled_process_elapsed_ms": 472.899084,
+    "child_process_effective_inferences_per_s": 329.99583248263156
+  },
+  "host_run_us": {
+    "median": 2846,
+    "p10": 2830.0,
+    "p90": 2888.6,
+    "min": 2824,
+    "max": 3001,
+    "mean": 2855.1414141414143,
+    "cv": 0.011091429884910685,
+    "samples": 99,
+    "median_inferences_per_s": 351.37034434293747
+  },
+  "device_inference_us": {
+    "median": 2803,
+    "p10": 2789.0,
+    "p90": 2828.0,
+    "min": 2784,
+    "max": 2882,
+    "mean": 2806.8888888888887,
+    "cv": 0.006493653605174087,
+    "samples": 99,
+    "median_inferences_per_s": 356.76061362825544
+  },
+  "device_cycles": {
+    "median": 2817775,
+    "p10": 2804838.0,
+    "p90": 2837158.8,
+    "min": 2800566,
+    "max": 2856456,
+    "mean": 2819314.6666666665,
+    "cv": 0.004113899213155402,
+    "samples": 99
+  },
+  "derived": {
+    "median_host_minus_device_us": 42,
+    "median_host_api_sync_overhead_percent_of_device": 1.4983945772386729,
+    "vendor_reported_profile_average_is_inconsistent": true,
+    "note": "The vpm_run final line reports 2875 us, equal to the first loop rather than the exact 100-loop mean 2807.57 us; canonical statistics are parsed from individual per-loop rows."
+  },
+  "profiling": {
+    "exit_code": 0,
+    "phase_events": ["profiler_start", "profiler_complete"],
+    "telemetry_samples": 36,
+    "thermal_guard_samples": 31,
+    "workload_peak_rss_kib": 1280,
+    "mem_available_kib_min": 11572156,
+    "swap_used_kib_delta": 0,
+    "hottest_cpu_peak_millidegrees_c": 37138,
+    "npu_peak_millidegrees_c": 35650,
+    "pwm_fan_state": 4,
+    "cpufreq_cooling_max_state": 0,
+    "kernel_journal_interval_utc": "2026-08-09T19:52:06.174831+00:00/2026-08-09T19:52:06.647831+00:00",
+    "kernel_normal_npu_frequency_events": 1,
+    "kernel_fault_matches": 0
+  },
+  "quality": {
+    "golden_present": false,
+    "output_bypassed": true,
+    "correctness_verified": false
+  },
+  "raw_sha256": {
+    "metadata.json": "c21df67b448c216eb74097dbdf89098f819572c1c6306459c266bae7df616e87",
+    "stdout.log": "dc5e155ec533beabd41899fafd8889633e7e6724e8b513b628bfb2a36f237347",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "phases.jsonl": "d4c6650a5d03d7d9f5ebcf0e06c99330faae6ab26ce0e0417b2969f6ae163c82",
+    "telemetry.jsonl": "59fb6165e3616a3e8231f61c182680ed2bcb845f9564ee8e66fff2328f9532d7",
+    "thermal-guard.jsonl": "85eebbcfd65b4e1d4a36da83be14c717b7f148cb2e80f155450642ec5cb389a7"
+  }
+}
