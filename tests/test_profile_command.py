@@ -5,6 +5,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -79,6 +80,12 @@ class ProfileCommandTests(unittest.TestCase):
             self.assertIn("monotonic_ns", samples[0])
             self.assertIn("system", samples[0])
             self.assertIn("process", samples[0])
+            phases = [
+                json.loads(line)
+                for line in (output_dir / "phases.jsonl").read_text().splitlines()
+            ]
+            self.assertEqual([row["event"] for row in phases], ["profiler_start", "profiler_complete"])
+            self.assertLessEqual(phases[0]["monotonic_ns"], phases[1]["monotonic_ns"])
 
     def test_failing_command_is_captured_and_status_is_propagated(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -148,7 +155,9 @@ class ProfileCommandTests(unittest.TestCase):
             for name in ("stdout.log", "stderr.log", "telemetry.jsonl", "phases.jsonl", "metadata.json"):
                 self.assertTrue((output_dir / name).exists(), name)
             self.assertEqual(metadata["phase_file"]["path"], "phases.jsonl")
-            self.assertEqual(metadata["phase_file"]["size_bytes"], 0)
+            self.assertGreater(metadata["phase_file"]["size_bytes"], 0)
+            phases = [json.loads(line) for line in (output_dir / "phases.jsonl").read_text().splitlines()]
+            self.assertEqual([row["event"] for row in phases], ["profiler_start", "profiler_complete"])
 
     def test_phase_file_is_passed_to_child_and_retains_raw_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -164,15 +173,103 @@ class ProfileCommandTests(unittest.TestCase):
 
             self.assertEqual(completed.returncode, 0, completed.stderr)
             phases = (output_dir / "phases.jsonl").read_bytes()
-            self.assertEqual(phases, b"{invalid\n\xff")
+            self.assertIn(b'"event":"profiler_start"', phases)
+            self.assertIn(b"{invalid\n\xff", phases)
+            self.assertIn(b'"event":"profiler_complete"', phases)
             metadata = json.loads((output_dir / "metadata.json").read_text())
             self.assertEqual(metadata["phase_file"]["path"], "phases.jsonl")
             self.assertEqual(metadata["phase_file"]["size_bytes"], len(phases))
 
+    def test_valid_child_phase_is_ordered_between_profiler_lifecycle_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "run-valid-child-phase"
+            child = (
+                "import json, os, time; "
+                "open(os.environ['VIP9000_PHASE_FILE'], 'a').write(json.dumps({"
+                "'event':'child_measured','monotonic_ns':time.monotonic_ns(),'step':1})+'\\n')"
+            )
+
+            completed = self.invoke(output_dir, [sys.executable, "-c", child])
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            phases = [json.loads(line) for line in (output_dir / "phases.jsonl").read_text().splitlines()]
+            self.assertEqual(
+                [row["event"] for row in phases],
+                ["profiler_start", "child_measured", "profiler_complete"],
+            )
+            self.assertEqual(
+                [row["monotonic_ns"] for row in phases],
+                sorted(row["monotonic_ns"] for row in phases),
+            )
+
+    def test_descendant_cannot_append_after_profiler_complete(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "run-descendant-phase"
+            writer = (
+                "import json, os, time; time.sleep(0.4); "
+                "open(os.environ['VIP9000_PHASE_FILE'], 'a').write(json.dumps({"
+                "'event':'late_descendant','monotonic_ns':time.monotonic_ns(),'step':1})+'\\n')"
+            )
+            child = (
+                "import subprocess, sys; "
+                f"subprocess.Popen([sys.executable, '-c', {writer!r}])"
+            )
+
+            completed = self.invoke(output_dir, [sys.executable, "-c", child])
+            size_at_return = (output_dir / "phases.jsonl").stat().st_size
+            time.sleep(0.7)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual((output_dir / "phases.jsonl").stat().st_size, size_at_return)
+            phases = [json.loads(line) for line in (output_dir / "phases.jsonl").read_text().splitlines()]
+            self.assertEqual([row["event"] for row in phases], ["profiler_start", "profiler_complete"])
+
+    def test_phase_setup_error_retains_failure_metadata(self) -> None:
+        sys.path.insert(0, str(ROOT / "tooling"))
+        try:
+            import profile_command
+        finally:
+            sys.path.pop(0)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "run-phase-open-error"
+            original_open = Path.open
+
+            def fail_phase_open(path: Path, *args: object, **kwargs: object):
+                if path.name == "phases.jsonl":
+                    raise OSError("phase storage unavailable")
+                return original_open(path, *args, **kwargs)
+
+            argv = [
+                "--output-dir",
+                str(output_dir),
+                "--run-id",
+                output_dir.name,
+                "--",
+                sys.executable,
+                "-c",
+                "print('must not run')",
+            ]
+            with mock.patch.object(Path, "open", fail_phase_open):
+                result = profile_command.main(argv)
+
+            self.assertNotEqual(result, 0)
+            metadata = json.loads((output_dir / "metadata.json").read_text())
+            self.assertIn("phase storage unavailable", metadata["profiler_error"])
+            self.assertIsNone(metadata["child_return_code"])
+
     def test_relative_phase_file_stays_in_output_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             output_dir = Path(tmp) / "run-phases-validation"
-            for phase_file in ("/tmp/phase.jsonl", "../phase.jsonl", "nested/../../phase.jsonl"):
+            for phase_file in (
+                "/tmp/phase.jsonl",
+                "../phase.jsonl",
+                "nested/../../phase.jsonl",
+                "./phase.jsonl",
+                "nested//phase.jsonl",
+                "C:/phase.jsonl",
+                "bad\nname.jsonl",
+            ):
                 completed = self.invoke(
                     output_dir,
                     [sys.executable, "-c", "print('must not run')"],
@@ -195,6 +292,8 @@ class ProfileCommandTests(unittest.TestCase):
             self.assertEqual(metadata["exit_code"], 128 + signal.SIGTERM)
             self.assertEqual(metadata["child_return_code"], -signal.SIGTERM)
             self.assertEqual(metadata["signal"], signal.SIGTERM)
+            phases = [json.loads(line) for line in (output_dir / "phases.jsonl").read_text().splitlines()]
+            self.assertEqual([row["event"] for row in phases], ["profiler_start", "profiler_complete"])
 
     def test_snapshot_failure_terminates_child_and_still_writes_metadata(self) -> None:
         sys.path.insert(0, str(ROOT / "tooling"))
@@ -236,6 +335,8 @@ class ProfileCommandTests(unittest.TestCase):
             metadata = json.loads((output_dir / "metadata.json").read_text())
             self.assertIn("sensor exploded", metadata["profiler_error"])
             self.assertIsNotNone(metadata["child_return_code"])
+            phases = [json.loads(line) for line in (output_dir / "phases.jsonl").read_text().splitlines()]
+            self.assertEqual([row["event"] for row in phases], ["profiler_start", "profiler_complete"])
             child_pid = int(pid_file.read_text())
             with self.assertRaises(ProcessLookupError):
                 os.kill(child_pid, 0)

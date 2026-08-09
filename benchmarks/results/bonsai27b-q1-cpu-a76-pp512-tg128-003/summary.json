@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "run_id": "bonsai27b-q1-cpu-a76-pp512-tg128-003",
+  "date": "2026-08-09",
+  "experiment": "CPU baseline: isolated A76 pair, pp512/tg128",
+  "model": {
+    "id": "prism-ml/Bonsai-27B-gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "quantization": "GGML Q1_0 type 41, group 128",
+    "size_bytes": 3803452480
+  },
+  "configuration": {
+    "backend": "cpu",
+    "partition": "A76 CPUs 6-7; profiler and guard CPU 0",
+    "context": 512,
+    "batch": 512,
+    "ubatch": 512,
+    "threads": 2
+  },
+  "software": {
+    "repository_commit": "f408367c2cedb0a322e0455c2c6241cc3e7d3b6e",
+    "runtime": "PrismML llama.cpp build 9594",
+    "runtime_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "compiler": "GCC 12.2.0, Release, armv8.2-a+dotprod",
+    "sdk": "none; CPU reference path",
+    "driver": "llama.cpp CPU backend; NPU unused",
+    "kernel": "Linux 6.6.98-sun60iw2 aarch64",
+    "command": "taskset -c 6,7 llama-bench -p 512 -n 128 -r 5 --delay 1 -b 512 -ub 512 -t 2 -C 0xc0 --cpu-strict 1 -ngl 0 -mmp 1 --progress -o jsonl"
+  },
+  "workload": {
+    "tokenizer": "embedded GGUF tokenizer from pinned model artifact",
+    "prompt_suite": "llama-bench synthetic pp512 and tg128 throughput workloads",
+    "prompt_tokens": 512,
+    "generated_tokens": 128,
+    "seed": 0,
+    "deterministic": true,
+    "warmup_iterations": 1
+  },
+  "performance": {
+    "prompt_tps": 1.58287,
+    "decode_tps": 0.649836,
+    "ttft_ms": null,
+    "peak_rss_mib": 7308.58203125,
+    "repetitions": 5,
+    "statistics": {
+      "prompt_tps": {
+        "median": 1.58287,
+        "p10": 1.582594,
+        "p90": 1.584104,
+        "min": 1.58255,
+        "max": 1.58482,
+        "cv": 0.000588756159080406,
+        "samples": [1.58482, 1.58287, 1.58255, 1.58303, 1.58266]
+      },
+      "decode_tps": {
+        "median": 0.649836,
+        "p10": 0.6494914,
+        "p90": 0.652178,
+        "min": 0.649455,
+        "max": 0.652354,
+        "cv": 0.002147194239859097,
+        "samples": [0.652354, 0.649546, 0.651914, 0.649836, 0.649455]
+      },
+      "ttft_ms": {
+        "median": null,
+        "p10": null,
+        "p90": null,
+        "min": null,
+        "max": null,
+        "cv": null,
+        "samples": []
+      }
+    }
+  },
+  "quality": {
+    "method": "not-run-throughput-only",
+    "reference_run_id": "",
+    "metric": "deterministic-token-agreement",
+    "value": null,
+    "threshold": 1.0,
+    "passed": null
+  },
+  "status": "unqualified",
+  "raw_result": "benchmarks/results/bonsai27b-q1-cpu-a76-pp512-tg128-003/summary.json",
+  "notes": "Exit 0 and five stable repetitions per workload. Raw phase file is empty because this run used the pre-lifecycle profiler, so the result remains unqualified together with missing TTFT and quality evidence. Extra cooler installed; peak CPU-zone temperature 69.089 C, cpufreq cooling stayed 0, fan state 4, swap delta 0. Immutable raw bundle remains on target and in the local external evidence store.",
+  "evidence": {
+    "elapsed_ns": 2951325947121,
+    "telemetry_samples": 27206,
+    "thermal_guard_samples": 29510,
+    "thermal_peak_millidegrees_c": 69089,
+    "thermal_median_millidegrees_c": 63488,
+    "peak_rss_kib": 7483988,
+    "swap_used_kib_delta": 0,
+    "cpufreq_cooling_max_state": 0,
+    "pwm_fan_median_state": 4,
+    "kernel_throttle_oom_matches": 0,
+    "phase_evidence": "missing-empty",
+    "raw_sha256": {
+      "metadata.json": "6dd7d4275fba82bd528209e9aeebcc7cfe0b6ee1bac0e15db4700cdd3866c27d",
+      "stdout.log": "e6ad77cbfe8c2cf78a9e73c2af20121b76ea2c05e47d15ef3d29c3600ad5a517",
+      "stderr.log": "63a0f59d06f0f5353761bab11cff0859f806bbb8e2c92e71552851ee2416fedd",
+      "phases.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "telemetry.jsonl": "269fe98a6aad1bba4a29e5cdec94281a8cafe54e4fe2f173b470896dee53cd9e",
+      "thermal-guard.jsonl": "d4b61396246fcf66e8f85bf6bad92114a3ce0249a67a7c73fc41170d48b124c7"
+    }
+  }
+}

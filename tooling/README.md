@@ -25,14 +25,19 @@ python3 tooling/profile_command.py \
 optional relative `--phase-file` defaults to `phases.jsonl`; its path inside
 the run directory is passed to the direct child as `VIP9000_PHASE_FILE`. The
 command writes `metadata.json`, `stdout.log`, `stderr.log`, `telemetry.jsonl`,
-and the phase file. It samples the direct child plus board-wide readable
+and the phase file. The profiler appends `profiler_start` and
+`profiler_complete` lifecycle events with monotonic timestamps; the child may
+append finer runtime events through `VIP9000_PHASE_FILE`. It samples the direct child plus board-wide readable
 `/proc`/`sys` interfaces. This is not a claim of full process-tree accounting:
 unobserved worker processes and vendor/kernel work may not be included in
 process totals. Missing sensors are retained as missing and do not abort the
 child command. Launch failures retain metadata and raw files. The output
 directory must not already exist, a signal maps to exit status `128 + signal`,
 and a collector failure cleans up the child process group after recording
-`profiler_error`.
+`profiler_error`. The profiler also terminates any process-group descendants
+left behind after the direct child exits, preventing late writes after the
+`profiler_complete` boundary. Setup failures are retained in metadata whenever
+the output directory itself remains writable.
 
 The profiler does not automatically know VIP init, graph-load, allocation,
 copy/flush, synchronization, or teardown boundaries. The benchmark harness
@@ -42,7 +47,8 @@ them, alongside the profiler artifacts.
 ## Summarize one target run
 
 Read an immutable run bundle and emit a deterministic JSON summary. The bundle
-must contain `metadata.json`, `telemetry.jsonl`, and `thermal-guard.jsonl`:
+must contain `metadata.json`, `telemetry.jsonl`, `thermal-guard.jsonl`, and the
+non-empty phase JSONL named by the safe relative `metadata.files.phases` path:
 
 ```bash
 python3 tooling/summarize_target_run.py benchmarks/results/<run_id>
@@ -54,12 +60,18 @@ The summary includes run status and elapsed time, sample counts, separate
 profiler-child and guarded-workload peak RSS/HWM/thread counts, thermal
 statistics by type, CPU-policy current/max frequency and governors,
 cooling-state statistics by type, minimum available memory, and swap-use
-delta/peak when the raw fields provide enough data. If telemetry exposes only
+delta/peak when the raw fields provide enough data. Phase events are validated
+for nondecreasing monotonic timestamps and counted independently from thermal
+guard events. If telemetry exposes only
 `SwapFree`, the tool still derives the used-space delta but does not invent an
-absolute used-space peak. JSONL is consumed as a stream so long benchmark
-traces are not retained as decoded rows in memory. Inputs are validated
-fail-closed and never modified; `--output` refuses to overwrite an existing
-file.
+absolute used-space peak. JSONL is consumed as a stream. Exact min/median/max
+statistics use a temporary on-disk SQLite spool with a bounded 2 MiB page
+cache and 4096-value insert batch, so long traces are not retained in RAM; the
+spool is removed after summarization and is never created inside the immutable
+run bundle. Empty phase evidence is rejected; new profiler bundles always
+contain the two lifecycle events unless phase recording itself failed. Inputs
+are validated fail-closed and never modified; `--output` refuses to overwrite
+an existing file.
 
 ## Fail closed on unsafe target state
 

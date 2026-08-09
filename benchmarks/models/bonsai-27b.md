@@ -34,4 +34,5 @@ ledger. Do not invent rows or results here.
 | Date | Run | Experiment | Backend / partition | Quantization | ctx / batch / ubatch / threads | Prompt tok/s | Decode tok/s | TTFT ms | Peak RSS MiB | Quality | Status | Raw |
 |---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|
 <!-- MODEL_RESULTS_START -->
+| 2026-08-09 | bonsai27b-q1-cpu-a76-pp512-tg128-003 | CPU baseline: isolated A76 pair, pp512/tg128 | cpu / A76 CPUs 6-7; profiler and guard CPU 0 | GGML Q1_0 type 41, group 128 | 512 / 512 / 512 / 2 | 1.583 | 0.650 | — | 7308.6 | deterministic-token-agreement=—; threshold=1; not-run | unqualified | [raw](../results/bonsai27b-q1-cpu-a76-pp512-tg128-003/summary.json) |
 <!-- MODEL_RESULTS_END -->

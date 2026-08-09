@@ -1,6 +1,7 @@
 import hashlib
 import json
 from pathlib import Path
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -20,6 +21,7 @@ class SummarizeTargetRunTests(unittest.TestCase):
             "run_id": run.name,
             "elapsed_ns": 123456789,
             "exit_code": 86,
+            "files": {"phases": "phases.jsonl"},
         }
         telemetry = [
             {
@@ -70,10 +72,16 @@ class SummarizeTargetRunTests(unittest.TestCase):
             },
             {"event": "exit", "status": 86},
         ]
+        phases = [
+            {"event": "idle", "monotonic_ns": 90, "step": 0},
+            {"event": "measured", "monotonic_ns": 105, "step": 1},
+            {"event": "complete", "monotonic_ns": 220, "step": 1},
+        ]
         contents = {
             "metadata.json": json.dumps(metadata, sort_keys=True) + "\n",
             "telemetry.jsonl": "".join(json.dumps(row, sort_keys=True) + "\n" for row in telemetry),
             "thermal-guard.jsonl": "".join(json.dumps(row, sort_keys=True) + "\n" for row in guard),
+            "phases.jsonl": "".join(json.dumps(row, sort_keys=True) + "\n" for row in phases),
         }
         for name, content in contents.items():
             (run / name).write_text(content)
@@ -102,7 +110,7 @@ class SummarizeTargetRunTests(unittest.TestCase):
             self.assertEqual(summary["run_id"], "run-summary")
             self.assertEqual(summary["exit_code"], 86)
             self.assertEqual(summary["elapsed_ns"], 123456789)
-            self.assertEqual(summary["sample_counts"], {"telemetry": 2, "thermal_guard": 2})
+            self.assertEqual(summary["sample_counts"], {"telemetry": 2, "thermal_guard": 2, "phases": 3})
             self.assertEqual(summary["profiler_child"], {"peak_rss_kib": 30, "peak_rss_hwm_kib": 40, "peak_threads": 3})
             self.assertEqual(summary["workload_child"], {"peak_rss_kib": 100, "peak_rss_hwm_kib": 130, "peak_threads": 5})
             self.assertEqual(summary["thermal_by_type"]["cpu"], {"min": 40000, "median": 45000, "max": 50000})
@@ -121,6 +129,7 @@ class SummarizeTargetRunTests(unittest.TestCase):
                 },
             )
             self.assertEqual(summary["thermal_guard_events"], {"exit": 1})
+            self.assertEqual(summary["phase_events"], {"complete": 1, "idle": 1, "measured": 1})
             for name, digest in hashes.items():
                 self.assertEqual(hashlib.sha256((run / name).read_bytes()).hexdigest(), digest)
 
@@ -153,6 +162,88 @@ class SummarizeTargetRunTests(unittest.TestCase):
             completed = self.invoke(run)
             self.assertNotEqual(completed.returncode, 0)
             self.assertIn("thermal-guard.jsonl", completed.stderr)
+
+    def test_phase_evidence_is_required_nonempty_and_safe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            run, _ = self.make_run(Path(tmp))
+
+            (run / "phases.jsonl").write_text("")
+            completed = self.invoke(run)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("empty", completed.stderr.lower())
+
+            metadata = json.loads((run / "metadata.json").read_text())
+            metadata["files"]["phases"] = "../outside.jsonl"
+            (run / "metadata.json").write_text(json.dumps(metadata) + "\n")
+            completed = self.invoke(run)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("unsafe", completed.stderr.lower())
+
+            metadata.pop("files")
+            (run / "metadata.json").write_text(json.dumps(metadata) + "\n")
+            completed = self.invoke(run)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("metadata.files", completed.stderr)
+
+    def test_phase_path_rejects_noncanonical_components_and_outside_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for unsafe in (
+                "/tmp/phases.jsonl",
+                "./phases.jsonl",
+                "foo//phases.jsonl",
+                "C:/phases.jsonl",
+                "bad\nname.jsonl",
+            ):
+                case_root = root / unsafe.replace("/", "_").replace("\n", "_")
+                case_root.mkdir()
+                run, _ = self.make_run(case_root)
+                metadata = json.loads((run / "metadata.json").read_text())
+                metadata["files"]["phases"] = unsafe
+                (run / "metadata.json").write_text(json.dumps(metadata) + "\n")
+                completed = self.invoke(run)
+                self.assertNotEqual(completed.returncode, 0, unsafe)
+                self.assertIn("unsafe", completed.stderr.lower(), unsafe)
+
+            case_root = root / "symlink-case"
+            case_root.mkdir()
+            run, _ = self.make_run(case_root)
+            outside = root / "outside.jsonl"
+            outside.write_text('{"event":"complete","monotonic_ns":1,"step":0}\n')
+            (run / "phases.jsonl").unlink()
+            (run / "phases.jsonl").symlink_to(outside)
+            completed = self.invoke(run)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("unsafe", completed.stderr.lower())
+
+    def test_phase_timestamps_must_be_monotonic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            run, _ = self.make_run(Path(tmp))
+            rows = [
+                {"event": "idle", "monotonic_ns": 100, "step": 0},
+                {"event": "complete", "monotonic_ns": 99, "step": 0},
+            ]
+            (run / "phases.jsonl").write_text(
+                "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
+            )
+
+            completed = self.invoke(run)
+
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("monotonic", completed.stderr.lower())
+
+    def test_exact_statistics_use_a_bounded_insert_batch(self) -> None:
+        namespace = runpy.run_path(str(SCRIPT))
+        store_type = namespace["DiskStatsStore"]
+        batch_size = namespace["STATS_BATCH_SIZE"]
+
+        with store_type() as store:
+            series = store.new_series()
+            for value in range(20001):
+                store.add(series, value, "synthetic.value")
+                self.assertLessEqual(len(store._pending), batch_size)
+
+            self.assertEqual(store.stats(series), {"min": 0, "median": 10000, "max": 20000})
 
     def test_swap_delta_is_derived_when_only_swap_free_is_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

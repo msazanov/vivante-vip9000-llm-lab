@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import ExitStack
 from datetime import datetime, timezone
 import json
 import os
@@ -19,6 +20,7 @@ from typing import Any
 
 SCHEMA_VERSION = 1
 RUN_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
+SAFE_PATH_COMPONENT = re.compile(r"[A-Za-z0-9._-]+\Z")
 
 
 def read_text(path: Path) -> str | None:
@@ -173,9 +175,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--run-id must match [A-Za-z0-9][A-Za-z0-9._-]*")
     if args.output_dir.name != args.run_id:
         parser.error("output directory basename must equal --run-id")
-    phase_file = Path(args.phase_file)
-    if not args.phase_file or phase_file.is_absolute() or phase_file == Path(".") or ".." in phase_file.parts:
-        parser.error("--phase-file must be a relative path without '..'")
+    phase_parts = args.phase_file.split("/")
+    if (
+        not args.phase_file
+        or args.phase_file.startswith("/")
+        or "\\" in args.phase_file
+        or any(part in ("", ".", "..") for part in phase_parts)
+        or any(SAFE_PATH_COMPONENT.fullmatch(part) is None for part in phase_parts)
+    ):
+        parser.error("--phase-file must be a canonical safe relative path")
     if args.interval_ms < 10:
         parser.error("--interval-ms must be at least 10")
     if args.command and args.command[0] == "--":
@@ -205,33 +213,68 @@ def main(argv: list[str] | None = None) -> int:
     stderr_path = args.output_dir / "stderr.log"
     telemetry_path = args.output_dir / "telemetry.jsonl"
     phase_path = args.output_dir / Path(args.phase_file)
-    phase_path.parent.mkdir(parents=True, exist_ok=True)
 
     def terminate_process_group(process: subprocess.Popen[bytes]) -> None:
-        if process.poll() is not None:
-            return
         try:
             os.killpg(process.pid, signal.SIGTERM)
         except ProcessLookupError:
             return
-        try:
-            process.wait(timeout=2.0)
-            return
-        except subprocess.TimeoutExpired:
-            pass
+        if process.poll() is None:
+            try:
+                process.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                pass
+        deadline = time.monotonic() + 0.25
+        while time.monotonic() < deadline:
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                return
+            time.sleep(0.01)
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             return
-        try:
-            process.wait(timeout=2.0)
-        except subprocess.TimeoutExpired:
-            pass
+        if process.poll() is None:
+            try:
+                process.wait(timeout=2.0)
+            except subprocess.TimeoutExpired:
+                pass
 
-    with stdout_path.open("w") as stdout_file, stderr_path.open("w") as stderr_file:
-        with telemetry_path.open("w") as telemetry_file, phase_path.open("ab"):
+    setup = ExitStack()
+    try:
+        phase_path.parent.mkdir(parents=True, exist_ok=True)
+        stdout_file = setup.enter_context(stdout_path.open("w"))
+        stderr_file = setup.enter_context(stderr_path.open("w"))
+        telemetry_file = setup.enter_context(telemetry_path.open("w"))
+        phase_file = setup.enter_context(phase_path.open("a+b"))
+    except Exception as error:
+        setup.close()
+        profiler_error = f"{type(error).__name__}: {error}"
+    else:
+        with setup:
+            def append_profiler_phase(event: str) -> None:
+                phase_file.flush()
+                phase_file.seek(0, os.SEEK_END)
+                if phase_file.tell() > 0:
+                    phase_file.seek(-1, os.SEEK_END)
+                    if phase_file.read(1) != b"\n":
+                        phase_file.seek(0, os.SEEK_END)
+                        phase_file.write(b"\n")
+                phase_file.seek(0, os.SEEK_END)
+                payload = {
+                    "event": event,
+                    "monotonic_ns": time.monotonic_ns(),
+                    "step": 0,
+                }
+                phase_file.write(
+                    (json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode()
+                )
+                phase_file.flush()
+
             process: subprocess.Popen[bytes] | None = None
             try:
+                append_profiler_phase("profiler_start")
                 child_env = os.environ.copy()
                 child_env["VIP9000_PHASE_FILE"] = str(phase_path.resolve())
                 try:
@@ -259,8 +302,7 @@ def main(argv: list[str] | None = None) -> int:
                 profiler_error = f"{type(error).__name__}: {error}"
             finally:
                 if process is not None:
-                    if process.poll() is None:
-                        terminate_process_group(process)
+                    terminate_process_group(process)
                     if child_return_code is None:
                         try:
                             child_return_code = process.wait(timeout=2.0)
@@ -270,6 +312,11 @@ def main(argv: list[str] | None = None) -> int:
                                 child_return_code = process.wait(timeout=2.0)
                             except subprocess.TimeoutExpired:
                                 child_return_code = process.returncode
+                try:
+                    append_profiler_phase("profiler_complete")
+                except Exception as error:
+                    if profiler_error is None:
+                        profiler_error = f"{type(error).__name__}: {error}"
 
     if child_return_code is not None:
         exit_code = 128 - child_return_code if child_return_code < 0 else child_return_code
