@@ -1,0 +1,23 @@
+[Unit]
+Description=Set A733 CPU PWM-fan thermal trips to 30C
+After=systemd-modules-load.service
+Before=multi-user.target
+ConditionPathIsDirectory=/sys/class/thermal
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/local/sbin/set_a733_fan_trip.sh --wait-ready
+ExecStart=/usr/local/sbin/set_a733_fan_trip.sh
+User=root
+Group=root
+RemainAfterExit=yes
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/sys/class/thermal
+PrivateTmp=yes
+TimeoutStartSec=8s
+UnsetEnvironment=A733_FAN_TRIP_TEST_SYSFS_ROOT A733_FAN_TRIP_TEST_FAIL_WRITE_INDEX A733_FAN_TRIP_TEST_READBACK_ERROR_INDEX A733_FAN_TRIP_TEST_FAIL_READBACK_INDEX A733_FAN_TRIP_TEST_FAIL_ROLLBACK_INDEX
+
+[Install]
+WantedBy=multi-user.target

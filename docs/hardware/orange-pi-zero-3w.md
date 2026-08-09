@@ -38,6 +38,38 @@ What board identity, compute state, and VIPLite entry points are actually availa
 - **Unknown/contradictory —** no correctness, throughput, thermal-duration, or memory-pressure result is established for the existing runner/model pair.
 - **Unknown/contradictory —** the relationship between `libNBGlinker.so` profiling exports and the standard profiler’s telemetry is not yet measured.
 
+## Approved PWM-fan policy
+
+**Verified on target —** `cpub_thermal_zone` and `cpul_thermal_zone` each
+exposed a passive trip bound to the `pwm-fan` cooling device. The operator
+approved `30000` millidegrees Celsius as the fan activation point while
+retaining the kernel thermal governor, the existing fan curve, the 90 °C
+CPU-frequency cooling trip, and the 110 °C critical trip.
+
+The persistent installation uses
+`tooling/set_a733_fan_trip.sh` and
+`tooling/systemd/a733-fan-trip-30c.service`. At boot the root-owned oneshot
+discovers zones by `type`, validates both fan bindings, completes all
+writeability and numeric-original-value preflight, then writes and verifies
+the two fan-bound passive trips. Preflight refuses partial configuration;
+rollback after a write or readback failure is best-effort and emits a warning
+if any original value cannot be restored.
+
+The service and helper are persistent filesystem state. The trip values in
+`/sys/class/thermal` are runtime state and must be checked after each boot;
+the service reapplies them. This policy makes the fan start earlier; it does
+not prove a hardware-safe temperature, replace kernel protection, or alter
+CPU-frequency, GPU, NPU, or critical-trip settings.
+
+**Verified on target —** on 2026-08-09 the reviewed helper and unit were
+installed with root ownership, passed target `systemd-analyze verify`, and the
+unit was enabled and started. Binding-aware verification found both fan trips
+at 30 °C; three one-second samples reported cooling state 4/4 and PWM 255 while
+CPU-zone temperatures were 45.2–47.6 °C. CPU-frequency and critical trips
+remained 90 °C and 110 °C, and GPU/NPU trips were unchanged. A cold reboot was
+not performed, so post-boot reapplication remains an explicit follow-up. See
+[the sanitized installation evidence](../evidence/a733-fan-policy-2026-08-09.md).
+
 ## Next experiment
 
 **Hypothesis —** run the existing persistent runner under the repository profiler with a pinned CPU reference, fixed warm-up/repetition counts, and a deterministic quality check. Record initialization, warm invocation, synchronization, RSS, NPU frequency, and thermal samples separately; do not interpret the run as a performance result until quality data is present.

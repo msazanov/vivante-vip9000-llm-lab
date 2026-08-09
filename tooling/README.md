@@ -1,9 +1,12 @@
 # Profiling and inventory tooling
 
-The tools in this directory are small, read-only-or-append-only entrypoints
-around the profiling contract. Vendor SDKs, proprietary compiler files,
-credentials, model weights, NBG files, and runtime binaries remain external;
-these scripts record paths, versions, hashes, and sanitized observations only.
+The tools in this directory are small entrypoints around the profiling and
+board-policy contracts. Profiling and inventory tools are read-only or
+append-only. The explicitly documented A733 fan-policy helper is the sole
+privileged exception and changes only its validated runtime thermal trips.
+Vendor SDKs, proprietary compiler files, credentials, model weights, NBG
+files, and runtime binaries remain external; the profiling tools record only
+paths, versions, hashes, and sanitized observations.
 
 ## Profile one command
 
@@ -100,6 +103,51 @@ is temporary until Docker exits successfully. It records package/version
 markers, SDK archive hash, a hash and sanitized marker for the license target,
 prebuilt SDK version, library names, relevant headers, and selected strings.
 The archive and extracted proprietary SDK remain external.
+
+## Persist the approved A733 PWM-fan trip
+
+The reviewed A733 fan policy sets only the passive trip that is explicitly
+bound to a `pwm-fan` cooling device in each of the `cpub_thermal_zone` and
+`cpul_thermal_zone` zones. The helper completes type, binding, trip-count,
+writeability, and numeric-original-value preflight before writing either
+value, writes exactly `30000` millidegrees Celsius, and verifies readback. A
+preflight failure therefore prevents partial writes. A write or readback
+failure attempts to restore every captured original value; rollback is
+best-effort and an incomplete rollback is reported as a warning.
+
+Install the helper and unit as root, then enable the oneshot for future boots:
+
+```bash
+sudo install -o root -g root -m 0755 tooling/set_a733_fan_trip.sh \
+  /usr/local/sbin/set_a733_fan_trip.sh
+sudo install -o root -g root -m 0644 tooling/systemd/a733-fan-trip-30c.service \
+  /etc/systemd/system/a733-fan-trip-30c.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now a733-fan-trip-30c.service
+```
+
+Before applying the policy, the unit runs a binding-aware readiness check up
+to five times with a one-second delay between failed checks. The complete
+oneshot has an eight-second start timeout. This covers boot-time module/sysfs
+readiness without creating an unbounded retry loop; a later apply failure is
+reported as a failed unit and is not retried indefinitely.
+
+Verify the persistent unit and both live values with the helper's binding-aware
+read-only mode. It repeats zone and cooling-device discovery, but never opens a
+trip temperature for writing:
+
+```bash
+systemctl is-enabled a733-fan-trip-30c.service
+systemctl is-active a733-fan-trip-30c.service
+sudo /usr/local/sbin/set_a733_fan_trip.sh --verify
+```
+
+The unit and installed helper are persistent files; the thermal trip values
+are runtime sysfs state and are reapplied by the unit after boot. The helper
+does not change governors, PWM values, fan mode, CPU-frequency trips, GPU or
+NPU trips, or critical trips. Thirty degrees is an operator-approved fan
+activation point, not a hardware safety claim and not a replacement for the
+benchmark abort ceiling or kernel protection.
 
 ## How model-card rows are generated
 
