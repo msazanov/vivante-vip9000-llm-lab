@@ -4,29 +4,17 @@
 
 - Upstream source: [prism-ml/Bonsai-27B-gguf](https://huggingface.co/prism-ml/Bonsai-27B-gguf)
 - Model ID: `prism-ml/Bonsai-27B-gguf`
-- Current benchmark local filename: unresolved until the model is acquired and
-  inventoried under this protocol
-- Current benchmark format/quantization: unresolved until the local file is
-  inventoried
-- Current benchmark group size: unresolved until the local file is inventoried
-- Current benchmark file size in bytes: unresolved until the local file is
-  inventoried
-- Current benchmark SHA-256: unresolved until the local file is locally hashed
+- Current benchmark local filename: `Bonsai-27B-Q1_0.gguf`
+- Current benchmark format/quantization: GGML `Q1_0`, type `41`; this is not
+  packed `TQ1_0`
+- Current benchmark group/block size: `128`
+- Current benchmark file size in bytes: `3,803,452,480`
+- Current benchmark SHA-256:
+  `17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0`
 
-The current benchmark identity fields are deliberately unresolved. No
-benchmark row is valid for promotion until the exact local file and its
-SHA-256 are recorded.
-
-### Prior local observation (candidate baseline)
-
-- Evidence class: prior local observation; not verified under the new protocol
-- Artifact: `/home/random/.local/share/orange-rag/models/Bonsai-27B-Q1_0.gguf`
-- Size: `3,803,452,480` bytes
-- SHA-256: `17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0`
-- Candidate label: `Bonsai-27B-Q1_0.gguf` baseline
-
-This locally hashed artifact may seed a future pinned CPU reference, but it is
-not a benchmark result and has not been run under the profiling contract.
+The source and target copies were independently hashed and matched. This pins
+the artifact identity only; a benchmark row is not valid until the model has
+completed the profiling and quality contract.
 
 ## Reference and quality policy
 

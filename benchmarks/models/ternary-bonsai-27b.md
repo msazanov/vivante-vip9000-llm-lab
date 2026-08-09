@@ -4,14 +4,17 @@
 
 - Upstream source: [prism-ml/Ternary-Bonsai-27B-gguf](https://huggingface.co/prism-ml/Ternary-Bonsai-27B-gguf)
 - Model ID: `prism-ml/Ternary-Bonsai-27B-gguf`
-- Local filename: unresolved until the model is acquired and inventoried
-- Format/quantization: unresolved until the local file is inventoried
-- Group size: unresolved until the local file is inventoried
-- File size in bytes: unresolved until the local file is inventoried
-- SHA-256: unresolved until the local file is locally hashed
+- Current benchmark local filename: `Ternary-Bonsai-27B-Q2_0.gguf`
+- Current benchmark format/quantization: standard GGML `Q2_0`, type `42`; this
+  is not packed `TQ2_0`
+- Current benchmark group/block size: `128`
+- Current benchmark file size in bytes: `7,165,121,600`
+- Current benchmark SHA-256:
+  `868c11714cf8fe47f5ec9eeb2be0ab1a337112886f92ee0ede6b855c4fa31757`
 
-The unresolved identity fields are deliberate. No benchmark row is valid for
-promotion until the exact local file and its SHA-256 are recorded.
+The local artifact was independently hashed twice. It has not yet been copied
+to the target or run under the profiling contract, so no benchmark row is
+promoted from this identity record alone.
 
 ## Reference and quality policy
 
@@ -32,4 +35,3 @@ ledger. Do not invent rows or results here.
 |---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|
 <!-- MODEL_RESULTS_START -->
 <!-- MODEL_RESULTS_END -->
-

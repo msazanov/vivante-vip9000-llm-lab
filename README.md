@@ -44,6 +44,9 @@ benchmarks/README.md                                  Benchmark and quality cont
 benchmarks/models/                                   Per-model append-only test tables
 docs/architecture/backend-plan.md                     Backend design and phased implementation
 docs/evidence/orange-rag-prior-tests.md               Sanitized prior local evidence boundary
+docs/evidence/a733-fan-policy-2026-08-09.md            Installed 30 °C fan policy evidence
+docs/evidence/a733-extra-cooler-thermal-baseline-2026-08-09.md Clean sustained CPU thermal baseline
+docs/evidence/prism-cpu-reference-build-2026-08-09.md Pinned native runtime and first model execution
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
 docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
 docs/legal/licensing.md                               Licensing and redistribution matrix

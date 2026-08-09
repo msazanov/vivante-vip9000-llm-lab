@@ -54,8 +54,31 @@ median, p10, p90, min, max, and CV. Sample RSS/HWM, threads, CPU ticks/load,
 system memory, CPU/NPU frequencies, thermals, copies/bytes, and power when the
 target exposes them.
 
+When a CPU partition leaves at least one core outside the measured workload,
+pin both the profiler and thermal guard to an excluded core and record that
+collector affinity. For the A76-only reference, collectors use CPU0 while the
+model uses CPUs 6–7. For the A55-only reference, collectors use CPU7 while the
+model uses CPUs 0–5. An all-eight-core test has no isolated collector core; its
+profiling overhead must therefore be measured and reported rather than silently
+compared with a partitioned run.
+
 Decode and prefill are separate workloads. A result may report both, but it
 must never combine them into one unlabeled throughput number.
+
+### Pinned Prism runtime command notes
+
+In Prism build 9594 (`38c66ad`), `llama-bench -pg PP,TG` is additive: unless
+explicitly overridden, the tool also runs its default `-p 512` and `-n 128`
+instances. Use `-p 512 -n 128` for two separate `pp512` and `tg128` rows. Use
+`-p 0 -n 0 -pg 512,128` only when an explicitly combined prefill-plus-decode
+workload is intended. Do not interpret that combined row as either standalone
+prefill or steady-state decode throughput.
+
+Use `llama-completion`, not `llama-cli`, for deterministic non-interactive
+generation in this pinned revision. A target run confirmed that `llama-cli`
+rejects `--no-conversation`; with `--simple-io` and EOF it can enter a fast
+prompt-output loop. `llama-bench` does not implement a successful `--version`
+option in this revision, so retain its binary hash and build-tree provenance.
 
 ## CPU reference and quality policy
 

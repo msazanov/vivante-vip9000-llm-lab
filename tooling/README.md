@@ -39,6 +39,57 @@ copy/flush, synchronization, or teardown boundaries. The benchmark harness
 must record those phase timings and copy/byte counters when the runtime exposes
 them, alongside the profiler artifacts.
 
+## Summarize one target run
+
+Read an immutable run bundle and emit a deterministic JSON summary. The bundle
+must contain `metadata.json`, `telemetry.jsonl`, and `thermal-guard.jsonl`:
+
+```bash
+python3 tooling/summarize_target_run.py benchmarks/results/<run_id>
+python3 tooling/summarize_target_run.py benchmarks/results/<run_id> \
+  --output /tmp/<run_id>-summary.json
+```
+
+The summary includes run status and elapsed time, sample counts, separate
+profiler-child and guarded-workload peak RSS/HWM/thread counts, thermal
+statistics by type, CPU-policy current/max frequency and governors,
+cooling-state statistics by type, minimum available memory, and swap-use
+delta/peak when the raw fields provide enough data. If telemetry exposes only
+`SwapFree`, the tool still derives the used-space delta but does not invent an
+absolute used-space peak. JSONL is consumed as a stream so long benchmark
+traces are not retained as decoded rows in memory. Inputs are validated
+fail-closed and never modified; `--output` refuses to overwrite an existing
+file.
+
+## Fail closed on unsafe target state
+
+Wrap every sustained target workload with the thermal execution guard inside
+the profiler. The guard inventories and pins every readable thermal zone, CPU
+frequency policy, and cooling device, samples them at 100 ms, and terminates
+the command's process group at the 85 °C ceiling or when required sysfs state
+disappears or changes identity:
+
+```bash
+python3 tooling/profile_command.py \
+  --output-dir benchmarks/results/<run_id> \
+  --run-id <run_id> \
+  --interval-ms 100 \
+  --label <experiment-label> \
+  -- python3 tooling/thermal_exec_guard.py \
+       --limit-mc 85000 \
+       --interval-ms 100 \
+       --trace benchmarks/results/<run_id>/thermal-guard.jsonl \
+       -- <command> <arg>...
+```
+
+The guard is standard-library-only and leaves child stdout/stderr attached to
+the profiler. Exit `86` means a runtime safety abort and exit `87` means
+preflight or launch failure. Signals are returned as `128 + signal`. The
+direct child and its descendants run in a separate process group so cleanup
+also covers a descendant that ignores `SIGTERM`. The guard samples direct-child
+RSS/HWM, threads, CPU ticks, context switches, and I/O, but external driver or
+kernel work remains board-wide evidence rather than process accounting.
+
 ## Record one model result
 
 After the profiled command and quality comparison produce a validated result
