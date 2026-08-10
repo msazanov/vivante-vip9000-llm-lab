@@ -45,7 +45,7 @@ evidence; Markdown только встраивает проверенный ар
 
 ---
 
-### Задача 1: Строгий сбор и классификация CPU/NPU evidence
+### Task 1 — Строгий сбор и классификация CPU/NPU evidence
 
 **Файлы:**
 
@@ -258,7 +258,7 @@ git commit -m "feat: validate benchmark evidence for charts"
 
 ---
 
-### Задача 2: Детерминированный наглядный SVG и безопасный CLI
+### Task 2 — Детерминированный наглядный SVG и безопасный CLI
 
 **Файлы:**
 
@@ -405,7 +405,7 @@ git commit -m "feat: render deterministic benchmark overview"
 
 ---
 
-### Задача 3: Русская документация и безопасное встраивание в model card
+### Task 3 — Русская документация и безопасное встраивание в model card
 
 **Файлы:**
 
@@ -487,7 +487,7 @@ git commit -m "docs: publish Russian benchmark chart workflow"
 
 ---
 
-### Задача 4: Наглядная QA-проверка, регрессия профайлера и публикация
+### Task 4 — Наглядная QA-проверка, регрессия профайлера и публикация
 
 **Файлы:**
 
