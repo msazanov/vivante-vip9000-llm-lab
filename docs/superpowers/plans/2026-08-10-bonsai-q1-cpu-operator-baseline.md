@@ -40,7 +40,7 @@
 | `experiments/E004-q1-cpu-operator-baseline/q1_cpu_operator_runner.cpp` | Построить реальный Prism `GGML_OP_MUL_MAT`, потребовать CPU_REPACK и записать samples JSONL. |
 | `experiments/E004-q1-cpu-operator-baseline/CMakeLists.txt` | Собрать runner против точного Prism source/build tree. |
 | `experiments/E004-q1-cpu-operator-baseline/README.md` | Описать цель, термины, сборку и hardware matrix по-русски. |
-| `tests/test_q1_cpu_operator_runner_source.py` | Проверить CLI, fail-closed guards, phase events и обязательные counters в source. |
+| `tests/test_q1_cpu_operator_runner.py` | Собрать/запустить self-test runner и проверить реальный JSON/output contract. |
 | `tooling/summarize_q1_cpu_operator.py` | Проверить raw JSONL, посчитать статистики/correctness и выпустить operator summary. |
 | `tests/test_summarize_q1_cpu_operator.py` | Проверить happy path и все qualification failures. |
 | `benchmarks/schema/q1-cpu-operator.example.json` | Зафиксировать общий CPU/NPU-compatible operator result contract. |
@@ -495,36 +495,38 @@ git commit -m "feat: validate Q1 operator evidence"
 
 - Create: `experiments/E004-q1-cpu-operator-baseline/q1_cpu_operator_runner.cpp`
 - Create: `experiments/E004-q1-cpu-operator-baseline/CMakeLists.txt`
-- Create: `tests/test_q1_cpu_operator_runner_source.py`
+- Create: `tests/test_q1_cpu_operator_runner.py`
 
-- [ ] **Step 1: Write source-contract tests before C++**
+- [ ] **Step 1: Write a failing executable-contract test before C++**
 
-Assert that the source contains and checks these interfaces/tokens:
+The test creates a literal `K=128`, `M=16` Q1 payload and F32 activation, then launches the executable named by `Q1_CPU_OPERATOR_RUNNER`. Without that environment variable the ordinary repository suite skips this hardware/runtime integration test with an explicit reason; during this task the variable is mandatory.
 
-```text
-ggml_backend_dev_get_extra_bufts
-CPU_REPACK
-ggml_backend_alloc_ctx_tensors_from_buft
-ggml_backend_supports_op
-ggml_backend_cpu_set_n_threads
-GGML_TYPE_Q1_0
-GGML_TYPE_F32
-ggml_mul_mat
-CLOCK_MONOTONIC_RAW
-VIP9000_PHASE_FILE
-expanded_weight_ddr_bytes
-cpu_fallback_count
+```python
+completed = subprocess.run(
+    [runner, "--self-test", "--fixture-dir", str(fixture),
+     "--iterations", "2", "--output-dir", str(output)],
+    text=True,
+    capture_output=True,
+)
+self.assertEqual(completed.returncode, 0, completed.stderr)
+records = [json.loads(line) for line in (output / "runner.jsonl").read_text().splitlines()]
+self.assertEqual([row["record"] for row in records],
+                 ["identity", "memory", "sample", "sample", "sample", "result"])
+self.assertEqual(records[0]["weight_buffer_type"], "CPU_REPACK")
+self.assertEqual(records[1]["expanded_weight_ddr_bytes"], 0)
+self.assertEqual(records[1]["cpu_fallback_count"], 0)
 ```
 
-Also assert that no `GGML_TYPE_I8`, `GGML_TYPE_F16` weight tensor or fallback-to-default-buffer branch exists.
+Read `output.f32.bin` and compare its 16 values with hand-derived expected results for the literal fixture. This is a behavior test; it must not grep C++ source text.
 
-- [ ] **Step 2: Run the red source test**
+- [ ] **Step 2: Run the red executable test**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_cpu_operator_runner_source -v
+Q1_CPU_OPERATOR_RUNNER=/tmp/q1-cpu-operator-build/q1_cpu_operator_runner \
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_cpu_operator_runner -v
 ```
 
-Expected: runner source missing.
+Expected: failure because the executable does not exist.
 
 - [ ] **Step 3: Implement strict CLI and tensor allocation**
 
@@ -562,14 +564,14 @@ Measure each resident graph compute with `CLOCK_MONOTONIC_RAW`. Write phase even
 
 - [ ] **Step 5: Add exact build integration**
 
-`CMakeLists.txt` must require:
+`CMakeLists.txt` must require `PRISM_SOURCE` and support two explicit modes:
 
 ```text
--DPRISM_SOURCE=/absolute/path/to/llama-prismml
+-DBUILD_PINNED_PRISM_FROM_SOURCE=ON
 -DPRISM_BUILD=/absolute/path/to/native/build
 ```
 
-It checks the source Git SHA at configure time, includes Prism public and internal ggml headers, and links the exact built `ggml`, `ggml-base`, and `ggml-cpu` targets/libraries. Refuse a different commit unless the caller supplies `-DALLOW_UNPINNED_PRISM=ON`; an unpinned build must be marked unqualified in runner identity.
+Host compile checks use `BUILD_PINNED_PRISM_FROM_SOURCE=ON` and `add_subdirectory(${PRISM_SOURCE}/ggml ...)`. A733 TDD/qualification uses the already accepted native `PRISM_BUILD` libraries. Both modes check the source Git SHA at configure time, include Prism public/internal ggml headers, and link `ggml`, `ggml-base`, and `ggml-cpu`. Refuse a different commit unless the caller supplies `-DALLOW_UNPINNED_PRISM=ON`; an unpinned build must be marked unqualified in runner identity.
 
 - [ ] **Step 6: Compile and smoke-test outside the timed hardware run**
 
@@ -577,18 +579,26 @@ It checks the source Git SHA at configure time, includes Prism public and intern
 cmake -S experiments/E004-q1-cpu-operator-baseline \
   -B /tmp/q1-cpu-operator-build \
   -DPRISM_SOURCE=/home/random/src/llama-prismml \
-  -DPRISM_BUILD=/home/random/src/llama-prismml/build
+  -DBUILD_PINNED_PRISM_FROM_SOURCE=ON
 cmake --build /tmp/q1-cpu-operator-build --parallel 2
 /tmp/q1-cpu-operator-build/q1_cpu_operator_runner --help
 ```
 
-Expected: configure names commit `38c66ad`; build succeeds; help lists every required option. On a non-AArch64 host, compilation may pass but the performance result is not qualified.
+Then build natively on the A733 against its accepted Prism build and run the behavior test there:
+
+```bash
+Q1_CPU_OPERATOR_RUNNER=/tmp/q1-cpu-operator-build/q1_cpu_operator_runner \
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_cpu_operator_runner -v
+```
+
+Expected: both configure steps name commit `38c66ad`; host compile succeeds; A733 self-test proves `CPU_REPACK`, numeric output and records. The x86 host is not expected to expose the Arm Q1 CPU_REPACK kernel and never produces a qualified performance result.
 
 - [ ] **Step 7: Run source tests and commit Task 6**
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_cpu_operator_runner_source -v
-git add experiments/E004-q1-cpu-operator-baseline/q1_cpu_operator_runner.cpp experiments/E004-q1-cpu-operator-baseline/CMakeLists.txt tests/test_q1_cpu_operator_runner_source.py
+Q1_CPU_OPERATOR_RUNNER=/tmp/q1-cpu-operator-build/q1_cpu_operator_runner \
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_cpu_operator_runner -v
+git add experiments/E004-q1-cpu-operator-baseline/q1_cpu_operator_runner.cpp experiments/E004-q1-cpu-operator-baseline/CMakeLists.txt tests/test_q1_cpu_operator_runner.py
 git commit -m "feat: benchmark Prism Q1 CPU operators"
 ```
 
@@ -601,16 +611,18 @@ git commit -m "feat: benchmark Prism Q1 CPU operators"
 - Create: `experiments/E004-q1-cpu-operator-baseline/README.md`
 - Modify: `tooling/README.md`
 
-- [ ] **Step 1: Write failing shell-contract tests**
+- [ ] **Step 1: Write failing wrapper behavior tests**
 
-The test must prove the wrapper:
+Run the wrapper against temporary fake guard/profiler/taskset/runner/summarizer executables passed through test-only environment variables. Assert observable exit codes, the captured argv sequence and created result artifacts. The tests must prove the wrapper:
 
 - uses `set -eu`;
 - accepts explicit `--cores` and `--threads`;
 - validates only `0-5/6` or `6-7/2` for qualified runs;
-- invokes `thermal_exec_guard.py`, `profile_command.py`, `taskset`, runner, and summarizer;
-- never contains `orangepi`, `sudo -S`, a password, model bytes, or a network destination;
+- invokes guard, profiler, taskset, runner, golden and summarizer in the required order;
+- passes no credential, model payload or network destination to any child;
 - refuses an existing result directory.
+
+Do not assert that a shell source line exists. Test the script as an executable with controlled child processes.
 
 - [ ] **Step 2: Run the red test**
 
