@@ -1,0 +1,94 @@
+{
+  "schema_version": "a733-ddr-pll-runtime-attempt/v1",
+  "run_id": "a733-ddr-pll-600-runtime-attempt-001",
+  "date": "2026-08-10",
+  "intent": "Однократно выставить ожидаемые 600 МГц DDR через live PLL write и наблюдать результат до следующей перезагрузки",
+  "status": "failed_unconfirmed_watchdog_reboot",
+  "target": {
+    "host": "orangepizero3w",
+    "soc": "Allwinner A733",
+    "kernel": "6.6.98-sun60iw2"
+  },
+  "register_plan": {
+    "pll_ddr_ctrl_address": "0x02002020",
+    "dram_clk_reg_address": "0x02002c00",
+    "verified_original_full_word": "0xf9005400",
+    "requested_target_full_word": "0xf9006300",
+    "verified_divider_word": "0x80000003",
+    "expected_pll_ddr_hz": 2400000000,
+    "expected_dram0_hz": 600000000,
+    "expectation_provenance": "inferred_from_current_raw field, 24 MHz parent formula and /4 divider; target rate was never read back"
+  },
+  "one_shot_runner": {
+    "target_path": "/tmp/a733_set_raw63_once.py",
+    "sha256": "360e2fbcf4bec7d85abd265439819a4fdfdb46df144268ecd4ff64d548453aae",
+    "watchdog_device": "/dev/watchdog",
+    "watchdog_options": "0x8180",
+    "watchdog_timeout_s": 16,
+    "temperature_abort_mC": 85000,
+    "planned_candidate_observation_s": 5
+  },
+  "captured_before_disconnect": {
+    "stdout_events": [
+      "watchdog_armed"
+    ],
+    "last_event_fields": {
+      "options": "0x8180",
+      "timeout_s": 16
+    },
+    "not_captured": [
+      "preflight",
+      "target_write_start",
+      "target_write_end",
+      "candidate_sample",
+      "left_active",
+      "restore_end",
+      "watchdog_closed"
+    ],
+    "transport_observation": "SSH stopped responding after watchdog_armed; no target register readback reached the controller host"
+  },
+  "candidate_result": {
+    "write_execution_proven": false,
+    "target_readback": null,
+    "pll_lock_readback": null,
+    "dram0_hz_readback": null,
+    "stable_residency_s": null,
+    "classification": "unconfirmed_failed_attempt",
+    "reason": "The board became unreachable before any post-arm evidence was captured. Program order and lost transport do not prove whether the MMIO write instruction executed."
+  },
+  "recovery": {
+    "reboot_observed": true,
+    "reset_mechanism": "consistent_with_armed_sunxi_wdt_timeout; exact reset-cause register was not captured",
+    "initial_reconnect_uptime_s": 36.53,
+    "later_boot_id": "821374c8-33c2-4ac4-a6e0-094163e14f91",
+    "later_uptime_s": 417.97,
+    "postboot_registers": {
+      "pll_ddr_ctrl": "0xf9005400",
+      "dram_clk_reg": "0x80000003",
+      "pll_ddr_hz": 2040000000,
+      "dram0_hz": 510000000,
+      "provenance": "fresh root read-only register inspect plus clk_summary after reboot"
+    }
+  },
+  "postboot_integrity": {
+    "root_filesystem": "/dev/mmcblk1p1 ext4 rw,noatime,errors=remount-ro,commit=600",
+    "fan_service": "active",
+    "journal_observation": "system.journal corrupted or uncleanly shut down, renaming and replacing",
+    "filesystem_error_attribution": "The journal line proves an unclean reset, not GGUF corruption. No offline fsck was run on the mounted root filesystem.",
+    "model": {
+      "path": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+      "expected_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "observed_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "passed": true
+    }
+  },
+  "measurements": {
+    "temperature_trace": null,
+    "mbw": null,
+    "memtester": null,
+    "bonsai_decode_tps": null,
+    "quality_gate": null,
+    "reason": "The attempt failed before a verified candidate state, so workloads were deliberately not reported as 600 MHz results."
+  },
+  "conclusion": "600 MHz was not established. The only verified post-attempt operating point is the reboot-restored 510 MHz state. Do not use this run in speedup charts as a 600 MHz datapoint."
+}
