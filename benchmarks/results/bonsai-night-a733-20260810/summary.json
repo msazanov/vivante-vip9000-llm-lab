@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "series": "Bonsai-27B Q1_0 / A733 heterogeneous night",
+  "model_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+  "runtime_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+  "reference_run_id": "bonsai27b-q1-cpu-a55-pp512-tg128-001",
+  "quality_evidence": {
+    "method": "deterministic greedy 32-token exact stdout comparison",
+    "reference_run_id": "golden-a55-6-greedy32-003",
+    "candidate_run_id": "golden-all8-greedy32-001",
+    "reference_sha256": "a9d86b7d298be35cf27a156be87f9aeedbae3602b877e74ced0fdc75b41c4a5f",
+    "candidate_sha256": "a9d86b7d298be35cf27a156be87f9aeedbae3602b877e74ced0fdc75b41c4a5f",
+    "exact_match": true
+  },
+  "rows": [
+    {
+      "run_id": "bonsai27b-q1-cpu-a55-pp512-tg128-001",
+      "label": "A55×6 · tg128 r5 · эталон",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.726325, 0.726362, 0.725669, 0.725747, 0.726175],
+      "median": 0.726175,
+      "quality": {"exact_match": true},
+      "reference": true
+    },
+    {
+      "run_id": "cpu-all8-p50-tg128-r5-001",
+      "label": "A55×6 + A76×2 · tg128 r5",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.857795, 0.860580, 0.856949, 0.860712, 0.865216],
+      "median": 0.860580,
+      "quality": {"exact_match": true}
+    },
+    {
+      "run_id": "cpu-a55-4-p50-tg32-r3-001",
+      "label": "A55×4 · tg32",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.510137, 0.510197, 0.510179],
+      "median": 0.510179,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-a55-6-p50-tg32-r3-001",
+      "label": "A55×6 · tg32",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.722014, 0.722008, 0.722256],
+      "median": 0.722014,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-mix-7-p50-tg32-r3-001",
+      "label": "A55×6 + A76×1 · tg32",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.823141, 0.820784, 0.816766],
+      "median": 0.820784,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all-8-p50-tg32-r3-001",
+      "label": "A55×6 + A76×2 · tg32",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.866365, 0.871746, 0.867775],
+      "median": 0.867775,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all8-poll-screen-tg16-r3-001--case-001",
+      "label": "all-core · poll 0 · tg16",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.840217, 0.903302, 0.826571],
+      "median": 0.840217,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all8-poll-screen-tg16-r3-001--case-002",
+      "label": "all-core · poll 1 · tg16",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.834869, 0.900960, 0.832332],
+      "median": 0.834869,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all8-poll-screen-tg16-r3-001--case-003",
+      "label": "all-core · poll 25 · tg16",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.885945, 0.837920, 0.897094],
+      "median": 0.885945,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all8-poll-screen-tg16-r3-001--case-004",
+      "label": "all-core · poll 50 · tg16",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.897988, 0.824411, 0.890474],
+      "median": 0.890474,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-all8-poll-screen-tg16-r3-001--case-005",
+      "label": "all-core · poll 100 · tg16",
+      "backend": "cpu",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.878410, 0.829134, 0.871066],
+      "median": 0.871066,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "vulkan-build-ngl0-tg32-r3-001",
+      "label": "Vulkan build · GPU off · tg32",
+      "backend": "cpu-control",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.865955, 0.870702, 0.879984],
+      "median": 0.870702,
+      "quality": {"exact_match": false}
+    },
+    {
+      "run_id": "cpu-fp16-all8-p50-tg32-r3-001",
+      "label": "all-core · +fp16 compiler · tg32",
+      "backend": "cpu-fp16",
+      "metric_scope": "full_model_decode",
+      "unit": "tokens_per_second",
+      "samples": [0.857072, 0.857097, 0.880181],
+      "median": 0.857097,
+      "quality": {"exact_match": false},
+      "rejection_reason": "screen: −1,23% к обычной all-core сборке"
+    },
+    {
+      "run_id": "e004-real-ffn-gate-cpu-all8-r50-001",
+      "label": "CPU_REPACK Q1×Q8 FFN gate",
+      "backend": "cpu-operator",
+      "metric_scope": "operator",
+      "unit": "milliseconds",
+      "samples": [3.8503125],
+      "median": 3.8503125,
+      "quality": {"exact_match": false},
+      "rejection_reason": "3,850 ms; operator Q1×Q8, не полный decode"
+    },
+    {
+      "run_id": "e007-real-ffn-gate-l64-r50-startend-001",
+      "label": "PowerVR OpenCL Q1×F32 FFN gate",
+      "backend": "powervr-opencl",
+      "metric_scope": "operator",
+      "unit": "milliseconds",
+      "samples": [176.4982365],
+      "median": 176.4982365,
+      "quality": {"exact_match": true},
+      "rejection_reason": "176,498 ms; golden PASS, 45,8× медленнее CPU"
+    },
+    {
+      "run_id": "e008-a733-q1-4x8-ab-r50",
+      "label": "A733 custom Q1×Q8 packed 4x8",
+      "backend": "cpu-custom-operator",
+      "metric_scope": "operator",
+      "unit": "milliseconds",
+      "samples": [4.2379165, 4.1576040, 7.2525625, 3.9874790],
+      "median": 4.19776025,
+      "quality": {"exact_match": true},
+      "rejection_reason": "golden PASS; 12,62% медленнее control 4x4"
+    },
+    {
+      "run_id": "e009-a733-q1-prefetch4-ab-r50",
+      "label": "A733 custom Q1×Q8 prefetch +288 B",
+      "backend": "cpu-custom-operator",
+      "metric_scope": "operator",
+      "unit": "milliseconds",
+      "samples": [3.8622085, 7.2478125, 4.1600625, 4.0041045],
+      "median": 4.0820835,
+      "quality": {"exact_match": true},
+      "rejection_reason": "golden PASS; latency на 19,00% хуже control"
+    },
+    {
+      "run_id": "vulkan-ngl99-q1-pipeline-001",
+      "label": "PowerVR Vulkan ngl99",
+      "backend": "powervr-vulkan",
+      "metric_scope": "failed_capability_gate",
+      "unit": "not_available",
+      "quality": {"exact_match": false},
+      "rejection_reason": "Q1 compute pipeline rejected driver; tokens/s отсутствует"
+    },
+    {
+      "run_id": "vip9000-q1-nbg-toolchain-gate",
+      "label": "VIP9000 custom Q1 NBG",
+      "backend": "vip9000",
+      "metric_scope": "blocked_toolchain_gate",
+      "unit": "not_available",
+      "quality": {"exact_match": false},
+      "rejection_reason": "TIM-VX/VSI ABI mismatch; Bonsai NBG не запускался"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+diff --git a/ggml/src/ggml-cpu/arch/arm/repack.cpp b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+index 128607256..bdf35bf1f 100644
+--- a/ggml/src/ggml-cpu/arch/arm/repack.cpp
++++ b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+@@ -1866,4 +1866,7 @@ void ggml_gemv_q1_0_4x4_q8_0(int                        n,
+         float32x4_t acc = vdupq_n_f32(0);
+         for (int l = 0; l < nb; l++) {
++            if (l + 4 < nb) {
++                __builtin_prefetch(b_ptr + l + 4, 0, 3);
++            }
+             const float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+             float32x4_t accb = vdupq_n_f32(0);
