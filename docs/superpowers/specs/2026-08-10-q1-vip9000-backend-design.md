@@ -1,26 +1,28 @@
-# Проект packed-weight backend llama.cpp для A733/VIP9000
+# Проект бинарного Q1 backend llama.cpp для A733/VIP9000
 
 ## Цель
 
-Оптимизировать ветку llama.cpp/ggml для бинарных и тернарных моделей Bonsai-27B
-именно под Orange Pi с Allwinner A733 и Vivante VIP9000, а не построить
-абстрактный NPU-микробенчмарк. Основной критерий — увеличить устойчивую скорость
-decode относительно текущего CPU-результата `0.726175 ток/с` без изменения
+Оптимизировать ветку llama.cpp/ggml для бинарной модели Bonsai-27B Q1_0 именно
+под Orange Pi с Allwinner A733 и Vivante VIP9000, а не построить абстрактный
+NPU-микробенчмарк. Основной критерий — увеличить устойчивую скорость decode
+относительно текущего CPU-результата `0.726175 ток/с` без изменения
 математических значений весов и без потери качества генерации.
 
-Первый физический тип — `Q1_VIP_16x128/v1`: перестановка исходных Q1_0-блоков
-для прямого packed GEMV на 128-битном PPU/EVIS. Следом идут отдельные семейства
-`TQ1_VIP_16x256/v1` и `TQ2_VIP_16x256/v1`: бинарный Q1 и base-3/2-bit ternary
-не смешиваются в одном kernel. Канонический GGUF и существующие логические
-GGML-типы остаются неизменными. Layout сначала существует как проверяемый
-sidecar и получает интеграцию с `ggml` только после правильного и более
-быстрого выполнения производственных форм матриц на целевой плате.
+Физический тип — `Q1_VIP_16x128/v1`: перестановка исходных Q1_0-блоков для
+прямого packed GEMV на 128-битном PPU/EVIS. Канонический GGUF и логический
+`GGML_TYPE_Q1_0` остаются неизменными. Layout сначала существует как
+проверяемый sidecar и получает интеграцию с `ggml` только после правильного и
+более быстрого выполнения производственных форм матриц на целевой плате.
 
 Конечный deliverable — backend/device `VIP9000` внутри ggml. Он поддерживает
 существующий `GGML_OP_MUL_MAT`, распознаёт исходный тип весов и передаёт
 вычисление соответствующему packed kernel. Новый логический op не вводится,
 пока стандартный контракт `MUL_MAT` достаточен. В steady-state веса не
 расширяются в INT8/FP16 в DDR и не перепаковываются на каждом токене.
+
+TQ1_0/TQ2_0 и Ternary-Bonsai исключены из активного milestone. Уже проверенные
+факты сохранены в `docs/evidence/ternary-packed-format-audit-2026-08-10.md`, но
+не входят в реализацию, capability checks или performance gates этого проекта.
 
 Параллельный CPU-контроль — `Q1_A733_4x4/v1`, заранее построенный вариант уже
 выбираемого PrismML repack. Он нужен для измерения стоимости загрузочного
@@ -51,6 +53,13 @@ repack, дополнительной памяти и возможного вли
 Первые две формы создают 63.632% всего Q1-потока и являются обязательными
 производственными формами первого performance gate.
 
+Первый model-level offload охватывает FFN `gate/up/down` всех 64 слоёв:
+2,406,481,920 Q1-байт, или те же 63.632%. Затем добавляются recurrent
+`qkv/gate/out` (20.675%), full-attention Q/K/V/O projections (6.238%) и LM head
+(4.728%). `token_embd.weight` не является полным decode GEMV и остаётся CPU
+lookup. Полное обоснование разбиения сохранено в
+`docs/evidence/bonsai-q1-npu-partition-audit-2026-08-10.md`.
+
 ### Точная семантика Q1_0
 
 В закреплённом PrismML runtime Q1_0 имеет group size 128. Один блок содержит:
@@ -69,48 +78,6 @@ ternary и не стандартный `TQ1_0`. Новый layout не меня�
 Для ARM DOTPROD текущий runtime уже выбирает специализированный
 `q1_0_4x4_q8_0` repack. Поэтому новый CPU layout должен сравниваться с этим
 путём, а не с медленным скалярным fallback.
-
-### Точная семантика TQ1_0 и TQ2_0
-
-Закреплённый runtime уже содержит логические типы `GGML_TYPE_TQ1_0=34` и
-`GGML_TYPE_TQ2_0=35`; новый GGUF type для них не нужен. Оба типа используют
-блок 256, где `d` — абсолютный максимум блока. TQ1 представляет только
-`-d`, `0`, `+d`. TQ2 quantizer также создаёт эти три значения, но физический
-2-bit format допускает code 3, который reference dequantizer трактует как
-`+2d`; lossless backend обязан сохранить и корректно обработать его.
-
-`TQ1_0` хранит один блок так. Base-3 code сериализуется не как обычное целое,
-а через `ceil(code * 256 / 243)`; kernel обязан воспроизвести reference decode
-через умножение/сдвиг, а не делить byte как точную base-3 запись:
-
-```text
-qs[48]     48 байт, пять base-3 trit в байте
-qh[4]       4 байта, четыре оставшихся trit в байте
-FP16 d      2 байта
-итого      54 байта на 256 весов = 1.6875 бит/вес
-```
-
-`TQ2_0` хранит четыре 2-битных ternary-кода в каждом байте:
-
-```text
-qs[64]     64 байта
-FP16 d      2 байта
-итого      66 байт на 256 весов = 2.0625 бит/вес
-```
-
-ARM reference выполняет `TQ1_0 × Q8_K` и `TQ2_0 × Q8_K`; подмена активации на
-Q8_0 меняет контракт и не допускается без отдельного исследования. Один
-`block_q8_K` хранит FP32 scale `d`, 256 signed INT8 значений и 16 INT16 block
-sums; TQ dot использует эти sums при восстановлении смещения кодов. Источники
-семантики в закреплённой ветке: `ggml/src/ggml-common.h` (структуры),
-`ggml/src/ggml-quants.c` (quant/dequant) и
-`ggml/src/ggml-cpu/arch/arm/quants.c` (dot kernels).
-
-Точный GGUF-артефакт `prism-ml/Ternary-Bonsai-27B-gguf` ещё не закреплён
-локальным filename, размером, SHA-256 и inventory типов/форм. До этого
-допустимы только synthetic TQ fixtures, построенные по исходной семантике.
-Нельзя переносить Q1 model-level baseline или заявлять ускорение Ternary-Bonsai
-до отдельного dump и baseline точного тернарного файла.
 
 ### Измеренная производительность и узкое место
 
@@ -201,26 +168,24 @@ for m_tile in range(0, ne1, 16):
 выходных строк. Конвертер обязан сохранять little-endian FP16 bytes и точный
 порядок sign-битов.
 
-### Sidecar-контейнер packed weights
+### Sidecar-контейнер Q1 weights
 
 Первый формат не получает глобальный GGUF type ID. Type 41 уже занят PrismML
 Q1_0, а ранняя регистрация нового GGUF-типа связала бы проверку kernel с
 loader, fallback и сериализацией.
 
-Sidecar не привязан к одному логическому quant type и состоит из:
+Sidecar состоит из:
 
 ```text
-<model>.vip9000.json   канонический JSON manifest
-<model>.vip9000.bin    выровненные tensor payloads
+<model>.q1vip.json   канонический JSON manifest
+<model>.q1vip.bin    выровненные tensor payloads
 ```
 
-Manifest schema `vip9000-packed-sidecar/v1` содержит ровно:
+Manifest schema `q1-vip-sidecar/v1` содержит ровно:
 
 - исходные filename, byte size и SHA-256;
-- для каждого tensor его semantic source type (`Q1_0`, `TQ1_0` или `TQ2_0`),
-  GGML type id и group size;
-- physical type (`Q1_VIP_16x128/v1`, `TQ1_VIP_16x256/v1` или
-  `TQ2_VIP_16x256/v1`);
+- semantic source type `GGML Q1_0 type 41, group 128`;
+- physical type `Q1_VIP_16x128/v1`;
 - byte order `little`, tensor alignment 64 и tile alignment 32;
 - converter repository commit и pinned Prism runtime commit;
 - для каждого packed tensor: GGUF index, name, `ne0`, `ne1`, source offset,
@@ -248,69 +213,12 @@ FP32 accumulation на FP16: такой вариант является отде
 записывается, flush выполняется один раз, затем trigger/wait. Output invalidate
 и read учитываются в host latency. Device profiling не заменяет host total.
 
-## Семейства тернарных весов
-
-### `TQ1_VIP_16x256/v1`
-
-Один tile покрывает 16 выходных строк и один K-блок 256. Он является только
-SoA-перестановкой 16 исходных `block_tq1_0`:
-
-```text
-qs row 0 ... row 15     16 × 48 B = 768 B
-qh row 0 ... row 15     16 ×  4 B =  64 B
-scale d[16]             16 ×  2 B =  32 B
-------------------------------------------
-tile total                           864 B
-```
-
-Tile содержит 4096 весов и сохраняет `864 × 8 / 4096 = 1.6875 бит/вес`.
-Размер кратен 32 байтам. PPU kernel декодирует base-3 непосредственно в
-регистрах/локальном tile и умножает на `Q8_K`; он не записывает 4096
-распакованных INT8-весов в DDR.
-
-Byte mapping внутри каждой строки остаётся reference-exact: `qs[0..31]`
-представляют logical `K=n*32+m` для `n=0..4, m=0..31`; `qs[32..47]` —
-`K=160+n*16+m` для `n=0..4, m=0..15`; `qh[0..3]` — `K=240+m*4+j` для
-`m=0..3, j=0..3`. В `qh` хранятся четыре trit; пятый разряд, используемый при
-масштабированном кодировании байта, не является отдельным весом. Порядок байт —
-исходный `qs[48]`, затем исходный `qh[4]`; FP16 scales сохраняются
-little-endian.
-
-### `TQ2_VIP_16x256/v1`
-
-Второе тернарное семейство сохраняет 2-bit codes без изменения:
-
-```text
-qs row 0 ... row 15     16 × 64 B = 1024 B
-scale d[16]             16 ×  2 B =   32 B
--------------------------------------------
-tile total                           1056 B
-```
-
-Плотность остаётся `1056 × 8 / 4096 = 2.0625 бит/вес`, размер tile также
-кратен 32 байтам. Kernel выполняет `TQ2_VIP_16x256 × Q8_K → FP32` и декодирует
-все четыре 2-bit codes как `-1, 0, +1, +2`, даже если канонический quantizer
-обычно создаёт только первые три значения.
-
-Для обоих форматов внешний порядок tile совпадает с Q1: сначала `m_tile`, затем
-`k_block`. V1 принимает только `ne0 % 256 == 0` и `ne1 % 16 == 0`; остальные
-формы fail closed до появления отдельной версии tail encoding. Manifest
-указывает собственные semantic source type, physical type, block size и payload
-hash. Pack/unpack обязан побайтово восстанавливать исходные `qs`, `qh` и `d`.
-Конкретный TQ1/TQ2 layout допускается к kernel только после microbenchmark двух
-вариантов порядка чтения; изменение кодов или scales ради скорости запрещено.
-
-### Почему не INT8 в DDR
+## Почему не INT8 в DDR
 
 Полное расширение одного блока в `±1 INT8` с scale требует 130 байт вместо 18,
 то есть 8.125 против 1.125 бит/вес. FP16 требует 258 байт, или 16.125 бит/вес.
 Это увеличивает весовой поток примерно в 7.22 или 14.33 раза и противоречит
 ограниченной DDR bandwidth.
-
-Для TQ1/TQ2 полное расширение до INT8 аналогично увеличивает поток примерно до
-8 бит/вес вместо 1.6875/2.0625 бит/вес, то есть в 4.74/3.88 раза ещё до
-служебных scales и alignment. Нули тернарных весов должны использоваться внутри
-packed dot, а не материализоваться как плотная DDR-матрица.
 
 Распаковка в INT8 допустима только как отдельный `Q1_VIP_UNPACK_NN/v1`
 эксперимент, если intermediate tile остаётся в 512 KiB VIP SRAM и profiler
@@ -354,18 +262,17 @@ GPU/IGPU только ради существующего CLI запрещено
 `supports_op` возвращает true только при одновременном выполнении условий:
 
 - op равен `GGML_OP_MUL_MAT`;
-- weight source имеет `Q1_0`, `TQ1_0` или `TQ2_0`;
+- weight source имеет `Q1_0`;
 - activation tensor имеет поддержанный graph type/stride; первый контракт —
-  contiguous F32, который backend квантует в рабочий `Q8_0` для Q1 либо
-  `Q8_K` для TQ;
+  contiguous F32, который backend квантует в рабочий `Q8_0`;
 - форма, strides, batch и alignment поддержаны конкретным kernel;
 - exact sidecar source SHA совпадает с GGUF и packed payload hash проверен;
 - compiler/runtime handshake и нужный kernel доступны на target.
 
 Не вводить новый `GGML_OP_*`, если эту семантику можно выразить
 `GGML_OP_MUL_MAT`. Физический layout является свойством backend buffer, а не
-новым математическим типом tensor. Исходные `GGML_TYPE_Q1_0/TQ1_0/TQ2_0`
-остаются каноническими и обеспечивают обычный CPU fallback.
+новым математическим типом tensor. Исходный `GGML_TYPE_Q1_0` остаётся
+каноническим и обеспечивает обычный CPU fallback.
 
 ### Loader bridge, buffer и lifetime
 
@@ -374,19 +281,20 @@ GPU/IGPU только ради существующего CLI запрещено
 bridge:
 
 1. manifest и source/payload hashes проверяются до allocation;
-2. `.vip9000.bin` map сохраняется на весь lifetime модели;
+2. `.q1vip.bin` map сохраняется на весь lifetime модели;
 3. GGUF index/name однозначно сопоставляется packed payload;
-4. loader передаёт backend признак `already-packed` через специальный callback,
-   не вызывая обычный canonical `set_tensor` повторно;
+4. проектный loader bridge (это не стандартный ggml callback) передаёт backend
+   признак `already-packed`, не вызывая обычный canonical `set_tensor` повторно;
 5. отсутствие/mismatch sidecar выбирает однократный canonical pack или явный
    CPU путь согласно режиму, но никогда не молчаливую интерпретацию bytes.
 
 Backend buffer type предоставляет host-visible mapped arena для `get_base` и
-обычного allocator contract, а device handles/physical addresses хранит в
-backend metadata. `init_tensor` связывает tensor с physical layout, payload,
-kernel handle, source type и validated hash. Обычный `set_tensor` принимает
-канонические Q1/TQ bytes и делает pack один раз; loader bridge для sidecar
-копирует/map-ит уже packed payload без второго pack.
+обычного allocator contract, но объявляет `is_host=false`; generic host copy не
+должен прочитать packed bytes как canonical Q1. Device handles/physical
+addresses хранятся в backend metadata. `init_tensor` связывает tensor с
+physical layout, payload, kernel handle, source type и validated hash. Обычный
+`set_tensor` принимает канонические Q1 bytes и делает pack один раз; loader
+bridge для sidecar копирует/map-ит уже packed payload без второго pack.
 
 `get_tensor` выполняет обратную перестановку и возвращает канонические GGML
 bytes. Это обязательно для правильной scheduler copy на CPU при неподдержанной
@@ -416,9 +324,12 @@ attention, RoPE, normalization и неподдержанные `MUL_MAT` ост�
 Prefill можно отдельно исследовать через native NN subgraph после доказательства
 decode path; это не должно задерживать packed GEMV.
 
-Обычный режим допускает явный CPU fallback с диагностикой причины. Benchmark
-режим `strict-vip` завершает run ошибкой при любом fallback поддержанного op и
-сохраняет counters `vip_ops`, `cpu_fallback_ops`, transfer bytes и kernel id.
+Обычный режим допускает явный CPU fallback с диагностикой причины. До вызова
+`supports_op` loader создаёт prevalidated sidecar state. Benchmark режим
+`strict-vip` завершает run до allocation/graph при missing/mismatched sidecar и
+считает ошибкой любой eligible `Q1_0 × Q8_0 MUL_MAT`, ушедший на CPU, даже если
+backend вернул `supports_op=false`. Он сохраняет counters `eligible_q1_ops`,
+`vip_ops`, `cpu_fallback_ops`, transfer bytes, kernel id и fallback reason.
 Нельзя считать ускорением run, в котором scheduler незаметно исполнил GEMV на
 CPU.
 
@@ -449,11 +360,6 @@ fixtures, включая все положительные знаки, все о
 биты, псевдослучайные данные, граничные FP16 scales и нулевые исходные
 значения, которые исходный quantizer относит к положительному знаку.
 
-TQ fixtures используют K=256/512/1024, все `-1/0/+1`, для TQ2 также физический
-code 3 (`+2d`), длинные серии нулей, все допустимые base-3/2-bit patterns,
-граничные scales и malformed input containers. Golden отдельно проверяет TQ1
-и TQ2 против закреплённых ggml functions.
-
 ### Gate C2 — производственные формы
 
 Обязательны полные GEMV формы:
@@ -464,9 +370,7 @@ code 3 (`+2d`), длинные серии нулей, все допустимы�
 Q1-веса берутся из точных тензоров закреплённого GGUF. Они загружаются один
 раз, один запуск прогревается, затем выполняется не менее 50 resident
 повторений. Сравнение проводится с текущим A55 t6 и A76 t2 CPU kernel на тех же
-данных. TQ production-shape gate добавляется только после закрепления точного
-Ternary-Bonsai GGUF и его tensor inventory; до этого TQ не получает model-level
-performance claim.
+данных.
 
 ### Gate C3 — `ggml` backend integration
 
@@ -475,8 +379,7 @@ performance claim.
 - sidecar discovery по exact model SHA;
 - loader bridge, mapped lifetime и защита от двойного pack;
 - buffer ownership, `set_tensor/get_tensor/cpy_tensor` и canonical CPU copy;
-- capability checks для `Q1_VIP × Q8_0`, `TQ1_VIP × Q8_K` и
-  `TQ2_VIP × Q8_K`;
+- capability check для `Q1_VIP × Q8_0`;
 - graph scheduling для поддержанных GEMV;
 - activation quantization, sync и диагностируемый CPU fallback;
 - compiled-kernel cache;
@@ -489,15 +392,13 @@ performance claim.
 deterministic `llama-completion` quality workload. Prefill и decode измеряются
 отдельно. Планировщик может оставить prefill на A76, а decode-supported GEMV
 перенести на PPU; переключение фаз и неподдержанные операции входят в
-wall-clock. Ternary-Bonsai проходит отдельный C4 с собственным CPU baseline
-после закрепления exact artifact; Q1-порог к нему не переносится.
+wall-clock.
 
 ## Контракт корректности
 
 ### Конвертер
 
-- `pack → unpack` побайтово восстанавливает каждый source `d`, `qs` и, где
-  применимо, `qh`;
+- `pack → unpack` побайтово восстанавливает каждый source `d` и `qs`;
 - logical dequantized tensor совпадает для каждого индекса;
 - повторный pack создаёт byte-identical manifest и payload;
 - source model и каждый payload проверяются SHA-256;
@@ -506,8 +407,7 @@ wall-clock. Ternary-Bonsai проходит отдельный C4 с собст�
 
 ### Operator golden
 
-CPU reference использует закреплённые реализации Q1_0×Q8_0, TQ1_0×Q8_K и
-TQ2_0×Q8_K. Каждый PPU kernel обязан:
+CPU reference использует закреплённую реализацию Q1_0×Q8_0. PPU kernel обязан:
 
 - содержать только finite значения;
 - быть детерминированным между resident repetitions;
@@ -521,9 +421,9 @@ accumulation получает собственный заранее объявл
 
 ### Полная модель
 
-Финальный quality gate каждой exact model — deterministic token agreement с
-точным CPU reference при одинаковом model hash, tokenizer, prompt, context,
-seed и sampling. Дополнительно сохраняются logits error/cosine на заранее
+Финальный quality gate exact Q1 model — deterministic token agreement с точным
+CPU reference при одинаковом model hash, tokenizer, prompt, context, seed и
+sampling. Дополнительно сохраняются logits error/cosine на заранее
 выбранных шагах, чтобы отличить изменение порядка accumulation от ошибки
 layout. Любое расхождение блокирует статус `qualified`, даже если tok/s выше.
 
@@ -569,9 +469,6 @@ p90    = 0.7263472 ток/с
 
 Основная цель — максимальный устойчивый decode tok/s, а не прохождение
 минимального порога. Prompt throughput и TTFT остаются отдельными метриками.
-Для Ternary-Bonsai эти же правила применяются только после отдельного CPU
-baseline: exact filename/hash, sampling contract, median/p90 и thermal evidence
-фиксируются до первого оптимизированного run.
 
 ## Профилирование и тепловая безопасность
 
@@ -615,10 +512,7 @@ NPD/layer dump — отдельный diagnostic A/B и не смешивает�
 - Нельзя считать PPU kernel использованием восьми NN engines без profiler/API
   evidence.
 - Нельзя учитывать expanded INT8 tile как SRAM-only без измеренных DDR bytes.
-- Нельзя называть Q1_0 тернарным или применять Q1 sign-bit kernel к TQ1/TQ2:
-  это разные serialized formats и разные activation dot contracts.
-- Нельзя приписывать `Ternary-Bonsai-27B` тип TQ1_0/TQ2_0 до inventory точного
-  GGUF-файла.
+- Нельзя называть Q1_0 тернарным: это бинарный sign-bit format.
 - Proprietary SDK, NBG, model и sidecar payload не попадают в Git.
 
 ## Последовательность реализации
@@ -631,15 +525,13 @@ NPD/layer dump — отдельный diagnostic A/B и не смешивает�
 6. Добавить минимальный `VIP9000` backend для прошедшего C2 Q1 kernel и
    `GGML_OP_MUL_MAT` в strict benchmark режиме.
 7. Выполнить полную Q1-модель C4 и обновить канонический ledger/график.
-8. Реализовать TQ1/TQ2 pack/unpack и synthetic golden fixtures в том же backend.
-9. Закрепить точный Ternary-Bonsai GGUF, измерить CPU baseline и выполнить его
-   production-shape/C4 gates.
-10. Только затем исследовать SRAM-only unpack → native NN и prefill partition.
+8. Только затем исследовать SRAM-only Q1 unpack → native NN и prefill
+   partition.
 
 ## Критерии приёмки исследования
 
-- Q1/TQ layouts воспроизводимы, versioned и математически эквивалентны своим
-  исходным GGML-типам.
+- Q1 layout воспроизводим, versioned и математически эквивалентен исходному
+  GGML Q1_0.
 - Target compiler/runtime path доказан либо blocker зафиксирован с точными
   statuses и hashes.
 - Производственные GEMV-формы имеют CPU golden, resident host/device timings,
@@ -650,5 +542,3 @@ NPD/layer dump — отдельный diagnostic A/B и не смешивает�
   сообщает counters/fallback и не гонит распакованные полные веса через DDR.
 - Полная Q1 Bonsai-27B либо превышает текущий decode gate без потери токенов,
   либо результат честно показывает, почему PPU/native NN path проиграл CPU.
-- Ternary-Bonsai получает отдельный baseline и conclusion только после
-  закрепления exact artifact; отсутствие файла не маскируется synthetic тестом.
