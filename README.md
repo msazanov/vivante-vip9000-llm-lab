@@ -142,3 +142,11 @@ The next hard gates are:
 
 - [`E001`](experiments/E001-vip9000-capability-probe/README.md): target-verified SDK, operation, shape, type, memory and overhead measurements.
 - [`E002`](experiments/E002-packed-ternary-kernel/README.md): direct Q2_0 packed execution, EVIS capability and CPU/PPU/NN performance comparison.
+
+## Текущие графики
+
+Сводный [график бенчмарков](benchmarks/charts/benchmark-overview.svg) строится
+из сохранённых свидетельств CPU и NPU. Подробная таблица запусков и ссылки на
+исходные сводки находятся в [карточке модели Bonsai 27B](benchmarks/models/bonsai-27b.md).
+Неквалифицированные строки показывают наблюдение производительности, но не
+подтверждают качество модели.

@@ -72,6 +72,7 @@ class Series:
     metric: str
     status: str
     repository_commit: str
+    temperature_c: float
     p10: float
     median: float
     p90: float
@@ -274,6 +275,19 @@ git commit -m "feat: validate benchmark evidence for charts"
   `publish_atomic(output: Path, payload: bytes) -> None` и
   `main(argv: list[str] | None = None) -> int`.
 
+- [ ] **Шаг 0: RED/GREEN для температурной метаинформации и производных величин**
+
+Сначала расширить `Series` полем `temperature_c: float`. До изменения parser
+добавить RED-assertions реальных значений `69.089`, `63.612` и `35.650`.
+CPU читает `evidence.thermal_peak_millidegrees_c`, resident NPU —
+`profiling.npu_peak_millidegrees_c`; оба значения обязательны для отображаемой
+строки, не принимают `bool`, конечны, неотрицательны и делятся на 1000.
+
+Отдельным RED-тестом зафиксировать, что нулевая CPU decode median или нулевая
+NPU host/device median завершается `EvidenceError`: график обязан безопасно
+вычислять `1 / decode_tps` секунд на токен и `1000 / latency_ms` инференсов в
+секунду. После минимального GREEN повторить весь parser test file.
+
 - [ ] **Шаг 1: написать RED-тест структуры и русских подписей**
 
 На synthetic `ChartData` вызвать `render_svg`, распарсить результат через
@@ -295,6 +309,15 @@ Fixture содержит label `A55 & A76 <probe>`; XML должен распа�
 точные `data-panel`, `data-cohort-id`, `data-run-id`, `data-metric` и
 `data-status`.
 
+Тест также проверяет точные подписи производных величин и температуры:
+
+```python
+self.assertIn("0.650 ток/с · 1.539 с/ток", text)
+self.assertIn("2.846 мс · 351.37 инф/с", text)
+self.assertIn("пик CPU 69.1 °C", text)
+self.assertIn("пик NPU 35.6 °C", text)
+```
+
 - [ ] **Шаг 2: подтвердить RED рендера**
 
 ```bash
@@ -311,6 +334,12 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
 один `rect[data-role=median-bar]`, один горизонтальный
 `line[data-role=whisker]`, два вертикальных cap и одну трёхзнаковую подпись.
 Нулевая линия и ticks строятся независимо для CPU и NPU.
+
+CPU prompt label показывает только `median` в `ток/с`; CPU decode label —
+`median` и `1 / median` в `с/ток`. NPU host/device label — `median` в `мс` и
+`1000 / median` в `инф/с`. Основная величина и `с/ток` имеют три знака после
+точки, `инф/с` — два, температура — один. У каждого run label есть отдельная
+строка `пик CPU … °C` или `пик NPU … °C`; температура не участвует в шкале.
 
 `nice_axis` вычисляет `raw_step = maximum / 5`, степень 10 и первый множитель
 из `(1, 2, 5, 10)`, который не меньше raw step; ceiling — ближайшее верхнее
@@ -540,6 +569,8 @@ rsvg-convert --width 600 benchmarks/charts/benchmark-overview.svg \
 Открыть оба PNG через image viewer. Проверить без догадок: обе панели видны,
 подписи не перекрываются, p10–p90 end caps различимы, единицы и unqualified
 предупреждения читаемы, числа 1.583/0.650, 1.445/0.726 и 2.846/2.803 видимы.
+Дополнительно видимы производные `1.539/1.377 с/ток`,
+`351.37/356.76 инф/с` и пики температуры `69.1/63.6/35.6 °C`.
 
 - [ ] **Шаг 4: независимый GPT-5.6 Luna review**
 

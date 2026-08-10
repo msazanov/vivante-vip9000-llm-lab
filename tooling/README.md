@@ -222,3 +222,35 @@ then constructs both updated files using sibling temporary files and replaces
 them in sequence; this is not a cross-file transaction. The row reports prompt
 tok/s, decode tok/s, TTFT, peak RSS, quality, status, and a relative raw-result
 link. Do not hand-edit rows or replace the model-card header.
+
+## Текущие графики бенчмарков
+
+График строится только из сохранённого канонического журнала и сводок запусков;
+значения вручную не переносятся в SVG. Для принудительной детерминированной
+регенерации используйте:
+
+```bash
+python3 tooling/generate_benchmark_chart.py \
+  --ledger benchmarks/results/model-runs.jsonl \
+  --results-dir benchmarks/results \
+  --output benchmarks/charts/benchmark-overview.svg \
+  --force
+```
+
+Флаг `--force` публикует SVG атомарно после проверки входов. Чтобы проверить
+свежесть без изменения файлов, выполните:
+
+```bash
+python3 tooling/generate_benchmark_chart.py \
+  --ledger benchmarks/results/model-runs.jsonl \
+  --results-dir benchmarks/results \
+  --output benchmarks/charts/benchmark-overview.svg \
+  --check
+```
+
+Код выхода `0` означает, что SVG актуален, `1` — что выход отсутствует или
+устарел, `2` — что обязательный вход отсутствует или некорректен. `--check` и
+`--force` нельзя указывать вместе. Источники истины — JSONL-журнал
+`benchmarks/results/model-runs.jsonl` и сводки
+`benchmarks/results/*/summary.json`; карточка модели и SVG являются
+производными представлениями этих сохранённых свидетельств.

@@ -1,52 +1,60 @@
-# Benchmark Chart Generator Design
+# Проект генератора графиков бенчмарков
 
-## Problem
+## Проблема
 
-The canonical benchmark ledger is machine-readable, but its wide Markdown
-table is difficult to read on GitHub and becomes increasingly fragile as more
-experiments are added. The repository needs a deterministic chart generated
-from saved evidence, not a manually maintained image or copied values.
+Канонический журнал бенчмарков машиночитаем, но его широкую таблицу Markdown
+трудно читать на GitHub; по мере добавления экспериментов она становится всё
+более хрупкой. Репозиторию нужен детерминированный график, построенный из
+сохранённых свидетельств, а не вручную поддерживаемое изображение или
+скопированные значения.
 
-## Goals
+## Цели
 
-- Generate one GitHub-renderable SVG from canonical saved CPU and NPU result
-  files using only the Python standard library.
-- Keep CPU throughput and NPU latency in separate panels and units.
-- Display medians and p10-p90 intervals without hiding result qualification.
-- Exclude incomparable, failed, or metric-less attempts from plotted bars while
-  reporting how many records were omitted and why.
-- Make regeneration atomic, reproducible, testable, and suitable for a future
-  CI freshness check.
-- Preserve the full append-only Markdown table as a detailed fallback while
-  making the generated chart the primary GitHub view.
+- Генерировать один SVG, отображаемый на GitHub, из канонических сохранённых
+  файлов результатов CPU и NPU, используя только стандартную библиотеку Python.
+- Показывать пропускную способность CPU и задержку NPU на отдельных панелях и
+  в отдельных единицах измерения.
+- Отображать медианы и интервалы p10–p90, не скрывая квалификацию результата.
+- Показывать рядом с каждой величиной, похожей на задержку, практически
+  полезную обратную скорость и сохранённую пиковую температуру каждого запуска:
+  секунд на сгенерированный токен для декодирования на CPU и выводов в секунду
+  для резидентной задержки NPU.
+- Исключать несопоставимые, неудачные и лишённые метрик попытки из столбцов
+  графика, сообщая при этом, сколько записей и по какой причине исключено.
+- Сделать регенерацию атомарной, воспроизводимой, тестируемой и пригодной для
+  будущей проверки свежести в CI.
+- Сохранить полную таблицу Markdown только для добавления новых строк как
+  подробный запасной вариант, сделав сгенерированный график основным видом на
+  GitHub.
 
-## Non-goals
+## Не входит в цели
 
-- No interactive JavaScript or HTML dashboard.
-- No matplotlib, Pillow, pandas, Vega, or network dependency.
-- No interpolation of missing metrics and no conversion of device latency into
-  LLM token throughput.
-- No claim that unqualified results establish model quality or numerical NPU
-  correctness.
-- No mutation of the canonical JSONL ledger or per-run summaries.
+- Интерактивная панель на JavaScript или HTML.
+- matplotlib, Pillow, pandas, Vega или зависимость от сети.
+- Интерполяция отсутствующих метрик и преобразование задержки устройства в
+  пропускную способность LLM по токенам.
+- Утверждение, что неквалифицированные результаты подтверждают качество модели
+  или численную корректность NPU.
+- Изменение канонического журнала JSONL или сводок отдельных запусков.
 
-## Files and responsibilities
+## Файлы и ответственность
 
-- `tooling/generate_benchmark_chart.py`: parse, validate, group, render, and
-  atomically publish the SVG.
-- `tests/test_generate_benchmark_chart.py`: unit and CLI behavior tests using
-  temporary synthetic fixtures.
-- `benchmarks/charts/benchmark-overview.svg`: generated deterministic artifact.
-- `tooling/README.md`: regeneration and freshness-check commands.
-- `benchmarks/models/bonsai-27b.md`: embed the chart and place the wide raw
-  table inside a collapsed details block without changing result markers.
-- `README.md`: link the generated benchmark overview.
+- `tooling/generate_benchmark_chart.py`: разбор, проверка, группировка,
+  визуализация и атомарная публикация SVG.
+- `tests/test_generate_benchmark_chart.py`: модульные тесты и тесты CLI с
+  временными синтетическими фикстурами.
+- `benchmarks/charts/benchmark-overview.svg`: сгенерированный
+  детерминированный артефакт.
+- `tooling/README.md`: команды регенерации и проверки свежести.
+- `benchmarks/models/bonsai-27b.md`: встраивание графика и размещение широкой
+  исходной таблицы внутри сворачиваемого блока details без изменения маркеров
+  результатов.
+- `README.md`: ссылка на сгенерированный обзор бенчмарков.
 
-The chart generator remains independent of `record_model_result.py`. The
-recorder owns the ledger and table; the chart generator consumes their saved
-outputs.
+Генератор графика остаётся независимым от `record_model_result.py`. Recorder
+отвечает за журнал и таблицу, а генератор потребляет сохранённые ими данные.
 
-## CLI contract
+## Контракт CLI
 
 ```text
 python3 tooling/generate_benchmark_chart.py \
@@ -56,33 +64,35 @@ python3 tooling/generate_benchmark_chart.py \
   --force
 ```
 
-The three paths have the values above as repository-relative defaults.
+Три пути выше имеют эти значения по умолчанию относительно корня репозитория.
 
-- With no mode flag, generation refuses to replace an existing output.
-- `--force` writes a sibling temporary file, flushes and fsyncs it, then uses
-  `os.replace` to atomically publish the new SVG and fsyncs the parent
-  directory. It creates a missing output parent only after every input has
-  validated.
-- `--check` performs a byte-for-byte comparison against the existing output,
-  writes nothing, returns 0 when current, 1 when stale, and 2 for malformed or
-  missing required inputs. A missing output is stale (1), not malformed.
-- `--check` and `--force` are mutually exclusive.
-- Diagnostics go to stderr and never include full raw result payloads.
+- Без флага режима генерация отказывается заменять существующий файл.
+- `--force` записывает соседний временный файл, сбрасывает его и вызывает
+  `fsync`, затем атомарно публикует новый SVG через `os.replace` и вызывает
+  `fsync` для родительского каталога. Отсутствующий родительский каталог
+  выходного файла создаётся только после проверки всех входов.
+- `--check` выполняет побайтовое сравнение с существующим выходным файлом,
+  ничего не записывает, возвращает 0, если файл актуален, 1, если устарел, и 2,
+  если обязательные входы отсутствуют или испорчены. Отсутствующий выходной
+  файл считается устаревшим (1), а не испорченным.
+- `--check` и `--force` взаимоисключающие.
+- Диагностика выводится в stderr и никогда не содержит полных исходных
+  payload результатов.
 
-The SVG contains no generation timestamp, host path, hostname, or random ID.
-Identical inputs therefore produce identical bytes.
+SVG не содержит времени генерации, пути на хосте, имени хоста или случайного
+идентификатора. Поэтому одинаковые входы дают побайтово одинаковый результат.
 
-## CPU data selection and comparability
+## Отбор данных CPU и сопоставимость
 
-CPU rows come from `benchmarks/results/model-runs.jsonl`. A row is eligible for
-plotting only when:
+Строки CPU берутся из `benchmarks/results/model-runs.jsonl`. Строка допускается
+к визуализации только если:
 
-- `configuration.backend` is `cpu` case-insensitively;
-- status does not case-insensitively start with `failed`;
-- both prompt and decode statistics contain finite, non-negative p10, median,
-  and p90 values ordered `p10 <= median <= p90`.
+- `configuration.backend` равен `cpu` без учёта регистра;
+- статус без учёта регистра не начинается с `failed`;
+- статистики prompt и decode содержат конечные неотрицательные значения p10,
+  median и p90, упорядоченные как `p10 <= median <= p90`.
 
-Eligible rows are grouped by the comparison signature:
+Допустимые строки группируются по сигнатуре сравнения:
 
 ```text
 model.id
@@ -93,53 +103,61 @@ software.compiler
 software.driver
 software.kernel
 software.sdk
-workload (the complete canonical object)
+workload (полный канонический объект)
 configuration.context
 configuration.batch
 configuration.ubatch
 ```
 
-Thread count and partition are intentionally excluded because those are the
-variables being compared. `software.command` is excluded because it encodes
-those variables. `software.repository_commit` is evidence provenance rather
-than the commit of the measured runtime and is therefore displayed in metadata
-but excluded from comparison; `software.runtime_commit` remains mandatory.
-Any newly introduced workload or execution-affecting configuration field must
-be explicitly classified before the generator accepts it. A comparison cohort
-is plotted only when it contains at least two eligible runs. Singleton cohorts,
-failed rows, and rows with missing metrics are counted in the SVG caption but
-do not influence scales. This keeps the bounded smoke test out of the
-pp512/tg128 topology comparison without relying on run-name conventions.
+Число потоков и partition намеренно исключены, поскольку это сравниваемые
+переменные. `software.command` исключён, поскольку кодирует эти переменные.
+`software.repository_commit` — свидетельство происхождения, а не коммит
+измеряемого runtime, поэтому он отображается в метаданных, но исключён из
+сравнения; `software.runtime_commit` остаётся обязательным. Любое новое поле
+workload или конфигурации, влияющее на выполнение, нужно явно
+классифицировать, прежде чем генератор его примет. Когорта сравнения
+визуализируется только при наличии не менее двух допустимых запусков. Одиночные
+когорты, неудачные строки и строки с отсутствующими метриками учитываются в
+подписи SVG, но не влияют на масштабы. Так ограниченный smoke-тест не попадает
+в сравнение топологий pp512/tg128 через соглашения об именах запусков.
 
-Each eligible CPU row must also have a positive integer
-`performance.repetitions`; each prompt/decode `samples` array must have exactly
-that many finite, non-negative values; and p10, median, and p90 must be
-consistent with that saved sample set. Quantiles use sorted samples and linear
-interpolation at zero-based position `(count - 1) * q`; saved and recomputed
-values must satisfy `math.isclose(rel_tol=1e-9, abs_tol=1e-12)`. Identity and
-signature fields are mandatory rather than treated as empty strings.
+Каждая допустимая строка CPU также должна иметь положительное целое
+`performance.repetitions`; массивы `samples` prompt/decode должны содержать
+ровно столько конечных неотрицательных значений; p10, median и p90 должны
+согласовываться с сохранённым набором. Квантили вычисляются по
+отсортированным образцам с линейной интерполяцией в позиции с нулевой
+индексацией `(count - 1) * q`; сохранённые и пересчитанные значения должны
+удовлетворять `math.isclose(rel_tol=1e-9, abs_tol=1e-12)`. Поля идентичности и
+сигнатуры обязательны, а не считаются пустыми строками.
 
-Within a cohort, runs are sorted by `run_id`. Cohorts are sorted by their full
-signature. Labels use a short model name plus the configured partition; the
-full run ID appears in SVG metadata and the visible legend.
+Видимая пиковая температура берётся из
+`evidence.thermal_peak_millidegrees_c / 1000`. Это метаданные свидетельства, а
+не третья ось производительности. Для допустимой строки исходное значение
+обязательно, должно быть целым (но не `bool`) и конечным, неотрицательным
+после преобразования.
 
-## NPU data selection
+Внутри когорты запуски сортируются по `run_id`. Когорты сортируются по полной
+сигнатуре. Подписи используют короткое имя модели и настроенный partition;
+полный run ID появляется в метаданных SVG и видимой легенде.
 
-NPU rows are discovered as sorted
-`benchmarks/results/*/summary.json` paths. A file is eligible only when:
+## Отбор данных NPU
 
-- `schema_version` equals `vip9000-capability-run/v1`;
-- `host_run_us` and `device_inference_us` contain ordered finite, non-negative
-  p10, median, and p90 values;
-- `configuration.measured_loops` is a positive integer;
-- status does not case-insensitively start with `failed`.
+Строки NPU обнаруживаются среди отсортированных путей
+`benchmarks/results/*/summary.json`. Файл допускается только если:
 
-For every NPU summary with that schema, `run_id` is required, unique, and must
-equal the result-directory basename. Both latency statistics must report a
-positive integer `samples` equal to `configuration.measured_loops`.
-`configuration.loops` must equal `warmup_loops + measured_loops`.
+- `schema_version` равен `vip9000-capability-run/v1`;
+- `host_run_us` и `device_inference_us` содержат упорядоченные конечные
+  неотрицательные значения p10, median и p90;
+- `configuration.measured_loops` — положительное целое;
+- статус без учёта регистра не начинается с `failed`.
 
-Eligible NPU rows are grouped by an invariant comparison signature containing:
+Для каждой сводки с этой схемой `run_id` обязателен, уникален и должен равняться
+имени каталога результата. Обе статистики задержки должны сообщать
+положительное целое `samples`, равное `configuration.measured_loops`.
+`configuration.loops` должно равняться `warmup_loops + measured_loops`.
+
+Допустимые строки NPU группируются по инвариантной сигнатуре сравнения,
+содержащей:
 
 ```text
 asset_sha256.network_binary.nb
@@ -165,164 +183,199 @@ configuration.npd
 configuration.bypass_output
 ```
 
-The NPU frequency and host/profiler affinity are experimental variables, so
-they are shown in the run label rather than included in the signature. Any new
-memory, input-layout, output, or execution-mode field must be classified before
-the row is accepted. Cohorts receive visible headers and separators so rows
-from different network/input/runtime signatures are not presented as one
-comparison. The current v1 evidence does not expose input shape/layout as
-separate fields, so the exact network-binary and input-file hashes are its
-identity anchors; a future schema that exposes those fields must add them to
-the signature.
+Частота NPU и привязка CPU/профайлера — экспериментальные переменные, поэтому
+они показываются в подписи запуска, а не включаются в сигнатуру. Любое новое
+поле памяти, входного формата, вывода или режима выполнения нужно
+классифицировать до принятия строки. Когорты получают видимые заголовки и
+разделители, чтобы строки с разными сигнатурами сети, входа или runtime не
+подавались как одно сравнение. Текущая v1 не раскрывает форму/раскладку входа
+отдельными полями, поэтому точные хэши network-binary и входного файла — её
+якоря идентичности; будущая схема с такими полями должна добавить их в
+сигнатуру.
 
-The plotted values are host and device latency converted from microseconds to
-milliseconds. Process lifecycle time, initialization, output capture, and
-device cycles remain in the result summary and are not plotted on the latency
-axis. NPU cohorts are sorted by their full signature and rows within each
-cohort by `run_id`.
+Визуализируемые значения — задержки host и device, преобразованные из
+микросекунд в миллисекунды. Время жизненного цикла процесса, инициализация,
+захват вывода и циклы устройства остаются в сводке результата и не
+визуализируются на оси задержки. Обе визуализируемые медианы должны быть строго
+положительными, поскольку рядом с ними показывается `1000 / median_ms` выводов
+в секунду. Видимая температура ускорителя берётся из
+`profiling.npu_peak_millidegrees_c / 1000`; это метаданные, а не ось задержки.
+Когорты NPU сортируются по полной сигнатуре, а строки внутри каждой когорты —
+по `run_id`.
 
-The current resident100 result is therefore eligible; single-execution,
-output-capture, and failed-prelaunch records are reported as omitted rather
-than silently mixed into the steady-state panel.
+Текущая resident100-запись поэтому допускается; записи однократного запуска,
+захвата вывода и неудачного запуска до старта учитываются как исключённые, а
+не молча смешиваются на панели steady-state.
 
-## SVG presentation
+## Представление SVG
 
-The artifact is a 1200-pixel-wide SVG with a white background and two
-vertically stacked panels so GitHub can scale it on desktop and mobile without
-mixing units. Its minimum height is 900 pixels and its height grows
-deterministically by 72 pixels for every plotted run beyond the initial three;
-horizontal bars keep labels readable as the ledger grows.
+Артефакт имеет ширину 1200 пикселей, белый фон и две вертикально расположенные
+панели, чтобы GitHub мог масштабировать его на компьютере и мобильном устройстве
+без смешения единиц. Минимальная высота — 900 пикселей; за каждый
+визуализируемый запуск сверх первых трёх высота детерминированно увеличивается
+на 72 пикселя. Горизонтальные столбцы сохраняют читаемость подписей при росте
+журнала.
 
-### CPU panel
+### Панель CPU
 
-- Title: `CPU: пропускная способность LLM — больше лучше`.
-- X-axis: `токенов/с`.
-- Each run has paired horizontal prompt and decode median bars.
-- A horizontal whisker with vertical end caps shows p10-p90.
-- Prompt and decode use distinct color-blind-safe colors.
+- Заголовок: `CPU: пропускная способность LLM — больше лучше`.
+- Ось X: `токенов/с`.
+- Для каждого запуска отображается пара горизонтальных медианных столбцов
+  prompt и decode.
+- Горизонтальный whisker с вертикальными концевыми ограничителями показывает
+  p10–p90.
+- Для prompt и decode используются разные безопасные для дальтоников цвета.
+- Подписи decode содержат сохранённую пропускную способность и обратное время
+  выполнения, например `0.650 ток/с · 1.539 с/ток`.
+- Аннотация запуска содержит сохранённую пиковую температуру CPU, например
+  `пик CPU 69.1 °C`.
 
-### NPU panel
+### Панель NPU
 
-- Title: `VIP9000: задержка резидентного запуска — меньше лучше`.
-- X-axis: `мс`.
-- Each run has paired horizontal host and device median bars.
-- A horizontal whisker with vertical end caps shows p10-p90.
-- The panel explicitly says that process/setup overhead and correctness are not
-  represented by these bars.
+- Заголовок: `VIP9000: задержка резидентного запуска — меньше лучше`.
+- Ось X: `мс`.
+- Для каждого запуска отображается пара горизонтальных медианных столбцов host
+  и device.
+- Горизонтальный whisker с вертикальными концевыми ограничителями показывает
+  p10–p90.
+- Подписи host/device содержат задержку и производную частоту запуска, например
+  `2.846 мс · 351.37 инф/с`.
+- Аннотация запуска содержит сохранённую пиковую температуру NPU, например
+  `пик NPU 35.6 °C`.
+- На панели явно указано, что накладные расходы процесса/настройки и
+  корректность этими столбцами не представлены.
 
-Both panels use zero baselines, deterministic "nice" ticks, three-decimal value
-labels, and XML-escaped text. The tick step is the first value in
-`{1, 2, 5, 10} * 10^n` greater than or equal to `max(p90) / 5`; the axis ceiling
-is the next multiple of that step. Formatting is locale-independent UTF-8 with
-LF newlines and one trailing newline. Unqualified or rejected results receive
-a visible status suffix and dashed bar outline; only status exactly
-`qualified` uses a solid outline.
+Обе панели используют нулевые базовые линии, детерминированные «круглые»
+деления, XML-экранирование текста, три знака после запятой для основных
+значений и секунд/токен, два знака для выводов/секунду и один знак для
+температуры. Шаг делений — первое значение из
+`{1, 2, 5, 10} * 10^n`, большее или равное `max(p90) / 5`; верхняя граница оси
+равна следующему кратному этого шага. Форматирование не зависит от локали,
+использует UTF-8, окончания строк LF и один завершающий перевод строки.
+Неквалифицированные или отклонённые результаты получают видимый суффикс статуса
+и пунктирную обводку столбца; только статус, в точности равный `qualified`,
+использует сплошную обводку.
 
-The footer states the saved-data sources, omitted-record counts, and that
-unqualified results are performance observations rather than quality claims.
+В подвале указаны источники сохранённых данных, количество исключённых записей
+и то, что неквалифицированные результаты являются наблюдениями
+производительности, а не утверждениями о качестве.
 
-The SVG includes a `<title>` and `<desc>` plus text equivalents for every bar
-to improve accessibility and make values inspectable without color alone. A
-reader can verify each plotted median directly from the image: every bar has a
-numeric label, every interval has visible end caps, and each panel has an
-explicit legend and unit label.
+SVG содержит `<title>` и `<desc>`, а также текстовые эквиваленты каждого
+столбца для доступности и проверки значений без опоры на цвет. Читатель может
+непосредственно проверить каждую отображаемую медиану: у каждого столбца есть
+числовая подпись, у каждого интервала — видимые концевые ограничители, а у
+каждой панели — явная легенда и единица измерения.
 
-The SVG exposes a stable structural interface for tests. Each metric is wrapped
-in a group with `data-panel`, `data-cohort-id`, `data-run-id`, `data-metric`, and
-`data-status`. Its children use `data-role="median-bar"`,
-`data-role="whisker"`, `data-role="whisker-cap"`, and
-`data-role="median-label"`. Cohort IDs are the first 12 lowercase hexadecimal
-characters of SHA-256 over the canonical JSON comparison signature.
+SVG предоставляет стабильный структурный интерфейс для тестов. Каждая метрика
+обёрнута в группу с `data-panel`, `data-cohort-id`, `data-run-id`,
+`data-metric` и `data-status`. Внутри используются элементы с
+`data-role="median-bar"`, `data-role="whisker"`,
+`data-role="whisker-cap"` и `data-role="median-label"`. ID когорты — первые
+12 строчных шестнадцатеричных символов SHA-256 от канонической JSON-сигнатуры
+сравнения.
 
-## Markdown integration
+## Интеграция с Markdown
 
-The Bonsai model card embeds the repository-relative chart immediately before
-the recorded-results section. The existing wide table, header, and
-`MODEL_RESULTS_START`/`MODEL_RESULTS_END` markers move unchanged inside:
+Карточка модели Bonsai встраивает график по относительному пути репозитория
+непосредственно перед разделом записанных результатов. Существующие широкая
+таблица, заголовок и маркеры `MODEL_RESULTS_START`/`MODEL_RESULTS_END`
+перемещаются без изменений внутрь:
 
 ```html
 <details>
-<summary>Full append-only result table</summary>
+<summary>Полная таблица запусков с добавлением новых строк</summary>
 
-... existing table and markers ...
+... существующая таблица и маркеры ...
 
 </details>
 ```
 
-This preserves recorder compatibility while making the chart the default
-GitHub presentation. README links to the SVG and the model card; it does not
-duplicate benchmark values manually.
+Это сохраняет совместимость с recorder и делает график представлением GitHub
+по умолчанию. README ссылается на SVG и карточку модели, но не дублирует вручную
+значения бенчмарков.
 
-## Validation and error handling
+## Проверка и обработка ошибок
 
-The generator fails closed on malformed JSON, duplicate run IDs, identity/path
-mismatches, unsafe or non-finite numeric values, inconsistent sample counts,
-invalid quantile ordering, missing source files, and an eligible dataset that
-cannot produce both required panels. Schema-valid records with a status that
-starts with `failed`, or with intentionally absent resident statistics, are
-omitted and counted. Wrong types, partial statistics, missing required identity
-or signature fields, and internally inconsistent statistics are fatal and
-return 2. Summary files with another schema version are out of scope rather
-than NPU omissions because the directory also contains CPU summaries.
+Генератор безопасно останавливается при некорректном JSON, повторяющихся
+идентификаторах запусков, несовпадении идентичности/пути, небезопасных или
+нефинитных числах, несогласованном числе образцов, неверном порядке квантилей,
+отсутствующих исходных файлах и наборе данных, не способном создать обе
+обязательные панели. Записи с валидной схемой и статусом, начинающимся с
+`failed`, или намеренно отсутствующей resident-статистикой исключаются и
+подсчитываются. Неверные типы, неполная статистика, отсутствующие обязательные
+поля идентичности или сигнатуры и внутренне несогласованная статистика —
+фатальные ошибки с кодом 2. Сводки другой версии схемы не входят в область
+поддержки и не считаются пропусками NPU, поскольку каталог содержит также
+сводки CPU.
 
-For CPU, a failed row is omitted before performance validation; a non-failed
-row with zero repetitions and all throughput metrics absent is an expected
-missing-metrics omission, while any partial metric set or mismatch with a
-positive repetition count is fatal. For NPU, a failed row is omitted before
-latency validation; a non-failed row with both resident latency blocks and
-`measured_loops` absent is a non-resident omission, while a positive
-`measured_loops` value with absent or partial latency statistics is fatal.
-NPU identity/path and status are validated before classification. Strict
-resident asset/target/configuration allow-lists are applied only after a row is
-classified as resident; legacy single/output fields in a non-resident omission
-are retained as evidence but are not interpreted by the chart generator.
+Для CPU неудачная строка исключается до проверки производительности; в
+не-неудачной строке нулевое число повторений при отсутствии всех метрик
+пропускной способности — ожидаемый пропуск отсутствующих метрик, а частичный
+набор метрик или несоответствие положительному числу повторений — фатальная
+ошибка. Для NPU неудачная строка исключается до проверки задержки;
+не-неудачная строка с обоими блоками resident-задержки и отсутствующим
+`measured_loops` — пропуск нерезидентного запуска, а положительное
+`measured_loops` при отсутствующей или частичной статистике задержки — фатальная
+ошибка. Идентичность/путь NPU и статус проверяются до классификации. Строгие
+списки разрешённых resident asset/target/configuration применяются только после
+классификации строки как resident; устаревшие одиночные поля/поля захвата
+вывода в нерезидентном пропуске сохраняются как свидетельство, но генератором
+графика не интерпретируются.
 
-Omission reasons use a fixed display order: failed status, missing metrics,
-non-resident execution, and singleton CPU cohort. Unsupported-schema summary
-files are reported last as a separate out-of-scope count and do not count as
-rejected NPU evidence.
+Причины пропусков используют фиксированный порядок отображения: статус failed,
+отсутствующие метрики, нерезидентное выполнение и одиночная когорта CPU.
+Сводки неподдерживаемой схемы сообщаются последними отдельным количеством
+записей вне области поддержки и не считаются отклонённым свидетельством NPU.
 
-All labels pass through XML escaping. The generator reads only explicit ledger,
-result-directory, and output paths supplied by the caller. It does not follow
-data-provided output paths or open model/raw artifact paths.
+Все подписи проходят XML-экранирование. Генератор читает только явно переданные
+вызывающим пути журнала, каталога результатов и выходного файла. Он не следует
+путям выходных файлов, указанным в данных, и не открывает пути моделей или
+исходных артефактов.
 
-## Test strategy
+## Стратегия тестирования
 
-Tests follow red-green-refactor and cover:
+Тесты следуют циклу red–green–refactor и охватывают:
 
-1. CPU comparison grouping excludes singleton smoke workloads and retains
-   topology variants with the same comparison signature.
-2. NPU discovery accepts resident statistics and omits single/output/failed
-   capability records; NPU cohorts separate incompatible assets and modes.
-3. Missing, non-finite, negative, or misordered p10/median/p90 values fail with
-   actionable diagnostics.
-4. XML-special labels are escaped and the generated document parses with
-   `xml.etree.ElementTree`.
-5. Unqualified status is visible; units and panel caveats are present.
-6. Identical input produces byte-identical SVG.
-7. Default output refuses overwrite; `--force` replaces atomically; `--check`
-   distinguishes current, stale, and malformed inputs without writing.
-8. The repository's real saved data generates an SVG containing the A76/A55
-   CPU comparison and resident100 NPU row.
-9. The existing `record_model_result.py` suite still passes after the table is
-   wrapped in `<details>`.
-10. Structural visual assertions prove that every plotted series has a visible
-    median label, whisker end caps, legend entry, unit, status treatment, and
-    omission caption; the checked-in real-data SVG is then rendered and
-    inspected once as the GitHub-facing visual QA artifact.
-11. Sample-count, identity/path, NPU cohort, newly introduced field, and
-    malformed-versus-omitted boundaries fail closed as specified.
-12. More than three plotted rows increases SVG height deterministically and
-    preserves one non-overlapping labeled row per run.
+1. Группировку сравнений CPU, исключающую одиночные smoke-нагрузки и сохраняющую
+   варианты топологии с одной сигнатурой сравнения.
+2. Обнаружение NPU, принимающее resident-статистику и исключающее записи
+   single/output/failed capability; когорты NPU разделяют несовместимые assets
+   и режимы.
+3. Отсутствующие, нефинитные, отрицательные или неправильно упорядоченные
+   значения p10/median/p90 с понятной диагностикой.
+4. Экранирование XML-специальных подписей и разбор сгенерированного документа
+   через `xml.etree.ElementTree`.
+5. Видимый неквалифицированный статус, единицы и оговорки панелей.
+6. Побайтово одинаковый SVG для одинакового входа.
+7. Отказ перезаписывать выход по умолчанию; атомарная замена через `--force`;
+   различение актуального, устаревшего и некорректного входа через `--check`
+   без записи файлов.
+8. Генерацию SVG из реальных сохранённых данных репозитория с A76/A55 CPU
+   сравнением и resident100 NPU-строкой, включая точные производные значения
+   `1.539 с/ток`, `1.377 с/ток`, `351.37 инф/с` и `356.76 инф/с`.
+9. Сохранение проходящего набора `record_model_result.py` после оборачивания
+   таблицы в `<details>`.
+10. Структурные визуальные проверки: у каждого ряда есть видимая медианная
+    подпись, концевые ограничители whisker, элемент легенды, единица, обработка
+    статуса и подпись с количеством пропусков; затем проверяется отрисованный
+    SVG с реальными данными как визуальный артефакт GitHub.
+11. Безопасную остановку на границах числа образцов, идентичности/пути, когорт
+    NPU, новых полей и различия malformed-versus-omitted.
+12. Детерминированное увеличение высоты SVG более чем для трёх строк и
+    сохранение одной неперекрывающейся подписанной строки на запуск.
 
-## Acceptance criteria
+## Критерии приёмки
 
-- The standard-library CLI generates the checked-in SVG from current saved
-  records and a second generation is byte-identical.
-- `--check` succeeds against the checked-in artifact.
-- The SVG parses as XML and includes both panels with correct current medians.
-- A rendered visual inspection confirms that labels do not overlap, whiskers
-  are visible, and both desktop-width and scaled-down views remain readable.
-- The full repository test suite passes.
-- A GPT-5.6 Luna review confirms data selection, unit separation, deterministic
-  output, and recorder-marker compatibility.
+- Стандартный CLI создаёт проверенный SVG из текущих сохранённых записей, а
+  повторная генерация побайтово совпадает с первой.
+- `--check` успешно проходит для включённого в репозиторий артефакта.
+- SVG разбирается как XML и содержит обе панели с актуальными медианами.
+- Для каждого текущего запуска показана сохранённая пиковая температура; для
+  CPU decode показаны секунды/токен, а для host/device NPU — выводы/секунду,
+  без смешения двух осей производительности.
+- Визуальная проверка отрендерированного результата подтверждает отсутствие
+  перекрытия подписей, видимость whisker и читаемость в полной ширине и при
+  уменьшении.
+- Полный набор тестов репозитория проходит.
+- Проверка GPT-5.6 Luna подтверждает отбор данных, разделение единиц,
+  детерминированность вывода и совместимость маркеров recorder.

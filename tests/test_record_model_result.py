@@ -119,6 +119,20 @@ def card_text() -> str:
 """
 
 
+def details_card_text() -> str:
+    return """# Model card
+
+<details>
+<summary>Полная таблица запусков</summary>
+
+| Date | Run | Experiment | Backend / partition | Quantization | ctx / batch / ubatch / threads | Prompt tok/s | Decode tok/s | TTFT ms | Peak RSS MiB | Quality | Status | Raw |
+|---|---|---|---|---|---:|---:|---:|---:|---:|---|---|---|
+<!-- MODEL_RESULTS_START -->
+<!-- MODEL_RESULTS_END -->
+</details>
+"""
+
+
 class RecordModelResultTests(unittest.TestCase):
     def write_raw_bundle(
         self,
@@ -207,6 +221,26 @@ class RecordModelResultTests(unittest.TestCase):
             self.assertIn("1.750", rendered)
             self.assertIn("token_agreement=1", rendered)
             self.assertIn("[raw](../results/tb27b-cpu-001/summary.json)", rendered)
+
+    def test_valid_result_updates_table_inside_details(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result_path = root / "result.json"
+            ledger = root / "model-runs.jsonl"
+            card = root / "model.md"
+            result_path.write_text(json.dumps(valid_result()))
+            card.write_text(details_card_text())
+
+            completed = self.invoke(result_path, ledger, card)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            rendered = card.read_text()
+            self.assertEqual(rendered.count("<!-- MODEL_RESULTS_START -->"), 1)
+            self.assertEqual(rendered.count("<!-- MODEL_RESULTS_END -->"), 1)
+            row_position = rendered.index("tb27b-cpu-001")
+            end_position = rendered.index("<!-- MODEL_RESULTS_END -->")
+            self.assertLess(row_position, end_position)
+            self.assertLess(end_position, rendered.index("</details>"))
 
     def test_duplicate_run_is_rejected_without_modifying_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
