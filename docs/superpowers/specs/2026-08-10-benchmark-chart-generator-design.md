@@ -195,16 +195,16 @@ horizontal bars keep labels readable as the ledger grows.
 
 ### CPU panel
 
-- Title: `CPU LLM throughput — higher is better`.
-- X-axis: tokens per second.
+- Title: `CPU: пропускная способность LLM — больше лучше`.
+- X-axis: `токенов/с`.
 - Each run has paired horizontal prompt and decode median bars.
 - A horizontal whisker with vertical end caps shows p10-p90.
 - Prompt and decode use distinct color-blind-safe colors.
 
 ### NPU panel
 
-- Title: `VIP9000 resident latency — lower is better`.
-- X-axis: milliseconds.
+- Title: `VIP9000: задержка резидентного запуска — меньше лучше`.
+- X-axis: `мс`.
 - Each run has paired horizontal host and device median bars.
 - A horizontal whisker with vertical end caps shows p10-p90.
 - The panel explicitly says that process/setup overhead and correctness are not
@@ -272,6 +272,10 @@ positive repetition count is fatal. For NPU, a failed row is omitted before
 latency validation; a non-failed row with both resident latency blocks and
 `measured_loops` absent is a non-resident omission, while a positive
 `measured_loops` value with absent or partial latency statistics is fatal.
+NPU identity/path and status are validated before classification. Strict
+resident asset/target/configuration allow-lists are applied only after a row is
+classified as resident; legacy single/output fields in a non-resident omission
+are retained as evidence but are not interpreted by the chart generator.
 
 Omission reasons use a fixed display order: failed status, missing metrics,
 non-resident execution, and singleton CPU cohort. Unsupported-schema summary
