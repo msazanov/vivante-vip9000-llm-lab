@@ -49,6 +49,9 @@ docs/evidence/a733-extra-cooler-thermal-baseline-2026-08-09.md Clean sustained C
 docs/evidence/prism-cpu-reference-build-2026-08-09.md Pinned native runtime and first model execution
 docs/evidence/a733-cpu-optimization-matrix-2026-08-09.md Source-audited CPU A/B matrix
 docs/evidence/vip9000-next-capability-probe-2026-08-09.md Verified SDK assets and next NPU probe
+docs/evidence/bonsai-q1-npu-partition-audit-2026-08-10.md Exact Bonsai Q1 tensor/offload inventory
+docs/evidence/q1-uint8-nbg-packed-carrier-design-2026-08-10.md Packed Q1 over proven UINT8 NBG design
+docs/superpowers/specs/2026-08-10-q1-vip9000-backend-design.md Approved-scope Q1 backend research specification
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
 docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
 docs/legal/licensing.md                               Licensing and redistribution matrix

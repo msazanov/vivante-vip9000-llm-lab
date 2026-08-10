@@ -83,14 +83,15 @@ ternary и не стандартный `TQ1_0`. Новый layout не меня�
 
 | CPU-раздел | Prompt median | Decode median | Нижняя оценка Q1-потока |
 |---|---:|---:|---:|
-| A76, CPU 6–7, t2 | 1.582870 ток/с | 0.649836 ток/с | 2.457600 GB/s |
-| A55, CPU 0–5, t6 | 1.444640 ток/с | 0.726175 ток/с | 2.746305 GB/s |
+| A76, CPU 6–7, t2 | 1.582870 ток/с | 0.649836 ток/с | 2.341416 GB/s |
+| A55, CPU 0–5, t6 | 1.444640 ток/с | 0.726175 ток/с | 2.616472 GB/s |
 
-Нижняя оценка умножает все Q1-байты на decode tok/s и не включает F32-тензоры,
-KV, активации и служебный трафик. Более быстрый decode на шести A55 при более
-медленном prompt на тех же весах является сильным признаком bandwidth-bound
-режима. Это не заменяет отдельный memory-bandwidth benchmark и operator-level
-профилирование.
+Нижняя оценка умножает 3,603,087,360 байт полных Q1 GEMV на decode tok/s. Она
+исключает `token_embd.weight`, который в decode является lookup, и не включает
+F32-тензоры, KV, активации и служебный трафик. Более быстрый decode на шести A55
+при более медленном prompt на тех же весах является сильным признаком
+bandwidth-bound режима. Это не заменяет отдельный memory-bandwidth benchmark и
+operator-level профилирование.
 
 Пик RSS обоих полноценных CPU-запусков около 7.3 GiB при GGUF около 3.8 GB
 согласуется с наличием исходного mapping, repack и рабочих буферов, но сам по
@@ -205,9 +206,16 @@ newline. Payload-тензоры следуют в GGUF index order, начина
 Первый kernel выполняет GEMV `Q1_VIP_16x128 × Q8_0 → FP32`.
 
 Для каждого Q1-блока и четырёх соответствующих Q8_0 subblocks по 32 элемента
-kernel вычисляет знаковый dot, применяет исходный Q1 `d` и Q8_0 scale и
-аккумулирует выход. Активация общая для 16 выходов. Нельзя молча заменить
-FP32 accumulation на FP16: такой вариант является отдельным quality-risk A/B.
+kernel вычисляет знаковый dot и аккумулирует точную форму:
+
+```text
+output += d_q1 * sum(s=0..3, d_q8[s] *
+                     sum(j=32*s..32*s+31, sign[j] * q8[j]))
+```
+
+`q8[j]` — квантованные целые значения; каждый subblock имеет собственную
+`d_q8[s]`. Активация общая для 16 выходов. Нельзя молча заменить FP32
+accumulation на FP16: такой вариант является отдельным quality-risk A/B.
 
 Веса и выходные buffers остаются resident. Активация одного token-step
 записывается, flush выполняется один раз, затем trigger/wait. Output invalidate
@@ -225,6 +233,45 @@ FP32 accumulation на FP16: такой вариант является отде
 доказывает отсутствие записи/чтения expanded weights через DDR. Этот путь
 может использовать native NN engines и особенно интересен для prefill, но не
 является первым decode-кандидатом.
+
+## Packed Q1 внутри рабочего UINT8 NBG
+
+Проверенный на плате UINT8 NBG является транспортом и контейнером графа, а не
+форматом одного байта на один Q1-вес. Один UINT8 переносит восемь sign-битов
+`Q1_VIP_16x128`; custom PPU/OpenCL/EVIS operation внутри NBG извлекает их в
+регистрах или локальном tile. В DDR остаются 18 байт на 128 весов. Стандартный
+UINT8 MAC не считается поддерживающим эту семантику без custom operation.
+
+Основной кандидат — прямой packed PPU kernel. Условный второй кандидат —
+PPU unpack текущего tile в VIP SRAM и native UINT8/INT8 NN partial dot. Второй
+путь fail closed, если expanded coefficients попадают в DDR, native engine не
+принимает transient coefficients или compiler не сохраняет разные Q1 scales
+для каждой выходной строки и K-группы.
+
+Физический layout остаётся `16×128`, но execution tile получает autotune
+варианты `16×128`, `64×128` и `128×128`. Их packed payload равен соответственно
+288, 1152 и 2304 байт; expanded INT8 scratch — 2048, 8192 и 16384 байт. Это
+позволяет переиспользовать один Q8_0 K=128 block для большего числа строк без
+изменения sidecar format.
+
+Второе независимое сокращение overhead — один NBG submission для независимых
+проекций с общей активацией. Полные четыре вызова каждого слоя:
+
+- recurrent: `qkv + attn_gate + alpha + beta`; `ssm_out`; `gate + up`;
+  `ffn_down`;
+- full attention: `q + k + v`; `attn_output`; `gate + up`; `ffn_down`.
+
+`ssm_out`, attention output и `ffn_down` остаются отдельными, потому что зависят
+от промежуточных операций. Если NBG допускает один multi-output invocation с
+внутренним стримингом output tiles, первый безопасный graph-bundle теоретически
+снижает число Q1 submissions на decode token с 497 до 257: четыре на каждый из
+64 слоёв и один LM head. Это экспериментальный target, а не доказанная
+возможность runtime. Дальнейшее снижение требует переноса
+nonlinear/state/attention ops и не входит в первый gate.
+
+Полное сравнение кандидатов, SRAM footprints и экспериментальные шлюзы
+зафиксированы в
+`docs/evidence/q1-uint8-nbg-packed-carrier-design-2026-08-10.md`.
 
 ## CPU-контроль `Q1_A733_4x4/v1`
 
@@ -360,6 +407,15 @@ fixtures, включая все положительные знаки, все о
 биты, псевдослучайные данные, граничные FP16 scales и нулевые исходные
 значения, которые исходный quantizer относит к положительному знаку.
 
+После correctness одной `16×128` tile измеряются execution tiles `16×128`,
+`64×128` и `128×128`. Отдельный bundle fixture передаёт одну активацию двум
+независимым матрицам и сравнивает оба выхода с двумя последовательными CPU
+golden. Ни одно сокращение числа submit не может менять порядок зависимых ops.
+
+Эксперимент SRAM-unpack собирается как один custom-op → native NN NBG. Он
+проходит gate только с измеренным отсутствием expanded-weight DDR traffic и
+корректными намеренно различными per-group scales.
+
 ### Gate C2 — производственные формы
 
 Обязательны полные GEMV формы:
@@ -443,6 +499,10 @@ median, p90, max и CV. Отдельно измеряются:
 - teardown;
 - bytes mapped, copied, flushed, invalidated и expanded.
 
+Дополнительно для bundled path сохраняются число logical Q1 GEMV, число NBG
+submissions и activation bytes на submission. Для полной модели первый
+безопасный target равен `497 logical GEMV → 257 NBG submissions`.
+
 Кандидат допускается к `ggml`-интеграции, если на обеих производственных формах
 он проходит correctness gate, имеет минимум 50 измерений, CV не выше 2% и его
 host-total median минимум на 10% меньше CPU A55 median той же GEMV. Device-only
@@ -469,6 +529,12 @@ p90    = 0.7263472 ток/с
 
 Основная цель — максимальный устойчивый decode tok/s, а не прохождение
 минимального порога. Prompt throughput и TTFT остаются отдельными метриками.
+
+Target run дополнительно обязан доказать фактическое NPU execution: нулевой CPU
+fallback eligible Q1 ops, ненулевые device cycles/time и согласованные NPU
+frequency/thermal samples. Использование всех восьми нижележащих NN engines
+является отдельным capability gate и не выводится из одного факта исполнения
+на VIP9000.
 
 ## Профилирование и тепловая безопасность
 
@@ -520,13 +586,16 @@ NPD/layer dump — отдельный diagnostic A/B и не смешивает�
 1. Закрепить compiler/runtime handshake C0.
 2. Реализовать host-side `Q1_VIP_16x128/v1` pack/unpack и adversarial tests.
 3. Создать Q1 CPU golden harness и production-shape fixtures.
-4. Реализовать Q1 PPU custom-op path и resident profiler C1/C2.
-5. Выполнить CPU A/B `Q1_A733_4x4/v1`.
-6. Добавить минимальный `VIP9000` backend для прошедшего C2 Q1 kernel и
+4. Реализовать Q1 PPU packed-carrier custom-op и сравнить execution tiles
+   `16×128`, `64×128`, `128×128` в resident profiler C1/C2.
+5. Проверить двухматричный bundle, затем производственный FFN `gate+up` и
+   target `497 → 257` submissions.
+6. Отдельно проверить PPU unpack → SRAM → native NN без expanded DDR traffic.
+7. Выполнить CPU A/B `Q1_A733_4x4/v1`.
+8. Добавить минимальный `VIP9000` backend для прошедшего C2 Q1 kernel и
    `GGML_OP_MUL_MAT` в strict benchmark режиме.
-7. Выполнить полную Q1-модель C4 и обновить канонический ledger/график.
-8. Только затем исследовать SRAM-only Q1 unpack → native NN и prefill
-   partition.
+9. Выполнить полную Q1-модель C4 и обновить канонический ledger/график.
+10. Только затем расширять native NN path на prefill partition.
 
 ## Критерии приёмки исследования
 
