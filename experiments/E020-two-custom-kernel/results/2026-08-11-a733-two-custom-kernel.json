@@ -1,0 +1,57 @@
+{
+  "schema": "vip9000-e020-two-custom-kernel-target/v1",
+  "date": "2026-08-11",
+  "board": "Orange Pi Zero 3W, A733, 12 GB",
+  "runtime": "VIPLite 2.0.3.2-AW-2024-08-30",
+  "hardware": {
+    "cid": "0x1000003b",
+    "device_count": 1,
+    "core_count_each_device": [1]
+  },
+  "nbg": {
+    "custom_kernel_count": 2,
+    "layer_count": 2,
+    "operation_types": ["SH", "SH"],
+    "graph_inputs": 1,
+    "graph_outputs": 1,
+    "intermediate": "virtual_uint8_tensor",
+    "memory_pool_bytes": 0,
+    "u8_16": {
+      "vip_sram_bytes": 98816,
+      "nbg_sha256": "6790df71668265468fc226f06cf73ffcc2828f51ee7a01edac82036ab5e87baa"
+    },
+    "u8_32768": {
+      "vip_sram_bytes": 131328,
+      "nbg_sha256": "c173948f1f58c2095424b8f6c7a2c471616c8f4e0a1ed83ffcc15149755d26aa"
+    }
+  },
+  "target_profiles": {
+    "u8_16": {
+      "iterations": 100,
+      "bit_exact": true,
+      "repeat_equal": true,
+      "run_us_mean": 48.325,
+      "run_us_p50": 48.083,
+      "run_us_p95": 49.084,
+      "device_us_mean": 9.333,
+      "cycles_mean": 2664.8,
+      "h2d_us_mean": 0.686,
+      "d2h_us_mean": 0.906
+    },
+    "u8_32768": {
+      "iterations": 100,
+      "bit_exact": true,
+      "repeat_equal": true,
+      "input_output_sha256": "c247dd6ea1fc501f65aa89ff2244598eb5075948da8c72debba828d597fe1a4f",
+      "run_us_mean": 144.954,
+      "run_us_p50": 144.250,
+      "run_us_p95": 147.834,
+      "device_us_mean": 91.394,
+      "cycles_mean": 84979.0,
+      "h2d_us_mean": 10.319,
+      "d2h_us_mean": 252.845
+    }
+  },
+  "temperature_c_after": 34.534,
+  "conclusion": "One physical VIP core does not limit an NBG to one custom kernel; two SH layers and an internal virtual tensor execute correctly."
+}
