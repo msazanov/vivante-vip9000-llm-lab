@@ -1,0 +1,48 @@
+#include "cl_viv_vx_ext.h"
+
+#ifndef E020_K
+#define E020_K 32
+#endif
+
+__kernel void e020_q1_unpack_i8(
+    __read_only image2d_t packed_q1,
+    __write_only image2d_t expanded_i8)
+{
+    const int block = (int)get_global_id(0) % (E020_K / 32);
+    const int row = (int)get_global_id(0) / (E020_K / 32);
+    const int2 input_coord = (int2)(row * (E020_K / 8) + block * 4, 0);
+    const int2 output_lo = (int2)(block * 32, row);
+    const int2 output_hi = (int2)(block * 32 + 16, row);
+    const vxc_uchar16 mask_0_7 = (vxc_uchar16)(
+        0, 1, 2, 3, 4, 5, 6, 7, 1, 1, 1, 1, 1, 1, 1, 1);
+    const vxc_uchar16 mask_8_15 = (vxc_uchar16)(
+        8, 9, 10, 11, 12, 13, 14, 15, 1, 1, 1, 1, 1, 1, 1, 1);
+    const vxc_uchar16 mask_16_23 = (vxc_uchar16)(
+        16, 17, 18, 19, 20, 21, 22, 23, 1, 1, 1, 1, 1, 1, 1, 1);
+    const vxc_uchar16 mask_24_31 = (vxc_uchar16)(
+        24, 25, 26, 27, 28, 29, 30, 31, 1, 1, 1, 1, 1, 1, 1, 1);
+    vxc_uchar16 source_bytes;
+    vxc_uchar16 bits_lo;
+    vxc_uchar16 bits_hi;
+    vxc_char16 signs_lo;
+    vxc_char16 signs_hi;
+
+    VXC_ReadImage(source_bytes, packed_q1, input_coord, VXC_5BITOFFSET_XY(0, 0),
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_BitExtract(bits_lo, source_bytes, source_bytes, mask_0_7,
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));
+    VXC_BitExtract(bits_lo, source_bytes, source_bytes, mask_8_15,
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_BitExtract(bits_hi, source_bytes, source_bytes, mask_16_23,
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));
+    VXC_BitExtract(bits_hi, source_bytes, source_bytes, mask_24_31,
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));
+    _viv_asm(COPY, signs_lo, bits_lo, 16);
+    _viv_asm(COPY, signs_hi, bits_hi, 16);
+    signs_lo = signs_lo * (vxc_char16)(2) - (vxc_char16)(1);
+    signs_hi = signs_hi * (vxc_char16)(2) - (vxc_char16)(1);
+    VXC_WriteImage(expanded_i8, output_lo, signs_lo,
+                   VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(expanded_i8, output_hi, signs_hi,
+                   VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+}

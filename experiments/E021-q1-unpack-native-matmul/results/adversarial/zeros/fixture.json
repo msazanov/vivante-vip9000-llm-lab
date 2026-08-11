@@ -1,0 +1,145 @@
+{
+  "activation_i8": [
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1
+  ],
+  "bit_order": "lsb_first",
+  "golden_i8": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "pattern": "zeros",
+  "rows": [
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 0
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 1
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 2
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 3
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 4
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 5
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 6
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 7
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 8
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 9
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 10
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 11
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 12
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 13
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 14
+    },
+    {
+      "dot": 0,
+      "packed_hex": "00000000",
+      "row": 15
+    }
+  ],
+  "schema": "vip9000-e020-q1-unpack-native-fc-fixture/v1",
+  "shape": {
+    "k": 32,
+    "m": 16,
+    "n": 1
+  },
+  "weight_mapping": "bit_0=-1,bit_1=+1"
+}

@@ -1,0 +1,17 @@
+{
+  "custom_kernel_count": 1,
+  "external_expanded_weight_bytes": 0,
+  "external_packed_weight_bytes": 16384,
+  "graph_inputs": 2,
+  "graph_outputs": 1,
+  "intermediate": "virtual_int8_weights",
+  "native_op": "vxFullyConnectedLayer",
+  "nbg_bytes": 3712,
+  "nbg_file": "e020_q1_unpack_native_fc_m1024_k128_i8.nb",
+  "schema": "vip9000-e020-q1-unpack-native-fc-host/v1",
+  "shape": {
+    "k": 128,
+    "m": 1024,
+    "n": 1
+  }
+}

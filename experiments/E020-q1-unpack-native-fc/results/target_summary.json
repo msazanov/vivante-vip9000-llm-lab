@@ -1,0 +1,49 @@
+{
+  "schema": "vip9000-e020-q1-unpack-native-fc-target/v1",
+  "board": "Orange Pi Zero 3W 12GB",
+  "npu": "Vivante VIP9000 PID 0x1000003b",
+  "driver": "VIPLite 2.0.3.2-AW-2024-08-30",
+  "runs": [
+    {
+      "shape": {"m": 16, "k": 32, "n": 1},
+      "iterations": 40,
+      "patterns": ["zeros", "ones", "alternating_0x55_0xaa", "mixed"],
+      "golden": "bit_exact_4_patterns_10_of_10_each",
+      "temperature_before_c": 34.224,
+      "temperature_after_c": 35.030,
+      "device_us_observed": "15..23 after warm-up",
+      "conclusion": "capability_gate_pass"
+    },
+    {
+      "shape": {"m": 1024, "k": 128, "n": 1},
+      "iterations": 100,
+      "steady_iterations": 99,
+      "golden": "bit_exact_1024_of_1024",
+      "repeat_equal": "100_of_100",
+      "h2d_mean_us": 7.324,
+      "run_mean_us": 378.800,
+      "d2h_mean_us": 9.281,
+      "device_mean_us": 339.232,
+      "total_mean_us": 395.405,
+      "cycles_mean": 336297.7,
+      "effective_gmac_s": 0.386378,
+      "temperature_after_c": 36.580,
+      "conclusion": "correct_profile_point"
+    },
+    {
+      "shape": {"m": 1024, "k": 5120, "n": 1},
+      "iterations": 30,
+      "steady_iterations": 29,
+      "golden": "failed_from_zero_based_output_102",
+      "repeat_equal_steady": "25_of_29",
+      "h2d_mean_us": 191.198,
+      "run_mean_us": 26263.934,
+      "d2h_mean_us": 18.318,
+      "device_mean_us": 25909.793,
+      "total_mean_us": 26473.450,
+      "cycles_mean": 25902699.8,
+      "effective_gmac_s": 0.202351,
+      "conclusion": "reject_incorrect_and_slower_than_e014"
+    }
+  ]
+}

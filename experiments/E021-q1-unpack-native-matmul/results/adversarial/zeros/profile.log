@@ -1,0 +1,22 @@
+VIPLite driver software version 2.0.3.2-AW-2024-08-30
+phase,name=init,time_us=5508.125
+phase,name=create_network,time_us=647.000
+network,inputs=2,outputs=1
+tensor,kind=input,index=0,format=2,quant=1,dims=2,shape=64x1
+buffer,kind=input,index=0,bytes=64
+tensor,kind=input,index=1,format=3,quant=1,dims=4,shape=1x1x32x1
+buffer,kind=input,index=1,bytes=32
+tensor,kind=output,index=0,format=3,quant=1,dims=4,shape=1x1x16x1
+buffer,kind=output,index=0,bytes=16
+phase,name=create_buffers,time_us=606.333
+phase,name=prepare,time_us=263.875
+iteration,index=0,kind=first,h2d_us=42.125,run_us=612.292,d2h_us=8.875,device_profile_status=0,device_us=167,cycles=8227,repeat_equal=1
+iteration,index=1,kind=steady,h2d_us=12.333,run_us=430.125,d2h_us=9.375,device_profile_status=0,device_us=167,cycles=8705,repeat_equal=1
+iteration,index=2,kind=steady,h2d_us=12.125,run_us=653.125,d2h_us=8.708,device_profile_status=0,device_us=163,cycles=8111,repeat_equal=1
+iteration,index=3,kind=steady,h2d_us=12.000,run_us=256.417,d2h_us=7.167,device_profile_status=0,device_us=95,cycles=8486,repeat_equal=1
+iteration,index=4,kind=steady,h2d_us=11.041,run_us=219.000,d2h_us=7.208,device_profile_status=0,device_us=73,cycles=7998,repeat_equal=1
+iteration,index=5,kind=steady,h2d_us=11.208,run_us=195.916,d2h_us=7.417,device_profile_status=0,device_us=51,cycles=8457,repeat_equal=1
+iteration,index=6,kind=steady,h2d_us=10.875,run_us=191.375,d2h_us=7.209,device_profile_status=0,device_us=48,cycles=7857,repeat_equal=1
+iteration,index=7,kind=steady,h2d_us=10.917,run_us=187.875,d2h_us=7.084,device_profile_status=0,device_us=45,cycles=8372,repeat_equal=1
+iteration,index=8,kind=steady,h2d_us=11.125,run_us=184.458,d2h_us=7.041,device_profile_status=0,device_us=43,cycles=8037,repeat_equal=1
+iteration,index=9,kind=steady,h2d_us=11.333,run_us=187.167,d2h_us=7.292,device_profile_status=0,device_us=43,cycles=8241,repeat_equal=1

@@ -1,0 +1,49 @@
+{
+  "schema": "vip9000-e021-q1-native-backends-target/v1",
+  "matrix_multiply_host": {
+    "result": "exporter_segmentation_fault",
+    "include_path_workaround": "cd_to_sdk_include_cl_removed_missing_header_error",
+    "shader_fallback_disabled": "still_segmentation_fault"
+  },
+  "conv1x1": {
+    "nbg_ops": ["e020_q1_unpack_i8", "ConvolutionLayer"],
+    "contains_tensor_transpose": false,
+    "adversarial_m16_k32": "bit_exact_4_patterns_10_of_10_each",
+    "m1024_k128": {
+      "golden": "bit_exact_1024_of_1024",
+      "repeat_equal": "100_of_100",
+      "h2d_mean_us": 7.194,
+      "run_mean_us": 634.690,
+      "d2h_mean_us": 9.426,
+      "device_mean_us": 574.869,
+      "total_mean_us": 651.310,
+      "effective_gmac_s": 0.228003,
+      "temperature_after_c": 33.728
+    },
+    "m1024_k5120": {
+      "golden": "failed_from_zero_based_output_104",
+      "repeat_equal_steady": "20_of_29",
+      "h2d_mean_us": 431.754,
+      "run_mean_us": 28833.651,
+      "d2h_mean_us": 29.579,
+      "device_mean_us": 28424.517,
+      "total_mean_us": 29294.984,
+      "effective_gmac_s": 0.184449
+    }
+  },
+  "safe_fc_tile_m96_k5120": {
+    "expanded_virtual_bytes": 491520,
+    "golden": "bit_exact_96_of_96",
+    "repeat_equal": "100_of_100",
+    "h2d_mean_us": 19.729,
+    "run_mean_us": 2082.876,
+    "d2h_mean_us": 2.695,
+    "device_mean_us": 2029.434,
+    "total_mean_us": 2105.300,
+    "effective_gmac_s": 0.242196,
+    "projected_11_tiles_device_ms": 22.324,
+    "projected_11_tiles_total_ms": 23.158,
+    "temperature_after_c": 33.418
+  },
+  "decision": "reject_expand_to_virtual_int8_then_native_backend_for_full_bonsai_gemv"
+}

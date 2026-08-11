@@ -1,0 +1,145 @@
+{
+  "activation_i8": [
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1,
+    0,
+    -1,
+    1
+  ],
+  "bit_order": "lsb_first",
+  "golden_i8": [
+    0,
+    0,
+    4,
+    0,
+    0,
+    -4,
+    0,
+    0,
+    4,
+    2,
+    0,
+    -2,
+    -4,
+    0,
+    0,
+    4
+  ],
+  "pattern": "mixed",
+  "rows": [
+    {
+      "dot": 0,
+      "packed_hex": "552a552a",
+      "row": 0
+    },
+    {
+      "dot": 0,
+      "packed_hex": "52a956a9",
+      "row": 1
+    },
+    {
+      "dot": 4,
+      "packed_hex": "4aa54aa5",
+      "row": 2
+    },
+    {
+      "dot": 0,
+      "packed_hex": "2ad52a95",
+      "row": 3
+    },
+    {
+      "dot": 0,
+      "packed_hex": "a954a954",
+      "row": 4
+    },
+    {
+      "dot": -4,
+      "packed_hex": "a55aa552",
+      "row": 5
+    },
+    {
+      "dot": 0,
+      "packed_hex": "952a956a",
+      "row": 6
+    },
+    {
+      "dot": 0,
+      "packed_hex": "54ab54aa",
+      "row": 7
+    },
+    {
+      "dot": 4,
+      "packed_hex": "52a552ad",
+      "row": 8
+    },
+    {
+      "dot": 2,
+      "packed_hex": "6a954a95",
+      "row": 9
+    },
+    {
+      "dot": 0,
+      "packed_hex": "aa54aa55",
+      "row": 10
+    },
+    {
+      "dot": -2,
+      "packed_hex": "ad52a952",
+      "row": 11
+    },
+    {
+      "dot": -4,
+      "packed_hex": "954ab54a",
+      "row": 12
+    },
+    {
+      "dot": 0,
+      "packed_hex": "552a552a",
+      "row": 13
+    },
+    {
+      "dot": 0,
+      "packed_hex": "52a956a9",
+      "row": 14
+    },
+    {
+      "dot": 4,
+      "packed_hex": "4aa54aa5",
+      "row": 15
+    }
+  ],
+  "schema": "vip9000-e020-q1-unpack-native-fc-fixture/v1",
+  "shape": {
+    "k": 32,
+    "m": 16,
+    "n": 1
+  },
+  "weight_mapping": "bit_0=-1,bit_1=+1"
+}
