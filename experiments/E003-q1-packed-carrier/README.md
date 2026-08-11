@@ -176,6 +176,13 @@ Runner не содержит host CPU implementation; ненулевые device 
 
 ## Следующий gate: fused native tensor op
 
+Текущая продолженная ветка [E022 fused packed-Q1](../E022-fused-q1/README.md)
+проверяет более узкий путь: `BitExtract → DP16x1 → FP16 scale decode →
+INT32/FP32 reduce` без expanded weight tensor. На полной форме `M=1024,K=5120`
+она дала exact FP32 golden и `13.518 ms` end-to-end, что ниже E014 `13.970 ms`
+на той же плате. Это ускорение одного GEMV-тайла; интеграция всего Bonsai
+decode ещё не доказана.
+
 EVIS выполняется на программируемом shader/PPU-пути и не загружает native NN
 MAC array так, как стандартный UINT8 FullyConnected/Conv. Следующий эксперимент
 должен собрать один graph:
@@ -190,4 +197,3 @@ MAC array так, как стандартный UINT8 FullyConnected/Conv. Сл�
 Если NBG planner материализует expanded tile в DDR или native op не сохраняет
 Q8_0 scale semantics, кандидат отклоняется независимо от локального ускорения
 одного узла.
-

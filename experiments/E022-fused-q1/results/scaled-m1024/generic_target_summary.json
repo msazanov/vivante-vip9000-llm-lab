@@ -1,0 +1,16 @@
+{
+  "cycles_mean": 12828652.575757576,
+  "d2h_mean_us": 139.77230303030305,
+  "device_mean_us": 12894.131313131313,
+  "dtype": "f32",
+  "golden_status": "exact",
+  "h2d_mean_us": 235.88975757575756,
+  "max_abs": 0.0,
+  "output_values_checked": 1024,
+  "repeat_equal_bad": 0,
+  "run_mean_us": 13142.392636363636,
+  "schema": "vip9000-e022-fused-q1-target/v1",
+  "steady_iterations": 99,
+  "thermal_after_raw": "/sys/class/thermal/thermal_zone0 type=cpub_thermal_zone\n temp=34.534 C\n/sys/class/thermal/thermal_zone1 type=ddr_thermal_zone\n temp=34.286 C\n/sys/class/thermal/thermal_zone2 type=npu_thermal_zone\n temp=33.728 C\n/sys/class/thermal/thermal_zone3 type=cpul_thermal_zone\n temp=34.968 C\n/sys/class/thermal/thermal_zone4 type=gpu_thermal_zone\n temp=34.100 C\n/sys/class/thermal/thermal_zone5 type=cpul_idle_zone\n temp=34.472 C\n/sys/class/thermal/thermal_zone6 type=cpub_idle_zone\n temp=33.232 C\n/sys/class/thermal/thermal_zone7 type=skin_zone\n temp=30.646 C\n",
+  "thermal_before_raw": "/sys/class/thermal/thermal_zone0 type=cpub_thermal_zone\n temp=33.790 C\n/sys/class/thermal/thermal_zone1 type=ddr_thermal_zone\n temp=33.604 C\n/sys/class/thermal/thermal_zone2 type=npu_thermal_zone\n temp=32.984 C\n/sys/class/thermal/thermal_zone3 type=cpul_thermal_zone\n temp=33.542 C\n/sys/class/thermal/thermal_zone4 type=gpu_thermal_zone\n temp=33.480 C\n/sys/class/thermal/thermal_zone5 type=cpul_idle_zone\n temp=33.790 C\n/sys/class/thermal/thermal_zone6 type=cpub_idle_zone\n temp=33.542 C\n/sys/class/thermal/thermal_zone7 type=skin_zone\n temp=30.708 C\n"
+}

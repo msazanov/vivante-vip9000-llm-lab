@@ -1,0 +1,108 @@
+#include "cl_viv_vx_ext.h"
+
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+
+/* K=5120 carrier: forty 128-value Q1 super-blocks.  The loop is kept
+ * dynamic in the kernel so the compiler does not replicate forty copies of
+ * the register-heavy four-row body. */
+#define E022_EXTRACT_ROW(SIGN_BLOB, BIT_BASE, Q_I8, TOTAL, ACC, BITS, BITS_I8) do { \
+    vxc_uchar16 mask_lo =                                                \
+        (vxc_uchar16)((BIT_BASE) + 0, (BIT_BASE) + 1,                    \
+                      (BIT_BASE) + 2, (BIT_BASE) + 3,                    \
+                      (BIT_BASE) + 4, (BIT_BASE) + 5,                    \
+                      (BIT_BASE) + 6, (BIT_BASE) + 7,                    \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    vxc_uchar16 mask_hi =                                                \
+        (vxc_uchar16)((BIT_BASE) + 8, (BIT_BASE) + 9,                    \
+                      (BIT_BASE) + 10, (BIT_BASE) + 11,                  \
+                      (BIT_BASE) + 12, (BIT_BASE) + 13,                  \
+                      (BIT_BASE) + 14, (BIT_BASE) + 15,                  \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    int selected;                                                          \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_lo,            \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));        \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_hi,            \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, (BITS_I8), (BITS), 16);                                \
+    VXC_DP16x1(selected, (BITS_I8), (Q_I8),                              \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniDotInt8_16x1);                                        \
+    (ACC) += (selected << 1) - (TOTAL);                                   \
+} while (0)
+
+#define E022_LOAD_CHUNK(Q8_X, BIT_BASE) do {                              \
+    vxc_uchar16 qraw;                                                      \
+    vxc_char16 q_i8;                                                       \
+    int total;                                                             \
+    VXC_ReadImage(qraw, activation, (int2)((Q8_X), 0), 0,               \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, q_i8, qraw, 16);                                       \
+    VXC_DP16x1(total, q_i8, q_i8,                                        \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniSumInt8_16x1);                                        \
+    E022_EXTRACT_ROW(sign0, (BIT_BASE), q_i8, total, dot0, bits0, bits0_i8); \
+    E022_EXTRACT_ROW(sign1, (BIT_BASE), q_i8, total, dot1, bits1, bits1_i8); \
+    E022_EXTRACT_ROW(sign2, (BIT_BASE), q_i8, total, dot2, bits2, bits2_i8); \
+    E022_EXTRACT_ROW(sign3, (BIT_BASE), q_i8, total, dot3, bits3, bits3_i8); \
+} while (0)
+
+__kernel void e022_q1_fused_dp16x1_rows4_k5120(
+    __read_only image2d_t weights,
+    __read_only image2d_t activation,
+    __write_only image2d_t output)
+{
+    const int group = (int)get_global_id(0);
+    const int row = group * 4;
+    vxc_uchar16 sign0;
+    vxc_uchar16 sign1;
+    vxc_uchar16 sign2;
+    vxc_uchar16 sign3;
+    vxc_uchar16 bits0;
+    vxc_uchar16 bits1;
+    vxc_uchar16 bits2;
+    vxc_uchar16 bits3;
+    vxc_char16 bits0_i8;
+    vxc_char16 bits1_i8;
+    vxc_char16 bits2_i8;
+    vxc_char16 bits3_i8;
+    int dot0 = 0;
+    int dot1 = 0;
+    int dot2 = 0;
+    int dot3 = 0;
+
+    for (int block = 0; block < 40; ++block) {
+        const int q1_x = block * 18;
+        const int q8_x = block * 136;
+        VXC_ReadImage(sign0, weights, (int2)(q1_x, row + 0), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign1, weights, (int2)(q1_x, row + 1), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign2, weights, (int2)(q1_x, row + 2), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign3, weights, (int2)(q1_x, row + 3), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+
+        E022_LOAD_CHUNK(q8_x + 2, 0);
+        E022_LOAD_CHUNK(q8_x + 18, 16);
+        E022_LOAD_CHUNK(q8_x + 36, 32);
+        E022_LOAD_CHUNK(q8_x + 52, 48);
+        E022_LOAD_CHUNK(q8_x + 70, 64);
+        E022_LOAD_CHUNK(q8_x + 86, 80);
+        E022_LOAD_CHUNK(q8_x + 104, 96);
+        E022_LOAD_CHUNK(q8_x + 120, 112);
+    }
+
+    vxc_int4 out0 = (vxc_int4)(dot0, 0, 0, 0);
+    vxc_int4 out1 = (vxc_int4)(dot1, 0, 0, 0);
+    vxc_int4 out2 = (vxc_int4)(dot2, 0, 0, 0);
+    vxc_int4 out3 = (vxc_int4)(dot3, 0, 0, 0);
+    VXC_WriteImage(output, (int2)((row + 0) * 4, 0), out0,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 1) * 4, 0), out1,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 2) * 4, 0), out2,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 3) * 4, 0), out3,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+}

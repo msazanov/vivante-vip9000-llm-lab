@@ -1,0 +1,16 @@
+/sys/class/thermal/thermal_zone0 type=cpub_thermal_zone
+ temp=33.790 C
+/sys/class/thermal/thermal_zone1 type=ddr_thermal_zone
+ temp=33.604 C
+/sys/class/thermal/thermal_zone2 type=npu_thermal_zone
+ temp=32.984 C
+/sys/class/thermal/thermal_zone3 type=cpul_thermal_zone
+ temp=33.542 C
+/sys/class/thermal/thermal_zone4 type=gpu_thermal_zone
+ temp=33.480 C
+/sys/class/thermal/thermal_zone5 type=cpul_idle_zone
+ temp=33.790 C
+/sys/class/thermal/thermal_zone6 type=cpub_idle_zone
+ temp=33.542 C
+/sys/class/thermal/thermal_zone7 type=skin_zone
+ temp=30.708 C

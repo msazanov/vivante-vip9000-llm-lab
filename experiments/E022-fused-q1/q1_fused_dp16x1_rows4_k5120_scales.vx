@@ -1,0 +1,150 @@
+#include "cl_viv_vx_ext.h"
+
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+_viv_uniform VXC_512Bits uniFP16toFP32Lo4_dp4x4;
+
+/* Read one little-endian FP16 from a byte carrier.  The first half lane is
+ * the two bytes at (X,Y); the remaining lanes are deliberately ignored. */
+#define E022_READ_SCALE(CARRIER, X, Y, DEST) do {                         \
+    VXC_ReadImage(scale_raw, (CARRIER), (int2)((X), (Y)), 0,            \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, scale_half, scale_raw, 16);                            \
+    VXC_DP4x4(scale_f, scale_half, scale_half,                           \
+              VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0),              \
+              uniFP16toFP32Lo4_dp4x4);                                  \
+    (DEST) = scale_f.x;                                                   \
+} while (0)
+
+#define E022_EXTRACT_ROW(SIGN_BLOB, BIT_BASE, Q_I8, TOTAL, ACC, BITS, BITS_I8, Q8_SCALE) do { \
+    vxc_uchar16 mask_lo =                                                \
+        (vxc_uchar16)((BIT_BASE) + 0, (BIT_BASE) + 1,                    \
+                      (BIT_BASE) + 2, (BIT_BASE) + 3,                    \
+                      (BIT_BASE) + 4, (BIT_BASE) + 5,                    \
+                      (BIT_BASE) + 6, (BIT_BASE) + 7,                    \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    vxc_uchar16 mask_hi =                                                \
+        (vxc_uchar16)((BIT_BASE) + 8, (BIT_BASE) + 9,                    \
+                      (BIT_BASE) + 10, (BIT_BASE) + 11,                  \
+                      (BIT_BASE) + 12, (BIT_BASE) + 13,                  \
+                      (BIT_BASE) + 14, (BIT_BASE) + 15,                  \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    int selected;                                                          \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_lo,            \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));        \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_hi,            \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, (BITS_I8), (BITS), 16);                                \
+    VXC_DP16x1(selected, (BITS_I8), (Q_I8),                              \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniDotInt8_16x1);                                        \
+    (ACC) += (float)((selected << 1) - (TOTAL)) * (Q8_SCALE);             \
+} while (0)
+
+#define E022_LOAD_CHUNK(Q8_X, BIT_BASE, Q8_SCALE) do {                    \
+    vxc_uchar16 qraw;                                                      \
+    vxc_char16 q_i8;                                                       \
+    int total;                                                             \
+    VXC_ReadImage(qraw, activation, (int2)((Q8_X), 0), 0,               \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, q_i8, qraw, 16);                                       \
+    VXC_DP16x1(total, q_i8, q_i8,                                        \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniSumInt8_16x1);                                        \
+    E022_EXTRACT_ROW(sign0, (BIT_BASE), q_i8, total, partial0, bits0, bits0_i8, (Q8_SCALE)); \
+    E022_EXTRACT_ROW(sign1, (BIT_BASE), q_i8, total, partial1, bits1, bits1_i8, (Q8_SCALE)); \
+    E022_EXTRACT_ROW(sign2, (BIT_BASE), q_i8, total, partial2, bits2, bits2_i8, (Q8_SCALE)); \
+    E022_EXTRACT_ROW(sign3, (BIT_BASE), q_i8, total, partial3, bits3, bits3_i8, (Q8_SCALE)); \
+} while (0)
+
+__kernel void e022_q1_fused_dp16x1_rows4_k5120_scales(
+    __read_only image2d_t weights,
+    __read_only image2d_t activation,
+    __write_only image2d_t output)
+{
+    const int group = (int)get_global_id(0);
+    const int row = group * 4;
+    vxc_uchar16 sign0;
+    vxc_uchar16 sign1;
+    vxc_uchar16 sign2;
+    vxc_uchar16 sign3;
+    vxc_uchar16 bits0;
+    vxc_uchar16 bits1;
+    vxc_uchar16 bits2;
+    vxc_uchar16 bits3;
+    vxc_char16 bits0_i8;
+    vxc_char16 bits1_i8;
+    vxc_char16 bits2_i8;
+    vxc_char16 bits3_i8;
+    vxc_uchar16 scale_raw;
+    vxc_half8 scale_half;
+    vxc_float4 scale_f;
+    float dot0 = 0.0f;
+    float dot1 = 0.0f;
+    float dot2 = 0.0f;
+    float dot3 = 0.0f;
+    float partial0;
+    float partial1;
+    float partial2;
+    float partial3;
+    float q1_scale0;
+    float q1_scale1;
+    float q1_scale2;
+    float q1_scale3;
+
+    for (int block = 0; block < 40; ++block) {
+        const int q1_x = block * 18;
+        const int q8_x = block * 136;
+        VXC_ReadImage(sign0, weights, (int2)(q1_x, row + 0), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign1, weights, (int2)(q1_x, row + 1), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign2, weights, (int2)(q1_x, row + 2), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign3, weights, (int2)(q1_x, row + 3), 0,
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        E022_READ_SCALE(weights, q1_x + 16, row + 0, q1_scale0);
+        E022_READ_SCALE(weights, q1_x + 16, row + 1, q1_scale1);
+        E022_READ_SCALE(weights, q1_x + 16, row + 2, q1_scale2);
+        E022_READ_SCALE(weights, q1_x + 16, row + 3, q1_scale3);
+
+        partial0 = 0.0f;
+        partial1 = 0.0f;
+        partial2 = 0.0f;
+        partial3 = 0.0f;
+        E022_READ_SCALE(activation, q8_x + 0, 0, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 2, 0, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 18, 16, scale_f.s0);
+        E022_READ_SCALE(activation, q8_x + 34, 0, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 36, 32, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 52, 48, scale_f.s0);
+        E022_READ_SCALE(activation, q8_x + 68, 0, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 70, 64, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 86, 80, scale_f.s0);
+        E022_READ_SCALE(activation, q8_x + 102, 0, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 104, 96, scale_f.s0);
+        E022_LOAD_CHUNK(q8_x + 120, 112, scale_f.s0);
+
+        /* q1 scales are applied per 128-value weight block, after all four
+         * Q8 blocks have contributed to that block's partial dot. */
+        dot0 += partial0 * q1_scale0;
+        dot1 += partial1 * q1_scale1;
+        dot2 += partial2 * q1_scale2;
+        dot3 += partial3 * q1_scale3;
+    }
+
+    vxc_float4 out0 = (vxc_float4)(dot0, 0.0f, 0.0f, 0.0f);
+    vxc_float4 out1 = (vxc_float4)(dot1, 0.0f, 0.0f, 0.0f);
+    vxc_float4 out2 = (vxc_float4)(dot2, 0.0f, 0.0f, 0.0f);
+    vxc_float4 out3 = (vxc_float4)(dot3, 0.0f, 0.0f, 0.0f);
+    /* As in the INT32 gate, use disjoint four-lane slots.  This is the
+     * proven output ABI for the current VIPLite tensor writer. */
+    VXC_WriteImage(output, (int2)((row + 0) * 4, 0), out0,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 1) * 4, 0), out1,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 2) * 4, 0), out2,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 3) * 4, 0), out3,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+}

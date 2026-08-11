@@ -1,0 +1,83 @@
+{
+  "schema": "vip9000-e022-fused-q1-target/v1",
+  "branch": "codex/e022-fused-q1",
+  "board": "Orange Pi Zero 3W",
+  "soc": "A733",
+  "npu": "VIP9000",
+  "viplite": "2.0.3.2-AW-2024-08-30",
+  "thermal_snapshot_after_scale_aware_m1024_k5120": {
+    "npu_c": 33.728,
+    "ddr_c": 34.286,
+    "skin_c": 30.646,
+    "throttling_observed": false
+  },
+  "k128": {
+    "scalar_m4": {
+      "golden": "5_patterns_exact_100_of_100_each",
+      "h2d_mean_us": 3.010,
+      "run_mean_us": 59.161,
+      "d2h_mean_us": 2.383,
+      "device_mean_us": 11.214,
+      "cycles_mean": 4601
+    },
+    "rows4_m4": {
+      "golden": "5_patterns_exact_100_of_100_each",
+      "rows_per_work_item": 4,
+      "h2d_mean_us": 2.691,
+      "run_mean_us": 60.730,
+      "d2h_mean_us": 1.948,
+      "device_mean_us": 13.602,
+      "cycles_mean": 6964
+    }
+  },
+  "k5120": {
+    "rows4_m4": {
+      "golden": "5_patterns_exact_100_of_100_each",
+      "rows_per_work_item": 4,
+      "h2d_mean_us": 4.248,
+      "run_mean_us": 248.350,
+      "d2h_mean_us": 1.879,
+      "device_mean_us": 193.723,
+      "cycles_mean": 184863
+    },
+    "m1024": {
+      "golden": "1024_of_1024_exact",
+      "repeat_equal": "100_of_100",
+      "weights_input_bytes": 737280,
+      "activation_input_bytes": 5440,
+      "output_bytes": 16384,
+      "h2d_mean_us": 251.187,
+      "run_mean_us": 9130.931,
+      "d2h_mean_us": 138.145,
+      "device_mean_us": 8941.404,
+      "total_h2d_run_d2h_us": 9520.262,
+      "cycles_mean": 8922720,
+      "scale_semantics": "not_yet_applied",
+      "production_speed_claim": false
+    },
+    "m1024_scale_aware": {
+      "golden": "1024_of_1024_exact_fp32",
+      "max_abs": 0.0,
+      "repeat_equal": "100_of_100",
+      "weights_input_bytes": 737280,
+      "activation_input_bytes": 5440,
+      "output_bytes": 16384,
+      "h2d_mean_us": 235.890,
+      "run_mean_us": 13142.393,
+      "d2h_mean_us": 139.772,
+      "device_mean_us": 12894.131,
+      "total_h2d_run_d2h_us": 13518.054,
+      "cycles_mean": 12828653,
+      "scale_semantics": "fp16_le_q1_per_128_and_q8_per_32",
+      "e014_reference_total_ms": 13.970,
+      "direct_cli_reference_total_ms": 13.315,
+      "relative_to_e014": "3.2_percent_faster",
+      "classification": "accelerates_for_tested_gemv_tile",
+      "production_speed_claim": "pending_llama_cpp_integration"
+    }
+  },
+  "dp16x2_b": {
+    "status": "unresolved_lane_mapping",
+    "integrated": false
+  }
+}

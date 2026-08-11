@@ -1,0 +1,44 @@
+#include "cl_viv_vx_ext.h"
+
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+
+__kernel void e022_dp16x2_b_probe(
+    __read_only image2d_t a_hi_image,
+    __read_only image2d_t a_lo_image,
+    __read_only image2d_t b_image,
+    __write_only image2d_t output_image)
+{
+    const int2 origin = (int2)(0, 0);
+    vxc_char16 a_hi;
+    vxc_char16 a_lo;
+    vxc_char16 b;
+    vxc_int2 pair_00;
+    vxc_int2 pair_11;
+    vxc_int2 pair_22;
+    vxc_int2 pair_33;
+    vxc_int8 output;
+
+    VXC_ReadImage(a_hi, a_hi_image, origin, VXC_5BITOFFSET_XY(0, 0),
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_ReadImage(a_lo, a_lo_image, origin, VXC_5BITOFFSET_XY(0, 0),
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_ReadImage(b, b_image, origin, VXC_5BITOFFSET_XY(0, 0),
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+
+    VXC_DP16x2_b(pair_00, a_hi, a_lo, b,
+                 VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),
+                 uniDotInt8_16x1);
+    VXC_DP16x2_b(pair_11, a_hi, a_lo, b,
+                 VXC_MODIFIER(1, 1, 0, VXC_RM_TowardZero, 0),
+                 uniDotInt8_16x1);
+    VXC_DP16x2_b(pair_22, a_hi, a_lo, b,
+                 VXC_MODIFIER(2, 2, 0, VXC_RM_TowardZero, 0),
+                 uniDotInt8_16x1);
+    VXC_DP16x2_b(pair_33, a_hi, a_lo, b,
+                 VXC_MODIFIER(3, 3, 0, VXC_RM_TowardZero, 0),
+                 uniDotInt8_16x1);
+    output = (vxc_int8)(pair_00.x, pair_00.y, pair_11.x, pair_11.y,
+                        pair_22.x, pair_22.y, pair_33.x, pair_33.y);
+    VXC_WriteImage(output_image, origin, output,
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));
+}

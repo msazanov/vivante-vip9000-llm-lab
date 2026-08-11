@@ -1,0 +1,117 @@
+#include "cl_viv_vx_ext.h"
+
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+
+/*
+ * Four rows share the same Q8 activation carrier.  The only values that
+ * leave the packed-Q1 representation are the 0/1 bit vectors in EVIS
+ * registers; no +/-1 weight tensor is written to DDR or exposed as an NBG
+ * input.  The identity used for every 16-value chunk is:
+ *
+ *     sum((2*b - 1) * q) = 2*sum(b*q) - sum(q)
+ */
+#define E022_EXTRACT_ROW(SIGN_BLOB, BIT_BASE, Q_I8, TOTAL, ACC, BITS, BITS_I8) do { \
+    vxc_uchar16 mask_lo =                                                \
+        (vxc_uchar16)((BIT_BASE) + 0, (BIT_BASE) + 1,                    \
+                      (BIT_BASE) + 2, (BIT_BASE) + 3,                    \
+                      (BIT_BASE) + 4, (BIT_BASE) + 5,                    \
+                      (BIT_BASE) + 6, (BIT_BASE) + 7,                    \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    vxc_uchar16 mask_hi =                                                \
+        (vxc_uchar16)((BIT_BASE) + 8, (BIT_BASE) + 9,                    \
+                      (BIT_BASE) + 10, (BIT_BASE) + 11,                  \
+                      (BIT_BASE) + 12, (BIT_BASE) + 13,                  \
+                      (BIT_BASE) + 14, (BIT_BASE) + 15,                  \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    int selected;                                                          \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_lo,            \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));        \
+    VXC_BitExtract((BITS), (SIGN_BLOB), (SIGN_BLOB), mask_hi,            \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, (BITS_I8), (BITS), 16);                                \
+    VXC_DP16x1(selected, (BITS_I8), (Q_I8),                              \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniDotInt8_16x1);                                        \
+    (ACC) += (selected << 1) - (TOTAL);                                   \
+} while (0)
+
+#define E022_LOAD_CHUNK(BIT_BASE, Q8_X) do {                              \
+    vxc_uchar16 qraw;                                                      \
+    vxc_char16 q_i8;                                                       \
+    int total;                                                             \
+    VXC_ReadImage(qraw, activation, (int2)((Q8_X), 0), 0,               \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, q_i8, qraw, 16);                                       \
+    VXC_DP16x1(total, q_i8, q_i8,                                        \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniSumInt8_16x1);                                        \
+    E022_EXTRACT_ROW(sign0, (BIT_BASE), q_i8, total, dot0, bits0, bits0_i8); \
+    E022_EXTRACT_ROW(sign1, (BIT_BASE), q_i8, total, dot1, bits1, bits1_i8); \
+    E022_EXTRACT_ROW(sign2, (BIT_BASE), q_i8, total, dot2, bits2, bits2_i8); \
+    E022_EXTRACT_ROW(sign3, (BIT_BASE), q_i8, total, dot3, bits3, bits3_i8); \
+} while (0)
+
+__kernel void e022_q1_fused_dp16x1_rows4(
+    __read_only image2d_t weights,
+    __read_only image2d_t activation,
+    __write_only image2d_t output)
+{
+    const int group = (int)get_global_id(0);
+    const int row = group * 4;
+    const int2 weight0_coord = (int2)(0, row + 0);
+    const int2 weight1_coord = (int2)(0, row + 1);
+    const int2 weight2_coord = (int2)(0, row + 2);
+    const int2 weight3_coord = (int2)(0, row + 3);
+    vxc_uchar16 sign0;
+    vxc_uchar16 sign1;
+    vxc_uchar16 sign2;
+    vxc_uchar16 sign3;
+    vxc_uchar16 bits0;
+    vxc_uchar16 bits1;
+    vxc_uchar16 bits2;
+    vxc_uchar16 bits3;
+    vxc_char16 bits0_i8;
+    vxc_char16 bits1_i8;
+    vxc_char16 bits2_i8;
+    vxc_char16 bits3_i8;
+    int dot0 = 0;
+    int dot1 = 0;
+    int dot2 = 0;
+    int dot3 = 0;
+
+    VXC_ReadImage(sign0, weights, weight0_coord, 0,
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_ReadImage(sign1, weights, weight1_coord, 0,
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_ReadImage(sign2, weights, weight2_coord, 0,
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+    VXC_ReadImage(sign3, weights, weight3_coord, 0,
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+
+    E022_LOAD_CHUNK(0, 2);
+    E022_LOAD_CHUNK(16, 18);
+    E022_LOAD_CHUNK(32, 36);
+    E022_LOAD_CHUNK(48, 52);
+    E022_LOAD_CHUNK(64, 70);
+    E022_LOAD_CHUNK(80, 86);
+    E022_LOAD_CHUNK(96, 104);
+    E022_LOAD_CHUNK(112, 120);
+
+    /* Keep the same proven diagnostic carrier as the scalar gate: an INT4
+     * source with lane zero in a disjoint four-int slot.  A direct scalar
+     * vxc_int store is sign-extended by this SDK's image writer as an 8-bit
+     * pixel, so it is not suitable for an INT32 tensor. */
+    vxc_int4 out0 = (vxc_int4)(dot0, 0, 0, 0);
+    vxc_int4 out1 = (vxc_int4)(dot1, 0, 0, 0);
+    vxc_int4 out2 = (vxc_int4)(dot2, 0, 0, 0);
+    vxc_int4 out3 = (vxc_int4)(dot3, 0, 0, 0);
+    VXC_WriteImage(output, (int2)((row + 0) * 4, 0), out0,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 1) * 4, 0), out1,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 2) * 4, 0), out2,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+    VXC_WriteImage(output, (int2)((row + 3) * 4, 0), out3,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+}

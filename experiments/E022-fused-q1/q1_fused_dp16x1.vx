@@ -1,0 +1,77 @@
+#include "cl_viv_vx_ext.h"
+
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+
+/*
+ * One work-item owns one Q1_0 row.  The carrier is deliberately compact:
+ * 18 bytes per Q1 block (16 packed sign bytes + 2 reserved scale bytes) and
+ * four 34-byte Q8 blocks (2 reserved scale bytes + 32 raw INT8 bytes).
+ * Scale application is intentionally deferred to a later gate; this kernel
+ * proves the exact integer path without materialising +/-1 weights.
+ */
+#define E022_DOT16(BIT_BASE, Q8_X) do {                                  \
+    vxc_uchar16 mask_lo =                                                \
+        (vxc_uchar16)((BIT_BASE) + 0, (BIT_BASE) + 1,                    \
+                      (BIT_BASE) + 2, (BIT_BASE) + 3,                    \
+                      (BIT_BASE) + 4, (BIT_BASE) + 5,                    \
+                      (BIT_BASE) + 6, (BIT_BASE) + 7,                    \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    vxc_uchar16 mask_hi =                                                \
+        (vxc_uchar16)((BIT_BASE) + 8, (BIT_BASE) + 9,                    \
+                      (BIT_BASE) + 10, (BIT_BASE) + 11,                 \
+                      (BIT_BASE) + 12, (BIT_BASE) + 13,                 \
+                      (BIT_BASE) + 14, (BIT_BASE) + 15,                 \
+                      1, 1, 1, 1, 1, 1, 1, 1);                          \
+    vxc_uchar16 bits01;                                                   \
+    vxc_uchar16 qraw;                                                      \
+    vxc_char16 bits_i8;                                                   \
+    vxc_char16 q_i8;                                                       \
+    int selected;                                                          \
+    int total;                                                             \
+    VXC_BitExtract(bits01, sign_blob, sign_blob, mask_lo,                \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0));        \
+    VXC_BitExtract(bits01, sign_blob, sign_blob, mask_hi,                \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0));        \
+    VXC_ReadImage(qraw, activation, (int2)((Q8_X), 0), 0,               \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));        \
+    _viv_asm(COPY, bits_i8, bits01, 16);                                 \
+    _viv_asm(COPY, q_i8, qraw, 16);                                      \
+    VXC_DP16x1(selected, bits_i8, q_i8,                                  \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniDotInt8_16x1);                                        \
+    VXC_DP16x1(total, q_i8, q_i8,                                        \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0),              \
+               uniSumInt8_16x1);                                        \
+    dot_acc += (selected << 1) - total;                                  \
+} while (0)
+
+__kernel void e022_q1_fused_dp16x1(
+    __read_only image2d_t weights,
+    __read_only image2d_t activation,
+    __write_only image2d_t output)
+{
+    const int row = (int)get_global_id(0);
+    const int2 weight_coord = (int2)(0, row);
+    /* A vector store writes all selected lanes.  Give every scalar probe row
+     * a disjoint four-lane slot; the carrier gate reads lane 0 of each slot. */
+    const int2 output_coord = (int2)(row * 4, 0);
+    vxc_uchar16 sign_blob;
+    int dot_acc = 0;
+
+    VXC_ReadImage(sign_blob, weights, weight_coord, 0,
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+
+    E022_DOT16(0, 2);
+    E022_DOT16(16, 18);
+    E022_DOT16(32, 36);
+    E022_DOT16(48, 52);
+    E022_DOT16(64, 70);
+    E022_DOT16(80, 86);
+    E022_DOT16(96, 104);
+    E022_DOT16(112, 120);
+
+    vxc_int4 out = (vxc_int4)(dot_acc, 0, 0, 0);
+    VXC_WriteImage(output, output_coord, out,
+                   VXC_MODIFIER(0, 3, 0, VXC_RM_TowardZero, 0));
+}

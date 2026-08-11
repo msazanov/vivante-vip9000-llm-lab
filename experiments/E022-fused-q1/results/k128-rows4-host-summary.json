@@ -1,0 +1,24 @@
+{
+  "activation_loads_per_work_item": 8,
+  "custom_kernel_count": 1,
+  "graph_inputs": 2,
+  "graph_outputs": 1,
+  "input_carriers": {
+    "q1": {
+      "bytes_per_row": 18,
+      "expanded": false
+    },
+    "q8": {
+      "bytes": 136,
+      "expanded": false
+    }
+  },
+  "k": 128,
+  "nbg_bytes": 6144,
+  "nbg_file": "e022_q1_fused_dp16x1_rows4_m4_k128_i32.nb",
+  "output_lanes_per_row": 4,
+  "output_type": "INT32",
+  "rows": 4,
+  "rows_per_work_item": 4,
+  "schema": "vip9000-e022-fused-q1-rows4-host/v1"
+}

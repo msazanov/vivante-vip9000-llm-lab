@@ -1,0 +1,18 @@
+{
+  "custom_kernel_count": 1,
+  "graph_inputs": 2,
+  "graph_outputs": 1,
+  "k": 5120,
+  "nbg_bytes": 7208,
+  "nbg_file": "e022_q1_fused_dp16x1_rows4_m4_k5120_scales_f32.nb",
+  "output_lanes_per_row": 4,
+  "output_type": "FLOAT32",
+  "q1_expanded": false,
+  "q1_row_bytes": 720,
+  "q8_activation_bytes": 5440,
+  "q8_expanded": false,
+  "rows": 4,
+  "rows_per_work_item": 4,
+  "scale_semantics": "fp16_little_endian_in_uint8_carrier",
+  "schema": "vip9000-e022-fused-q1-rows4-k5120-scales-host/v1"
+}
