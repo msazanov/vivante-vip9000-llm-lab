@@ -1,0 +1,185 @@
+{
+  "schema_version": "vip9000-q1-q8-row-reuse/v1",
+  "run_id": "vip9000-q1-q8-row-reuse-20260811-001",
+  "date": "2026-08-11",
+  "objective": "Ускорить точный Q1_0 x Q8_0 GEMV Bonsai на VIP9000 переиспользованием Q8 без разворачивания весов в DDR.",
+  "target": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "npu": "Vivante VIP9000",
+    "npu_clock_hz": 1008000000,
+    "driver": "VIPLite 2.0.3.2-AW-2024-08-30",
+    "temperature_c_range": [31.0, 37.0],
+    "thermal_throttling_observed": false
+  },
+  "terminology": {
+    "row": "Один выходной нейрон, то есть одно скалярное произведение строки весов на activation.",
+    "work_item": "Один экземпляр EVIS kernel, который в принятом варианте считает четыре output rows.",
+    "golden": "Независимый CPU reference для проверки математики.",
+    "device_cycles": "Аппаратные такты VIP9000; основной показатель стоимости самого kernel.",
+    "end_to_end": "H2D + синхронный run + D2H; видимая host latency одного вызова NBG."
+  },
+  "exact_contract": {
+    "weights": "canonical GGML Q1_0, 18 bytes на K=128 block",
+    "activation": "canonical GGML Q8_0, 136 bytes на K=128 block",
+    "output": "FP32",
+    "expanded_weight_tensor_in_ddr": false,
+    "quality_change": false,
+    "integer_identity": "sum((2*b-1)*q) = 2*sum(b*q)-sum(q)"
+  },
+  "synthetic_r64_k128": {
+    "golden_output_sha256": "8417deaa3388290678a4659bce7fd694805f0f489c7692327a1fb0deacf2be89",
+    "variants": [
+      {
+        "id": "e003-row-local",
+        "status": "baseline",
+        "steady_iterations": 99,
+        "device_cycles_median": 28514,
+        "device_us_median": 35.0,
+        "end_to_end_us_median": 74.041,
+        "golden_passed": true,
+        "description": "Каждая из четырёх строк повторно читает те же Q8 chunks."
+      },
+      {
+        "id": "e011-r4-shared-q8",
+        "status": "accepted-local-kernel-win",
+        "steady_iterations": 99,
+        "device_cycles_median": 25586,
+        "device_us_median": 33.0,
+        "end_to_end_us_median": 74.376,
+        "golden_passed": true,
+        "device_cycles_speedup_vs_e003": 1.1144375830532323,
+        "device_cycles_reduction_fraction": 0.10268639966332327,
+        "raw_log_external_sha256": "18d3281406c07e2608086beb41715bf8d717caf22915755edc22388baafe82d1",
+        "nbg_sha256": "253d0bf631605a2dc3082c4faac6cff799eaeac9ae02c5676761a64b2cf4abd8",
+        "description": "Один Q8 load и total_sum используются сразу четырьмя output rows."
+      },
+      {
+        "id": "e011-v3-direct-signs",
+        "status": "rejected-slower",
+        "steady_iterations": 2,
+        "device_cycles_range": [27948, 28048],
+        "device_us_range": [36.0, 37.0],
+        "golden_passed": true,
+        "nbg_sha256": "911542b9e9f3fae18d18657f412cd8afee94f96dbe534537b6b86ee1678d692e",
+        "description": "Преобразование 0/1 в -1/+1 убирает total_sum DP, но vector multiply/add дороже."
+      },
+      {
+        "id": "e012-r4-direct-signed-read",
+        "status": "rejected-no-material-win",
+        "steady_iterations": 99,
+        "device_cycles_median": 25705,
+        "device_us_median": 33.0,
+        "end_to_end_us_median": 74.291,
+        "golden_passed": true,
+        "repeat_equal_failures": 0,
+        "raw_log_sha256": "8303032d8578b673f0c2cb8b98346d0604e948ec698473c5ec6090876118e69a",
+        "nbg_sha256": "71480353f1bf1c183dde18d3eff11181c55be80f9f89861dc7eaa5fea976a12b",
+        "program_sha256": "025576f1eec3fc22da47cda450f1d4b798fb9d5d0d90736350b4c767df6ecd4d",
+        "description": "Прямой signed read точен, но COPY не был измеримым bottleneck."
+      },
+      {
+        "id": "e013-r8-shared-q8",
+        "status": "rejected-r8-slower",
+        "steady_iterations": 2,
+        "device_cycles_range": [42310, 43057],
+        "device_us_range": [48.0, 50.0],
+        "golden_passed": true,
+        "nbg_sha256": "2d5169d1e9125372b28bc5d85bec3b9ce942487559891f34156bb93b85e55c1c",
+        "program_sha256": "9d49c8d08a350357911419d47de23ffb012b3d29a9dab4ea20e946eed773edd1",
+        "description": "Восемь rows уменьшают Q8 loads, но увеличивают время примерно в 1.67 раза против R4; register pressure является вероятной, но не доказанной причиной без compiler resource report."
+      },
+      {
+        "id": "e014-r4-vector-accum",
+        "status": "accepted-new-best-evis",
+        "steady_iterations": 99,
+        "device_cycles_median": 24570,
+        "device_us_median": 29.0,
+        "end_to_end_us_median": 74.25,
+        "golden_passed": true,
+        "repeat_equal_failures": 0,
+        "device_cycles_speedup_vs_e011": 1.0413512413512414,
+        "raw_log_sha256": "4a8454644775299536fc5d2d24ca7c3b5f03ee07094cd486223a232c446349fb",
+        "nbg_sha256": "3d015aa8edb1cba19571aa66f014cd133f6ea0beb0f6bde88a9d9380be3675e1",
+        "program_sha256": "beb92362bd7fc4e04ccb884579a282c11abf6d333257e1b46b7d79c98fc01eb2",
+        "description": "Четыре scalar FP32 accumulator заменены lane-wise float4 без изменения integer dot order."
+      }
+    ]
+  },
+  "bonsai_real_tile_1024x5120": {
+    "tensor": "blk.0.ffn_gate.weight, первые 1024 rows",
+    "baseline_e003": {
+      "steady_iterations": 19,
+      "device_cycles_median": 23630039,
+      "device_ms_median": 23.585,
+      "run_ms_median": 23.860084,
+      "end_to_end_ms_median": 24.137459,
+      "golden_passed": true
+    },
+    "e011_r4_shared_q8": {
+      "steady_iterations": 19,
+      "h2d_ms_median": 0.2275,
+      "device_cycles_median": 13578831,
+      "device_ms_median": 13.65,
+      "run_ms_median": 13.876458,
+      "d2h_ms_median": 0.045667,
+      "end_to_end_ms_median": 14.150126,
+      "repeat_equal_failures": 0,
+      "golden_passed": true,
+      "max_abs_error_vs_independent_golden": 1.7881393432617188e-07,
+      "max_abs_error_vs_e003": 0.0,
+      "output_sha256": "88dd88f5a3146dea0c9c6d50dd7bb002aa64621b5a90a3f42d09ff81633fa2ff",
+      "raw_log_external_sha256": "eacc70c0581c37dd9f6572ab98e4fa91e02a5d7e7c01d92faa4d4b3c86e56775",
+      "nbg_sha256": "fa65b608fde499121a51c3c8a9496cfa94df71d5370babe7508719099ee20015"
+    },
+    "e014_r4_vector_accum": {
+      "steady_iterations": 19,
+      "h2d_ms_median": 0.196791,
+      "device_cycles_median": 13473791,
+      "device_ms_median": 13.545,
+      "run_ms_median": 13.754125,
+      "d2h_ms_median": 0.015125,
+      "end_to_end_ms_median": 13.9695,
+      "repeat_equal_failures": 0,
+      "golden_passed": true,
+      "max_abs_error_vs_independent_golden": 1.7881393432617188e-07,
+      "max_abs_error_vs_e011": 0.0,
+      "output_sha256": "88dd88f5a3146dea0c9c6d50dd7bb002aa64621b5a90a3f42d09ff81633fa2ff",
+      "raw_log_sha256": "88420e74087a76327332c2a04237c6914f3e44fbb018cf6e1060da5e30a83a2f",
+      "nbg_sha256": "4c37a47fe28756bd875a235623c5146ac885aedb6b4fc583f85e550df90139ac"
+    },
+    "speedup_e003_over_e011": {
+      "device_cycles": 1.740211583751208,
+      "device_time": 1.727838827838828,
+      "run": 1.7194650104515146,
+      "end_to_end": 1.7058123016007065
+    },
+    "speedup_e003_over_e014": {
+      "device_cycles": 1.7537780569700094,
+      "device_time": 1.741232927279439,
+      "run": 1.734758408840984,
+      "end_to_end": 1.7278684992304663
+    },
+    "speedup_e011_over_e014": {
+      "device_cycles": 1.0077958757115946,
+      "device_time": 1.0077519379844961,
+      "end_to_end": 1.0129300261283511
+    }
+  },
+  "full_layer_context": {
+    "rows": 17408,
+    "columns": 5120,
+    "measured_cpu_full_layer_ms_median": 3.8503125,
+    "npu_e011_linear_projection_ms": 240.552142,
+    "npu_e014_linear_projection_ms": 237.4815,
+    "projection_method": "E011: 17 x measured E011 tile E2E; E014: 17 x measured E014 tile E2E",
+    "projection_is_measurement": false,
+    "projected_npu_to_measured_cpu_slowdown": 61.67850012174337,
+    "tokens_per_second_improvement_demonstrated": false
+  },
+  "conclusion": {
+    "accepted": "R4 Q8 reuse materially accelerates the EVIS NPU kernel; vector FP32 accumulation is a further exact 1.3% E2E improvement on the real tile.",
+    "not_claimed": "This does not yet accelerate full Bonsai inference or tokens/s because the NPU tile remains much slower than the measured full CPU layer.",
+    "next": "Reduce BitExtract/DP16 cost or reach a native tensor path; only integrate an offload that beats the CPU operator end-to-end."
+  }
+}
