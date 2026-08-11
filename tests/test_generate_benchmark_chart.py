@@ -37,7 +37,9 @@ class BenchmarkChartTests(unittest.TestCase):
         self.assertEqual(len(data.cpu), 4)
         self.assertEqual(len(data.npu), 2)
         self.assertEqual({row.median for row in data.npu}, {2.803, 2.846})
-        self.assertEqual(data.out_of_scope, 11)
+        # E009 fused-FC and E011-E014 Q8-reuse summaries intentionally use
+        # experiment-specific schemas and must stay outside the generic chart.
+        self.assertEqual(data.out_of_scope, 13)
         cpu_values = {
             (row.run_id, row.metric): (row.p10, row.median, row.p90)
             for row in data.cpu
