@@ -36,12 +36,13 @@ def build_cases(k: int) -> list[tuple[str, list[int]]]:
 
 
 def generate(output_dir: Path, m: int, k: int, n: int) -> dict[str, object]:
-    if (m, k, n) != (1, 32, 1):
-        raise FixtureError("golden gate currently requires M=1, K=32, N=1")
+    if m <= 0 or n != 1 or k not in (32, 128):
+        raise FixtureError("golden gate requires M>0, K=32 or 128, N=1")
     if output_dir.exists():
         raise FixtureError(f"output directory already exists: {output_dir}")
 
-    activation = [-128, -127, -1, 0, 1, 126, 127, 64] * 4
+    activation = ([-128, -127, -1, 0, 1, 126, 127, 64]
+                  * (k // 8))
     output_dir.mkdir(parents=True)
     manifest_cases: list[dict[str, object]] = []
     input_b = pack_i16(activation)
@@ -51,8 +52,9 @@ def generate(output_dir: Path, m: int, k: int, n: int) -> dict[str, object]:
                        for weight, value in zip(weights, activation, strict=True))
         if not -32768 <= expected <= 32767:
             raise FixtureError(f"expected dot overflows INT16 for {name}: {expected}")
-        input_a = pack_i16(weights)
-        expected_c = pack_i16([expected])
+        input_a = pack_i16(weights * m)
+        expected_values = [expected] * m
+        expected_c = pack_i16(expected_values)
         case_dir = output_dir / name
         case_dir.mkdir()
         (case_dir / "input_a.i16.bin").write_bytes(input_a)
@@ -61,7 +63,7 @@ def generate(output_dir: Path, m: int, k: int, n: int) -> dict[str, object]:
         manifest_cases.append(
             {
                 "name": name,
-                "expected_physical_i16": [expected],
+                "expected_physical_i16": expected_values,
                 "files": {
                     "input_a": f"{name}/input_a.i16.bin",
                     "input_b": f"{name}/input_b.i16.bin",
