@@ -12,6 +12,11 @@ KERNEL = EXPERIMENT / "q1_vip_1x128.cl"
 KERNEL_M = EXPERIMENT / "q1_vip_mx128.cl"
 KERNEL_5120 = EXPERIMENT / "q1_vip_mx5120.cl"
 KERNEL_Q1Q8 = EXPERIMENT / "q1_vip_q8_evis_1x128.vx"
+KERNEL_Q1Q8_REUSE = EXPERIMENT / "q1_vip_q8_evis_4row_reuse.vx"
+KERNEL_Q1Q8_DIRECT_SIGNS = EXPERIMENT / "q1_vip_q8_evis_4row_direct_signs.vx"
+KERNEL_Q1Q8_SIGNED_READ = EXPERIMENT / "q1_vip_q8_evis_4row_signed_read.vx"
+KERNEL_Q1Q8_REUSE8 = EXPERIMENT / "q1_vip_q8_evis_8row_reuse.vx"
+KERNEL_Q1Q8_VECTOR_ACCUM = EXPERIMENT / "q1_vip_q8_evis_4row_vector_accum.vx"
 
 
 class Q1VipNbgBuilderSourceTests(unittest.TestCase):
@@ -135,8 +140,94 @@ class Q1VipNbgBuilderSourceTests(unittest.TestCase):
         self.assertIn("activation_type = VX_TYPE_UINT8", source)
         self.assertIn("vxSetNodeUniform", source)
         self.assertIn('"block_count"', source)
-        self.assertIn("q8_carrier && rows % 4 != 0", source)
-        self.assertIn("execution.globalWorkSize[0] = q8_carrier ? rows / 4 : rows", source)
+        self.assertIn("q8_carrier && rows % row_group != 0", source)
+        self.assertIn("execution.globalWorkSize[0] = q8_carrier ? rows / row_group : rows", source)
+        self.assertIn('"q1_vip_q8_evis_"', source)
+        self.assertIn("q8_kernel && !q8_carrier", source)
+        self.assertIn("Q8 EVIS kernel requires q8 activation carrier", source)
+
+    def test_e011_kernel_reuses_each_q8_chunk_across_four_rows(self):
+        source = KERNEL_Q1Q8_REUSE.read_text(encoding="utf-8")
+
+        self.assertIn("__kernel void q1_vip_q8_evis_4row_reuse", source)
+        self.assertEqual(source.count("VXC_ReadImage(q8_raw, packed_q8"), 1)
+        self.assertIn("uniSumInt8_16x1", source)
+        self.assertIn("VXC_DP16x1(total_sum", source)
+        self.assertIn("2 * selected_sum - total_sum", source)
+        self.assertNotIn("sign_bits = sign_bits *", source)
+        self.assertEqual(source.count("ACCUMULATE_SHARED_Q8("), 2)
+        self.assertIn("subblock < 4", source)
+        self.assertIn("half_index < 2", source)
+        self.assertIn("subblock * 34", source)
+        self.assertIn("subblock * 2 + half_index", source)
+        for row in range(4):
+            self.assertIn(f"sign_blob{row}", source)
+            self.assertIn(f"integer_dot{row}", source)
+        self.assertIn("int4 mask_lo", source)
+        self.assertIn("0x03020100", source)
+        self.assertIn("0x7f7e7d7c", source)
+        self.assertIn("get_global_id(0) * 4", source)
+        self.assertIn("write_imagef(output", source)
+        self.assertNotIn("COMPUTE_ROW", source)
+        self.assertNotIn("expanded_weights", source)
+
+    def test_e011_rejected_direct_signs_candidate_is_reproducible(self):
+        source = KERNEL_Q1Q8_DIRECT_SIGNS.read_text(encoding="utf-8")
+
+        self.assertIn("__kernel void q1_vip_q8_evis_4row_direct_signs", source)
+        self.assertNotIn("uniSumInt8_16x1", source)
+        self.assertNotIn("total_sum", source)
+        self.assertIn("sign_bits = sign_bits * (vxc_uchar16)(2)", source)
+        self.assertIn("sign_bits = sign_bits + (vxc_uchar16)(255)", source)
+        self.assertIn("VXC_DP16x1(exact_dot", source)
+
+        builder = BUILDER.read_text(encoding="utf-8")
+        self.assertIn('"q1_vip_q8_evis_4row_direct_signs"', builder)
+        self.assertIn("if (!direct_signs)", builder)
+
+    def test_e012_signed_read_removes_only_q8_copy(self):
+        source = KERNEL_Q1Q8_SIGNED_READ.read_text(encoding="utf-8")
+
+        self.assertIn("__kernel void q1_vip_q8_evis_4row_signed_read", source)
+        self.assertIn("VXC_ReadImage(signed_q8, packed_q8", source)
+        self.assertNotIn("vxc_uchar16 q8_raw", source)
+        self.assertNotIn("_viv_asm(COPY, signed_q8, q8_raw, 16)", source)
+        self.assertIn("VXC_DP16x1(total_sum", source)
+        self.assertIn("2 * selected_sum - total_sum", source)
+        self.assertIn("get_global_id(0) * 4", source)
+
+    def test_e013_kernel_reuses_q8_across_eight_rows(self):
+        source = KERNEL_Q1Q8_REUSE8.read_text(encoding="utf-8")
+
+        self.assertIn("__kernel void q1_vip_q8_evis_8row_reuse", source)
+        self.assertIn("get_global_id(0) * 8", source)
+        self.assertEqual(source.count("VXC_ReadImage(q8_raw, packed_q8"), 1)
+        self.assertIn("VXC_DP16x1(total_sum", source)
+        for row in range(8):
+            self.assertIn(f"sign_blob{row}", source)
+            self.assertIn(f"integer_dot{row}", source)
+        self.assertEqual(source.count("write_imagef(output"), 2)
+        self.assertIn("base_row + 4", source)
+
+        builder = BUILDER.read_text(encoding="utf-8")
+        self.assertIn('"q1_vip_q8_evis_8row_reuse"', builder)
+        self.assertIn("rows % row_group", builder)
+        self.assertIn("rows / row_group", builder)
+
+    def test_e014_vectorizes_only_four_row_accumulation(self):
+        source = KERNEL_Q1Q8_VECTOR_ACCUM.read_text(encoding="utf-8")
+
+        self.assertIn("__kernel void q1_vip_q8_evis_4row_vector_accum", source)
+        self.assertIn("float4 accumulator", source)
+        self.assertIn("float4 block_accumulator", source)
+        self.assertIn("const float4 q1_scales", source)
+        self.assertIn("const int4 integer_dots", source)
+        self.assertIn("convert_float4(integer_dots)", source)
+        self.assertIn("accumulator += q1_scales * block_accumulator", source)
+        self.assertIn("VXC_DP16x1(total_sum", source)
+        self.assertIn("2 * selected_sum - total_sum", source)
+        self.assertIn("get_global_id(0) * 4", source)
+        self.assertEqual(source.count("write_imagef(output"), 1)
 
 
 if __name__ == "__main__":
