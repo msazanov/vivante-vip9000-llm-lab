@@ -1,0 +1,152 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#include "cl_viv_vx_ext.h"
+
+// E014: E011 R4 transport with four lane-wise FP32 accumulators represented as
+// float4 values.  The integer dot order and canonical carrier math are unchanged.
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+_viv_uniform int block_count;
+
+static float load_fp16_from_u8(
+    __read_only image2d_t carrier, int byte_offset, int row)
+{
+    const uint lo = read_imageui(carrier, (int2)(byte_offset, row)).x;
+    const uint hi = read_imageui(carrier, (int2)(byte_offset + 1, row)).x;
+    return convert_float(as_half((ushort)(lo | (hi << 8))));
+}
+
+// vcCompiler 5.0.0 mis-lowers dynamic vxc_uchar16 bit-position vectors on
+// alternating sign patterns.  Keep all eight Q1 chunks as raw static masks.
+#define LOAD_STATIC_MASKS(mask_lo, mask_hi, chunk_value) do { \
+    switch (chunk_value) { \
+    case 0: \
+        mask_lo = (int4)(0x03020100, 0x07060504, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x0b0a0908, 0x0f0e0d0c, 0x01010101, 0x01010101); \
+        break; \
+    case 1: \
+        mask_lo = (int4)(0x13121110, 0x17161514, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x1b1a1918, 0x1f1e1d1c, 0x01010101, 0x01010101); \
+        break; \
+    case 2: \
+        mask_lo = (int4)(0x23222120, 0x27262524, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x2b2a2928, 0x2f2e2d2c, 0x01010101, 0x01010101); \
+        break; \
+    case 3: \
+        mask_lo = (int4)(0x33323130, 0x37363534, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x3b3a3938, 0x3f3e3d3c, 0x01010101, 0x01010101); \
+        break; \
+    case 4: \
+        mask_lo = (int4)(0x43424140, 0x47464544, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x4b4a4948, 0x4f4e4d4c, 0x01010101, 0x01010101); \
+        break; \
+    case 5: \
+        mask_lo = (int4)(0x53525150, 0x57565554, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x5b5a5958, 0x5f5e5d5c, 0x01010101, 0x01010101); \
+        break; \
+    case 6: \
+        mask_lo = (int4)(0x63626160, 0x67666564, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x6b6a6968, 0x6f6e6d6c, 0x01010101, 0x01010101); \
+        break; \
+    default: \
+        mask_lo = (int4)(0x73727170, 0x77767574, 0x01010101, 0x01010101); \
+        mask_hi = (int4)(0x7b7a7978, 0x7f7e7d7c, 0x01010101, 0x01010101); \
+        break; \
+    } \
+} while (0)
+
+#define ADD_ROW_DOT(integer_dot, sign_blob, signed_q8, total_sum, mask_lo, mask_hi) do { \
+    vxc_uchar16 sign_bits; \
+    vxc_char16 signed_bits; \
+    int selected_sum; \
+    VXC_BitExtract(sign_bits, sign_blob, sign_blob, mask_lo, \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0)); \
+    VXC_BitExtract(sign_bits, sign_blob, sign_blob, mask_hi, \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0)); \
+    _viv_asm(COPY, signed_bits, sign_bits, 16); \
+    VXC_DP16x1(selected_sum, signed_bits, signed_q8, \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0), \
+               uniDotInt8_16x1); \
+    integer_dot += 2 * selected_sum - total_sum; \
+} while (0)
+
+#define ACCUMULATE_SHARED_Q8(q8_x, chunk_value, integer_dot0, integer_dot1, \
+                             integer_dot2, integer_dot3) do { \
+    vxc_uchar16 q8_raw; \
+    vxc_char16 signed_q8; \
+    int total_sum; \
+    int4 mask_lo; \
+    int4 mask_hi; \
+    LOAD_STATIC_MASKS(mask_lo, mask_hi, chunk_value); \
+    VXC_ReadImage(q8_raw, packed_q8, (int2)(q8_x, 0), \
+                  VXC_5BITOFFSET_XY(0, 0), \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0)); \
+    _viv_asm(COPY, signed_q8, q8_raw, 16); \
+    VXC_DP16x1(total_sum, signed_q8, signed_q8, \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0), \
+               uniSumInt8_16x1); \
+    ADD_ROW_DOT(integer_dot0, sign_blob0, signed_q8, total_sum, mask_lo, mask_hi); \
+    ADD_ROW_DOT(integer_dot1, sign_blob1, signed_q8, total_sum, mask_lo, mask_hi); \
+    ADD_ROW_DOT(integer_dot2, sign_blob2, signed_q8, total_sum, mask_lo, mask_hi); \
+    ADD_ROW_DOT(integer_dot3, sign_blob3, signed_q8, total_sum, mask_lo, mask_hi); \
+} while (0)
+
+__kernel void q1_vip_q8_evis_4row_vector_accum(
+    __read_only image2d_t packed_weights,
+    __read_only image2d_t packed_q8,
+    __write_only image2d_t output)
+{
+    const int base_row = (int)get_global_id(0) * 4;
+    float4 accumulator = (float4)(0.0f);
+
+    for (int block = 0; block < block_count; ++block) {
+        const int weight_base = block * 18;
+        const int q8_base = block * 136;
+        const float4 q1_scales = (float4)(
+            load_fp16_from_u8(packed_weights, weight_base, base_row + 0),
+            load_fp16_from_u8(packed_weights, weight_base, base_row + 1),
+            load_fp16_from_u8(packed_weights, weight_base, base_row + 2),
+            load_fp16_from_u8(packed_weights, weight_base, base_row + 3));
+
+        vxc_uchar16 sign_blob0;
+        vxc_uchar16 sign_blob1;
+        vxc_uchar16 sign_blob2;
+        vxc_uchar16 sign_blob3;
+        VXC_ReadImage(sign_blob0, packed_weights, (int2)(weight_base + 2, base_row + 0),
+                      VXC_5BITOFFSET_XY(0, 0),
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign_blob1, packed_weights, (int2)(weight_base + 2, base_row + 1),
+                      VXC_5BITOFFSET_XY(0, 0),
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign_blob2, packed_weights, (int2)(weight_base + 2, base_row + 2),
+                      VXC_5BITOFFSET_XY(0, 0),
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+        VXC_ReadImage(sign_blob3, packed_weights, (int2)(weight_base + 2, base_row + 3),
+                      VXC_5BITOFFSET_XY(0, 0),
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0));
+
+        float4 block_accumulator = (float4)(0.0f);
+
+        for (int subblock = 0; subblock < 4; ++subblock) {
+            int integer_dot0 = 0;
+            int integer_dot1 = 0;
+            int integer_dot2 = 0;
+            int integer_dot3 = 0;
+            for (int half_index = 0; half_index < 2; ++half_index) {
+                const int q8_x =
+                    q8_base + subblock * 34 + 2 + half_index * 16;
+                const int chunk = subblock * 2 + half_index;
+                ACCUMULATE_SHARED_Q8(q8_x, chunk, integer_dot0, integer_dot1,
+                                     integer_dot2, integer_dot3);
+            }
+            const float q8_scale =
+                load_fp16_from_u8(packed_q8, q8_base + subblock * 34, 0);
+            const int4 integer_dots =
+                (int4)(integer_dot0, integer_dot1, integer_dot2, integer_dot3);
+            block_accumulator += q8_scale * convert_float4(integer_dots);
+        }
+
+        accumulator += q1_scales * block_accumulator;
+    }
+
+    write_imagef(output, (int2)(base_row, 0), accumulator);
+}
