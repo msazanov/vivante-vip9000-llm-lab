@@ -148,11 +148,24 @@ int main(int argc, char **argv)
             return 2;
         }
     }
-    if (q8_carrier && rows % 4 != 0) {
-        fprintf(stderr, "q8 EVIS output rows must be divisible by 4: %zu\n",
-                (size_t) rows);
+    static const char q8_kernel_prefix[] = "q1_vip_q8_evis_";
+    const int q8_kernel =
+        strncmp(kernel_name, q8_kernel_prefix,
+                sizeof(q8_kernel_prefix) - 1) == 0;
+    if (q8_kernel && !q8_carrier) {
+        fprintf(stderr, "Q8 EVIS kernel requires q8 activation carrier\n");
         return 2;
     }
+    const vx_size row_group =
+        strcmp(kernel_name, "q1_vip_q8_evis_8row_reuse") == 0 ? 8 : 4;
+    if (q8_carrier && rows % row_group != 0) {
+        fprintf(stderr,
+                "q8 EVIS output rows must be divisible by %zu: %zu\n",
+                (size_t) row_group, (size_t) rows);
+        return 2;
+    }
+    const int direct_signs =
+        strcmp(kernel_name, "q1_vip_q8_evis_4row_direct_signs") == 0;
 
     int result = 1;
     uint8_t *program_binary = NULL;
@@ -249,9 +262,12 @@ int main(int argc, char **argv)
         if (check_status(vxSetNodeUniform(node, (const vx_char *) "uniDotInt8_16x1",
                                           1, uni_dot_int8_16x1),
                          "vxSetNodeUniform(dot)")) goto cleanup;
-        if (check_status(vxSetNodeUniform(node, (const vx_char *) "uniSumInt8_16x1",
-                                          1, uni_sum_int8_16x1),
-                         "vxSetNodeUniform(sum)")) goto cleanup;
+        if (!direct_signs) {
+            if (check_status(vxSetNodeUniform(
+                    node, (const vx_char *) "uniSumInt8_16x1",
+                    1, uni_sum_int8_16x1),
+                    "vxSetNodeUniform(sum)")) goto cleanup;
+        }
         if (check_status(vxSetNodeUniform(node, (const vx_char *) "block_count",
                                           1, &block_count),
                          "vxSetNodeUniform(block_count)")) goto cleanup;
@@ -261,7 +277,7 @@ int main(int argc, char **argv)
     execution.workDim = 1;
     execution.globalWorkScale[0] = 1;
     execution.localWorkSize[0] = 1;
-    execution.globalWorkSize[0] = q8_carrier ? rows / 4 : rows;
+    execution.globalWorkSize[0] = q8_carrier ? rows / row_group : rows;
     if (check_status(vxSetNodeAttribute(node, VX_NODE_ATTRIBUTE_KERNEL_EXECUTION_PARAMETERS,
                                         &execution, sizeof(execution)),
                      "vxSetNodeAttribute(execution)")) goto cleanup;
