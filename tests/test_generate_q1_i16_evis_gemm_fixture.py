@@ -68,6 +68,30 @@ class GenerateQ1I16EvisGemmFixtureTest(unittest.TestCase):
             self.assertEqual(second.returncode, 2)
             self.assertIn("already exists", second.stderr)
 
+    def test_m1024_k128_fixture_repeats_exact_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "fixture"
+            result = subprocess.run(
+                ["python3", str(GENERATOR), "--output-dir", str(output),
+                 "--m", "1024", "--k", "128", "--n", "1"],
+                text=True, capture_output=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((output / "manifest.json").read_text(
+                encoding="utf-8"))
+            self.assertEqual(manifest["shape"], {"m": 1024, "k": 128, "n": 1})
+            expected = {
+                "all-negative": -992,
+                "all-positive": 992,
+                "alternating-plus": -1024,
+                "alternating-minus": 1024,
+            }
+            for case in manifest["cases"]:
+                case_dir = output / case["name"]
+                weights = unpack_i16(case_dir / "input_a.i16.bin")
+                outputs = unpack_i16(case_dir / "expected_c.i16.bin")
+                self.assertEqual(len(weights), 1024 * 128)
+                self.assertEqual(outputs, [expected[case["name"]]] * 1024)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -32,6 +32,10 @@ class Q1I16EvisGemmHostGateTest(unittest.TestCase):
             self.assertEqual(summary["graph_inputs"], 2)
             self.assertEqual(summary["graph_outputs"], 1)
             self.assertEqual(summary["host_export_exit_code"], 0)
+            self.assertEqual(summary["source_variant"],
+                             "coordfix-signed-output-v2")
+            self.assertEqual(summary["shader_source_file"],
+                             "matrixmul_i16_coordfix.vx")
             self.assertGreater(summary["shader_binary_bytes"], 0)
             self.assertGreater(summary["nbg_bytes"], 0)
             self.assertEqual(summary["forbidden_markers_found"], [])
