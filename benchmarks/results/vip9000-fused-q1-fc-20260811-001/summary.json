@@ -1,0 +1,124 @@
+{
+  "schema_version": "vip9000-fused-q1-fc/v1",
+  "run_id": "vip9000-fused-q1-fc-20260811-001",
+  "date": "2026-08-11",
+  "status": "exact-native-gemm-rejected-transpose-overhead",
+  "objective": "Ускорить Bonsai-27B Q1_0 decode без изменения математики и без разворачивания весов в DDR.",
+  "target": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "memory_gib": 12,
+    "npu": "Vivante VIP9000",
+    "chip_id": "0x1000003b",
+    "runtime": "VIPLite 2.0.3.2-AW-2024-08-30",
+    "npu_clock_hz": 1008000000
+  },
+  "graph": {
+    "operation_plan": ["SH DD->VS", "NT VS->VS", "GEMM VS DD->DD"],
+    "meaning": {
+      "SH": "EVIS programmable shader распаковывает Q1",
+      "NT": "TensorTranspose переставляет оси virtual tensor",
+      "GEMM": "native NN matrix multiply"
+    },
+    "graph_inputs": 2,
+    "graph_outputs": 1,
+    "expanded_tensor_is_graph_io": false,
+    "native_gemm_evidence": true,
+    "tensor_transpose_present": true
+  },
+  "artifacts": {
+    "kernel_source_sha256": "45bc461349606e90e9db01a42b6c5956d1ef6429d413a281d3ca1812c64e31d3",
+    "kernel_program_sha256": "a1b8c5bec2baa054c41e625e38e4849275c93f4cb04ddbbe00a67bcafbdbfec9",
+    "builder_source_sha256": "1e4573f3fff388126dccac11231d091a0983cd98be650d01c0608b22ee202af5",
+    "r16_nbg_sha256": "f5f475f85887b65dbc82e855c09ee18672ce9b55e14e220f0fee999a29aeabb8",
+    "r64_nbg_sha256": "dded3d6dd994e58167616888a5bc2d8dc2eac9c751d0e24512118f293ac09600",
+    "direct_evis_r64_nbg_sha256": "e04893ee2c6b869a9a1166bd4e7fd588782db556ed8687bd671ed6273eda5936"
+  },
+  "correctness": {
+    "unpack_exact_bytes": 2048,
+    "unpack_total_bytes": 2048,
+    "r16_golden": "byte-exact INT16",
+    "r64_golden": "byte-exact INT16",
+    "direct_evis_r64_golden": "byte-exact FP32",
+    "r16_output_sha256": "61df8dfc9f5c82107ea37be54adcff15f0a5a0d34ac1f6658e2ebddb0a4077e7",
+    "r64_output_sha256": "d504069552fb851672e7d6ac82faf675c2b4c505acb57bca54dede42bc59ad6d",
+    "direct_evis_r64_output_sha256": "8417deaa3388290678a4659bce7fd694805f0f489c7692327a1fb0deacf2be89"
+  },
+  "measurements": {
+    "fused_r16": {
+      "rows": 16,
+      "k": 128,
+      "steady_iterations": 99,
+      "h2d_us_median": 3.0,
+      "run_us_median": 69.167,
+      "d2h_us_median": 2.125,
+      "device_us_median": 20.0,
+      "cycles_median": 12873,
+      "e2e_us_median": 74.375,
+      "e2e_us_p95": 77.625,
+      "stable_iterations": 99,
+      "raw_log_sha256": "523aae4a9d91db0fc717786a568e2b492e0e30a39cc25ad1e06c854f0ae6be5f",
+      "vipsram_peak_bytes": 4352
+    },
+    "fused_r64": {
+      "rows": 64,
+      "k": 128,
+      "steady_iterations": 99,
+      "h2d_us_median": 3.125,
+      "run_us_median": 95.458,
+      "d2h_us_median": 2.5,
+      "device_us_median": 49.0,
+      "cycles_median": 42472,
+      "e2e_us_median": 101.291,
+      "e2e_us_p95": 103.708,
+      "stable_iterations": 99,
+      "raw_log_sha256": "67d0f0f3aa9d6a31c9391e28005a9bdf50e07b0881af2fbf2ce6ce3ef5445d00",
+      "vipsram_peak_bytes": 16640
+    },
+    "direct_evis_r64": {
+      "rows": 64,
+      "k": 128,
+      "steady_iterations": 99,
+      "h2d_us_median": 1.417,
+      "run_us_median": 71.417,
+      "d2h_us_median": 1.167,
+      "device_us_median": 35.0,
+      "cycles_median": 28514,
+      "e2e_us_median": 74.041,
+      "e2e_us_p95": 76.334,
+      "stable_iterations": 99,
+      "raw_log_sha256": "5ac7852c09ac124da8e7d91fe84d27e67d9ed63a5434c7c6c24ff6eeb08b6041"
+    }
+  },
+  "same_shape_comparison": {
+    "shape": "64x128",
+    "fused_over_direct_e2e_slowdown": 1.3680517551086563,
+    "fused_over_direct_device_slowdown": 1.4,
+    "fused_over_direct_cycles_slowdown": 1.489541979378551,
+    "acceptance_passed": false,
+    "observed_extra_stage": "TensorTranspose"
+  },
+  "nsi_pmu": {
+    "master": "npu",
+    "window_us": 100000,
+    "method": "Сравнение 1 и 100 запусков в одном 100 ms окне; delta разделена на 99 steady-запусков.",
+    "fused_r16_steady_read_bytes_per_run": 4613.17,
+    "fused_r16_steady_write_bytes_per_run": 62.06,
+    "fused_r64_steady_read_bytes_per_run": 5440.65,
+    "fused_r64_steady_write_bytes_per_run": 124.12,
+    "scratch_growth_r16_to_r64_bytes": 6144,
+    "ddr_read_growth_r16_to_r64_bytes_per_run": 827.48,
+    "interpretation": "Рост DDR близок к росту packed carrier, а не expanded tensor; virtual scratch остаётся on-chip."
+  },
+  "thermal": {
+    "temperature_range_c": [31.204, 37.696],
+    "npu_clock_hz": 1008000000,
+    "thermal_throttling_observed": false
+  },
+  "decision": {
+    "phase_a": "rejected_for_speed",
+    "phase_b_four_q8_scales": "not_started_after_failed_prerequisite",
+    "next_experiment": "E010 MatrixMultiply or Conv1x1 layout without TensorTranspose",
+    "next_gate": "Exact R64, native GEMM, no NT, on-chip scratch, E2E < 74.041 us and device < 35 us."
+  }
+}
