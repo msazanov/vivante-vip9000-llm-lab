@@ -63,6 +63,16 @@ class Q1I16EvisGemmContractTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("N must be 1", result.stderr)
 
+    def test_signed_output_pack_disables_unsigned_saturation(self):
+        source = (EXPERIMENT / "matrixmul_i16_coordfix.vx").read_text(
+            encoding="utf-8")
+        self.assertEqual(source.count(
+            "VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0), "
+            "uniConvertInt32toUint8_2x8"), 2)
+        self.assertNotIn(
+            "VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 1), "
+            "uniConvertInt32toUint8_2x8", source)
+
 
 if __name__ == "__main__":
     unittest.main()
