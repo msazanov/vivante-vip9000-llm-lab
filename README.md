@@ -51,6 +51,8 @@ docs/evidence/a733-cpu-optimization-matrix-2026-08-09.md Source-audited CPU A/B 
 docs/evidence/vip9000-next-capability-probe-2026-08-09.md Verified SDK assets and next NPU probe
 docs/evidence/bonsai-q1-npu-partition-audit-2026-08-10.md Exact Bonsai Q1 tensor/offload inventory
 docs/evidence/q1-uint8-nbg-packed-carrier-design-2026-08-10.md Packed Q1 over proven UINT8 NBG design
+docs/evidence/vip9000-phase-profile-2026-08-10.md Real H2D/run/D2H target profile and terminology
+docs/evidence/q1-vip9000-evis-bonsai-2026-08-11.md Real packed Q1×Q8 EVIS and Bonsai scaling result
 docs/superpowers/specs/2026-08-10-q1-vip9000-backend-design.md Approved-scope Q1 backend research specification
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
 docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
@@ -137,19 +139,55 @@ Confirmed from official, BSP and upstream source:
   median host run time and 2.803 ms median device profile time. The fixture has
   no golden output, so this is compatibility/performance evidence rather than
   a correctness qualification.
+- A phase-aware resident runner completed 1000/1000 target iterations with no
+  repeat mismatch: steady median H2D 66.250 µs, host run 2918.750 µs, device
+  2815 µs, D2H 7.834 µs, end-to-end 3025.668 µs. NPU stayed at 1008 MHz and
+  peaked at 42.16 °C; no thermal-throttling evidence was observed. This remains
+  unqualified because repeat equality is not an independent CPU golden.
 - A direct packed-ternary PPU kernel is technically plausible, but it should not be assumed to use all eight NN cores.
 - A tile-unpack-to-native-NN path may exploit the eight cores but risks losing the memory advantage through intermediate traffic.
+- Our packed Q1_0×Q8_0 EVIS kernel now executes on the target without an
+  expanded DDR weight tensor. On the same 16×128 golden workload it reduces
+  device cycles from 133472 to 13331 (10.01×), passes golden and remains stable
+  for 100/100 runs.
+- Real Bonsai `blk.0.ffn_gate` slices also pass golden, but a measured 1024×5120
+  EVIS tile takes 24.137 ms end-to-end while the CPU completes the full
+  17408×5120 layer in 3.850 ms. The programmable EVIS path is therefore not a
+  production decode offload; the next gate is EVIS unpack fused with a native
+  NN tensor operation whose intermediate tile stays on-chip.
 - Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet optimal autoregressive LLM decode.
 
 The next hard gates are:
 
 - [`E001`](experiments/E001-vip9000-capability-probe/README.md): target-verified SDK, operation, shape, type, memory and overhead measurements.
 - [`E002`](experiments/E002-packed-ternary-kernel/README.md): direct Q2_0 packed execution, EVIS capability and CPU/PPU/NN performance comparison.
+- [`E003`](experiments/E003-q1-packed-carrier/README.md): target-verified
+  canonical Q1_0×Q8_0 EVIS kernel. Синтетическое микроядро прошло golden и
+  ускорилось в 10,01× по cycles относительно скалярного NPU варианта. Реальное
+  масштабирование Bonsai также прошло golden, но отклонено по скорости полного
+  слоя. Следующая ступень — fused EVIS unpack → native NN FC/Conv внутри NBG.
 
 ## Текущие графики
 
-Сводный [график бенчмарков](benchmarks/charts/benchmark-overview.svg) строится
-из сохранённых свидетельств CPU и NPU. Подробная таблица запусков и ссылки на
-исходные сводки находятся в [карточке модели Bonsai 27B](benchmarks/models/bonsai-27b.md).
-Неквалифицированные строки показывают наблюдение производительности, но не
-подтверждают качество модели.
+Основная [XY-карта экспериментов](benchmarks/charts/experiment-xy-overview.svg)
+разделяет две XY-системы и correctness-панель: latency/tokens/s полной Bonsai
+27B, latency/inferences/s служебного ShuffleNet NPU и CPU golden Q1.
+Failed-запуски без метрики перечисляются, но не получают выдуманную координату
+скорости. Подробная таблица запусков находится в
+[карточке модели Bonsai 27B](benchmarks/models/bonsai-27b.md).
+
+Старый [сводный график бенчмарков](benchmarks/charts/benchmark-overview.svg)
+остаётся вторичным обзором сохранённых CPU/NPU свидетельств. Неквалифицированные
+строки показывают наблюдение производительности, но не подтверждают качество.
+
+Отдельный [график фаз VIPLite](benchmarks/charts/vip9000-shufflenet-phase-profile.svg)
+является диагностикой драйвера, а не графиком токенов: он показывает подготовку
+входа, выполнение NPU и чтение результата для первого и 999 steady запусков.
+Термины, методика, raw hashes и границы golden-проверки описаны в
+[русском отчёте](docs/evidence/vip9000-phase-profile-2026-08-10.md).
+
+Новый [график packed Q1×Q8](benchmarks/charts/q1-vip9000-evis-bonsai-20260811.svg)
+показывает отдельно честное A/B микроядра на одинаковой форме и XY-масштабирование
+реального `blk.0.ffn_gate`. Полая оранжевая точка полного NPU-слоя — явно
+подписанная линейная оценка, а не измерение. Методика и выводы находятся в
+[русском отчёте E003](docs/evidence/q1-vip9000-evis-bonsai-2026-08-11.md).

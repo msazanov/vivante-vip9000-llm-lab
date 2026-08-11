@@ -1,0 +1,40 @@
+diff --git a/ggml/src/ggml-vulkan/ggml-vulkan.cpp b/ggml/src/ggml-vulkan/ggml-vulkan.cpp
+index fd22aba11..4cf5402db 100644
+--- a/ggml/src/ggml-vulkan/ggml-vulkan.cpp
++++ b/ggml/src/ggml-vulkan/ggml-vulkan.cpp
+@@ -3736,10 +3736,15 @@ static void ggml_vk_load_shaders(vk_device& device, vk_pipeline requested) {
+             ggml_type t = (ggml_type)i;
+             // Disable medium and large matrix multiplication if not enough shared memory is available
+             // Check mmq warptiles as the largest configuration
+-            // Throw an error if not enough for any matrix multiplication is available
++            // A type-specific failure must not prevent other quantization types (for example Q1_0)
++            // from using the Vulkan device.  Mark all regular tiles unavailable; supports_op below
++            // will decline this type instead of attempting an over-budget shader.
+             if (!ggml_vk_matmul_shmem_support(device, s_warptile_mmq, false, t)) {
+-                std::cerr << "ggml_vulkan: Error: Shared memory size too small for matrix multiplication." << std::endl;
+-                throw std::runtime_error("Shared memory size too small for matrix multiplication.");
++                device->mul_mat_s[i] = false;
++                device->mul_mat_m[i] = false;
++                device->mul_mat_l[i] = false;
++                GGML_LOG_WARN("ggml_vulkan: disabling mul_mat_s/m/l for %s: shared memory limit is %u bytes\n",
++                              ggml_type_name(t), device->properties.limits.maxComputeSharedMemorySize);
+             } else if (!ggml_vk_matmul_shmem_support(device, m_warptile_mmq, false, t)) {
+                 device->mul_mat_m[i] = false;
+                 device->mul_mat_l[i] = false;
+@@ -16504,6 +16509,16 @@ static bool ggml_backend_vk_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+                         return false;
+                     }
+                 }
++                if (op->op == GGML_OP_MUL_MAT) {
++                    const bool is_q8_1 = op->src[1]->type == GGML_TYPE_Q8_1;
++                    const bool mm_s = is_q8_1 ? device->mul_mat_s_int[src0_type] : device->mul_mat_s[src0_type];
++                    const bool mm_m = is_q8_1 ? device->mul_mat_m_int[src0_type] : device->mul_mat_m[src0_type];
++                    const bool mm_l = is_q8_1 ? device->mul_mat_l_int[src0_type] : device->mul_mat_l[src0_type];
++                    if (!mm_s && !mm_m && !mm_l) {
++                        // No tile fits this type's shared-memory budget; let the scheduler use another backend.
++                        return false;
++                    }
++                }
+                 switch (src0_type) {
+                     case GGML_TYPE_F32:
+                     case GGML_TYPE_F16:

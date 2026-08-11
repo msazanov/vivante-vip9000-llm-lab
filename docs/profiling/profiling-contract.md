@@ -91,6 +91,22 @@ them observable:
 The raw directory also retains the phase file. A launch failure still writes
 metadata and all raw files that can be created, including the launch error.
 
+### Словарь фаз для SoC с общей памятью
+
+- `H2D` означает host-to-device visibility path. Для текущего VIPLite runner
+  это `map + memcpy + unmap + cache flush`, а не PCIe transfer в отдельную
+  память. Указанное GB/s является эффективной скоростью всего пути.
+- `D2H` означает device-to-host visibility path:
+  `cache invalidate + map + memcpy + unmap`. Для очень малого output fixed API
+  overhead делает GB/s малоинформативным.
+- `run` — wall-clock синхронного runtime call; `device` — время, сообщённое
+  device profiler. Их разность интерпретируется только как host/driver/API
+  overhead данного вызова.
+- `first` — первая итерация после prepare; `steady` — последующие итерации
+  resident graph/buffers. Setup и first нельзя смешивать со steady KPI.
+- `golden` — независимо вычисленный reference output. Повторное byte-equality
+  с первым device output является проверкой repeatability, но не correctness.
+
 `profile_command.py` supplies lifecycle timing, direct-child process samples,
 and board-wide readable `/proc`/`/sys` telemetry. It does not infer internal
 VIP phases, copy byte counts, power, or runtime quality. The tested command or

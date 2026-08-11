@@ -1,0 +1,50 @@
+{
+  "schema_version": "a733-ddr-pll-ab-baseline/v1",
+  "experiment_id": "E005-a733-ddr-pll-ab",
+  "status": "prepared_not_run",
+  "provenance": "observed_elsewhere_and_audit_snapshot",
+  "hardware": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "kernel": "6.6.98-sun60iw2",
+    "memory": "12 GB LPDDR5"
+  },
+  "controller_before": {
+    "pll_ddr_ctrl": "0xf9005400",
+    "dram_clk_reg": "0x80000003",
+    "pll_ddr_hz": 2040000000,
+    "dram0_hz": 510000000,
+    "source": "target root read-only debugfs and register snapshot",
+    "provenance_class": "verified_on_target"
+  },
+  "planned_single_step": {
+    "original_full_word": "0xf9005400",
+    "target_full_word": "0xf9006300",
+    "raw_field_before": "0x54",
+    "raw_field_after": "0x63",
+    "expected_pll_ddr_hz": 2400000000,
+    "expected_dram0_hz": 600000000,
+    "expected_status": "not_verified_until_readback",
+    "write_address": "0x02002020",
+    "read_only_dram_address": "0x02002c00",
+    "status": "not_run"
+  },
+  "mbw_mib_per_s": {
+    "MEMCPY": {"value": 3102.053, "provenance_class": "past_observation", "status": "baseline_value_recorded"},
+    "DUMB": {"value": 3207.795, "provenance_class": "past_observation", "status": "baseline_value_recorded"},
+    "MCBLOCK": {"value": 5498.990, "provenance_class": "past_observation", "status": "baseline_value_recorded"}
+  },
+  "memtester": {
+    "argv": ["/usr/bin/taskset", "-c", "0-5", "/usr/local/bin/memtester", "128M", "1"],
+    "status": "pass_as_past_observation",
+    "provenance_class": "past_observation"
+  },
+  "ddr_temperature_mC": {
+    "mbw": {"before": 33046, "after": 32674, "unit": "mC", "provenance_class": "past_observation"},
+    "memtester": {"before": 31310, "after": 35774, "unit": "mC", "provenance_class": "past_observation"},
+    "status": "paired_past_observations_not_E005_run",
+    "known_snapshot_mC": 32984
+  },
+  "q1_gate": {"status": "not_run", "required_for_first_approved_raw63": true, "workload_json_required": true},
+  "safety": {"temperature_abort_mC": 85000, "sampler_interval_ms": 250, "ecc": "not_assumed", "watchdog": "mandatory_for_apply", "restore_word": "0xf9005400"}
+}

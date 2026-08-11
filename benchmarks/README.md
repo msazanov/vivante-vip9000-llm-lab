@@ -147,6 +147,33 @@ for a changed model hash, runtime, prompt suite, or configuration. The
 JSON file under that run's directory. Absolute paths, `..` components, and a
 different run ID are invalid.
 
+## VIPLite phase profiles
+
+Operator/NBG capability runs use a separate compact schema
+`vip9000-viplite-phase-profile/v1`, because an image-classification inference
+is not a token-generation result and must not enter the model tokens/s ledger.
+The first retained 1000-loop profile is
+[`vip9000-shufflenet-h2d-run-d2h-1000-001`](results/vip9000-shufflenet-h2d-run-d2h-1000-001/summary.json),
+with its generated [phase chart](charts/vip9000-shufflenet-phase-profile.svg).
+Its status is performance-observed-unqualified: output repeatability passed,
+but an independent CPU golden was unavailable.
+
+The generated [experiment XY overview](charts/experiment-xy-overview.svg)
+keeps full-model token decode, image-network NPU inference, and Q1 CPU golden
+on three separate coordinate systems. It is built from the model ledger,
+VIPLite summaries, and
+[`q1-vip-cpu-golden-tests-001`](results/q1-vip-cpu-golden-tests-001/summary.json).
+Failed runs are named outside the XY plot because missing throughput is not
+equivalent to zero throughput.
+
+Packed-Q1 operator research uses
+[`q1-vip9000-evis-bonsai-20260811`](results/q1-vip9000-evis-bonsai-20260811/summary.json)
+and its generated [EVIS/Bonsai chart](charts/q1-vip9000-evis-bonsai-20260811.svg).
+The upper panel is a same-shape NPU microkernel A/B; the lower XY panel uses
+real Bonsai tensor slices and keeps the full-layer linear projection visually
+and semantically separate from measurements. These operator milliseconds do
+not enter the full-model tokens/s ledger.
+
 ## Inventory safety
 
 `target_inventory.sh` and `inspect_acuitylite.sh` write temporary output and

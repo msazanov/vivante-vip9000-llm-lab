@@ -1,0 +1,34 @@
+{
+  "schema_version": "q1-memory-accounting/v1",
+  "model": {
+    "id": "prism-ml/Ternary-Bonsai-27B-gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "size_bytes": 3803452480,
+    "quantization": "Q1_0"
+  },
+  "q1_tensor_count": 498,
+  "q1_payload_bytes": 3781877760,
+  "logical_gemv_count": 497,
+  "excluded_embedding_count": 1,
+  "decode_q1_bytes_per_token": 3603087360,
+  "declared_decode_q1_bytes_per_token": 3603087360,
+  "observed_ddr_bytes_per_token": null,
+  "families": {
+    "ffn": {
+      "logical_gemv_count": 192,
+      "q1_bytes_per_token": 2406481920
+    },
+    "recurrent": {
+      "logical_gemv_count": 240,
+      "q1_bytes_per_token": 781885440
+    },
+    "full_attention": {
+      "logical_gemv_count": 64,
+      "q1_bytes_per_token": 235929600
+    },
+    "lm_head": {
+      "logical_gemv_count": 1,
+      "q1_bytes_per_token": 178790400
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "q1-vip-cpu-golden-tests/v1",
+  "run_id": "q1-vip-cpu-golden-tests-001",
+  "date": "2026-08-10",
+  "status": "correctness-qualified-performance-not-measured",
+  "backend": "host-cpu-python",
+  "npu_executed": false,
+  "performance_measured": false,
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_q1_vip_golden -v",
+  "tests_run": 13,
+  "failures": 0,
+  "errors": 0,
+  "tests": [
+    {"name": "all-minus-q8-raw128", "kind": "numeric", "passed": true},
+    {"name": "all-plus-q8-raw128", "kind": "numeric", "passed": true},
+    {"name": "alternating-lsb-order", "kind": "numeric", "passed": true},
+    {"name": "alternating-zero-q8", "kind": "numeric", "passed": true},
+    {"name": "canonical-matrix", "kind": "numeric", "passed": true},
+    {"name": "four-independent-q8-scales", "kind": "numeric", "passed": true},
+    {"name": "matrix-cli-little-endian-output", "kind": "numeric", "passed": true},
+    {"name": "reject-nan-inf-scales", "kind": "guard", "passed": true},
+    {"name": "reject-packed-length", "kind": "guard", "passed": true},
+    {"name": "packed-tile-matches-16-canonical-rows", "kind": "numeric", "passed": true},
+    {"name": "q1-scale-two", "kind": "numeric", "passed": true},
+    {"name": "signed-q8-endpoints", "kind": "numeric", "passed": true},
+    {"name": "reject-scalar-length", "kind": "guard", "passed": true}
+  ],
+  "source_sha256": {
+    "tooling/q1_vip_golden.py": "9366630edff112a454872f2eb2e944a59f563466b22ed09b4bf26708c7c1111e",
+    "tooling/q1_vip_layout.py": "3bc472a36c385de75ce20b7018a6e0c8c3ffe565437d958f9e4ca1ba6660f847",
+    "tests/test_q1_vip_golden.py": "7e60d868798573b91efa8d380ace48eb6aa0c001aeba7c13aa30f0b3596db593"
+  },
+  "interpretation": "The independent scalar CPU reference passed exact arithmetic and malformed-input checks. This is correctness evidence only; it is not a VIP9000 execution or performance result."
+}

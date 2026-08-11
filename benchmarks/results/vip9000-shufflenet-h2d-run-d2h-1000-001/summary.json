@@ -1,0 +1,186 @@
+{
+  "bandwidth_gbps": {
+    "first": {
+      "d2h_at_median": 0.0003529204164460914,
+      "h2d_at_median": 1.2380576391630478
+    },
+    "steady": {
+      "d2h_at_median": 0.0002552974214960429,
+      "h2d_at_median": 2.272120754716981
+    }
+  },
+  "bytes": {
+    "d2h": 2,
+    "h2d": 150528
+  },
+  "correctness": {
+    "golden_checked": false,
+    "repeat_equal_failures": 0,
+    "repeat_equal_is_not_golden": true
+  },
+  "device_profile_failures": 0,
+  "driver_software": "2.0.3.2-AW-2024-08-30",
+  "inputs": [
+    {
+      "bytes": 150528,
+      "format": 2,
+      "index": 0,
+      "quant": 2,
+      "scale": 0.00392156886,
+      "shape": [
+        224,
+        224,
+        3,
+        1
+      ],
+      "zero_point": 0
+    }
+  ],
+  "iterations": {
+    "first": 1,
+    "steady": 999,
+    "total": 1000
+  },
+  "outputs": [
+    {
+      "bytes": 2,
+      "format": 2,
+      "index": 0,
+      "quant": 2,
+      "scale": 0.00162548793,
+      "shape": [
+        2,
+        1
+      ],
+      "zero_point": 128
+    }
+  ],
+  "run_id": "vip9000-shufflenet-h2d-run-d2h-1000-001",
+  "schema_version": "vip9000-viplite-phase-profile/v1",
+  "setup_us": {
+    "create_buffers": 394.75,
+    "create_network": 2051.041,
+    "init": 3801.208,
+    "prepare": 790.5
+  },
+  "source_stdout_sha256": "e038a5ed8781129a6c1c18ac79fbd2033a56274a6ebdc0e8cdd610a5201e5277",
+  "stats_us": {
+    "first": {
+      "cycles": {
+        "max": 2837092.0,
+        "median": 2837092.0,
+        "min": 2837092.0,
+        "p95": 2837092.0
+      },
+      "d2h": {
+        "max": 5.667,
+        "median": 5.667,
+        "min": 5.667,
+        "p95": 5.667
+      },
+      "device": {
+        "max": 2827.0,
+        "median": 2827.0,
+        "min": 2827.0,
+        "p95": 2827.0
+      },
+      "end_to_end": {
+        "max": 3174.917,
+        "median": 3174.917,
+        "min": 3174.917,
+        "p95": 3174.917
+      },
+      "end_to_end_minus_device": {
+        "max": 347.917,
+        "median": 347.917,
+        "min": 347.917,
+        "p95": 347.917
+      },
+      "h2d": {
+        "max": 121.584,
+        "median": 121.584,
+        "min": 121.584,
+        "p95": 121.584
+      },
+      "run": {
+        "max": 3047.666,
+        "median": 3047.666,
+        "min": 3047.666,
+        "p95": 3047.666
+      },
+      "run_minus_device": {
+        "max": 220.666,
+        "median": 220.666,
+        "min": 220.666,
+        "p95": 220.666
+      }
+    },
+    "steady": {
+      "cycles": {
+        "max": 3031300.0,
+        "median": 2818729.0,
+        "min": 2798950.0,
+        "p95": 2890803.1
+      },
+      "d2h": {
+        "max": 71.125,
+        "median": 7.834,
+        "min": 1.292,
+        "p95": 15.17
+      },
+      "device": {
+        "max": 3045.0,
+        "median": 2815.0,
+        "min": 2782.0,
+        "p95": 2907.0
+      },
+      "end_to_end": {
+        "max": 3793.167,
+        "median": 3025.668,
+        "min": 2870.833,
+        "p95": 3182.788
+      },
+      "end_to_end_minus_device": {
+        "max": 989.167,
+        "median": 181.751,
+        "min": 75.959,
+        "p95": 346.129
+      },
+      "h2d": {
+        "max": 160.958,
+        "median": 66.25,
+        "min": 38.083,
+        "p95": 121.379
+      },
+      "run": {
+        "max": 3699.25,
+        "median": 2918.75,
+        "min": 2827.709,
+        "p95": 3058.988
+      },
+      "run_minus_device": {
+        "max": 864.0,
+        "median": 99.875,
+        "min": 35.0,
+        "p95": 211.087
+      }
+    }
+  },
+  "status": "performance-observed-unqualified",
+  "thermal": {
+    "clock_variation_evidence": false,
+    "npu_clock_max_hz": 1008000000,
+    "npu_clock_min_hz": 1008000000,
+    "npu_cooling_max_state": 0,
+    "npu_end_c": 41.23,
+    "npu_peak_c": 42.16,
+    "npu_start_c": 35.34,
+    "pwm_fan_min_state": 4,
+    "sample_count": 309,
+    "throttling_evidence": false
+  },
+  "thermal_evidence_sha256": {
+    "telemetry.jsonl": "5f2993d712877147ff8df01e9220413338bfb53df6d6ddece3cf83bb8a907e31",
+    "thermal-guard.jsonl": "89d379f1c55a8ab1804324f71e9e5f478d74dea7f75c7301b18e05254086bf07"
+  }
+}

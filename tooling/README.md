@@ -8,6 +8,45 @@ Vendor SDKs, proprietary compiler files, credentials, model weights, NBG
 files, and runtime binaries remain external; the profiling tools record only
 paths, versions, hashes, and sanitized observations.
 
+## Generate the public Q1 C0 fixture
+
+Create the deterministic packed Q1/Q8 carrier fixture in a new directory:
+
+```bash
+python3 tooling/generate_q1_vip_fixture.py \
+  --output-dir /tmp/q1-vip-c0-fixture
+```
+
+The generated fixture files are public synthetic data. Generated NBG files
+remain outside Git and must not be added to the repository.
+
+## Pin a real Bonsai Q1 workload manifest
+
+Read the external GGUF with the pinned PrismML `gguf-py` reader and write only
+metadata, payload offsets, and SHA-256 values to the repository:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 tooling/q1_memory_accounting.py \
+  --model /home/random/.local/share/orange-rag/models/Bonsai-27B-Q1_0.gguf \
+  --gguf-python-root /home/random/src/llama-prismml/gguf-py \
+  --output benchmarks/workloads/bonsai-27b-q1.json
+```
+
+Re-read the generated manifest through the pinned identity and accounting
+validator:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 tooling/q1_memory_accounting.py \
+  --check benchmarks/workloads/bonsai-27b-q1.json
+```
+
+The command prints `PASS q1-memory-accounting/v1` only after the exact model
+size/SHA-256, Q1 payload offsets, and pinned Bonsai totals validate. GGUF
+weights and a future sidecar payload remain external to Git.
+`sidecar.total_payload_bytes` is the binary sidecar span through the final
+tensor end, including any alignment padding, rather than the sum of payload
+bytes alone.
+
 ## Profile one command
 
 Create a new result directory and retain the child output and telemetry:
@@ -72,6 +111,79 @@ run bundle. Empty phase evidence is rejected; new profiler bundles always
 contain the two lifecycle events unless phase recording itself failed. Inputs
 are validated fail-closed and never modified; `--output` refuses to overwrite
 an existing file.
+
+## Измерить фазы VIPLite
+
+`profiled_viplite_runner.c` держит NBG и buffers resident и для каждой
+итерации отдельно печатает H2D, wall-clock `vip_run_network`, внутренний
+`VIP_NETWORK_PROP_PROFILING`, D2H и byte-equality с первым output. Runner не
+умеет GGUF и не содержит host CPU implementation операции: он вызывает только
+скомпилированный NBG. Device profiler/cycles доказывают device execution, но
+закрытый runtime не даёт счётчика своего возможного внутреннего fallback.
+
+На плате runner собирается против установленного VIPLite:
+
+```bash
+gcc -O2 -std=c11 -Wall -Wextra -Werror \
+  tooling/profiled_viplite_runner.c -I/usr/include -L/usr/lib \
+  -Wl,-rpath,/usr/lib -lNBGlinker -o /tmp/profiled_viplite_runner
+
+/tmp/profiled_viplite_runner --iterations 1000 \
+  network_binary.nb input_0.dat output.bin
+
+# Два input tensors и один output, как в packed Q1×Q8 E003:
+/tmp/profiled_viplite_runner --iterations 100 \
+  q1_q8.nb packed_weights.q1_0.bin activation.q8_0.bin output.f32.bin
+```
+
+Input должен иметь ровно размер, сообщённый `vip_get_buffer_size`; лишние или
+недостающие bytes приводят к ошибке. Output записывается один раз после цикла и
+не входит в D2H timing.
+
+Строгая компактная сводка и график строятся так:
+
+```bash
+python3 tooling/summarize_viplite_profile.py <raw-run>/stdout.log \
+  --run-id <run_id> \
+  --thermal-guard <raw-run>/thermal-guard.jsonl \
+  --telemetry <raw-run>/telemetry.jsonl \
+  --output benchmarks/results/<run_id>/summary.json
+
+python3 tooling/generate_viplite_phase_chart.py \
+  benchmarks/results/<run_id>/summary.json \
+  --output benchmarks/charts/<run_id>.svg
+```
+
+Parser требует непрерывные iteration indices, `first` только для index 0,
+успешный device profiler и полные tensor/quantization metadata. Output equality
+с первым запуском остаётся repeatability-check и никогда не переименовывается
+в golden. `--output` у обоих инструментов не перезаписывает существующий файл.
+
+Общая XY-карта строится только из сохранённых JSON evidence:
+
+```bash
+python3 tooling/generate_experiment_xy_chart.py \
+  --output benchmarks/charts/experiment-xy-overview.svg
+```
+
+Генератор намеренно использует три панели. Bonsai показывает milliseconds per
+token и decode tokens/s; ShuffleNet показывает milliseconds per inference и
+inferences/s; CPU golden показывает PASS/нет проверки. Эти единицы нельзя
+объединять на одной оси. Failed/no-metric run IDs выводятся отдельно и не
+получают искусственное значение `0`.
+
+График packed Q1×Q8 EVIS строится из отдельной машинной сводки:
+
+```bash
+python3 tooling/generate_q1_evis_chart.py \
+  benchmarks/results/q1-vip9000-evis-bonsai-20260811/summary.json \
+  --output benchmarks/charts/q1-vip9000-evis-bonsai-20260811.svg
+```
+
+Верхняя панель сравнивает только одинаковую форму `16×128`. Нижняя использует
+логарифмические XY-оси для реальных Bonsai tiles. Генератор fail-closed
+отклоняет попытку пометить линейную full-layer проекцию как измерение и не
+перезаписывает существующий SVG.
 
 ## Fail closed on unsafe target state
 

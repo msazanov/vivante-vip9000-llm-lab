@@ -37,7 +37,7 @@ class BenchmarkChartTests(unittest.TestCase):
         self.assertEqual(len(data.cpu), 4)
         self.assertEqual(len(data.npu), 2)
         self.assertEqual({row.median for row in data.npu}, {2.803, 2.846})
-        self.assertEqual(data.out_of_scope, 6)
+        self.assertEqual(data.out_of_scope, 11)
         cpu_values = {
             (row.run_id, row.metric): (row.p10, row.median, row.p90)
             for row in data.cpu

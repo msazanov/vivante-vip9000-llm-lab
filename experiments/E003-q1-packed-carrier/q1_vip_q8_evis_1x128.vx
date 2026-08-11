@@ -1,0 +1,118 @@
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+#include "cl_viv_vx_ext.h"
+
+// Signed INT8 x signed INT8 DP16 and signed INT8 horizontal sum.
+// The exact 512-bit configurations come from TIM-VX 1.1.30
+// instance_normalization_evis.c (I8 path).
+_viv_uniform VXC_512Bits uniDotInt8_16x1;
+_viv_uniform VXC_512Bits uniSumInt8_16x1;
+_viv_uniform int block_count;
+
+static float load_fp16_from_u8(
+    __read_only image2d_t carrier, int byte_offset, int row)
+{
+    const uint lo = read_imageui(carrier, (int2)(byte_offset, row)).x;
+    const uint hi = read_imageui(carrier, (int2)(byte_offset + 1, row)).x;
+    return convert_float(as_half((ushort)(lo | (hi << 8))));
+}
+
+// Extract sixteen consecutive LSB-first sign bits from the canonical Q1_0
+// 16-byte sign blob.  No matrix-sized expanded INT8 tensor is materialized:
+// the sixteen 0/1 values exist only in an EVIS register.
+#define EXTRACT_SIGN_BITS(bits, sign_blob, first_bit) do { \
+    const vxc_uchar16 mask_lo = (vxc_uchar16)( \
+        first_bit + 0, first_bit + 1, first_bit + 2, first_bit + 3, \
+        first_bit + 4, first_bit + 5, first_bit + 6, first_bit + 7, \
+        1, 1, 1, 1, 1, 1, 1, 1); \
+    const vxc_uchar16 mask_hi = (vxc_uchar16)( \
+        first_bit + 8, first_bit + 9, first_bit + 10, first_bit + 11, \
+        first_bit + 12, first_bit + 13, first_bit + 14, first_bit + 15, \
+        1, 1, 1, 1, 1, 1, 1, 1); \
+    VXC_BitExtract(bits, sign_blob, sign_blob, mask_lo, \
+                   VXC_MODIFIER(0, 7, 0, VXC_RM_TowardZero, 0)); \
+    VXC_BitExtract(bits, sign_blob, sign_blob, mask_hi, \
+                   VXC_MODIFIER(8, 15, 0, VXC_RM_TowardZero, 0)); \
+} while (0)
+
+#define SIGNED_DOT_16(result, sign_bits, q8_raw) do { \
+    vxc_char16 signed_bits; \
+    vxc_char16 signed_q8; \
+    _viv_asm(COPY, signed_bits, sign_bits, 16); \
+    _viv_asm(COPY, signed_q8, q8_raw, 16); \
+    int selected_sum; \
+    int total_sum; \
+    VXC_DP16x1(selected_sum, signed_bits, signed_q8, \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0), \
+               uniDotInt8_16x1); \
+    VXC_DP16x1(total_sum, signed_q8, signed_q8, \
+               VXC_MODIFIER(0, 0, 0, VXC_RM_TowardZero, 0), \
+               uniSumInt8_16x1); \
+    result = 2 * selected_sum - total_sum; \
+} while (0)
+
+#define ACCUMULATE_HALF(integer_dot, q8_x, first_bit) do { \
+    vxc_uchar16 q8_raw; \
+    vxc_uchar16 sign_bits; \
+    int half_dot; \
+    VXC_ReadImage(q8_raw, packed_q8, (int2)(q8_x, 0), \
+                  VXC_5BITOFFSET_XY(0, 0), \
+                  VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0)); \
+    EXTRACT_SIGN_BITS(sign_bits, sign_blob, first_bit); \
+    SIGNED_DOT_16(half_dot, sign_bits, q8_raw); \
+    integer_dot += half_dot; \
+} while (0)
+
+#define COMPUTE_ROW(result, row_value) do { \
+    const int row = row_value; \
+    float row_accumulator = 0.0f; \
+    for (int block = 0; block < block_count; ++block) { \
+        const int weight_base = block * 18; \
+        const int q8_base = block * 136; \
+        const float q1_scale = load_fp16_from_u8( \
+            packed_weights, weight_base, row); \
+        vxc_uchar16 sign_blob; \
+        VXC_ReadImage(sign_blob, packed_weights, \
+                      (int2)(weight_base + 2, row), \
+                      VXC_5BITOFFSET_XY(0, 0), \
+                      VXC_MODIFIER(0, 15, 0, VXC_RM_TowardZero, 0)); \
+        float block_accumulator = 0.0f; \
+        int integer_dot = 0; \
+        ACCUMULATE_HALF(integer_dot, q8_base + 2, 0); \
+        ACCUMULATE_HALF(integer_dot, q8_base + 18, 16); \
+        block_accumulator += load_fp16_from_u8( \
+            packed_q8, q8_base, 0) * (float)integer_dot; \
+        integer_dot = 0; \
+        ACCUMULATE_HALF(integer_dot, q8_base + 36, 32); \
+        ACCUMULATE_HALF(integer_dot, q8_base + 52, 48); \
+        block_accumulator += load_fp16_from_u8( \
+            packed_q8, q8_base + 34, 0) * (float)integer_dot; \
+        integer_dot = 0; \
+        ACCUMULATE_HALF(integer_dot, q8_base + 70, 64); \
+        ACCUMULATE_HALF(integer_dot, q8_base + 86, 80); \
+        block_accumulator += load_fp16_from_u8( \
+            packed_q8, q8_base + 68, 0) * (float)integer_dot; \
+        integer_dot = 0; \
+        ACCUMULATE_HALF(integer_dot, q8_base + 104, 96); \
+        ACCUMULATE_HALF(integer_dot, q8_base + 120, 112); \
+        block_accumulator += load_fp16_from_u8( \
+            packed_q8, q8_base + 102, 0) * (float)integer_dot; \
+        row_accumulator += q1_scale * block_accumulator; \
+    } \
+    result = row_accumulator; \
+} while (0)
+
+// Exact canonical Q1_0 x Q8_0 dot.  Each K=128 block consumes 18 packed
+// Q1 bytes and 136 packed Q8 bytes; no expanded weight tensor is created.
+__kernel void q1_vip_q8_evis_1x128(
+    __read_only image2d_t packed_weights,
+    __read_only image2d_t packed_q8,
+    __write_only image2d_t output)
+{
+    const int base_row = (int)get_global_id(0) * 4;
+    float4 output_values;
+    COMPUTE_ROW(output_values.x, base_row + 0);
+    COMPUTE_ROW(output_values.y, base_row + 1);
+    COMPUTE_ROW(output_values.z, base_row + 2);
+    COMPUTE_ROW(output_values.w, base_row + 3);
+    write_imagef(output, (int2)(base_row, 0), output_values);
+}
