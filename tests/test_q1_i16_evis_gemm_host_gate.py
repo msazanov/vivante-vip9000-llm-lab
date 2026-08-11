@@ -17,7 +17,7 @@ class Q1I16EvisGemmHostGateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             output_dir = Path(tmp) / "e019-host-gate"
             result = subprocess.run(
-                [str(RUNNER), "--output-dir", str(output_dir), "--image",
+                ["bash", str(RUNNER), "--output-dir", str(output_dir), "--image",
                  "ubuntu-npu:v2.0.10.2", "--m", "1", "--k", "32", "--n", "1"],
                 cwd=ROOT, text=True, capture_output=True, check=False, timeout=180)
             self.assertEqual(result.returncode, 0,
