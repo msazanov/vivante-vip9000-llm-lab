@@ -1,0 +1,30 @@
+{
+  "experiment": "E024",
+  "board": "Orange Pi Zero 3W / A733",
+  "driver": "VIPLite 2.0.3.2-AW-2024-08-30",
+  "kernel": "6.6.98-sun60iw2",
+  "model_projection": {"m": 17408, "k": 5120},
+  "kernel_contract": {
+    "custom_kernel_count": 1,
+    "rows_per_work_item": 4,
+    "q1_expanded": false,
+    "q8_expanded": false,
+    "scale_semantics": "fp16_le_q1_per_128_and_q8_per_32",
+    "output_type": "FLOAT32"
+  },
+  "runs": [
+    {"rows": 2048, "golden": "exact", "max_abs": 0.0, "steady": 9, "h2d_mean_us": 384.84711111111113, "run_mean_us": 25572.03722222222, "d2h_mean_us": 48.87033333333333, "device_mean_us": 25343.666666666668, "cycles_mean": 25430528.666666668, "profile_sha256": "7a0933f05e5e0fd8674ea9311afed2c8911ab0cd5e1dd0f5a53ec3690da5efd2", "output_sha256": "5d78da2955fa242b786a385eae836906162ec92f5e4ed7f6262f83d46a236c57"},
+    {"rows": 4096, "golden": "exact", "max_abs": 0.0, "steady": 9, "h2d_mean_us": 894.4443333333334, "run_mean_us": 50656.48155555556, "d2h_mean_us": 516.2869999999999, "device_mean_us": 50375.666666666664, "cycles_mean": 50608266.88888889, "profile_sha256": "ebbc74f2cf0f8fd0fb4c5d88e28226e2523a922c6382eabd002e7e4bfecbf8a8", "output_sha256": "9caf61788ea1754ff2694f09c58934febd3f3d55e81bde1ebcf9a9a675b25c55"},
+    {"rows": 8192, "golden": "exact", "max_abs": 0.0, "steady": 9, "h2d_mean_us": 1552.9721111111112, "run_mean_us": 100897.29644444445, "d2h_mean_us": 165.10644444444446, "device_mean_us": 100603.77777777778, "cycles_mean": 101254165.33333333, "profile_sha256": "65e6dbc2edb5c59ef88317e0ce70bcf565ca9dcb673f8be2eba4e24d22f70650", "output_sha256": "60a9d2314bdb012e20942bbe64494d46ed636639f8a30e42540eaea05400daa2"},
+    {"rows": 16384, "golden": "exact", "max_abs": 0.0, "steady": 9, "h2d_mean_us": 3090.5186666666664, "run_mean_us": 201840.45855555555, "d2h_mean_us": 367.4582222222222, "device_mean_us": 201457.77777777778, "cycles_mean": 202832982.0, "profile_sha256": "5a3a7eac572c532172404c56e77353bfffed6ef170bbeff581420f845ed97e07", "output_sha256": "e8c893f85c705b4681d19d62b830efbd68e259499caea60b14bebb4d8f1ab25f"},
+    {"rows": 17408, "golden": "mismatch", "max_abs": 5.767810231038444e32, "steady": 99, "h2d_mean_us": 3241.1223737373734, "run_mean_us": 214178.35742424245, "d2h_mean_us": 369.7634545454546, "device_mean_us": 213769.14141414143, "cycles_mean": 215255807.979798, "valid_rows": 1024, "profile_sha256": "882cb266a3238163c586572648e9b596714a04a006bd37115965441ec3fcfa36", "output_sha256": "db1ed4dad142cdf88c9d41ea80e7e9309e365820989337f757b472c3075e335d", "status": "rejected"}
+  ],
+  "inference": {
+    "max_verified_rows": 16384,
+    "full_projection_plan": "16384+1024",
+    "estimated_two_tile_device_ms": 214.352,
+    "cpu_reference_projection_ms": 3.850,
+    "npu_speedup_claim": false,
+    "quality_gate": "full M=17408 rejected because golden mismatch"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "experiment": "E023",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / A733",
+  "kernel": "6.6.98-sun60iw2",
+  "model": {
+    "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "type": "qwen35 27B Q1_0",
+    "bytes": 3792459776,
+    "parameters": 26895998464
+  },
+  "common": {
+    "build_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "build_number": 9594,
+    "prompt_tokens": 0,
+    "generation_tokens": 128,
+    "repetitions": 2,
+    "threads": 6,
+    "cpu_mask": "0x3f",
+    "batch": 512,
+    "ubatch": 512,
+    "cpu_strict": true,
+    "n_gpu_layers": 0,
+    "thermal_guard_limit_c": 85.0
+  },
+  "results": [
+    {
+      "id": "baseline-a55",
+      "binary": "build/cpu-38c66-native-git/bin/llama-bench",
+      "target_result_dir": "results/bonsai27b-q1-cpu-a55-pp512-tg128-001",
+      "avg_tok_s": 0.726056,
+      "samples_tok_s": [0.726325, 0.726362, 0.725669, 0.725747, 0.726175],
+      "status": "accepted"
+    },
+    {
+      "id": "q1-4x8-a55-r2",
+      "binary": "build/cpu-38c66-a733-q1-4x8/bin/llama-bench",
+      "target_result_dir": "results/e023-q1-4x8-a55-r2",
+      "avg_tok_s": 0.632198,
+      "samples_tok_s": [0.631574, 0.632823],
+      "delta_vs_baseline_pct": -12.927,
+      "max_thermal_c": {
+        "cpul": 59.334,
+        "cpub": 59.830,
+        "ddr": 53.506,
+        "npu": 52.204
+      },
+      "stdout_sha256": "d99660e446d2fd012c755bb9b26da130c11fb1aee567eace4bd03abeaa98206d",
+      "thermal_trace_sha256": "1661264b6ca709ea2e1fc5aca3d3dfb52292ac196493ecdc4d3846686f75e72c",
+      "status": "accepted_but_slower"
+    },
+    {
+      "id": "prefetch4-a55-r2",
+      "binary": "build/cpu-38c66-a733-q1-prefetch4/bin/llama-bench",
+      "target_result_dir": "results/e023-q1-prefetch4-a55-r2",
+      "avg_tok_s": 0.600313,
+      "samples_tok_s": [0.600444, 0.600182],
+      "delta_vs_baseline_pct": -17.319,
+      "max_thermal_c": {
+        "cpul": 55.490,
+        "cpub": 55.986,
+        "ddr": 51.398,
+        "npu": 49.414
+      },
+      "stdout_sha256": "beeee0a009c85eb62b84c50583c0dc52e1f467bd7e7ea5d5dba4f812da137f37",
+      "thermal_trace_sha256": "8302e6fab78d47c93ad033bbffe87090d1070a4098c286d358004b7256905ee2",
+      "status": "accepted_but_slower"
+    },
+    {
+      "id": "q1-4x8-allcore-r3",
+      "binary": "build/cpu-38c66-a733-q1-4x8/bin/llama-bench",
+      "target_result_dir": "results/e023-q1-4x8-allcore-r3",
+      "cpu_mask": "0xff",
+      "requested_repetitions": 3,
+      "max_observed_c": 74.576,
+      "thermal_trace_sha256": "82018d08e853095414b0280bf9b419dc55b8f208fb2dabbdca7478efdd1763ed",
+      "status": "failed_unexpected_reboot",
+      "reason": "target connection reset before a complete JSON result; thermal guard limit was not reached"
+    }
+  ]
+}
