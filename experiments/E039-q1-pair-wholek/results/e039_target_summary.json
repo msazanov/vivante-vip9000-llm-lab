@@ -1,0 +1,46 @@
+{
+  "experiment": "E039",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733",
+  "status": "golden_pass_microgate_rejected",
+  "model_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+  "artifacts": {
+    "assembly_sha256": "3338df3dfedf683247ef0da3975db371667add1c2552f77219718a444687143f",
+    "harness_cpp_sha256": "4bbd8841069bef4b6e29f99b1b31dc7e4d1e67a15e0ec644282ef9ca7e5b567e",
+    "harness_elf_sha256": "7fb1a6e36b6d98306e79e6ee101e7fa76f096029c2a491dab921e0306e2e2ff5",
+    "object_sha256": "00b5bb114f300b04b69a596964f499ba76b9b6e66d8d83c2342747f3fb590c53"
+  },
+  "target_run": {
+    "run_rc": 0,
+    "child_return_code": 0,
+    "signal": null,
+    "profiler_interval_ms": 50,
+    "guard_interval_ms": 100,
+    "thermal_limit_c": 85.0,
+    "thermal_abort": false,
+    "governor_before": {"policy0": "ondemand", "policy6": "ondemand"},
+    "governor_during": {"policy0": "performance", "policy6": "performance"},
+    "governor_after": {"policy0": "ondemand", "policy6": "ondemand"},
+    "npu_after_hz": 1008000000,
+    "ddr_readout": "absent"
+  },
+  "golden": {
+    "k_values": [128, 256, 5120],
+    "patterns": 6,
+    "case_count": 18,
+    "scalar_vs_simd_bit_exact": true,
+    "paired_vs_scalar_bit_exact": true,
+    "paired_vs_simd_bit_exact": true,
+    "input_mutation": false
+  },
+  "microgate_median_ns": {
+    "128": {"paired_asm": 180.1, "two_native_simd": 170.1, "paired_over_native": 1.058789},
+    "256": {"paired_asm": 276.3, "two_native_simd": 250.1, "paired_over_native": 1.104758},
+    "5120": {"paired_asm": 3945.4, "two_native_simd": 3448.4, "paired_over_native": 1.144125}
+  },
+  "thermal_max_c": {"cpul": 39.370, "cpub": 37.448, "ddr": 36.518, "npu": 36.518, "gpu": 36.766, "skin": 31.874},
+  "evidence": {
+    "target_report_sha256": "23cd06aa43d355788dfcbe5b0d16a2a81ea3cd6e12cb50931c4f096170615f16",
+    "review_sha256": "3d9cf50f19abcbc551a0149b3cf7c3975dcd40c9d6202b595439ebf0b188cad5"
+  }
+}

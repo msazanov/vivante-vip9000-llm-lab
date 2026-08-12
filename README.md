@@ -53,6 +53,7 @@ docs/evidence/bonsai-q1-npu-partition-audit-2026-08-10.md Exact Bonsai Q1 tensor
 docs/evidence/q1-uint8-nbg-packed-carrier-design-2026-08-10.md Packed Q1 over proven UINT8 NBG design
 docs/evidence/vip9000-phase-profile-2026-08-10.md Real H2D/run/D2H target profile and terminology
 docs/evidence/q1-vip9000-evis-bonsai-2026-08-11.md Real packed Q1×Q8 EVIS and Bonsai scaling result
+docs/evidence/a733-ddr-secure-dfs-2026-08-12.md Read-only DDR secure-DFS/SMC boundary and hashes
 docs/superpowers/specs/2026-08-10-q1-vip9000-backend-design.md Approved-scope Q1 backend research specification
 docs/hardware/a733.md                                 A733 hardware facts and validation checklist
 docs/hardware/orange-pi-zero-3w.md                    Observed target-board fingerprint
@@ -66,6 +67,7 @@ docs/research/related-work.md                         Relevant projects and prio
 docs/toolchain/inventory.md                           Sanitized compiler/runtime/tool inventory
 experiments/E001-vip9000-capability-probe/            Target-side SDK/operator experiment
 experiments/E002-packed-ternary-kernel/               Packed Q2_0 OpenCL/EVIS and native-NN study
+experiments/E039-q1-pair-wholek/                      Target golden and rejected whole-K packed-Q1 CPU pair
 experiments/README.md                                 Experiment template and reproducibility rules
 research/decisions/002-packed-ternary-research-direction.md Research direction record
 research/open-questions.md                            Unresolved technical and legal questions
@@ -156,6 +158,12 @@ Confirmed from official, BSP and upstream source:
   production decode offload; the next gate is EVIS unpack fused with a native
   NN tensor operation whose intermediate tile stays on-chip.
 - Community A733 work has executed complete transformer-body graphs through VIPLite, demonstrating feasibility but not yet optimal autoregressive LLM decode.
+- E039 whole-K packed-Q1 pair passes 18/18 bit-exact target golden cases, but
+  its assembly microgate is 5.88–14.41% slower than two native SIMD calls;
+  it is therefore rejected for llama.cpp integration.
+- E038 recovers the built-in DDR clock provider and SMC FID `0xc0000096`, but
+  the secure DFS/training sequence remains opaque; runtime SMC/MMIO/raw DDR
+  writes remain prohibited. See the [Russian DDR evidence](docs/evidence/a733-ddr-secure-dfs-2026-08-12.md).
 
 The next hard gates are:
 
@@ -166,6 +174,8 @@ The next hard gates are:
   ускорилось в 10,01× по cycles относительно скалярного NPU варианта. Реальное
   масштабирование Bonsai также прошло golden, но отклонено по скорости полного
   слоя. Следующая ступень — fused EVIS unpack → native NN FC/Conv внутри NBG.
+- [`E039`](experiments/E039-q1-pair-wholek/README.md): target golden для
+  whole-K packed-Q1 pair. Корректность принята, локальное ускорение отвергнуто.
 
 ## Текущие графики
 
@@ -191,4 +201,3 @@ Failed-запуски без метрики перечисляются, но н�
 реального `blk.0.ffn_gate`. Полая оранжевая точка полного NPU-слоя — явно
 подписанная линейная оценка, а не измерение. Методика и выводы находятся в
 [русском отчёте E003](docs/evidence/q1-vip9000-evis-bonsai-2026-08-11.md).
-
