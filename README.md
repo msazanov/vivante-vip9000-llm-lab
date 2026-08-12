@@ -68,6 +68,7 @@ docs/toolchain/inventory.md                           Sanitized compiler/runtime
 experiments/E001-vip9000-capability-probe/            Target-side SDK/operator experiment
 experiments/E002-packed-ternary-kernel/               Packed Q2_0 OpenCL/EVIS and native-NN study
 experiments/E039-q1-pair-wholek/                      Target golden and rejected whole-K packed-Q1 CPU pair
+experiments/E040-q1-register-lut/                     Target golden and rejected register-only Q1 nibble-LUT
 experiments/README.md                                 Experiment template and reproducibility rules
 research/decisions/002-packed-ternary-research-direction.md Research direction record
 research/open-questions.md                            Unresolved technical and legal questions
@@ -161,6 +162,10 @@ Confirmed from official, BSP and upstream source:
 - E039 whole-K packed-Q1 pair passes 18/18 bit-exact target golden cases, but
   its assembly microgate is 5.88–14.41% slower than two native SIMD calls;
   it is therefore rejected for llama.cpp integration.
+- E040 register-only Q1 nibble-LUT passes the target exhaustive/canary golden
+  gate, but at K=5120 it takes 4507.1 ns versus 1741.1 ns for one native SIMD
+  group whole-K call (2.58865x latency, 61.37% lower speed). It is rejected;
+  additional TBL/index work does not remove the full-GEMV memory bottleneck.
 - E038 recovers the built-in DDR clock provider and SMC FID `0xc0000096`, but
   the secure DFS/training sequence remains opaque; runtime SMC/MMIO/raw DDR
   writes remain prohibited. See the [Russian DDR evidence](docs/evidence/a733-ddr-secure-dfs-2026-08-12.md).
@@ -176,6 +181,9 @@ The next hard gates are:
   слоя. Следующая ступень — fused EVIS unpack → native NN FC/Conv внутри NBG.
 - [`E039`](experiments/E039-q1-pair-wholek/README.md): target golden для
   whole-K packed-Q1 pair. Корректность принята, локальное ускорение отвергнуто.
+- [`E040`](experiments/E040-q1-register-lut/README.md): target exhaustive
+  golden для register-only Q1 nibble-LUT. Baseline — один native SIMD group;
+  корректность принята, timing отвергнут, интеграции нет.
 
 ## Текущие графики
 

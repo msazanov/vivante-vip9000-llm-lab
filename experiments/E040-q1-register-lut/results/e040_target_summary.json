@@ -1,0 +1,116 @@
+{
+  "experiment": "E040",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733 sun60iw2",
+  "kernel": "6.6.98-sun60iw2",
+  "architecture": "aarch64",
+  "status": "golden_pass_performance_rejected",
+  "baseline_semantics": "one native SIMD group whole-K call, not two native calls",
+  "model_context": {
+    "name": "Bonsai-27B-Q1_0",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0"
+  },
+  "hypothesis": "register-only nibble-LUT unpack for packed Q1 without expanded DDR sign tensor",
+  "source_artifacts": {
+    "assembly": {
+      "path": "e040_q1_group_wholek.S",
+      "sha256": "00bea3ec1573698d8b0156417df675c2013d6ebc4f03e55cef30fc4096ade3fd"
+    },
+    "harness": {
+      "path": "e040_q1_group_harness.cpp",
+      "sha256": "2001de476b74019703858f9e2c58869ca9d7d3d25a777af79ced5ce199c5526c"
+    }
+  },
+  "target_staging_sha256": {
+    "e040_green": "8e0e74cb9039d6fee04844ca1fce5e9fd70aa09d4e9664af5086aa9b1227e194",
+    "e040_q1_group_harness.cpp": "2001de476b74019703858f9e2c58869ca9d7d3d25a777af79ced5ce199c5526c",
+    "e040_q1_group_wholek.S": "00bea3ec1573698d8b0156417df675c2013d6ebc4f03e55cef30fc4096ade3fd",
+    "e040_q1_group_harness.o": "37f392a645ff1cf96ac70e8ee437d00025f7e039d6a92493f3d0b976ef2247ad",
+    "e040_q1_group_wholek.o": "9da1e0bdb0b09ac889a9e4e1962a5b11bb7dd8ae5327db8e0f876680682d0c2f",
+    "e040_q1_group_wholek.objdump": "254b1daa110c910bef7a2592217d76b2d0b1d3b2be2720b0158c00201813fcdf",
+    "e040_q1_group_wholek.readelf": "a4307ddeda6901d5db187cea9920c16bcadc0508c1a4fb3ec75f9c1416a54dd3"
+  },
+  "target_runs": {
+    "prelaunch_001": {
+      "path": "results/e040-register-lut-target-20260812-001/",
+      "qualified": false,
+      "status": "prelaunch_failure",
+      "run_rc": 127,
+      "child_started": false,
+      "telemetry_samples": 0,
+      "reason": "thermal_exec_guard.py was invoked without python3 and profile_command.py received PermissionError; binary did not run"
+    },
+    "qualified_002": {
+      "path": "results/e040-register-lut-target-20260812-002/",
+      "qualified": true,
+      "status": "golden_pass_performance_rejected",
+      "run_rc": 0,
+      "child_return_code": 0,
+      "signal": null,
+      "profiler_interval_ms": 50,
+      "thermal_guard_interval_ms": 100,
+      "thermal_limit_c": 85.0,
+      "affinity": "taskset -c 0-7",
+      "governor_before": {
+        "policy0": "ondemand",
+        "policy6": "ondemand"
+      },
+      "governor_during": {
+        "policy0": "performance",
+        "policy6": "performance"
+      },
+      "governor_after": {
+        "policy0": "ondemand",
+        "policy6": "ondemand"
+      },
+      "ddr_changed": false,
+      "npu_gpu_mmio_smc_modules_changed": false,
+      "fan_changed": false,
+      "evidence": {
+        "path": "/tmp/e040-target-results/e040-register-lut-target-20260812-002/",
+        "metadata_sha256": "f5377f7afeb9d7306a7a4ff42c2c78e552b85e6d9106e72a02e75c243cccaca4",
+        "stdout_sha256": "88e7f19f0b664ca610637e0532af9438432fa3b385ef615ff2bf6849de54e699",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "thermal_guard_sha256": "cc9e0aad45c078923ba997b4f4f8656c69f924c71eb3fca997bdb63b0f91525e",
+        "telemetry_sha256": "4947f57441d7c1fc2674c4853ec0a5b9ebfb407c676dcffc1f792424b7d7731f"
+      }
+    }
+  },
+  "exact_gate": {
+    "k_values": [128, 256, 5120],
+    "patterns": 6,
+    "exhaustive_q1_values": 256,
+    "exhaustive_q1_offsets": 64,
+    "early_exit_null_inputs": true,
+    "canary_red_zone": true,
+    "input_mutation": false,
+    "scalar_vs_e040_bit_exact": true,
+    "native_vs_e040_bit_exact": true,
+    "status": "pass"
+  },
+  "timing_gate": {
+    "k": 5120,
+    "rounds": 4,
+    "alternating_order": true,
+    "candidate_median_ns": 4507.1,
+    "one_native_simd_group_median_ns": 1741.1,
+    "candidate_latency_over_baseline": 2.5886508529,
+    "candidate_speed_over_baseline": 0.3863016130,
+    "speed_delta_pct": -61.36984,
+    "latency_delta_pct": 158.86509,
+    "status": "reject"
+  },
+  "thermal_max_c": {
+    "cpul": 38.192,
+    "cpub": 38.192,
+    "ddr": 35.898,
+    "npu": 35.712,
+    "gpu": 36.084,
+    "skin": 31.638
+  },
+  "evidence_report": {
+    "path": "/tmp/e040_target_report.md",
+    "sha256": "bc9ff7311d6ac524c0d41da54ab0fa7f985fb3757421625c25cab72018a43c24"
+  },
+  "next_gate": "broader full-GEMV scheduling/load-address generation, memory-stall and thread-parallelism study; no llama.cpp integration"
+}
