@@ -1,0 +1,77 @@
+{
+  "experiment": "E033",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733",
+  "hypothesis": "Linux scheduler with strict=0 balances the same all-core worker pool better than round-robin strict affinity",
+  "model": {
+    "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "type": "qwen35 27B Q1_0",
+    "bytes": 3792459776,
+    "parameters": 26895998464
+  },
+  "common": {
+    "source_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "cpu_mask": "0xff",
+    "threads": 8,
+    "cpu_strict": false,
+    "batch": 512,
+    "ubatch": 512,
+    "kv": "f16",
+    "flash_attn": true,
+    "poll": 50,
+    "ngl": 0,
+    "n_gen": 32,
+    "runs": 3,
+    "governor": "performance",
+    "ddr_raw": "0x54",
+    "thermal_guard_limit_c": 85.0,
+    "profile_interval_ms": 100
+  },
+  "affinity_screen_n8": [
+    {"id": "all8_strict", "mask": "0xff", "threads": 8, "cpu_strict": true, "avg_tok_s": 0.884488},
+    {"id": "a76_2", "mask": "0xc0", "threads": 2, "cpu_strict": true, "avg_tok_s": 0.641160},
+    {"id": "mixed4", "mask": "0xf0", "threads": 4, "cpu_strict": true, "avg_tok_s": 0.766557},
+    {"id": "mixed6", "mask": "0xfc", "threads": 6, "cpu_strict": true, "avg_tok_s": 0.808081},
+    {"id": "a55_6", "mask": "0x3f", "threads": 6, "cpu_strict": true, "avg_tok_s": 0.720282}
+  ],
+  "reference": {
+    "id": "e026-performance-flash-allcore-n32-r3",
+    "avg_tok_s": 0.888039,
+    "samples_tok_s": [0.885429, 0.901302, 0.877385]
+  },
+  "target": {
+    "id": "e033-scheduler-performance-flash-allcore-n32-r3-strict0-001",
+    "avg_tok_s": 0.968236,
+    "samples_tok_s": [0.980676, 0.964671, 0.959361],
+    "stddev_tok_s": 0.011096,
+    "delta_vs_reference_pct": 9.0308,
+    "max_cpub_c": 72.275,
+    "max_cpul_c": 74.340,
+    "max_ddr_c": 64.480,
+    "max_npu_c": 63.364,
+    "max_gpu_c": 66.198,
+    "max_skin_c": 38.868,
+    "thermal_abort": false,
+    "child_return_code": 0,
+    "status": "accepted_best_cpu_mode"
+  },
+  "quality_gate": {
+    "target_id": "e033-quality-strict0-001",
+    "prompt": "Explain the A733 memory bottleneck in one short sentence.",
+    "seed": 123,
+    "temperature": 0.0,
+    "generated_tokens": 4,
+    "native_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "target_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "token_stream_match": true,
+    "status": "exact_stdout_match"
+  },
+  "artifacts_on_target": [
+    "results/e033-affinity-screen-20260812-003/",
+    "results/e033-scheduler-screen-20260812-001/",
+    "results/e033-scheduler-performance-flash-allcore-n32-r3-strict0-001/",
+    "results/e033-quality-strict0-001/"
+  ],
+  "status": "accepted_best_cpu_mode"
+}

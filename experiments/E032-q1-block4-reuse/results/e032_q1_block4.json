@@ -1,0 +1,95 @@
+{
+  "experiment": "E032",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733",
+  "hypothesis": "one noinline helper consumes four Q8 blocks for one packed Q1 block4 group",
+  "model": {
+    "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "type": "qwen35 27B Q1_0",
+    "bytes": 3792459776,
+    "parameters": 26895998464
+  },
+  "common": {
+    "source_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "cpu_mask": "0xff",
+    "threads": 8,
+    "cpu_strict": false,
+    "batch": 512,
+    "ubatch": 512,
+    "kv": "f16",
+    "flash_attn": true,
+    "poll": 50,
+    "ngl": 0,
+    "n_gen": 32,
+    "runs": 3,
+    "governor": "performance",
+    "ddr_raw": "0x54",
+    "thermal_guard_limit_c": 85.0,
+    "profile_interval_ms": 100
+  },
+  "host_gate": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests/test_e030_q1_paired_golden.py tests/test_e031_q1_noinline_golden.py tests/test_e032_q1_block4_golden.py -v",
+    "tests": 11,
+    "passed": 11,
+    "status": "exact"
+  },
+  "patch": {
+    "file": "0001-q1-block4-reuse.patch",
+    "sha256": "ecd3b239fe86abd615b8d1d3966758649bdae616931447945775d579f89a8de4",
+    "patched_repack_sha256": "de58128736bb408a4594c1af693125b613e45665f1cc412ba25b1c0bd9a44345"
+  },
+  "build": {
+    "child_return_code": 0,
+    "llama_bench_sha256": "3dff1b0cc8605d01f94fe2edb26ca0eea7f1f3cac24344bcf19e9ad57b6c8618",
+    "llama_completion_sha256": "55a2a3b144c885330ad824be9ff366cf83176a88021f02e0110655da3fd57c3a",
+    "libggml_cpu_sha256": "6846a764e0121b4ed6faa8ae19d1067cb93bdd6d3ff2fcdc9c49d0f9445551a3",
+    "helper_text_bytes": 948,
+    "gemv_text_bytes": 244,
+    "reference_gemv_text_bytes": 1172
+  },
+  "reference": {
+    "id": "e026-performance-flash-allcore-n32-r3",
+    "avg_tok_s": 0.888039,
+    "samples_tok_s": [0.885429, 0.901302, 0.877385]
+  },
+  "scheduler_reference": {
+    "id": "e033-scheduler-performance-flash-allcore-n32-r3-strict0-001",
+    "avg_tok_s": 0.968236,
+    "samples_tok_s": [0.980676, 0.964671, 0.959361]
+  },
+  "target": {
+    "id": "e032-block4-performance-flash-allcore-n32-r3-strict0-001",
+    "avg_tok_s": 0.958360,
+    "samples_tok_s": [0.954903, 0.959495, 0.960682],
+    "stddev_tok_s": 0.003052,
+    "delta_vs_reference_pct": 7.9187,
+    "delta_vs_scheduler_reference_pct": -1.0200,
+    "max_cpub_c": 73.160,
+    "max_cpul_c": 74.753,
+    "max_ddr_c": 65.224,
+    "max_npu_c": 62.930,
+    "max_gpu_c": 65.844,
+    "max_skin_c": 38.950,
+    "thermal_abort": false,
+    "child_return_code": 0,
+    "status": "rejected_below_e033"
+  },
+  "quality_gate": {
+    "target_id": "e032-quality-strict0-001",
+    "prompt": "Explain the A733 memory bottleneck in one short sentence.",
+    "seed": 123,
+    "temperature": 0.0,
+    "generated_tokens": 4,
+    "native_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "target_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "token_stream_match": true,
+    "status": "exact_stdout_match"
+  },
+  "artifacts_on_target": [
+    "results/e032-build-001/",
+    "results/e032-block4-performance-flash-allcore-n32-r3-strict0-001/",
+    "results/e032-quality-strict0-001/"
+  ],
+  "status": "rejected_below_e033"
+}

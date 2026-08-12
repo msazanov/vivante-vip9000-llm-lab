@@ -11,12 +11,17 @@ Pinned модель: `Bonsai-27B-Q1_0.gguf`, SHA-256
 | E029 | `-mtune=cortex-a55` | 0.856562 | −3.54% | веса не менялись | rejected |
 | E030 | inline pair: повторное использование Q8 для двух Q1-групп | 0.559322 | −37.02% | exact stdout | rejected |
 | E031 | pair + `noinline` single-half helper | 0.576260 | −35.11% | exact stdout | rejected |
+| E032 | один `noinline` helper на четыре Q8-блока (block4), `strict=0` | 0.958360 | +7.92% к E026; −1.02% к E033 | exact stdout | rejected ниже E033 |
+| E033 | native GEMV, all-core `strict=0` scheduler | **0.968236** | **+9.03%** | exact stdout | лучший подтверждённый CPU режим |
 
 ## Последний результат
 
-E031 математически точен, не расширяет Q1-веса и не троттлился, но четыре
-вызова helper увеличили размер GEMV и не дали end-to-end ускорения. Подробная
-карточка: [`experiments/E031-q1-noinline-reuse/README.md`](../../experiments/E031-q1-noinline-reuse/README.md).
+E033 сейчас является лучшим подтверждённым CPU-режимом: ослабление жёсткой
+round-robin привязки потоков до `strict=0` дало 0.968236 ток/с при совпавшем
+quality gate. E032 математически точен, не расширяет Q1-веса и не троттлился,
+но отдельный block4 helper дал 0.958360 ток/с — немного хуже одного scheduler
+изменения. Подробные карточки: [`experiments/E032-q1-block4-reuse/README.md`](../../experiments/E032-q1-block4-reuse/README.md)
+и [`experiments/E033-scheduler-strict0/README.md`](../../experiments/E033-scheduler-strict0/README.md).
 
 Каждая строка должна оставаться append-only: новый запуск получает новый ID,
 а rejected/unqualified результаты не удаляются и не превращаются в «оценку».
