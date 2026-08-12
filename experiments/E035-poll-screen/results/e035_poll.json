@@ -1,0 +1,19 @@
+{
+  "experiment": "E035",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733",
+  "model_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+  "common": {"cpu_mask": "0xff", "cpu_strict": false, "threads": 8, "kv": "f16", "flash_attn": true, "batch": 512, "ubatch": 512, "ngl": 0, "governor": "performance", "ddr_raw": "0x54", "thermal_limit_c": 85.0},
+  "screen_n8": [
+    {"poll": 0, "avg_tok_s": 0.973818, "child_return_code": 0},
+    {"poll": 25, "avg_tok_s": 0.897133, "child_return_code": 0},
+    {"poll": 50, "avg_tok_s": 0.991160, "child_return_code": 0},
+    {"poll": 100, "avg_tok_s": 0.983271, "child_return_code": 0}
+  ],
+  "full_gates": [
+    {"poll": 50, "avg_tok_s": 0.972497, "samples_tok_s": [0.988354, 0.969448, 0.959690], "thermal_abort": false, "child_return_code": 0, "status": "accepted_best_poll"},
+    {"poll": 100, "avg_tok_s": 0.964588, "samples_tok_s": [0.966104, 0.968048, 0.959614], "thermal_abort": false, "child_return_code": 0, "status": "rejected"}
+  ],
+  "quality_gate": {"id": "e035-quality-poll50-001", "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb", "reference_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb", "token_stream_match": true},
+  "status": "accepted_poll50_repeat"
+}

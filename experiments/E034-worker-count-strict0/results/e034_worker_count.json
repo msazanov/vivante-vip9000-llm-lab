@@ -1,0 +1,33 @@
+{
+  "experiment": "E034",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / Allwinner A733",
+  "model_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+  "common": {"cpu_mask": "0xff", "cpu_strict": false, "kv": "f16", "flash_attn": true, "batch": 512, "ubatch": 512, "poll": 50, "ngl": 0, "governor": "performance", "thermal_limit_c": 85.0},
+  "screen": [
+    {"threads": 4, "n_gen": 8, "avg_tok_s": 0.828570, "child_return_code": 0},
+    {"threads": 5, "n_gen": 8, "avg_tok_s": 0.827991, "child_return_code": 0},
+    {"threads": 6, "n_gen": 8, "avg_tok_s": 0.889905, "child_return_code": 0},
+    {"threads": 7, "n_gen": 8, "avg_tok_s": 0.985185, "child_return_code": 0},
+    {"threads": 8, "n_gen": 8, "avg_tok_s": 0.998680, "child_return_code": 0}
+  ],
+  "full_gate": {
+    "id": "e034-worker8-performance-flash-allcore-n32-r3-strict0-001",
+    "threads": 8,
+    "n_gen": 32,
+    "runs": 3,
+    "avg_tok_s": 0.965594,
+    "samples_tok_s": [0.963765, 0.965773, 0.967243],
+    "delta_vs_e033_pct": -0.2729,
+    "max_cpub_c": 72.865,
+    "max_cpul_c": 75.284,
+    "max_ddr_c": 64.790,
+    "max_npu_c": 63.240,
+    "max_gpu_c": 67.673,
+    "max_skin_c": 39.056,
+    "thermal_abort": false,
+    "child_return_code": 0,
+    "status": "rejected_below_e033"
+  },
+  "status": "rejected_below_e033"
+}

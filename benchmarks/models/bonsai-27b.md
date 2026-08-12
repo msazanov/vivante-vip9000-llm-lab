@@ -13,6 +13,8 @@ Pinned модель: `Bonsai-27B-Q1_0.gguf`, SHA-256
 | E031 | pair + `noinline` single-half helper | 0.576260 | −35.11% | exact stdout | rejected |
 | E032 | один `noinline` helper на четыре Q8-блока (block4), `strict=0` | 0.958360 | +7.92% к E026; −1.02% к E033 | exact stdout | rejected ниже E033 |
 | E033 | native GEMV, all-core `strict=0` scheduler | **0.968236** | **+9.03%** | exact stdout | лучший подтверждённый CPU режим |
+| E034 | screen 4–8 workers, затем 8 workers full gate, `strict=0` | 0.965594 | −0.27% к E033 | не меняет веса | rejected ниже E033 |
+| E035 | scheduler `poll=50`, повторный full gate | 0.972497 | +0.44% к E033 | exact stdout | принятая настройка; новый рекорд не подтверждён |
 
 ## Последний результат
 
@@ -20,8 +22,12 @@ E033 сейчас является лучшим подтверждённым CPU
 round-robin привязки потоков до `strict=0` дало 0.968236 ток/с при совпавшем
 quality gate. E032 математически точен, не расширяет Q1-веса и не троттлился,
 но отдельный block4 helper дал 0.958360 ток/с — немного хуже одного scheduler
-изменения. Подробные карточки: [`experiments/E032-q1-block4-reuse/README.md`](../../experiments/E032-q1-block4-reuse/README.md)
-и [`experiments/E033-scheduler-strict0/README.md`](../../experiments/E033-scheduler-strict0/README.md).
+изменения. E034 показал, что уменьшение worker-пула не помогает, а E035
+подтвердил `poll=50` (0.972497) без нового статистически устойчивого рекорда.
+Подробные карточки: [`experiments/E032-q1-block4-reuse/README.md`](../../experiments/E032-q1-block4-reuse/README.md),
+[`experiments/E033-scheduler-strict0/README.md`](../../experiments/E033-scheduler-strict0/README.md),
+[`experiments/E034-worker-count-strict0/README.md`](../../experiments/E034-worker-count-strict0/README.md)
+и [`experiments/E035-poll-screen/README.md`](../../experiments/E035-poll-screen/README.md).
 
 Каждая строка должна оставаться append-only: новый запуск получает новый ID,
 а rejected/unqualified результаты не удаляются и не превращаются в «оценку».
