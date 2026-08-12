@@ -1,0 +1,36 @@
+{
+  "experiment": "E029",
+  "date": "2026-08-12",
+  "build": {
+    "commit": "38c66ad",
+    "build_number": 1,
+    "binary_sha256": "8d184ac31007a7088acd7d9b8e8c834fc26b2132a807db5b3dc7d3549afee42d",
+    "c_flags_extra": "-mtune=cortex-a55",
+    "cxx_flags_extra": "-mtune=cortex-a55",
+    "cpu_arch": "armv8.2-a+dotprod",
+    "ggml_cpu_repack": true,
+    "ggml_lto": false
+  },
+  "common": {
+    "cpu_mask": "0xff",
+    "threads": 8,
+    "cpu_strict": true,
+    "batch": 512,
+    "ubatch": 512,
+    "kv": "f16",
+    "flash_attn": true,
+    "poll": 50,
+    "ngl": 0,
+    "n_gen": 32,
+    "runs": 3,
+    "governor": "performance",
+    "ddr_raw": "0x54"
+  },
+  "reference_avg_tok_s": 0.888039,
+  "tuned_avg_tok_s": 0.856562,
+  "samples_tok_s": [0.868249, 0.866974, 0.834463],
+  "delta_pct": -3.5445,
+  "max_cpu_c": 69.325,
+  "status": "rejected_slower",
+  "quality_gate": "not_run; GGUF and arithmetic unchanged"
+}
