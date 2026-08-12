@@ -1,0 +1,86 @@
+{
+  "experiment": "E030",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / A733",
+  "model": {
+    "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+    "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+    "type": "qwen35 27B Q1_0",
+    "bytes": 3792459776,
+    "parameters": 26895998464
+  },
+  "hypothesis": "pair adjacent 4-row Q1 groups so one Q8 activation block is loaded once",
+  "common": {
+    "source_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "cpu_mask": "0xff",
+    "threads": 8,
+    "cpu_strict": true,
+    "batch": 512,
+    "ubatch": 512,
+    "kv": "f16",
+    "flash_attn": true,
+    "poll": 50,
+    "ngl": 0,
+    "n_gen": 32,
+    "runs": 3,
+    "governor": "performance",
+    "ddr_raw": "0x54",
+    "thermal_guard_limit_c": 85.0,
+    "profile_interval_ms": 100
+  },
+  "build": {
+    "patched_repack_sha256": "cba6283ff6ad5db5cff3a0f755c96475e1e3c19c6511caadbd5f4abf34320d52",
+    "binary_sha256": "69aed548c4da1a50f63e1006f45b46880ea5ef29c4d2a70e561760390b277b12",
+    "flags": ["GGML_CPU_REPACK=ON", "GGML_CPU_ARM_ARCH=armv8.2-a+dotprod", "GGML_NATIVE=OFF", "GGML_LTO=OFF", "CPU-only"]
+  },
+  "reference": {
+    "id": "e026-performance-flash-allcore-n32-r3",
+    "avg_tok_s": 0.888039,
+    "samples_tok_s": [0.885429, 0.901302, 0.877385],
+    "max_cpu_c": 72.570
+  },
+  "target": {
+    "id": "e030-paired-performance-flash-allcore-n32-r3-faon-001",
+    "avg_tok_s": 0.559322,
+    "samples_tok_s": [0.565944, 0.550712, 0.561310],
+    "delta_vs_reference_pct": -37.0161,
+    "max_cpu_c": 66.552,
+    "max_ddr_c": 60.450,
+    "max_npu_c": 58.404,
+    "profile_telemetry_samples": 1898,
+    "thermal_abort": false,
+    "child_return_code": 0,
+    "status": "rejected_slower"
+  },
+  "quality_gate": {
+    "id_native": "e030-quality-native-005",
+    "id_paired": "e030-quality-paired-001",
+    "prompt": "Explain the A733 memory bottleneck in one short sentence.",
+    "seed": 123,
+    "temperature": 0.0,
+    "context": 512,
+    "generated_tokens": 4,
+    "native_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "paired_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+    "token_stream_match": true,
+    "native_eval_tok_s": 0.69,
+    "paired_eval_tok_s": 0.65,
+    "status": "exact_stdout_match_but_slower"
+  },
+  "machine_code": {
+    "native_text_bytes": 1172,
+    "paired_text_bytes": 1964,
+    "native_stack_frame_bytes": 176,
+    "paired_stack_frame_bytes": 288,
+    "native_stack_reference_instructions": 27,
+    "paired_stack_reference_instructions": 48,
+    "interpretation": "paired inline path causes register pressure and spill/reload overhead"
+  },
+  "status": "rejected_slower",
+  "next_experiment": "E031 low-register Q8 reuse/software pipeline",
+  "artifacts_on_target": [
+    "results/e030-paired-performance-flash-allcore-n32-r3-faon-001/",
+    "results/e030-quality-native-005/",
+    "results/e030-quality-paired-001/"
+  ]
+}
