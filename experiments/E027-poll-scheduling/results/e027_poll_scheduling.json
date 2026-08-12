@@ -1,0 +1,11 @@
+{
+  "experiment": "E027",
+  "date": "2026-08-12",
+  "common": {"build_commit": "38c66ad", "build_number": 9594, "cpu_mask": "0xff", "threads": 8, "cpu_strict": true, "batch": 512, "ubatch": 512, "kv": "f16", "flash_attn": true, "governor": "performance", "ngl": 0, "n_gen": 32, "runs": 3, "ddr_raw": "0x54"},
+  "variants": [
+    {"poll": 50, "avg_tok_s": 0.888039, "samples_tok_s": [0.885429, 0.901302, 0.877385], "status": "reference"},
+    {"poll": 0, "avg_tok_s": 0.885928, "samples_tok_s": [0.89918, 0.884917, 0.873685], "status": "rejected_slower"}
+  ],
+  "delta_poll0_vs_poll50_pct": -0.2377,
+  "quality_gate": "not_run; throughput-only screen"
+}

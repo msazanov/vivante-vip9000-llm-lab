@@ -1,0 +1,12 @@
+{
+  "experiment": "E028",
+  "date": "2026-08-12",
+  "build": {"commit": "38c66ad", "build_number": 1, "binary_sha256": "3d87f57fc7b23084b54718811f39cf4d17fc5711ec96e09d8f1ff8d91f754c40", "ggml_lto": true, "cpu_arch": "armv8.2-a+dotprod", "native": false},
+  "common": {"cpu_mask": "0xff", "threads": 8, "cpu_strict": true, "batch": 512, "ubatch": 512, "kv": "f16", "flash_attn": true, "poll": 50, "ngl": 0, "n_gen": 32, "runs": 3, "governor": "performance", "ddr_raw": "0x54"},
+  "reference_avg_tok_s": 0.888039,
+  "lto_avg_tok_s": 0.875359,
+  "lto_samples_tok_s": [0.862534, 0.877282, 0.886262],
+  "delta_pct": -1.4299,
+  "status": "rejected_slower",
+  "quality_gate": "not_run; GGUF and arithmetic unchanged"
+}

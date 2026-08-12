@@ -1,0 +1,17 @@
+{
+  "experiment": "E026",
+  "date": "2026-08-12",
+  "board": "Orange Pi Zero 3W / A733",
+  "model": "Bonsai-27B-Q1_0.gguf",
+  "model_sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+  "build_commit": "38c66ad",
+  "build_number": 9594,
+  "common": {"cpu_mask": "0xff", "threads": 8, "cpu_strict": true, "batch": 512, "ubatch": 512, "n_gen": 32, "runs": 3, "ngl": 0, "ddr_raw": "0x54"},
+  "variants": [
+    {"id": "control", "kv": "f16", "flash_attn": "auto", "governor": "ondemand", "avg_tok_s": 0.873368, "samples_tok_s": null, "status": "control"},
+    {"id": "kv-q8", "kv": "q8_0", "flash_attn": "auto", "governor": "ondemand", "avg_tok_s": 0.863995, "samples_tok_s": [0.866251, 0.860212, 0.865521], "status": "rejected_slower"},
+    {"id": "flash-f16", "kv": "f16", "flash_attn": "on", "governor": "ondemand", "avg_tok_s": 0.876827, "samples_tok_s": [0.882437, 0.879895, 0.868148], "status": "accepted_baseline"},
+    {"id": "flash-performance", "kv": "f16", "flash_attn": "on", "governor": "performance", "avg_tok_s": 0.888039, "samples_tok_s": [0.885429, 0.901302, 0.877385], "status": "best_cpu_only"}
+  ],
+  "quality_gate": "not_run; throughput-only screen"
+}
