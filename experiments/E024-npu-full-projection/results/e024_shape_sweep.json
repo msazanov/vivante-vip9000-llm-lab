@@ -23,6 +23,23 @@
     "max_verified_rows": 16384,
     "full_projection_plan": "16384+1024",
     "estimated_two_tile_device_ms": 214.352,
+    "split_golden": "exact",
+    "split_max_abs": 0.0,
+    "split_combined_output_sha256": "dd1bd435ffd96541c859c065f5b6e14ce97b2f29f0e7292dfaef99b484e80c2e",
+    "split_profile": {
+      "head_rows": 16384,
+      "tail_rows": 1024,
+      "head_device_mean_us": 201457.77777777778,
+      "tail_device_mean_us": 12895.555555555555,
+      "head_run_mean_us": 201840.45855555555,
+      "tail_run_mean_us": 13132.389000000001,
+      "head_h2d_mean_us": 3090.5186666666664,
+      "tail_h2d_mean_us": 199.14344444444444,
+      "head_d2h_mean_us": 367.4582222222222,
+      "tail_d2h_mean_us": 29.328666666666663,
+      "tail_profile_sha256": "33d17921e358cf0c3ecbbd25c16f729ed825e0d66e769907bf1d66382feecdd7",
+      "tail_output_sha256": "9e3f2e86c1f10fa386f63dd17db7737c8d1bddf46c8684e76c03adb7ca5b3ad7"
+    },
     "cpu_reference_projection_ms": 3.850,
     "npu_speedup_claim": false,
     "quality_gate": "full M=17408 rejected because golden mismatch"
