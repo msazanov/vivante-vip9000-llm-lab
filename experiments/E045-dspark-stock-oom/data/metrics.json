@@ -1,0 +1,190 @@
+{
+  "schema": "e045a-metrics/v1",
+  "experiment": "E045a-dspark-stock-oom",
+  "status": "REJECTED_INVALID_CONFIG/OOM",
+  "classification": "CONFIGURATION_FAIL",
+  "throughput_status": "unavailable",
+  "acceptance_status": "unavailable",
+  "quality_status": "not_run",
+  "kernel_oom_confirmed": true,
+  "run": {
+    "run_id": "e045-dspark-preflight-20260813T0512Z",
+    "start_utc": "2026-08-13T05:11:26.676835+00:00",
+    "wrapper_end_utc": "2026-08-13T05:14:44.409911+00:00",
+    "elapsed_s": 197.732998116,
+    "telemetry_samples": 1829,
+    "n_predict": 0,
+    "oom_chart_marker_s": 197.7,
+    "process_missing_from_s": 196.732,
+    "exit_code": 137,
+    "child_return_code": -9,
+    "signal": 9
+  },
+  "memory": {
+    "max_rss_kib": 11491376,
+    "max_rss_gib": 10.95903,
+    "min_mem_available_kib": 67852,
+    "min_mem_available_gib": 0.064709,
+    "normalization": "per one-second floor(elapsed) bin: max available RSS and min MemAvailable"
+  },
+  "thermal": {
+    "limit_c": 85.0,
+    "max_cpu_c": 52.018,
+    "max_ddr_c": 46.066,
+    "max_gpu_c": 48.794,
+    "max_npu_c": 45.136,
+    "thermal_abort": false
+  },
+  "sequence": {
+    "schema": "e045-sequence/v1",
+    "pending": "E045g",
+    "speed_gate": "directional_phase_comparison_only",
+    "quality_gate": "not_reached",
+    "runs": [
+      {
+        "id": "E045a",
+        "status": "REJECTED_INVALID_CONFIG/OOM",
+        "classification": "CONFIGURATION_FAIL",
+        "context": "model default 262144 because -c was omitted",
+        "throughput_status": "unavailable",
+        "acceptance_status": "unavailable",
+        "quality_status": "not_run",
+        "summary": {
+          "bins": 198,
+          "max_rss_gib": 10.959030,
+          "min_mem_available_gib": 0.064709,
+          "max_cpu_c": 52.018,
+          "max_ddr_c": 46.066,
+          "max_gpu_c": 48.794,
+          "max_npu_c": 45.136
+        }
+      },
+      {
+        "id": "E045b",
+        "status": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_N0",
+        "classification": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_N0",
+        "context": 512,
+        "n_predict": 0,
+        "exit_code": 134,
+        "signal": 6,
+        "throughput_status": "unavailable",
+        "acceptance_status": "unavailable",
+        "quality_status": "not_run",
+        "summary": {
+          "bins": 31,
+          "max_rss_gib": 9.824123,
+          "min_mem_available_gib": 6.390690,
+          "max_cpu_c": 60.140,
+          "max_ddr_c": 51.336,
+          "max_gpu_c": 54.374,
+          "max_npu_c": 49.228
+        }
+      },
+      {
+        "id": "E045c",
+        "status": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_EMPTY_PREFILL",
+        "classification": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_EMPTY_PREFILL",
+        "context": 512,
+        "n_predict": 1,
+        "prompt": "x",
+        "prompt_token_count": 1,
+        "exit_code": 134,
+        "signal": 6,
+        "throughput_status": "unavailable",
+        "acceptance_status": "unavailable",
+        "quality_status": "not_run",
+        "summary": {
+          "bins": 32,
+          "max_rss_gib": 9.841137,
+          "min_mem_available_gib": 6.372032,
+          "max_cpu_c": 62.868,
+          "max_ddr_c": 51.336,
+          "max_gpu_c": 54.498,
+          "max_npu_c": 49.476
+        }
+      },
+      {
+        "id": "E045d",
+        "status": "FAIL_PRECHECK_WRAPPER",
+        "classification": "WRAPPER_FAIL_NOT_RUN",
+        "context": 512,
+        "hardware_run": false,
+        "exit_code": 2,
+        "failure": "profile_command refused to overwrite pre-created profile directory",
+        "throughput_status": "unavailable",
+        "acceptance_status": "unavailable",
+        "quality_status": "not_run"
+      },
+      {
+        "id": "E045e",
+        "status": "FUNCTIONAL_SMOKE_PASS",
+        "classification": "FUNCTIONAL_SMOKE_PASS",
+        "context": 512,
+        "prompt": "Explain the A733 memory bottleneck in one short sentence.",
+        "prompt_tokens": 14,
+        "requested_tokens": 1,
+        "actual_tokens": 2,
+        "decoded_s": 7.603,
+        "tok_s": 0.263,
+        "drafted": 8,
+        "accepted": 0,
+        "acceptance_pct": 0.0,
+        "throughput_status": "measured_smoke_only",
+        "acceptance_status": "measured_smoke_only",
+        "quality_status": "not_compared",
+        "comparison_scope": "SMOKE_NOT_FULL_BENCHMARK_DIFFERENT_TIMER_FROM_E045F",
+        "summary": {
+          "bins": 43,
+          "max_rss_gib": 9.885788,
+          "min_mem_available_gib": 6.290817,
+          "max_cpu_c": 65.224,
+          "max_ddr_c": 57.288,
+          "max_gpu_c": 58.838,
+          "max_npu_c": 54.436
+        }
+      },
+      {
+        "id": "E045f",
+        "status": "FUNCTIONAL_BASELINE_PASS",
+        "classification": "TARGET_ONLY_BASELINE_PASS",
+        "context": 512,
+        "prompt": "Explain the A733 memory bottleneck in one short sentence.",
+        "prompt_tokens": 14,
+        "requested_tokens": 2,
+        "actual_tokens": 1,
+        "eval_s": 0.896400,
+        "tok_s": 1.120,
+        "throughput_status": "measured_target_eval_only",
+        "acceptance_status": "not_applicable",
+        "quality_status": "visible_prefix_only",
+        "golden_status": "not_run",
+        "token_ids_available": false,
+        "visible_prefix": "<think>",
+        "comparison_scope": "TARGET_ONLY_PHASE_ONLY",
+        "summary": {
+          "bins": 33,
+          "max_rss_gib": 7.023560,
+          "min_mem_available_gib": 7.493740,
+          "max_cpu_c": 65.224,
+          "max_ddr_c": 54.870,
+          "max_gpu_c": 57.660,
+          "max_npu_c": 52.576
+        }
+      }
+    ]
+  },
+  "configuration_gate": {
+    "context_argument": "omitted",
+    "resolved_context_warning": "The command omitted -c. In this llama.cpp build n_ctx=0 resolves to the model context length; Bonsai-27B declares 262144. This makes the preflight unsuitable as a 12 GB memory-capacity result.",
+    "next_required_preflight": "repeat with explicit -c 512 (then -c 1024 only if safe)",
+    "causal_attribution": "Kernel OOM is proven for this invocation; the responsible allocation (KV cache, mmap/anonymous pages, Markov path, or combination) is not isolated. Do not call stock DSpark intrinsically OOM."
+  },
+  "kernel_evidence": {
+    "summary": "global_oom killed llama-speculati pid 14649",
+    "task": "llama-speculati",
+    "pid": 14649,
+    "total_vm_kib": 24010856,
+    "anon_rss_kib": 8167564,
+    "file_rss_kib": 548
+  }
+}

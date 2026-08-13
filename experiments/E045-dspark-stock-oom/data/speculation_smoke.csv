@@ -1,0 +1,2 @@
+run,prompt_tokens,requested_tokens,actual_tokens,decoded_s,tok_s,drafted,accepted,acceptance_pct,status,comparison_scope
+e,14,1,2,7.603,0.263,8,0,0.000,FUNCTIONAL_SMOKE_PASS,SMOKE_NOT_FULL_BENCHMARK_DIFFERENT_TIMER_FROM_E045F

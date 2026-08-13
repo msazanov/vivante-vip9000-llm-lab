@@ -1,0 +1,204 @@
+{
+  "schema": "e045a-dataset/v1",
+  "experiment": "E045a-dspark-stock-oom",
+  "captured_utc": "2026-08-13",
+  "board": "Orange Pi Zero 3W / Allwinner A733 / aarch64",
+  "kernel": "6.6.98-sun60iw2",
+  "status": "REJECTED_INVALID_CONFIG/OOM",
+  "classification": "CONFIGURATION_FAIL",
+  "status_explanation": "The kernel OOM-killed the process, but the invocation omitted -c; llama.cpp therefore used the model context length (Bonsai-27B: 262144). The run is evidence of this invalid preflight, not proof that stock DSpark cannot fit after an explicit bounded context.",
+  "models": [
+    {
+      "name": "Bonsai-27B-Q1_0.gguf",
+      "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+      "size_bytes": 3803452480,
+      "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0"
+    },
+    {
+      "name": "Bonsai-27B-dspark-Q4_1.gguf",
+      "path_on_target": "/home/orangepi/vip9000-lab/models/Bonsai-27B-dspark-Q4_1.gguf",
+      "size_bytes": 1787468768,
+      "sha256": "25e73f9f7ab5d1f7f1336711496dbc12da674e639ec88d579dc8683045befb1b"
+    }
+  ],
+  "binary": {
+    "path_on_target": "/home/orangepi/vip9000-lab/runtime/cpu-38c66-dspark/llama-speculative-simple",
+    "sha256": "c2b239976db3649550423af43533792b477f2f437e7d3ce9cb71e9e5afe66809",
+    "source_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "build": "Release; armv8.2-a+dotprod; OpenMP; GGML CPU repack; GGML_NATIVE=OFF; CPU-only"
+  },
+  "invocation": {
+    "n_predict": 0,
+    "context_argument": "omitted",
+    "context_default_consequence": "n_ctx=0 resolved to Bonsai-27B model context 262144",
+    "spec_type": "draft-dspark",
+    "spec_draft_n_max": 4,
+    "target_threads": 8,
+    "draft_threads": 8,
+    "target_device": "none",
+    "draft_device": "none",
+    "thermal_guard_limit_c": 85,
+    "mmap": true
+  },
+  "source_artifacts": {
+    "report": {
+      "path_on_target": "/home/orangepi/vip9000-lab/results/e045-dspark-smoke-20260813T0512Z/REPORT.md",
+      "sha256": "745fb64cf2da2273d6205b6b327017dfd8bb0fcb952e7b472bc85658c1d919b8"
+    },
+    "metadata": {
+      "path_on_target": "/home/orangepi/vip9000-lab/results/e045-dspark-smoke-20260813T0512Z/metadata.json",
+      "sha256": "295fde89e7ea638e700ef886830de40c19561be073bb10b044b7ed3faac5f120"
+    },
+    "telemetry": {
+      "path_on_target": "/home/orangepi/vip9000-lab/results/e045-dspark-smoke-20260813T0512Z/telemetry.jsonl",
+      "sha256": "1cd7c163607a1218431e934dd643ca22762edc288c93afa314ac0478f71d7ca6",
+      "size_bytes": 2360581
+    },
+    "thermal_guard": {
+      "path_on_target": "/home/orangepi/vip9000-lab/results/e045-dspark-smoke-20260813T0512Z/thermal-guard.jsonl",
+      "sha256": "f368fddf8f1ec192db6d4b8f55e73ec68e752d6547f51fd5e5e24007557d0b90",
+      "size_bytes": 5987812,
+      "committed": false
+    },
+    "sequence_reports": {
+      "E045b": {
+        "report_path_on_target": "/home/orangepi/vip9000-lab/results/e045b-dspark-ctx512-preflight-20260813T054643Z-retry2/REPORT.md",
+        "report_sha256": "a4289b706b48db608329ff8845cc221661c11c3040ab16161320014ce9708e7c",
+        "metadata_sha256": "7e3c148c1976e5168bd88269eb81181ccffc814fcca174cb4f1845eb5ad8c6af",
+        "telemetry_sha256": "45895f621a27e364c3fc5e6ba6012adecae5805271a232da9f0a8f1ec183b8f7"
+      },
+      "E045c": {
+        "report_path_on_target": "/home/orangepi/vip9000-lab/results/e045c-dspark-ctx512-n1-20260813T055557Z/REPORT.md",
+        "report_sha256": "72c7a768287e04deef883be0923a0e3be96bb6a80c6c5d8afd0ee93d48e863aa",
+        "metadata_sha256": "b01443d438dc4dcdd0d390371f45860d124028e9bb7fe405b3ae876ca062cc56",
+        "telemetry_sha256": "37a5b1f7798f77f85f3fd4e254f2df1834ad8c3d6d08c2543d3458d32ceb0168"
+      },
+      "E045c_prompt_audit_sha256": "4575645a653fe9616b5570115b96e1076ebd855460324230bdb789650c8215d0"
+      ,"E045d": {
+        "report_path_on_target": "/home/orangepi/vip9000-lab/results/e045d-dspark-longprompt-n1-20260813T061400Z/REPORT.md",
+        "report_sha256": "0087eddac3047733e1988fd93d8aabbcf163072b6895b427474a32a9fdaee43c",
+        "command_sha256": "50fcc0e64f10a7a4002738178e31472b9f8e10a21c269a7b5172d04e1d8aea12",
+        "thermal_guard_sha256": "df5acae15cc74e126e34d585bdb49cdac31f775ecba685fb0d9b69251e83f6cc"
+      },
+      "E045e": {
+        "report_path_on_target": "/home/orangepi/vip9000-lab/results/e045e-dspark-longprompt-n1-20260813T061513Z/REPORT.md",
+        "report_sha256": "42d599ebe874177e6e78b8a9ac5e5455ef2cb31ef8af86245d0728fdccdf0d23",
+        "command_path_on_target": "/home/orangepi/vip9000-lab/results/e045e-dspark-longprompt-n1-20260813T061513Z/command.txt",
+        "command_sha256": "f4365127c1482e3308f2ec0d6636133474c4f4b78dcb16a99c837aedf668347d",
+        "metadata_sha256": "1a297b4dbd3c2fdf90775a8edf661e098ef6461b2c336856987f4d061be0dbf2",
+        "telemetry_sha256": "968bee280c03e7f9afd203b26b0f8b6a758294db8a871ca7bb1808e622051ce7",
+        "stderr_sha256": "bec284332965ed39c1844a35bb8f4b6c7a99438df29de819d502805d503ceb1d",
+        "stdout_sha256": "f0f6a5beddc050acb6f854b61f65404c3c82d4c3bf5befde8091fad43349fba1"
+      },
+      "E045f": {
+        "report_path_on_target": "/home/orangepi/vip9000-lab/results/e045f-target-longprompt-n2-20260813T062104Z/REPORT.md",
+        "report_sha256": "26db730123f1dee60551844408b3bf2fa8386262e0712b415d19a15a2efbecd3",
+        "command_path_on_target": "/home/orangepi/vip9000-lab/results/e045f-target-longprompt-n2-20260813T062104Z/command.txt",
+        "command_sha256": "cf3e2acdc1dbf579be4192d3687f04197c8f206ae2dec95981d84559c503f4fe",
+        "metadata_sha256": "3fdf57bd2c40ce44fe00035578a322e21cbe905574977775fd0e6988813f6808",
+        "telemetry_sha256": "6bcb5926c83fcc056df15708c89b72f39ebf736d555e773465512d261fe99b20",
+        "stderr_sha256": "e593c69dbc250eb377b9af6d17b1bc26dd24ccea00f51ec16100bb14576ca294",
+        "stdout_sha256": "8ceb6319a46795e640d5fd43493121bdcce12fe0bd469eac492ec0aaaef1cb85"
+      }
+    }
+  },
+  "committed_files": {
+    "data/memory_thermal_1s.csv": "66e8941589f32697e7a22e6e0df1d97fee08be5eac391f0b009615bd5d10ad81",
+    "data/memory_thermal_b_1s.csv": "9040bb0d7cdb2615ca004a5629ed7e9b3609aa275096ce1b443041ff1605bc65",
+    "data/memory_thermal_c_1s.csv": "e159467dcae8bf31e63738f2fec5b18776d395b0e53f74c60576ffc576a059ab",
+    "data/memory_thermal_e_1s.csv": "f9bd263fbb788bb8fe8b0bb28c81d2dccb703246dcd271acf631ef2e2ff11348",
+    "data/memory_thermal_f_1s.csv": "5e79b8ae05ceb44e63bed7b977db82fda06350058a042c9998be6774c0c95048",
+    "data/speculation_smoke.csv": "67f9646c47e2fa72b6669d0e1c5306bdab8ebd4a000fe6d87353265303bef02f",
+    "data/speculation_comparison.csv": "4ae614bf2244833d31921f5c74e3969a054e86726dba3cbf477cef21eaea4498",
+    "data/metrics.json": "f97d1b29c033dbf56fd8bd644046be905c32d6382d91c6c62ad9eb69002c9ed4",
+    "plot_e045.py": "9f061a1596d943155d5b6f4296be2e3c6d57b12fa7efcc399dc5c6f2798d19a6",
+    "test_plot_e045.py": "b0dc85fe14e16c6aad3690d9d8ef3577cb05874283a54ac33fc6568d8415fdba",
+    "generated/e045_memory_comparison.png": "4fa99a093599cf904f49c32cec06dd437b7dcf1c16324663aae9f7f46b6cf8b0",
+    "generated/e045_memory_comparison.svg": "92988745da61e2e1ab5ae3ce2308d8a1a3e681f08c83b7a0ebcaa59540d2bb6f",
+    "generated/e045_memory_oom.png": "20f158aef2cd83956e038192a1a787ffe8490cc66fe98df1a4946ab5dad69ce3",
+    "generated/e045_memory_oom.svg": "d49b2edf9258ecd7293db8fe89d90d4ea8f8fd57d50bfb821086f6836a2cfa8a",
+    "generated/e045_temperature.png": "b800ad2b68ca6957602b2e5f87bc4bfc58b9e0e938a7c4b60898ec39c8fda1e6",
+    "generated/e045_temperature.svg": "62a174efefffc1c7d03680ec50a0ae4fb116498262f73febb3f2a7d7244c0e0e",
+    "generated/e045_temperature_comparison.png": "c65020337eac788c1920c86f9f572b30536095e778e7cfb944e4a4c6debea168",
+    "generated/e045_temperature_comparison.svg": "f98ba40bbb639dff9eff7b35b77c9f64090d45916879457a487e3e60ea904170",
+    "generated/e045_speculation_smoke.png": "cd653cd418db2c90651e0807cd27fdc6fc7e0d1712f73892e4820561c274bb63",
+    "generated/e045_speculation_smoke.svg": "0e34ba68c94d37902302ccad98a6c150bce8437154e63f269aca6f358c3706ba",
+    "generated/e045_speculation_comparison.png": "cc2c338fc96f16e1d78283d28750d1df9af7d87483f6d371a1b0dc1074f3ef57",
+    "generated/e045_speculation_comparison.svg": "bd1ada35291fcf93c190b9658d968de0379e7ad1d21581f0c4bcefefa5869929"
+  },
+  "normalization": {
+    "source": "telemetry.jsonl",
+    "bin_width_s": 1,
+    "elapsed_origin": "first telemetry monotonic_ns",
+    "rss": "maximum process rss_kib in each floor(elapsed_s) bin; blank after process became unavailable",
+    "mem_available": "minimum system MemAvailable_kib in each bin",
+    "temperatures": "maximum Celsius per zone in each bin; CPU is max of cpub and cpul zones",
+    "oom_marker_s": 197.7
+  },
+  "sequence": {
+    "schema": "e045-sequence/v1",
+    "pending": "E045g",
+    "runs": [
+      {
+        "id": "E045a",
+        "data": "data/memory_thermal_1s.csv",
+        "status": "REJECTED_INVALID_CONFIG/OOM",
+        "classification": "CONFIGURATION_FAIL",
+        "source_report": "/home/orangepi/vip9000-lab/results/e045-dspark-smoke-20260813T0512Z/REPORT.md",
+        "context": "-c omitted; n_ctx=0 resolved to model context 262144"
+      },
+      {
+        "id": "E045b",
+        "data": "data/memory_thermal_b_1s.csv",
+        "status": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_N0",
+        "classification": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_N0",
+        "source_report": "/home/orangepi/vip9000-lab/results/e045b-dspark-ctx512-preflight-20260813T054643Z-retry2/REPORT.md",
+        "context": 512,
+        "failure": "n=0 unsupported decode/assertion after both models loaded"
+      },
+      {
+        "id": "E045c",
+        "data": "data/memory_thermal_c_1s.csv",
+        "status": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_EMPTY_PREFILL",
+        "classification": "LOAD_MEMORY_PASS + FUNCTIONAL_FAIL_EMPTY_PREFILL",
+        "source_report": "/home/orangepi/vip9000-lab/results/e045c-dspark-ctx512-n1-20260813T055557Z/REPORT.md",
+        "context": 512,
+        "failure": "prompt x tokenized to one token; capture prefill was empty"
+      },
+      {
+        "id": "E045d",
+        "status": "FAIL_PRECHECK_WRAPPER",
+        "classification": "WRAPPER_FAIL_NOT_RUN",
+        "data": null,
+        "hardware_run": false,
+        "failure": "profile_command refused to overwrite a pre-created profile directory"
+      },
+      {
+        "id": "E045e",
+        "status": "FUNCTIONAL_SMOKE_PASS",
+        "classification": "FUNCTIONAL_SMOKE_PASS",
+        "data": "data/memory_thermal_e_1s.csv",
+        "smoke_data": "data/speculation_smoke.csv",
+        "hardware_run": true,
+        "comparison_scope": "SMOKE_NOT_FULL_BENCHMARK_DIFFERENT_TIMER_FROM_E045F",
+        "decoded_timer_scope": "after load and prompt encode; includes draft/Markov/verify/accept"
+      },
+      {
+        "id": "E045f",
+        "status": "FUNCTIONAL_BASELINE_PASS",
+        "classification": "TARGET_ONLY_BASELINE_PASS",
+        "data": "data/memory_thermal_f_1s.csv",
+        "comparison_data": "data/speculation_comparison.csv",
+        "hardware_run": true,
+        "comparison_scope": "TARGET_ONLY_PHASE_ONLY",
+        "quality": "visible prefix only; token IDs and golden unavailable"
+      },
+      {
+        "id": "E045g",
+        "status": "PENDING",
+        "classification": "PENDING",
+        "data": null
+      }
+    ]
+  }
+}

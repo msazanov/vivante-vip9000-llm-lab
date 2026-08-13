@@ -69,6 +69,8 @@ experiments/E001-vip9000-capability-probe/            Target-side SDK/operator e
 experiments/E002-packed-ternary-kernel/               Packed Q2_0 OpenCL/EVIS and native-NN study
 experiments/E039-q1-pair-wholek/                      Target golden and rejected whole-K packed-Q1 CPU pair
 experiments/E040-q1-register-lut/                     Target golden and rejected register-only Q1 nibble-LUT
+experiments/E044-cluster-prfm/                        Short PRFM ranking and sustained-load reset evidence
+experiments/E045-dspark-stock-oom/                    DSpark memory/functional preflight sequence and graphs
 experiments/README.md                                 Experiment template and reproducibility rules
 research/decisions/002-packed-ternary-research-direction.md Research direction record
 research/open-questions.md                            Unresolved technical and legal questions
@@ -169,6 +171,23 @@ Confirmed from official, BSP and upstream source:
 - E038 recovers the built-in DDR clock provider and SMC FID `0xc0000096`, but
   the secure DFS/training sequence remains opaque; runtime SMC/MMIO/raw DDR
   writes remain prohibited. See the [Russian DDR evidence](docs/evidence/a733-ddr-secure-dfs-2026-08-12.md).
+- E044 `big-only PRFM` достиг 1.018629 токенов/с только в коротком ranking
+  screen `n=8/r=1`. Три sustained-load попытки перезагрузили плату до появления
+  throughput или quality record; CPU оставался ниже 65.1 °C при лимите guard
+  85 °C. Production-статус — `UNQUALIFIED`, а не подтверждённый рекорд.
+- E045a загрузил официальный Bonsai-27B DSpark с `n=0`, но kernel завершил
+  процесс по OOM. В команде не было `-c`, поэтому эта сборка выбрала полный
+  контекст модели 262144 токена. Это `CONFIGURATION_FAIL`, а не доказательство
+  того, что DSpark не помещается при ограниченном контексте.
+- E045b с явным `-c 512` загрузил target и DSpark без OOM и сохранил около
+  6.39 GiB `MemAvailable`; затем example отклонил неподдержанный путь `n=0`.
+  E045c повторил bounded load, но однотокенный prompt оставил capture-prefill
+  пустым и выявил robustness-дефект driver до генерации.
+- E045e завершил первый functional smoke официального DSpark: 2 фактических
+  токена при 0.263 ток/с, 8 предложено и 0 принято. E045f target-only измерил
+  один внутренний eval-шаг при 1.12 ток/с. Области timer различаются, поэтому
+  направленный разрыв 4.26× является только диагностикой; ещё нужны точные
+  token IDs/golden и повторный benchmark с одинаковыми timers.
 
 The next hard gates are:
 
@@ -184,6 +203,12 @@ The next hard gates are:
 - [`E040`](experiments/E040-q1-register-lut/README.md): target exhaustive
   golden для register-only Q1 nibble-LUT. Baseline — один native SIMD group;
   корректность принята, timing отвергнут, интеграции нет.
+- [`E044`](experiments/E044-cluster-prfm/README.md): короткий cluster-aware
+  PRFM screen и три full-reset timeline. Графики отделяют promising ranking от
+  отсутствующего production throughput/quality.
+- [`E045a`](experiments/E045-dspark-stock-oom/README.md): официальный
+  Bonsai-27B DSpark, kernel OOM и доказанный конфаундер полного контекста.
+  Следующий корректный gate использует явный `-c 512`.
 
 ## Текущие графики
 

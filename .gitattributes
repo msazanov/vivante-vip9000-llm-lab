@@ -1,0 +1,3 @@
+# Matplotlib emits SVG path data with significant-looking trailing spaces.
+# Treat generated SVG as artifacts rather than source-style whitespace input.
+experiments/**/generated/*.svg -whitespace

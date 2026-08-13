@@ -1,0 +1,5 @@
+run_order,variant,mode,avg_tok_s,sample_tok_s,elapsed_s,exit_code,thermal_abort,telemetry_samples,max_cpu_c,max_ddr_c,max_gpu_c,max_npu_c,source_result_dir
+1,native,screen,0.944547,0.944547,34.581933441,0,false,327,63.612,52.700,55.614,50.468,/tmp/e044-screen-results/e044-native-screen-screen-seq-20260813T042000Z-01
+2,a-split,screen,0.968064,0.968064,34.772382169,0,false,327,64.356,54.808,55.800,51.336,/tmp/e044-screen-results/e044-a-split-screen-screen-seq-20260813T042000Z-02
+3,b-big-prfm,screen,1.018629,1.018630,33.574539095,0,false,319,65.224,54.684,57.784,53.010,/tmp/e044-screen-results/e044-b-big-prfm-screen-screen-seq-20260813T042000Z-03
+4,native,screen,0.955468,0.955468,33.775949482,0,false,319,64.782,54.684,58.962,53.196,/tmp/e044-screen-results/e044-native-screen-screen-seq-20260813T042000Z-04
