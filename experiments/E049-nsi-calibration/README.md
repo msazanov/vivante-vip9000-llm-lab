@@ -128,9 +128,10 @@ Target: Orange Pi Zero 3W / A733, kernel `6.6.98-sun60iw2`, NSI module
 - thermal guard имел предел `85 °C`; наибольшая температура серии была около
   `36.3 °C`;
 - после финального окна read-back дал `pmu_timer=0`;
-- read-only SHA-256 `port_mode` остался
+- финальный read-only SHA-256 `port_mode` был
   `8ce76146bb47151d932443ee3ede667bd7b1a7e633b8a162a2bdf296aac41aca`, а
-  `port_select` — `bb06be5a65269cf405294994077e10ddbd7247d069bd153440e9d749c15883a6`.
+  `port_select` — `bb06be5a65269cf405294994077e10ddbd7247d069bd153440e9d749c15883a6`;
+  сам инструмент эти control-файлы не открывает.
 
 ### Что можно утверждать сейчас
 
