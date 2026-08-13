@@ -111,8 +111,8 @@
     "data/speculation_smoke.csv": "67f9646c47e2fa72b6669d0e1c5306bdab8ebd4a000fe6d87353265303bef02f",
     "data/speculation_comparison.csv": "4ae614bf2244833d31921f5c74e3969a054e86726dba3cbf477cef21eaea4498",
     "data/metrics.json": "f97d1b29c033dbf56fd8bd644046be905c32d6382d91c6c62ad9eb69002c9ed4",
-    "plot_e045.py": "9f061a1596d943155d5b6f4296be2e3c6d57b12fa7efcc399dc5c6f2798d19a6",
-    "test_plot_e045.py": "b0dc85fe14e16c6aad3690d9d8ef3577cb05874283a54ac33fc6568d8415fdba",
+    "plot_e045.py": "5991d6e678f01eee854c7f7f102230f83d01b81dd7b55f9ae8eeefc8d59f7dfc",
+    "test_plot_e045.py": "148646351dbdb4c065d428751c7dfa0a9c68196603101ebc77de5f5a05d190dd",
     "generated/e045_memory_comparison.png": "4fa99a093599cf904f49c32cec06dd437b7dcf1c16324663aae9f7f46b6cf8b0",
     "generated/e045_memory_comparison.svg": "92988745da61e2e1ab5ae3ce2308d8a1a3e681f08c83b7a0ebcaa59540d2bb6f",
     "generated/e045_memory_oom.png": "20f158aef2cd83956e038192a1a787ffe8490cc66fe98df1a4946ab5dad69ce3",
@@ -120,11 +120,7 @@
     "generated/e045_temperature.png": "b800ad2b68ca6957602b2e5f87bc4bfc58b9e0e938a7c4b60898ec39c8fda1e6",
     "generated/e045_temperature.svg": "62a174efefffc1c7d03680ec50a0ae4fb116498262f73febb3f2a7d7244c0e0e",
     "generated/e045_temperature_comparison.png": "c65020337eac788c1920c86f9f572b30536095e778e7cfb944e4a4c6debea168",
-    "generated/e045_temperature_comparison.svg": "f98ba40bbb639dff9eff7b35b77c9f64090d45916879457a487e3e60ea904170",
-    "generated/e045_speculation_smoke.png": "cd653cd418db2c90651e0807cd27fdc6fc7e0d1712f73892e4820561c274bb63",
-    "generated/e045_speculation_smoke.svg": "0e34ba68c94d37902302ccad98a6c150bce8437154e63f269aca6f358c3706ba",
-    "generated/e045_speculation_comparison.png": "cc2c338fc96f16e1d78283d28750d1df9af7d87483f6d371a1b0dc1074f3ef57",
-    "generated/e045_speculation_comparison.svg": "bd1ada35291fcf93c190b9658d968de0379e7ad1d21581f0c4bcefefa5869929"
+    "generated/e045_temperature_comparison.svg": "f98ba40bbb639dff9eff7b35b77c9f64090d45916879457a487e3e60ea904170"
   },
   "normalization": {
     "source": "telemetry.jsonl",

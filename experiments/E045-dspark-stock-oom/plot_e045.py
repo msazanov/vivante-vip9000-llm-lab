@@ -10,10 +10,10 @@ E045 содержит пять запусков на плате и одну ош
 * E045e — рабочий DSpark smoke: 0.263 ток/с, принято 0 из 8 draft-токенов;
 * E045f — target-only control: 1.120 eval ток/с.
 
-Графики показывают реально записанные RSS/MemAvailable, температуры и
-результаты E045e/E045f. Сравнение скорости является только направляющим:
-E045e и E045f используют different timer scopes. Golden-сравнение токенов ещё
-не выполнено; следующий строгий A/B-тест обозначен как E045g.
+Графики показывают только реально сопоставимые ряды RSS/MemAvailable и
+температур. Скоростной график намеренно не строится: E045e и E045f используют
+разные timer scopes, а golden-сравнение токенов ещё не выполнено. Сырые
+скорости, acceptance и области timer сохраняются в CSV/JSON для E046.
 
 Примеры:
     python3 plot_e045.py --check
@@ -556,145 +556,6 @@ def plot_temperature_comparison(data: dict[str, Any], output_dir: Path) -> None:
     plt.close(fig)
 
 
-def plot_speculation_smoke(data: dict[str, Any], output_dir: Path) -> None:
-    """Show what happened inside the one E045e run without fake A/B comparison."""
-
-    plt = _matplotlib()
-    smoke = data["smoke"]
-    actual = float(smoke["actual_tokens"])
-    decoded_s = float(smoke["decoded_s"])
-    tok_s = float(smoke["tok_s"])
-    drafted = float(smoke["drafted"])
-    accepted = float(smoke["accepted"])
-    fig, (draft_ax, metrics_ax) = plt.subplots(1, 2, figsize=(13, 6.8), gridspec_kw={"width_ratios": (1.15, 1)})
-
-    # Panel 1: the only actual speculative-decoding comparison in E045e.
-    labels = ["draft\nчерновик", "accepted\nBonsai-27B"]
-    bars = draft_ax.bar(
-        labels,
-        [drafted, accepted],
-        color=("#6a1b9a", "#455a64"),
-        width=0.55,
-    )
-    for bar, label, value in zip(bars, ("draft = 8", "accepted = 0"), (drafted, accepted)):
-        draft_ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            max(value + 0.25, 0.25),
-            label,
-            ha="center",
-            va="bottom",
-            fontsize=12,
-            fontweight="bold",
-        )
-    draft_ax.set_ylim(0, max(drafted * 1.25, 10))
-    draft_ax.set_ylabel("Количество токенов")
-    draft_ax.set_title("1. Черновые токены и принятые токены")
-    draft_ax.grid(axis="y", alpha=0.24)
-    draft_ax.set_axisbelow(True)
-    draft_ax.text(
-        0.02,
-        0.02,
-        "draft — предложенные черновой моделью токены\n"
-        "accepted — Принятые Bonsai-27B токены\n"
-        "acceptance = 0 / 8 = 0%",
-        transform=draft_ax.transAxes,
-        fontsize=9,
-        color="#37474f",
-        bbox={"boxstyle": "round,pad=0.4", "facecolor": "#f3e5f5", "edgecolor": "#8e24aa"},
-    )
-
-    # Panel 2: values with different units are shown as metric strips, not a
-    # misleading shared-scale bar chart.
-    metrics_ax.axis("off")
-    metrics_ax.set_title("2. Что измерил timer E045e", pad=18)
-    metric_rows = (
-        ("decoded", f"decoded = {decoded_s:.3f} с", "Время DSpark decode-фазы"),
-        ("tokens", f"actual_tokens = {actual:.0f}", "Фактически декодировано"),
-        ("rate", f"throughput = {tok_s:.3f} токенов/с", "actual_tokens / decoded"),
-    )
-    y_positions = (0.78, 0.53, 0.28)
-    colors = ("#1565c0", "#2e7d32", "#6a1b9a")
-    for (key, value_label, explanation), y, color in zip(metric_rows, y_positions, colors):
-        metrics_ax.text(
-            0.06,
-            y,
-            value_label,
-            transform=metrics_ax.transAxes,
-            fontsize=13 if key == "rate" else 12,
-            fontweight="bold",
-            color=color,
-            va="center",
-        )
-        metrics_ax.text(
-            0.06,
-            y - 0.08,
-            explanation,
-            transform=metrics_ax.transAxes,
-            fontsize=10,
-            color="#37474f",
-            va="center",
-        )
-    metrics_ax.text(
-        0.06,
-        0.04,
-        "Это разбор одного smoke-запуска, не сравнение\n"
-        "с E045f и не итоговый benchmark качества.",
-        transform=metrics_ax.transAxes,
-        fontsize=9,
-        color="#37474f",
-        bbox={"boxstyle": "round,pad=0.4", "facecolor": "#fffde7", "edgecolor": "#f9a825"},
-    )
-    fig.suptitle("E045e: что произошло за один DSpark smoke-запуск", fontsize=15)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    _save(fig, output_dir, "e045_speculation_smoke")
-    plt.close(fig)
-
-
-def plot_speculation_comparison(data: dict[str, Any], output_dir: Path) -> None:
-    """Show phase rates while explicitly exposing the timer mismatch."""
-
-    plt = _matplotlib()
-    rows = {row["case"]: row for row in data["comparison"]}
-    labels = ["E045e\nDSpark smoke\n(decode phase)", "E045f\ntarget-only\n(eval phase)"]
-    values = [float(rows["E045e"]["tok_s"]), float(rows["E045f"]["tok_s"])]
-    colors = [RUN_COLORS["E045e"], "#455a64"]
-    fig, ax = plt.subplots(figsize=(10, 6.5))
-    bars = ax.bar(labels, values, color=colors, width=0.55)
-    for bar, value in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, value + 0.04, f"{value:.3f} tok/s", ha="center", fontsize=11)
-    ax.set_ylim(0, 1.45)
-    ax.set_ylabel("Измеренная скорость внутри указанного timer, токенов/с")
-    ax.set_title("E045e vs E045f: направленное phase-only сравнение")
-    ax.grid(axis="y", alpha=0.24)
-    ax.set_axisbelow(True)
-    ax.text(
-        0.02,
-        0.97,
-        "Важно: timers не совпадают. E045e = decode после load+encode,\n"
-        "включает draft/Markov/verify/accept; E045f = target eval,\n"
-        "без load и prompt eval. Поэтому это не speedup benchmark.",
-        transform=ax.transAxes,
-        va="top",
-        fontsize=9,
-        color="#37474f",
-        bbox={"boxstyle": "round,pad=0.45", "facecolor": "#fffde7", "edgecolor": "#f9a825"},
-    )
-    ratio = values[1] / values[0]
-    ax.text(
-        0.02,
-        0.02,
-        f"Направленное отношение phase rates: {ratio:.2f}× в пользу target-only.\n"
-        "Не является выводом о качестве, golden или итоговом ускорении модели.",
-        transform=ax.transAxes,
-        fontsize=9,
-        color="#37474f",
-        bbox={"boxstyle": "round,pad=0.4", "facecolor": "#eceff1", "edgecolor": "#90a4ae"},
-    )
-    fig.tight_layout()
-    _save(fig, output_dir, "e045_speculation_comparison")
-    plt.close(fig)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="проверить CSV/JSON и sequence invariants")
@@ -708,8 +569,6 @@ def main() -> int:
     plot_temperature(data, args.output_dir)
     plot_memory_comparison(data, args.output_dir)
     plot_temperature_comparison(data, args.output_dir)
-    plot_speculation_smoke(data, args.output_dir)
-    plot_speculation_comparison(data, args.output_dir)
     print(f"E045 plots written to {args.output_dir}")
     return 0
 

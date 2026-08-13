@@ -12,7 +12,7 @@
 впервые завершил функциональный smoke и дал одну измеренную точку `0.263 tok/s`;
 E045f добавил короткий target-only контроль. Golden и повторов пока нет, а
 область timer у двух драйверов различается. Эти точки нельзя выдавать за итоговую
-скорость Bonsai-27B.
+скорость Bonsai-27B, поэтому график скорости здесь намеренно не рисуется.
 
 | Запуск | Конфигурация | Что доказано | Точный статус |
 |---|---|---|---|
@@ -179,14 +179,10 @@ E045e — только `SMOKE_NOT_FULL_BENCHMARK`: golden/качество не 
 сейчас указывает на отсутствие выигрыша в данном smoke, но не является
 статистически устойчивым выводом о DSpark без повторов и baseline.
 
-![E045e: draft и accepted, время и скорость одного запуска](generated/e045_speculation_smoke.png)
-
-На этом графике нет фиктивной второй серии: слева сопоставлены только две
-величины **одного** запуска — `draft = 8` предложений и `accepted = 0` токенов,
-принятых Bonsai-27B. Справа явно указаны `decoded = 7.603 с`,
-`actual_tokens = 2` и вычисленный `throughput = 0.263 токенов/с`. Это
-диагностика внутреннего результата E045e; скорость не сравнивается с E045f,
-поскольку у запусков разные области timer.
+Значения `draft = 8`, `accepted = 0`, `decoded = 7.603 s` и
+`throughput = 0.263 tok/s` сохранены в `speculation_smoke.csv` и
+`metrics.json` как raw-метрики одного запуска. Они не превращаются в график:
+одна точка не является сравнением.
 
 ## График сравнения памяти и температуры
 
@@ -201,22 +197,21 @@ E045e — только `SMOKE_NOT_FULL_BENCHMARK`: golden/качество не 
 
 ![E045: сравнение температур](generated/e045_temperature_comparison.png)
 
-## Диагностическое сравнение E045e и E045f
+## Почему здесь нет графика скорости
 
 E045f — target-only baseline на том же prompt и с теми же `-c 512`, CPU-only,
 temperature/seed и числом потоков. Его `llama common_perf_print eval` сообщил
-`1.12 tok/s` за `0.8964 s` для одного eval run. Видимый prefix stdout обоих
-запусков начинается с `<think>`, но token IDs и полный golden output в этих
-артефактах не сохранены, поэтому exact-quality claim невозможен.
+`1.12 tok/s` за `0.8964 s` для одного eval run. E045e измеряет speculative
+**decode phase** после load и prompt encode, включая draft/Markov/verify/accept;
+E045f измеряет target-only **eval phase** без load и prompt eval. Это разные
+timer scopes, поэтому `1.12 / 0.263` нельзя откладывать на общий график и нельзя
+называть speedup.
 
-Сравнивать `1.12 / 0.263 ≈ 4.25×` как настоящий speedup нельзя: E045e измеряет
-speculative **decode phase** (после load и prompt encode, включая
-draft/Markov/verify/accept), а E045f — target-only **eval phase** (без load и
-prompt eval). Это полезная диагностическая разница: в данном smoke DSpark
-получил `0%` acceptance и не показал выигрыша, но для итогового вывода нужны
-одинаковые timers, несколько повторов, baseline и golden.
-
-![E045e/E045f: phase-only диагностическое сравнение](generated/e045_speculation_comparison.png)
+Здесь намеренно **нет графика скорости**: E045e и E045f несопоставимы по
+области timer, а token IDs, golden и повторные одинаковые прогоны ещё не
+собраны. Настоящий speed chart с baseline Bonsai-27B и Bonsai-27B + DSpark
+отложен до E046; он будет строиться только по одинаковому timer, prompt,
+числу токенов и проверенному качеству.
 
 ## Данные и воспроизводимость
 
@@ -229,8 +224,8 @@ provenance исходных отчётов.
 * [memory_thermal_c_1s.csv](data/memory_thermal_c_1s.csv) — E045c;
 * [memory_thermal_e_1s.csv](data/memory_thermal_e_1s.csv) — E045e;
 * [memory_thermal_f_1s.csv](data/memory_thermal_f_1s.csv) — E045f;
-* [speculation_smoke.csv](data/speculation_smoke.csv) — единственная smoke-точка E045e;
-* [speculation_comparison.csv](data/speculation_comparison.csv) — E045e/E045f с явным scope timers;
+* [speculation_smoke.csv](data/speculation_smoke.csv) — raw acceptance и throughput одной smoke-точки E045e;
+* [speculation_comparison.csv](data/speculation_comparison.csv) — raw E045e/E045f с явным scope timers, без общего speed chart;
 * [metrics.json](data/metrics.json) — статусы, memory/thermal summaries и scope без fake baseline;
 * [manifest.json](data/manifest.json) — provenance и схема последовательности;
 * [plot_e045.py](plot_e045.py) — проверка и генерация графиков;
@@ -253,9 +248,10 @@ MPLCONFIGDIR=/tmp/e045-mpl \
 
 Скрипт проверяет, что для E045a/b/c/d отсутствуют speed/acceptance-значения, а
 для E045e единственная точка совпадает с `speculation_smoke.csv` и явно помечена
-как smoke без baseline. Summary в JSON совпадают с нормализованными CSV, поэтому
-график не может случайно превратить загрузочный/ошибочный запуск в ложный
-benchmark.
+как smoke без baseline. Генератор выдаёт только графики памяти и температур;
+скорости и acceptance остаются в raw CSV/JSON. Summary в JSON совпадают с
+нормализованными CSV, поэтому график не может случайно превратить
+загрузочный/ошибочный запуск в ложный benchmark.
 
 ## Источники отчётов на плате
 

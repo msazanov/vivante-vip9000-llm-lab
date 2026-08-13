@@ -52,7 +52,9 @@ class E045PlotTest(unittest.TestCase):
         self.assertIn("0.263", result.stdout)
         self.assertIn("E045f", result.stdout)
         self.assertIn("1.120", result.stdout)
-        self.assertIn("different timer scopes", result.stdout)
+        self.assertIn("разные timer", result.stdout)
+        self.assertIn("scopes", result.stdout)
+        self.assertIn("намеренно не строится", result.stdout)
 
     def test_sequence_has_no_unmeasured_speed_or_acceptance(self) -> None:
         result = self._run("--check")
@@ -117,22 +119,8 @@ class E045PlotTest(unittest.TestCase):
                     "e045_memory_comparison.svg",
                     "e045_temperature_comparison.png",
                     "e045_temperature_comparison.svg",
-                    "e045_speculation_smoke.png",
-                    "e045_speculation_smoke.svg",
-                    "e045_speculation_comparison.png",
-                    "e045_speculation_comparison.svg",
                 },
             )
-            smoke_svg = (Path(first) / "e045_speculation_smoke.svg").read_text(encoding="utf-8")
-            self.assertIn("Черновые токены", smoke_svg)
-            self.assertIn("Принятые Bonsai-27B", smoke_svg)
-            self.assertIn("draft = 8", smoke_svg)
-            self.assertIn("accepted = 0", smoke_svg)
-            self.assertIn("decoded = 7.603 с", smoke_svg)
-            self.assertIn("actual_tokens = 2", smoke_svg)
-            self.assertIn("throughput = 0.263 токенов/с", smoke_svg)
-            self.assertNotIn("нет сопоставимого контроля", smoke_svg)
-            self.assertNotIn("единственная smoke-точка", smoke_svg)
 
             memory_svg = (Path(first) / "e045_memory_comparison.svg").read_text(encoding="utf-8")
             self.assertIn("a/b/c/e/f", memory_svg)
