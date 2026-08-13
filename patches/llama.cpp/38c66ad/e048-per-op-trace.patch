@@ -1,0 +1,1013 @@
+diff --git a/ggml/include/ggml-cpu.h b/ggml/include/ggml-cpu.h
+index e3e067c..47b83c6 100644
+--- a/ggml/include/ggml-cpu.h
++++ b/ggml/include/ggml-cpu.h
+@@ -7,6 +7,8 @@
+ extern "C" {
+ #endif
+ 
++    struct ggml_e048_trace;
++
+     // the compute plan that needs to be prepared for ggml_graph_compute()
+     // since https://github.com/ggml-org/ggml/issues/287
+     struct ggml_cplan {
+@@ -22,6 +24,9 @@ extern "C" {
+ 
+         // use only reference implementations
+         bool use_ref;
++
++        // Optional E048 diagnostics. NULL when tracing is off.
++        struct ggml_e048_trace * trace;
+     };
+ 
+     // numa strategies
+@@ -137,6 +142,10 @@ extern "C" {
+ 
+     GGML_BACKEND_API void ggml_backend_cpu_set_use_ref(ggml_backend_t backend_cpu, bool use_ref);
+ 
++    // Opt-in E048 per-op trace. No-op when GGML_E048_TRACE_PATH is absent.
++    GGML_BACKEND_API void ggml_backend_cpu_trace_token_begin(ggml_backend_t backend_cpu, uint32_t n_tokens, bool steady_decode);
++    GGML_BACKEND_API void ggml_backend_cpu_trace_token_end  (ggml_backend_t backend_cpu, int status);
++
+     GGML_BACKEND_API ggml_backend_reg_t ggml_backend_cpu_reg(void);
+ 
+     GGML_BACKEND_API void ggml_cpu_fp32_to_fp32(const float *,       float *, int64_t);
+diff --git a/ggml/src/ggml-cpu/CMakeLists.txt b/ggml/src/ggml-cpu/CMakeLists.txt
+index 8c735a0..d053242 100644
+--- a/ggml/src/ggml-cpu/CMakeLists.txt
++++ b/ggml/src/ggml-cpu/CMakeLists.txt
+@@ -29,6 +29,8 @@ function(ggml_add_cpu_backend_variant_impl tag_name)
+     list (APPEND GGML_CPU_SOURCES
+         ggml-cpu/ggml-cpu.c
+         ggml-cpu/ggml-cpu.cpp
++        ggml-cpu/e048-trace.c
++        ggml-cpu/e048-trace.h
+         ggml-cpu/repack.cpp
+         ggml-cpu/repack.h
+         ggml-cpu/hbm.cpp
+diff --git a/ggml/src/ggml-cpu/arch/arm/repack.cpp b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+index ad0e5cc..5a8143e 100644
+--- a/ggml/src/ggml-cpu/arch/arm/repack.cpp
++++ b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+@@ -8,6 +8,7 @@
+ #include "ggml-cpu-impl.h"
+ #include "simd-mappings.h"
+ #include "traits.h"
++#include "../../e048-trace.h"
+ 
+ #include <cmath>
+ #include <cstring>
+@@ -1848,6 +1849,8 @@ void ggml_gemv_q1_0_4x4_q8_0(int                        n,
+                              const void * GGML_RESTRICT vy,
+                              int                        nr,
+                              int                        nc) {
++    void * e048_q1_span = nullptr;
++    ggml_e048_trace_record_q1(ggml_e048_trace_current(), 4, n, nr, nc, &e048_q1_span);
+     const int qk                = QK1_0;
+     const int nb                = n / qk;
+     const int ncols_interleaved = 4;
+@@ -1897,9 +1900,11 @@ void ggml_gemv_q1_0_4x4_q8_0(int                        n,
+         vst1q_f32(s, acc);
+         s += ncols_interleaved;
+     }
++    ggml_e048_trace_finish_q1(e048_q1_span);
+     return;
+ #endif
+     ggml_gemv_q1_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
++    ggml_e048_trace_finish_q1(e048_q1_span);
+ }
+ 
+ void ggml_gemv_q1_0_4x8_q8_0(int                        n,
+@@ -1909,6 +1914,8 @@ void ggml_gemv_q1_0_4x8_q8_0(int                        n,
+                              const void * GGML_RESTRICT vy,
+                              int                        nr,
+                              int                        nc) {
++    void * e048_q1_span = nullptr;
++    ggml_e048_trace_record_q1(ggml_e048_trace_current(), 8, n, nr, nc, &e048_q1_span);
+     const int qk                = QK1_0;
+     const int nb                = n / qk;
+     const int ncols_interleaved = 4;
+@@ -1961,10 +1968,12 @@ void ggml_gemv_q1_0_4x8_q8_0(int                        n,
+         vst1q_f32(s, acc);
+         s += ncols_interleaved;
+     }
++    ggml_e048_trace_finish_q1(e048_q1_span);
+     return;
+ #endif
+ 
+     ggml_gemv_q1_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
++    ggml_e048_trace_finish_q1(e048_q1_span);
+ }
+ 
+ void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+diff --git a/ggml/src/ggml-cpu/e048-trace.c b/ggml/src/ggml-cpu/e048-trace.c
+new file mode 100644
+index 0000000..f10bfb4
+--- /dev/null
++++ b/ggml/src/ggml-cpu/e048-trace.c
+@@ -0,0 +1,529 @@
++#include "e048-trace.h"
++
++#include "ggml.h"
++
++#include <errno.h>
++#include <inttypes.h>
++#include <limits.h>
++#include <stdatomic.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++
++#if defined(__linux__)
++#include <sched.h>
++#endif
++
++#define E048_DEFAULT_CAPACITY 4096u
++#define E048_MAX_CAPACITY 65536u
++#define E048_MAX_THREADS 64
++#define E048_PATH_MAX 1024
++
++enum e048_event_kind {
++    E048_EVENT_NODE = 1,
++    E048_EVENT_Q1 = 2,
++    E048_EVENT_PHASE = 3,
++};
++
++struct e048_event {
++    uint32_t kind;
++    uint32_t worker_ith;
++    uint64_t token_seq;
++    uint32_t node_index;
++    int32_t layer_index;
++    uint32_t fused_nodes;
++    uint32_t variant;
++    uint32_t phase;
++    uint32_t n;
++    uint32_t nr;
++    uint32_t nc;
++    int32_t cpu_start;
++    int32_t cpu_end;
++    uint64_t start_ns;
++    uint64_t end_ns;
++    uint64_t post_barrier_end_ns;
++    uint64_t logical_read;
++    uint64_t logical_write;
++    uint64_t unique_read;
++    uint64_t unique_write;
++    uint64_t q1_weight_read;
++    uint64_t q8_logical_read;
++    uint64_t q8_unique_read;
++    uint64_t output_write;
++    const struct ggml_tensor * node;
++};
++
++struct e048_ring {
++    struct e048_event * events;
++    uint32_t count;
++};
++
++struct ggml_e048_trace {
++    bool enabled;
++    bool token_active;
++    bool steady_decode;
++    FILE * output;
++    char path[E048_PATH_MAX];
++    int n_threads;
++    uint32_t capacity;
++    struct e048_ring rings[E048_MAX_THREADS];
++    atomic_uint overflow_count;
++    uint64_t token_seq;
++    uint32_t token_n_tokens;
++    uint64_t token_start_ns;
++    uint64_t token_end_ns;
++    int token_status;
++};
++
++struct e048_tls_context {
++    struct ggml_e048_trace * trace;
++    uint64_t token_seq;
++    uint32_t node_index;
++    int worker_ith;
++    const struct ggml_tensor * node;
++};
++
++static _Thread_local struct e048_tls_context e048_tls;
++
++uint64_t ggml_e048_trace_now_ns(void) {
++    struct timespec ts;
++    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
++    return (uint64_t) ts.tv_sec * UINT64_C(1000000000) + (uint64_t) ts.tv_nsec;
++}
++
++struct ggml_e048_trace * ggml_e048_trace_current(void) {
++    return e048_tls.trace;
++}
++
++static uint32_t e048_env_capacity(void) {
++    const char * value = getenv("GGML_E048_TRACE_CAPACITY");
++    if (!value || !*value) {
++        return E048_DEFAULT_CAPACITY;
++    }
++    char * end = NULL;
++    unsigned long parsed = strtoul(value, &end, 10);
++    if (end == value || *end != '\0' || parsed < 256 || parsed > E048_MAX_CAPACITY) {
++        return E048_DEFAULT_CAPACITY;
++    }
++    return (uint32_t) parsed;
++}
++
++struct ggml_e048_trace * ggml_e048_trace_create_from_env(void) {
++    const char * path = getenv("GGML_E048_TRACE_PATH");
++    if (!path || !*path) {
++        return NULL;
++    }
++
++    struct ggml_e048_trace * trace = (struct ggml_e048_trace *) calloc(1, sizeof(*trace));
++    if (!trace) {
++        fprintf(stderr, "E048: trace state allocation failed\n");
++        return NULL;
++    }
++    trace->capacity = e048_env_capacity();
++    strncpy(trace->path, path, sizeof(trace->path) - 1);
++    trace->output = fopen(trace->path, "w");
++    if (!trace->output) {
++        fprintf(stderr, "E048: cannot open %s: %s\n", trace->path, strerror(errno));
++        free(trace);
++        return NULL;
++    }
++    trace->enabled = true;
++    atomic_init(&trace->overflow_count, 0);
++    return trace;
++}
++
++static void e048_free_rings(struct ggml_e048_trace * trace) {
++    for (int i = 0; i < E048_MAX_THREADS; ++i) {
++        free(trace->rings[i].events);
++        trace->rings[i].events = NULL;
++        trace->rings[i].count = 0;
++    }
++    trace->n_threads = 0;
++}
++
++void ggml_e048_trace_free(struct ggml_e048_trace * trace) {
++    if (!trace) {
++        return;
++    }
++    if (trace->output) {
++        fflush(trace->output);
++        fclose(trace->output);
++    }
++    e048_free_rings(trace);
++    free(trace);
++}
++
++void ggml_e048_trace_set_threads(struct ggml_e048_trace * trace, int n_threads) {
++    if (!trace || !trace->enabled) {
++        return;
++    }
++    if (n_threads < 1) {
++        n_threads = 1;
++    }
++    if (n_threads > E048_MAX_THREADS) {
++        n_threads = E048_MAX_THREADS;
++    }
++    if (trace->n_threads == n_threads) {
++        return;
++    }
++    if (trace->token_active) {
++        fprintf(stderr, "E048: refusing worker-ring resize during active token\n");
++        return;
++    }
++    e048_free_rings(trace);
++    for (int i = 0; i < n_threads; ++i) {
++        trace->rings[i].events = (struct e048_event *) calloc(trace->capacity, sizeof(struct e048_event));
++        if (!trace->rings[i].events) {
++            fprintf(stderr, "E048: ring allocation failed for worker %d\n", i);
++            e048_free_rings(trace);
++            return;
++        }
++    }
++    trace->n_threads = n_threads;
++}
++
++bool ggml_e048_trace_is_enabled(const struct ggml_e048_trace * trace) {
++    return trace && trace->enabled && trace->output != NULL;
++}
++
++uint64_t ggml_e048_trace_current_token_seq(const struct ggml_e048_trace * trace) {
++    return trace ? trace->token_seq : 0;
++}
++
++static void e048_emit_prefix(FILE * output, const char * event) {
++    fprintf(output, "{\"schema\":\"e048-trace/v1\",\"event\":\"%s\"", event);
++}
++
++static void e048_emit_token_begin(const struct ggml_e048_trace * trace) {
++    e048_emit_prefix(trace->output, "token_begin");
++    fprintf(trace->output, ",\"token_seq\":%" PRIu64 ",\"n_tokens\":%u,\"steady_decode\":%s,\"start_ns\":%" PRIu64 ",\"counter_method\":\"none\",\"observed_ddr_read_bytes\":null,\"observed_ddr_write_bytes\":null}\n",
++            trace->token_seq, trace->token_n_tokens, trace->steady_decode ? "true" : "false", trace->token_start_ns);
++    // The begin record is intentionally flushed before graph execution.  If
++    // the target process is killed or faults in an op, the JSONL still tells
++    // us that this token started, even though token_end is absent.
++    fflush(trace->output);
++}
++
++static void e048_emit_node_name(FILE * output, const struct ggml_tensor * node) {
++    const char * name = node ? ggml_get_name(node) : "";
++    fputs(",\"tensor_id\":\"", output);
++    for (const char * p = name; *p; ++p) {
++        if (*p == '\\' || *p == '"') {
++            fputc('\\', output);
++        }
++        fputc(*p, output);
++    }
++    fputc('"', output);
++    fprintf(output, ",\"op_name\":\"%s\"", node ? ggml_op_name(node->op) : "NONE");
++}
++
++void ggml_e048_trace_token_begin(struct ggml_e048_trace * trace, uint32_t n_tokens, bool steady_decode) {
++    if (!ggml_e048_trace_is_enabled(trace)) {
++        return;
++    }
++    if (trace->token_active) {
++        ggml_e048_trace_token_end(trace, -1);
++    }
++    trace->token_active = true;
++    trace->steady_decode = steady_decode;
++    trace->token_n_tokens = n_tokens;
++    trace->token_status = 0;
++    trace->token_start_ns = ggml_e048_trace_now_ns();
++    trace->token_end_ns = 0;
++    trace->token_seq++;
++    atomic_store_explicit(&trace->overflow_count, 0, memory_order_relaxed);
++    for (int i = 0; i < trace->n_threads; ++i) {
++        trace->rings[i].count = 0;
++    }
++    e048_emit_token_begin(trace);
++}
++
++static struct e048_event * e048_reserve(struct ggml_e048_trace * trace, int worker_ith) {
++    if (!ggml_e048_trace_is_enabled(trace) || worker_ith < 0 || worker_ith >= trace->n_threads) {
++        return NULL;
++    }
++    struct e048_ring * ring = &trace->rings[worker_ith];
++    if (ring->count >= trace->capacity) {
++        atomic_fetch_add_explicit(&trace->overflow_count, 1, memory_order_relaxed);
++        return NULL;
++    }
++    return &ring->events[ring->count++];
++}
++
++void ggml_e048_trace_set_op_context(
++        struct ggml_e048_trace * trace,
++        uint64_t token_seq,
++        uint32_t node_index,
++        int worker_ith,
++        const struct ggml_tensor * node) {
++    e048_tls.trace = trace;
++    e048_tls.token_seq = token_seq;
++    e048_tls.node_index = node_index;
++    e048_tls.worker_ith = worker_ith;
++    e048_tls.node = node;
++}
++
++int ggml_e048_trace_layer_index(const struct ggml_tensor * node) {
++    if (!node) {
++        return -1;
++    }
++    const char * name = ggml_get_name(node);
++    // llama.cpp transformer tensors conventionally carry ``blk.N``.  Keep a
++    // fallback for the older ``...-N`` names used by a few conversion tools.
++    const char * start = strstr(name, "blk.");
++    if (start) {
++        start += 4;
++    } else {
++        const char * dash = strrchr(name, '-');
++        start = dash && dash[1] ? dash + 1 : NULL;
++    }
++    if (!start || !*start) {
++        return -1;
++    }
++    char * end = NULL;
++    long value = strtol(start, &end, 10);
++    if (*end != '\0' || value < 0 || value > INT32_MAX) {
++        return -1;
++    }
++    return (int) value;
++}
++
++void ggml_e048_trace_record_node(
++        struct ggml_e048_trace * trace,
++        uint64_t token_seq,
++        uint32_t node_index,
++        int layer_index,
++        int worker_ith,
++        const struct ggml_tensor * node,
++        uint32_t fused_nodes,
++        uint64_t start_ns,
++        uint64_t end_ns,
++        uint64_t post_barrier_end_ns,
++        uint64_t logical_read,
++        uint64_t logical_write,
++        uint64_t unique_read,
++        uint64_t unique_write,
++        int cpu_start,
++        int cpu_end) {
++    struct e048_event * event = e048_reserve(trace, worker_ith);
++    if (!event) {
++        return;
++    }
++    event->kind = E048_EVENT_NODE;
++    event->worker_ith = (uint32_t) worker_ith;
++    event->token_seq = token_seq;
++    event->node_index = node_index;
++    event->layer_index = layer_index;
++    event->fused_nodes = fused_nodes;
++    event->cpu_start = cpu_start;
++    event->cpu_end = cpu_end;
++    event->start_ns = start_ns;
++    event->end_ns = end_ns;
++    event->post_barrier_end_ns = post_barrier_end_ns;
++    event->logical_read = logical_read;
++    event->logical_write = logical_write;
++    event->unique_read = unique_read;
++    event->unique_write = unique_write;
++    event->node = node;
++}
++
++void ggml_e048_trace_record_q1(struct ggml_e048_trace * trace, uint32_t variant, int n, int nr, int nc, void ** span_out) {
++    if (span_out) {
++        *span_out = NULL;
++    }
++    if (!trace || e048_tls.trace != trace) {
++        return;
++    }
++    struct e048_event * event = e048_reserve(trace, e048_tls.worker_ith);
++    if (!event) {
++        return;
++    }
++    const uint64_t blocks = (uint64_t) n / 128;
++    const uint64_t groups = (uint64_t) nc / 4;
++    event->kind = E048_EVENT_Q1;
++    event->worker_ith = (uint32_t) e048_tls.worker_ith;
++    event->token_seq = e048_tls.token_seq;
++    event->node_index = e048_tls.node_index;
++    event->variant = variant;
++    event->n = (uint32_t) n;
++    event->nr = (uint32_t) nr;
++    event->nc = (uint32_t) nc;
++    event->start_ns = ggml_e048_trace_now_ns();
++    event->cpu_start =
++#if defined(__linux__)
++        sched_getcpu();
++#else
++        -1;
++#endif
++    event->q1_weight_read = blocks * groups * 72;
++    event->q8_logical_read = blocks * groups * 4 * 34;
++    event->q8_unique_read = blocks * 4 * 34;
++    event->output_write = (uint64_t) nc * 4;
++    event->node = e048_tls.node;
++    if (span_out) {
++        *span_out = event;
++    }
++}
++
++void ggml_e048_trace_finish_q1(void * span) {
++    if (!span) {
++        return;
++    }
++    struct e048_event * event = (struct e048_event *) span;
++    event->end_ns = ggml_e048_trace_now_ns();
++    event->cpu_end =
++#if defined(__linux__)
++        sched_getcpu();
++#else
++        -1;
++#endif
++}
++
++void ggml_e048_trace_record_phase(
++        struct ggml_e048_trace * trace,
++        uint32_t phase,
++        uint64_t start_ns,
++        uint64_t end_ns,
++        int cpu_start,
++        int cpu_end) {
++    if (!trace || e048_tls.trace != trace) {
++        return;
++    }
++    struct e048_event * event = e048_reserve(trace, e048_tls.worker_ith);
++    if (!event) {
++        return;
++    }
++    event->kind = E048_EVENT_PHASE;
++    event->worker_ith = (uint32_t) e048_tls.worker_ith;
++    event->token_seq = e048_tls.token_seq;
++    event->node_index = e048_tls.node_index;
++    event->phase = phase;
++    event->start_ns = start_ns;
++    event->end_ns = end_ns;
++    event->cpu_start = cpu_start;
++    event->cpu_end = cpu_end;
++    event->node = e048_tls.node;
++}
++
++static void e048_emit_events(struct ggml_e048_trace * trace) {
++    if (!trace->output) {
++        return;
++    }
++    for (int worker = 0; worker < trace->n_threads; ++worker) {
++        const struct e048_ring * ring = &trace->rings[worker];
++        for (uint32_t i = 0; i < ring->count; ++i) {
++            const struct e048_event * event = &ring->events[i];
++            if (event->kind == E048_EVENT_NODE) {
++                e048_emit_prefix(trace->output, "node_worker");
++                fprintf(trace->output, ",\"token_seq\":%" PRIu64 ",\"node_index\":%u,\"layer_index\":%d,\"worker_ith\":%u,\"fused_nodes\":%u",
++                        event->token_seq, event->node_index, event->layer_index, event->worker_ith, event->fused_nodes);
++                e048_emit_node_name(trace->output, event->node);
++                fprintf(trace->output, ",\"start_ns\":%" PRIu64 ",\"end_ns\":%" PRIu64 ",\"post_barrier_end_ns\":%" PRIu64 ",\"cpu_start\":%d,\"cpu_end\":%d,\"logical_read_bytes\":%" PRIu64 ",\"logical_write_bytes\":%" PRIu64 ",\"unique_read_bytes\":%" PRIu64 ",\"unique_write_bytes\":%" PRIu64 ",\"observed_ddr_read_bytes\":null,\"observed_ddr_write_bytes\":null,\"counter_method\":\"none\"}\n",
++                        event->start_ns, event->end_ns, event->post_barrier_end_ns, event->cpu_start, event->cpu_end,
++                        event->logical_read, event->logical_write, event->unique_read, event->unique_write);
++            } else if (event->kind == E048_EVENT_Q1) {
++                e048_emit_prefix(trace->output, "q1_kernel");
++                fprintf(trace->output, ",\"token_seq\":%" PRIu64 ",\"node_index\":%u,\"worker_ith\":%u,\"variant\":\"q1_0_4x%u_q8_0\",\"n\":%u,\"nr\":%u,\"nc\":%u,\"start_ns\":%" PRIu64 ",\"end_ns\":%" PRIu64 ",\"cpu_start\":%d,\"cpu_end\":%d,\"q1_packed_weight_read_bytes\":%" PRIu64 ",\"q8_activation_logical_read_bytes\":%" PRIu64 ",\"q8_activation_unique_read_bytes\":%" PRIu64 ",\"output_write_bytes\":%" PRIu64 ",\"observed_ddr_read_bytes\":null,\"observed_ddr_write_bytes\":null,\"counter_method\":\"none\"}\n",
++                        event->token_seq, event->node_index, event->worker_ith, event->variant, event->n, event->nr, event->nc,
++                        event->start_ns, event->end_ns, event->cpu_start, event->cpu_end, event->q1_weight_read, event->q8_logical_read, event->q8_unique_read, event->output_write);
++            } else if (event->kind == E048_EVENT_PHASE) {
++                e048_emit_prefix(trace->output, "phase_worker");
++                fprintf(trace->output, ",\"token_seq\":%" PRIu64 ",\"node_index\":%u,\"worker_ith\":%u,\"phase\":\"%s\",\"start_ns\":%" PRIu64 ",\"end_ns\":%" PRIu64 ",\"cpu_start\":%d,\"cpu_end\":%d,\"observed_ddr_read_bytes\":null,\"observed_ddr_write_bytes\":null,\"counter_method\":\"none\"}\n",
++                        event->token_seq, event->node_index, event->worker_ith,
++                        event->phase == 1 ? "f32_to_q8" : "unknown", event->start_ns, event->end_ns, event->cpu_start, event->cpu_end);
++            }
++        }
++    }
++
++    e048_emit_prefix(trace->output, "token_end");
++    fprintf(trace->output, ",\"token_seq\":%" PRIu64 ",\"end_ns\":%" PRIu64 ",\"status\":%d,\"overflow_count\":%u,\"counter_method\":\"none\",\"observed_ddr_read_bytes\":null,\"observed_ddr_write_bytes\":null}\n",
++            trace->token_seq, trace->token_end_ns, trace->token_status,
++            atomic_load_explicit(&trace->overflow_count, memory_order_relaxed));
++    fflush(trace->output);
++}
++
++void ggml_e048_trace_token_end(struct ggml_e048_trace * trace, int status) {
++    if (!ggml_e048_trace_is_enabled(trace) || !trace->token_active) {
++        return;
++    }
++    trace->token_status = status;
++    trace->token_end_ns = ggml_e048_trace_now_ns();
++    e048_emit_events(trace);
++    trace->token_active = false;
++}
++
++static uint64_t e048_union_ranges(const struct ggml_tensor * node, bool source) {
++    struct {
++        uintptr_t start;
++        uintptr_t end;
++    } ranges[GGML_MAX_SRC + 1];
++    int count = 0;
++    if (source) {
++        for (int i = 0; i < GGML_MAX_SRC; ++i) {
++            const struct ggml_tensor * src = node->src[i];
++            if (!src || !src->data || ggml_nbytes(src) == 0) {
++                continue;
++            }
++            ranges[count].start = (uintptr_t) src->data;
++            ranges[count].end = ranges[count].start + ggml_nbytes(src);
++            count++;
++        }
++    } else if (node->data && ggml_nbytes(node) > 0) {
++        ranges[0].start = (uintptr_t) node->data;
++        ranges[0].end = ranges[0].start + ggml_nbytes(node);
++        count = 1;
++    }
++    for (int i = 1; i < count; ++i) {
++        const uintptr_t start = ranges[i].start;
++        const uintptr_t end = ranges[i].end;
++        int j = i - 1;
++        while (j >= 0 && ranges[j].start > start) {
++            ranges[j + 1] = ranges[j];
++            --j;
++        }
++        ranges[j + 1].start = start;
++        ranges[j + 1].end = end;
++    }
++    uint64_t total = 0;
++    uintptr_t start = 0;
++    uintptr_t end = 0;
++    bool active = false;
++    for (int i = 0; i < count; ++i) {
++        if (!active) {
++            start = ranges[i].start;
++            end = ranges[i].end;
++            active = true;
++        } else if (ranges[i].start <= end) {
++            if (ranges[i].end > end) {
++                end = ranges[i].end;
++            }
++        } else {
++            total += (uint64_t) (end - start);
++            start = ranges[i].start;
++            end = ranges[i].end;
++        }
++    }
++    if (active) {
++        total += (uint64_t) (end - start);
++    }
++    return total;
++}
++
++void ggml_e048_trace_node_bytes(
++        const struct ggml_tensor * node,
++        uint64_t * logical_read,
++        uint64_t * logical_write,
++        uint64_t * unique_read,
++        uint64_t * unique_write) {
++    uint64_t read = 0;
++    for (int i = 0; i < GGML_MAX_SRC; ++i) {
++        if (node->src[i]) {
++            read += ggml_nbytes(node->src[i]);
++        }
++    }
++    *logical_read = read;
++    *logical_write = ggml_nbytes(node);
++    *unique_read = e048_union_ranges(node, true);
++    *unique_write = e048_union_ranges(node, false);
++}
+diff --git a/ggml/src/ggml-cpu/e048-trace.h b/ggml/src/ggml-cpu/e048-trace.h
+new file mode 100644
+index 0000000..bbb1a61
+--- /dev/null
++++ b/ggml/src/ggml-cpu/e048-trace.h
+@@ -0,0 +1,85 @@
++#pragma once
++
++// E048 is intentionally an opt-in diagnostic seam.  The hot path stores
++// fixed-size records in a worker-local ring; JSON formatting and file I/O are
++// deferred until the synchronous CPU graph has returned.
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct ggml_tensor;
++struct ggml_e048_trace;
++
++struct ggml_e048_trace * ggml_e048_trace_create_from_env(void);
++void ggml_e048_trace_free(struct ggml_e048_trace * trace);
++void ggml_e048_trace_set_threads(struct ggml_e048_trace * trace, int n_threads);
++bool ggml_e048_trace_is_enabled(const struct ggml_e048_trace * trace);
++uint64_t ggml_e048_trace_current_token_seq(const struct ggml_e048_trace * trace);
++
++void ggml_e048_trace_token_begin(struct ggml_e048_trace * trace, uint32_t n_tokens, bool steady_decode);
++void ggml_e048_trace_token_end(struct ggml_e048_trace * trace, int status);
++
++uint64_t ggml_e048_trace_now_ns(void);
++struct ggml_e048_trace * ggml_e048_trace_current(void);
++void ggml_e048_trace_set_op_context(
++        struct ggml_e048_trace * trace,
++        uint64_t token_seq,
++        uint32_t node_index,
++        int worker_ith,
++        const struct ggml_tensor * node);
++
++int ggml_e048_trace_layer_index(const struct ggml_tensor * node);
++
++void ggml_e048_trace_node_bytes(
++        const struct ggml_tensor * node,
++        uint64_t * logical_read,
++        uint64_t * logical_write,
++        uint64_t * unique_read,
++        uint64_t * unique_write);
++
++void ggml_e048_trace_record_node(
++        struct ggml_e048_trace * trace,
++        uint64_t token_seq,
++        uint32_t node_index,
++        int layer_index,
++        int worker_ith,
++        const struct ggml_tensor * node,
++        uint32_t fused_nodes,
++        uint64_t start_ns,
++        uint64_t end_ns,
++        uint64_t post_barrier_end_ns,
++        uint64_t logical_read,
++        uint64_t logical_write,
++        uint64_t unique_read,
++        uint64_t unique_write,
++        int cpu_start,
++        int cpu_end);
++
++void ggml_e048_trace_record_q1(
++        struct ggml_e048_trace * trace,
++        uint32_t variant,
++        int n,
++        int nr,
++        int nc,
++        void ** span_out);
++
++// Completes the Q1 span reserved by ggml_e048_trace_record_q1().  The
++// pointer is NULL when tracing is disabled or the worker ring overflowed.
++void ggml_e048_trace_finish_q1(void * span);
++
++void ggml_e048_trace_record_phase(
++        struct ggml_e048_trace * trace,
++        uint32_t phase,
++        uint64_t start_ns,
++        uint64_t end_ns,
++        int cpu_start,
++        int cpu_end);
++
++#ifdef __cplusplus
++}
++#endif
+diff --git a/ggml/src/ggml-cpu/ggml-cpu-impl.h b/ggml/src/ggml-cpu/ggml-cpu-impl.h
+index 5d1ca5f..30123dd 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu-impl.h
++++ b/ggml/src/ggml-cpu/ggml-cpu-impl.h
+@@ -4,6 +4,7 @@
+ 
+ #include "ggml.h"
+ #include "ggml-impl.h"
++#include "e048-trace.h"
+ 
+ #include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
+ //#include <stddef.h>
+@@ -27,6 +28,11 @@ struct ggml_compute_params {
+ 
+     // use reference implementation
+     bool use_ref;
++
++    // Optional E048 trace context propagated to each worker.
++    struct ggml_e048_trace * trace;
++    uint64_t trace_token_seq;
++    uint32_t trace_node_index;
+ };
+ 
+ 
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index 67e88ef..2ed5fc4 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -36,6 +36,7 @@
+ #include <signal.h>
+ #if defined(__gnu_linux__)
+ #include <syscall.h>
++#include <sched.h>
+ #endif
+ 
+ #ifdef GGML_USE_OPENMP
+@@ -76,6 +77,14 @@
+ #define UNUSED GGML_UNUSED
+ #define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)
+ 
++static inline int ggml_e048_cpu_id(void) {
++#if defined(__linux__)
++    return sched_getcpu();
++#else
++    return -1;
++#endif
++}
++
+ // precomputed f32 table for f16 (256 KB) (simd-mappings.h)
+ float ggml_table_f32_f16[1 << 16];
+ 
+@@ -1320,6 +1329,9 @@ void ggml_compute_forward_mul_mat(
+ UseGgmlGemm1:;
+ #endif
+ 
++    const bool trace_q8_conversion = params->trace != NULL && src1->type != vec_dot_type;
++    const uint64_t trace_q8_start_ns = trace_q8_conversion ? ggml_e048_trace_now_ns() : 0;
++    const int trace_q8_cpu_start = trace_q8_conversion ? ggml_e048_cpu_id() : -1;
+     if (src1->type != vec_dot_type) {
+         char * wdata = params->wdata;
+ 
+@@ -1356,6 +1368,15 @@ UseGgmlGemm1:;
+         }
+     #endif
+     }
++    if (trace_q8_conversion) {
++        ggml_e048_trace_record_phase(
++            params->trace,
++            1,
++            trace_q8_start_ns,
++            ggml_e048_trace_now_ns(),
++            trace_q8_cpu_start,
++            ggml_e048_cpu_id());
++    }
+ 
+     if (ith == 0) {
+         // Every thread starts at ith, so the first unprocessed chunk is nth.  This save a bit of coordination right at the start.
+@@ -3046,6 +3067,9 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
+         /*.wdata      =*/ cplan->work_data,
+         /*.threadpool =*/ tp,
+         /*.use_ref    =*/ cplan->use_ref,
++        /*.trace      =*/ cplan->trace,
++        /*.trace_token_seq =*/ ggml_e048_trace_current_token_seq(cplan->trace),
++        /*.trace_node_index =*/ 0,
+     };
+ 
+ #ifdef GGML_USE_OPENMP
+@@ -3066,15 +3090,37 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
+             continue;
+         }
+ 
++        params.trace_node_index = (uint32_t) node_n;
++        params.trace_token_seq = ggml_e048_trace_current_token_seq(params.trace);
++        const bool trace_enabled = params.trace != NULL;
++        if (trace_enabled) {
++            ggml_e048_trace_set_op_context(params.trace, params.trace_token_seq, (uint32_t) node_n, state->ith, node);
++        }
++        const uint64_t trace_start_ns = trace_enabled ? ggml_e048_trace_now_ns() : 0;
++        const int trace_cpu_start = trace_enabled ? ggml_e048_cpu_id() : -1;
++        uint64_t trace_logical_read = 0;
++        uint64_t trace_logical_write = 0;
++        uint64_t trace_unique_read = 0;
++        uint64_t trace_unique_write = 0;
++        if (state->ith == 0 && params.trace) {
++            ggml_e048_trace_node_bytes(node, &trace_logical_read, &trace_logical_write, &trace_unique_read, &trace_unique_write);
++        }
++
++        // E048 keeps the existing GGML_CPU_DISABLE_FUSION=1 diagnostic control;
++        // fused work is emitted as one node event with fused_nodes > 1.
+         // TODO: move fused-op detection into ggml_graph_plan so fusion decisions are made once at planning time
+         // Try fused ops, fall back to normal compute
+         const int n_fused = ggml_cpu_try_fuse_ops(cgraph, node_n, &params, cplan);
++        const uint32_t fused_nodes = n_fused > 0 ? (uint32_t) n_fused + 1 : 1;
+         if (n_fused > 0) {
+             node_n += n_fused;
+         } else {
+             ggml_compute_forward(&params, node);
+         }
+ 
++        const uint64_t trace_end_ns = trace_enabled ? ggml_e048_trace_now_ns() : 0;
++        const int trace_cpu_end = trace_enabled ? ggml_e048_cpu_id() : -1;
++
+         if (state->ith == 0 && cplan->abort_callback &&
+                 cplan->abort_callback(cplan->abort_callback_data)) {
+             atomic_store_explicit(&tp->abort, node_n + 1, memory_order_relaxed);
+@@ -3084,6 +3130,26 @@ static thread_ret_t ggml_graph_compute_thread(void * data) {
+         if (node_n + 1 < cgraph->n_nodes) {
+             ggml_barrier(state->threadpool);
+         }
++        const uint64_t trace_post_barrier_end_ns = trace_enabled ? ggml_e048_trace_now_ns() : 0;
++        if (trace_enabled) {
++            ggml_e048_trace_record_node(
++                params.trace,
++                params.trace_token_seq,
++                (uint32_t) (node_n - (int) n_fused),
++                ggml_e048_trace_layer_index(node),
++                state->ith,
++                node,
++                fused_nodes,
++                trace_start_ns,
++                trace_end_ns,
++                trace_post_barrier_end_ns,
++                trace_logical_read,
++                trace_logical_write,
++                trace_unique_read,
++                trace_unique_write,
++                trace_cpu_start,
++                trace_cpu_end);
++        }
+     }
+ 
+ #ifdef GGML_USE_OPENMP
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.cpp b/ggml/src/ggml-cpu/ggml-cpu.cpp
+index 128883b..fb84208 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.cpp
++++ b/ggml/src/ggml-cpu/ggml-cpu.cpp
+@@ -1,6 +1,7 @@
+ #include "ggml-backend.h"
+ #include "ggml-backend-impl.h"
+ #include "ggml-cpu.h"
++#include "e048-trace.h"
+ #include "repack.h"
+ #include "traits.h"
+ #include "ggml-impl.h"
+@@ -107,6 +108,8 @@ struct ggml_backend_cpu_context {
+     void *              abort_callback_data;
+ 
+     bool                use_ref;  // use reference implementation
++
++    struct ggml_e048_trace * trace;
+ };
+ 
+ static const char * ggml_backend_cpu_get_name(ggml_backend_t backend) {
+@@ -117,6 +120,7 @@ static const char * ggml_backend_cpu_get_name(ggml_backend_t backend) {
+ 
+ static void ggml_backend_cpu_free(ggml_backend_t backend) {
+     struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
++    ggml_e048_trace_free(cpu_ctx->trace);
+     delete[] cpu_ctx->work_data;
+     delete cpu_ctx;
+     delete backend;
+@@ -146,6 +150,7 @@ static ggml_backend_graph_plan_t ggml_backend_cpu_graph_plan_create(ggml_backend
+     cpu_plan->cplan.abort_callback      = cpu_ctx->abort_callback;
+     cpu_plan->cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+     cpu_plan->cplan.use_ref             = cpu_ctx->use_ref;
++    cpu_plan->cplan.trace               = cpu_ctx->trace;
+ 
+     return cpu_plan;
+ }
+@@ -186,6 +191,7 @@ static enum ggml_status ggml_backend_cpu_graph_compute(ggml_backend_t backend, s
+     cplan.abort_callback      = cpu_ctx->abort_callback;
+     cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+     cplan.use_ref             = cpu_ctx->use_ref;
++    cplan.trace               = cpu_ctx->trace;
+ 
+     return ggml_graph_compute(cgraph, &cplan);
+ }
+@@ -230,6 +236,8 @@ ggml_backend_t ggml_backend_cpu_init(void) {
+     ctx->abort_callback      = NULL;
+     ctx->abort_callback_data = NULL;
+     ctx->use_ref             = false;
++    ctx->trace                = ggml_e048_trace_create_from_env();
++    ggml_e048_trace_set_threads(ctx->trace, ctx->n_threads);
+ 
+     ggml_backend_t cpu_backend = new ggml_backend {
+         /* .guid    = */ ggml_backend_cpu_guid(),
+@@ -239,6 +247,7 @@ ggml_backend_t ggml_backend_cpu_init(void) {
+     };
+ 
+     if (cpu_backend == NULL) {
++        ggml_e048_trace_free(ctx->trace);
+         delete ctx;
+         return NULL;
+     }
+@@ -255,6 +264,7 @@ void ggml_backend_cpu_set_n_threads(ggml_backend_t backend_cpu, int n_threads) {
+ 
+     struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+     ctx->n_threads = n_threads;
++    ggml_e048_trace_set_threads(ctx->trace, n_threads);
+ }
+ 
+ void ggml_backend_cpu_set_threadpool(ggml_backend_t backend_cpu, ggml_threadpool_t threadpool) {
+@@ -284,6 +294,18 @@ void ggml_backend_cpu_set_use_ref(ggml_backend_t backend_cpu, bool use_ref) {
+     ctx->use_ref = use_ref;
+ }
+ 
++void ggml_backend_cpu_trace_token_begin(ggml_backend_t backend_cpu, uint32_t n_tokens, bool steady_decode) {
++    GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
++    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
++    ggml_e048_trace_token_begin(ctx->trace, n_tokens, steady_decode);
++}
++
++void ggml_backend_cpu_trace_token_end(ggml_backend_t backend_cpu, int status) {
++    GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
++    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
++    ggml_e048_trace_token_end(ctx->trace, status);
++}
++
+ // CPU backend - device
+ 
+ struct ggml_backend_cpu_device_context {
+@@ -663,6 +685,12 @@ static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const ch
+     if (strcmp(name, "ggml_backend_cpu_set_use_ref") == 0) {
+         return (void *)ggml_backend_cpu_set_use_ref;
+     }
++    if (strcmp(name, "ggml_backend_cpu_trace_token_begin") == 0) {
++        return (void *)ggml_backend_cpu_trace_token_begin;
++    }
++    if (strcmp(name, "ggml_backend_cpu_trace_token_end") == 0) {
++        return (void *)ggml_backend_cpu_trace_token_end;
++    }
+ 
+     // threadpool - TODO:  move to ggml-base
+     if (strcmp(name, "ggml_threadpool_new") == 0) {
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 5f43818..ee12586 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -1,6 +1,7 @@
+ #include "llama-context.h"
+ 
+ #include "ggml.h"
++#include "ggml-cpu.h"
+ #include "llama-arch.h"
+ #include "llama-graph.h"
+ #include "llama-impl.h"
+@@ -1468,7 +1469,18 @@ llm_graph_result * llama_context::process_ubatch(const llama_ubatch & ubatch, ll
+         //LLAMA_LOG_INFO("graph set inputs time: %.3f ms\n", (ggml_time_us() - t_start_us)/1000.0);
+     }
+ 
++    if (backend_cpu != nullptr) {
++        // graph_compute() applies the same value later, but rings must be
++        // resized before token_begin marks the graph active.  This avoids
++        // dropping workers when llama's backend thread count differs from
++        // GGML_DEFAULT_N_THREADS during warmup or the first decode.
++        ggml_backend_cpu_set_n_threads(backend_cpu, ubatch.n_tokens > 1 ? cparams.n_threads_batch : cparams.n_threads);
++        ggml_backend_cpu_trace_token_begin(backend_cpu, ubatch.n_tokens, ubatch.n_tokens == 1);
++    }
+     const auto status = graph_compute(res->get_gf(), ubatch.n_tokens > 1);
++    if (backend_cpu != nullptr) {
++        ggml_backend_cpu_trace_token_end(backend_cpu, status);
++    }
+     if (status != GGML_STATUS_SUCCESS) {
+         LLAMA_LOG_ERROR("%s: failed to compute graph, compute status: %d\n", __func__, status);
+         ret = status;
