@@ -16,15 +16,26 @@ import hashlib
 import json
 import re
 import statistics
+import subprocess
 from pathlib import Path
 from typing import Any, Iterable
 
 from jsonschema import Draft202012Validator, FormatChecker
 
 try:
-    from tooling.branch_preflight import list_remote_refs
+    from tooling.branch_preflight import (
+        duplicate_decision_from_refs,
+        list_refs,
+        ref_commit,
+        tree_binding_sha256,
+    )
 except ModuleNotFoundError:  # direct: python3 tooling/experiment_validator.py
-    from branch_preflight import list_remote_refs
+    from branch_preflight import (
+        duplicate_decision_from_refs,
+        list_refs,
+        ref_commit,
+        tree_binding_sha256,
+    )
 
 
 MANIFEST_SCHEMA = "e053-experiment-manifest/v1"
@@ -36,6 +47,10 @@ COMMON_PROMPT_SHA256 = "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d770
 SUMMARY_SCHEMA_PATH = (
     Path(__file__).resolve().parents[1]
     / "benchmarks/schema/e053-experiment-summary.schema.json"
+)
+TRACE_AB_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "benchmarks/schema/e047-trace-ab-result.schema.json"
 )
 REQUIRED_FILES = (
     "README.md",
@@ -70,8 +85,10 @@ TRACE_REQUIRED = {
     "schema_version",
     "run_id",
     "step",
+    "phase",
     "token_index",
     "layer_index",
+    "layer_scope",
     "op_index",
     "op_name",
     "backend",
@@ -82,6 +99,9 @@ TRACE_REQUIRED = {
     "outputs",
     "memory",
 }
+TRACE_BACKENDS = {"cpu", "npu", "gpu", "cpu+npu", "host"}
+TRACE_PHASES = {"load", "tokenize", "prefill", "decode", "sample", "sync"}
+DIRECT_METHODS = {"hardware_counter", "pmu_counter_delta", "uncore_counter_delta"}
 MEMORY_PROVENANCE_REQUIRED = {
     "measurement_method",
     "measurement_source",
@@ -318,6 +338,50 @@ def _nonempty_string(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def _nonnegative_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _finite_number(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def _validate_byte_values(
+    item: object,
+    fields: set[str],
+    prefix: str,
+    errors: list[str],
+    *,
+    allowed_methods: set[str],
+) -> None:
+    _validate_memory_provenance(
+        item,
+        prefix,
+        errors,
+        allowed_methods=allowed_methods | {"unavailable"},
+    )
+    if not isinstance(item, dict):
+        return
+    missing = fields - item.keys()
+    if missing:
+        errors.append(f"{prefix}: отсутствуют {', '.join(sorted(missing))}")
+    method = item.get("measurement_method")
+    unavailable = method == "unavailable"
+    for field in fields:
+        value = item.get(field)
+        if unavailable:
+            if value is not None:
+                errors.append(f"{prefix}.{field}: при unavailable требуется null")
+        elif not _nonnegative_int(value):
+            errors.append(f"{prefix}.{field}: нужен integer >= 0 для метода {method}")
+    if unavailable and item.get("measurement_confidence") != "unavailable":
+        errors.append(f"{prefix}: unavailable требует measurement_confidence=unavailable")
+
+
 def _validate_environment(value: dict[str, Any], errors: list[str]) -> None:
     if not isinstance(value.get("repo_commit"), str) or not COMMIT_RE.fullmatch(value["repo_commit"]):
         errors.append("environment.json: repo_commit должен быть полным git commit")
@@ -378,15 +442,24 @@ def _validate_run_memory_accounting(value: object, prefix: str, errors: list[str
     if not isinstance(value, dict):
         return
     groups = {
-        "logical": {"logical_bytes"},
-        "unique_weights": {"unique_weight_bytes"},
-        "observed_direct_ddr": {
-            "observed_direct_ddr_read_bytes",
-            "observed_direct_ddr_write_bytes",
-        },
-        "inferred_ddr": {"inferred_ddr_read_bytes", "inferred_ddr_write_bytes"},
+        "logical": (
+            {"logical_bytes"},
+            {"static_tensor_accounting", "runtime_tensor_accounting"},
+        ),
+        "unique_weights": (
+            {"unique_weight_bytes"},
+            {"static_tensor_accounting", "runtime_tensor_accounting"},
+        ),
+        "observed_direct_ddr": (
+            {"observed_direct_ddr_read_bytes", "observed_direct_ddr_write_bytes"},
+            DIRECT_METHODS,
+        ),
+        "inferred_ddr": (
+            {"inferred_ddr_read_bytes", "inferred_ddr_write_bytes"},
+            {"analytical_estimate", "counter_model_fit", "simulation"},
+        ),
     }
-    for group, byte_fields in groups.items():
+    for group, (byte_fields, methods) in groups.items():
         item = value.get(group)
         if not isinstance(item, dict):
             continue
@@ -396,6 +469,13 @@ def _validate_run_memory_accounting(value: object, prefix: str, errors: list[str
             errors.append(
                 f"{prefix}.{group}: смешивает классы измерений: {', '.join(sorted(unexpected))}"
             )
+        _validate_byte_values(
+            item,
+            byte_fields,
+            f"{prefix}.{group}",
+            errors,
+            allowed_methods=methods,
+        )
 
 
 def _validate_run_bindings(summary: dict[str, Any], commands_text: str, errors: list[str]) -> set[str]:
@@ -507,7 +587,12 @@ def _validate_memory_provenance(
         errors.append(f"{prefix}: отсутствуют {', '.join(sorted(missing))}")
     if value.get("measurement_confidence") not in {"high", "medium", "low", "unavailable"}:
         errors.append(f"{prefix}: measurement_confidence вне enum")
-    if allowed_methods is not None and value.get("measurement_method") not in allowed_methods:
+    if not _nonempty_string(value.get("measurement_source")):
+        errors.append(f"{prefix}: measurement_source должен быть непустой строкой")
+    method = value.get("measurement_method")
+    if allowed_methods is not None and (
+        not isinstance(method, str) or method not in allowed_methods
+    ):
         errors.append(f"{prefix}: measurement_method смешивает классы измерений")
 
 
@@ -518,20 +603,46 @@ def _validate_telemetry_events(events: list[dict[str, Any]], run_ids: set[str], 
         if missing:
             errors.append(f"{prefix}: отсутствуют {', '.join(sorted(missing))}")
             continue
+        unexpected = set(event) - TELEMETRY_REQUIRED
+        if unexpected:
+            errors.append(f"{prefix}: неизвестные поля {', '.join(sorted(unexpected))}")
         if event.get("schema_version") != "e047-telemetry-event/v1":
             errors.append(f"{prefix}: неверный schema_version")
-        if event.get("run_id") not in run_ids:
+        if not _nonempty_string(event.get("run_id")) or event.get("run_id") not in run_ids:
             errors.append(f"{prefix}: неизвестный run_id")
-        if not isinstance(event.get("timestamp_ns"), int) or event["timestamp_ns"] < 0:
+        if not _nonnegative_int(event.get("timestamp_ns")):
             errors.append(f"{prefix}: timestamp_ns должен быть >= 0")
-        if not isinstance(event.get("cpu_frequency_hz"), list) or not event["cpu_frequency_hz"]:
+        cpu_temperature = event.get("cpu_temperature_c")
+        if not _finite_number(cpu_temperature) or not -40.0 <= float(cpu_temperature) <= 150.0:
+            errors.append(f"{prefix}: cpu_temperature_c должен быть finite в диапазоне [-40, 150]")
+        frequencies = event.get("cpu_frequency_hz")
+        if not isinstance(frequencies, list) or not frequencies:
             errors.append(f"{prefix}: cpu_frequency_hz должен быть непустым массивом")
-        _validate_memory_provenance(
+        elif any(not _nonnegative_int(value) or value > 10_000_000_000 for value in frequencies):
+            errors.append(f"{prefix}: cpu_frequency_hz содержит значение вне диапазона")
+        npu_frequency = event.get("npu_frequency_hz")
+        if npu_frequency is not None and (
+            not _nonnegative_int(npu_frequency) or npu_frequency > 10_000_000_000
+        ):
+            errors.append(f"{prefix}: npu_frequency_hz вне диапазона")
+        if not _nonnegative_int(event.get("rss_bytes")):
+            errors.append(f"{prefix}: rss_bytes должен быть integer >= 0")
+        ddr_fields = {
+            "observed_direct_ddr_read_bytes",
+            "observed_direct_ddr_write_bytes",
+        }
+        _validate_byte_values(
             event.get("ddr"),
+            ddr_fields,
             f"{prefix}.ddr",
             errors,
-            allowed_methods={"hardware_counter", "pmu_counter_delta", "uncore_counter_delta"},
+            allowed_methods=DIRECT_METHODS,
         )
+        ddr = event.get("ddr")
+        if isinstance(ddr, dict):
+            unexpected = set(ddr) - (ddr_fields | MEMORY_PROVENANCE_REQUIRED)
+            if unexpected:
+                errors.append(f"{prefix}.ddr: смешивает классы измерений")
 
 
 def _validate_trace_memory(value: object, prefix: str, errors: list[str]) -> None:
@@ -549,7 +660,7 @@ def _validate_trace_memory(value: object, prefix: str, errors: list[str]) -> Non
         ),
         "observed_direct_ddr": (
             {"observed_direct_ddr_read_bytes", "observed_direct_ddr_write_bytes"},
-            {"hardware_counter", "pmu_counter_delta", "uncore_counter_delta"},
+            DIRECT_METHODS,
         ),
         "inferred_ddr": (
             {"inferred_ddr_read_bytes", "inferred_ddr_write_bytes"},
@@ -558,16 +669,14 @@ def _validate_trace_memory(value: object, prefix: str, errors: list[str]) -> Non
     }
     for group, (byte_fields, methods) in groups.items():
         item = value.get(group)
-        _validate_memory_provenance(
+        _validate_byte_values(
             item,
+            byte_fields,
             f"{prefix}.{group}",
             errors,
             allowed_methods=methods,
         )
         if isinstance(item, dict):
-            missing = byte_fields - item.keys()
-            if missing:
-                errors.append(f"{prefix}.{group}: отсутствуют {', '.join(sorted(missing))}")
             unexpected = set(item) - (byte_fields | MEMORY_PROVENANCE_REQUIRED)
             if unexpected:
                 errors.append(
@@ -583,24 +692,47 @@ def _validate_trace_events(events: list[dict[str, Any]], run_ids: set[str], erro
         if missing:
             errors.append(f"{prefix}: отсутствуют {', '.join(sorted(missing))}")
             continue
+        unexpected = set(event) - TRACE_REQUIRED
+        if unexpected:
+            errors.append(f"{prefix}: неизвестные поля {', '.join(sorted(unexpected))}")
         if event.get("schema_version") != "e047-trace-event/v1":
             errors.append(f"{prefix}: неверный schema_version")
-        if event.get("run_id") not in run_ids:
+        if not _nonempty_string(event.get("run_id")) or event.get("run_id") not in run_ids:
             errors.append(f"{prefix}: неизвестный run_id")
-        for field in ("token_index", "layer_index", "op_index", "start_ns", "end_ns", "duration_ns"):
-            if not isinstance(event.get(field), int) or event[field] < 0:
+        for field in ("step", "token_index", "op_index", "start_ns", "end_ns", "duration_ns"):
+            if not _nonnegative_int(event.get(field)):
                 errors.append(f"{prefix}: {field} должен быть integer >= 0")
-        if all(isinstance(event.get(field), int) for field in ("start_ns", "end_ns", "duration_ns")):
+        layer_index = event.get("layer_index")
+        layer_scope = event.get("layer_scope")
+        if layer_scope == "global":
+            if layer_index is not None:
+                errors.append(f"{prefix}: layer_scope=global требует layer_index=null")
+        elif layer_scope == "layer":
+            if not _nonnegative_int(layer_index):
+                errors.append(f"{prefix}: layer_scope=layer требует layer_index integer >= 0")
+        else:
+            errors.append(f"{prefix}: layer_scope должен быть layer/global")
+        if not isinstance(event.get("phase"), str) or event.get("phase") not in TRACE_PHASES:
+            errors.append(f"{prefix}: phase вне enum")
+        if not isinstance(event.get("backend"), str) or event.get("backend") not in TRACE_BACKENDS:
+            errors.append(f"{prefix}: backend вне enum")
+        if not _nonempty_string(event.get("op_name")):
+            errors.append(f"{prefix}: op_name должен быть непустой строкой")
+        if all(_nonnegative_int(event.get(field)) for field in ("start_ns", "end_ns", "duration_ns")):
+            if event["end_ns"] < event["start_ns"]:
+                errors.append(f"{prefix}: end_ns должен быть >= start_ns")
             if event["end_ns"] - event["start_ns"] != event["duration_ns"]:
                 errors.append(f"{prefix}: duration_ns != end_ns-start_ns")
         if not isinstance(event.get("inputs"), list) or not isinstance(event.get("outputs"), list):
             errors.append(f"{prefix}: inputs/outputs должны быть массивами")
+        elif any(not _nonempty_string(value) for value in event["inputs"] + event["outputs"]):
+            errors.append(f"{prefix}: inputs/outputs должны содержать непустые строки")
         _validate_trace_memory(event.get("memory"), f"{prefix}.memory", errors)
 
 
 def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, Any] | None, errors: list[str]) -> None:
-    if value.get("schema_version") != "e053-branch-preflight/v2":
-        errors.append("data/branch-preflight.json: нужен schema_version e053-branch-preflight/v2")
+    if value.get("schema_version") != "e053-branch-preflight/v3":
+        errors.append("data/branch-preflight.json: нужен schema_version e053-branch-preflight/v3")
     if not _nonempty_string(value.get("hypothesis_query")):
         errors.append("data/branch-preflight.json: отсутствует hypothesis_query")
     if summary is not None and str(value.get("experiment_id", "")).upper() != str(
@@ -611,41 +743,242 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
     if not _nonempty_string(repository_root):
         errors.append("data/branch-preflight.json: отсутствует repository_root")
         return
-    expected_remote_refs = list_remote_refs(Path(str(repository_root)))
-    recorded = value.get("remote_refs_at_scan")
-    if recorded != expected_remote_refs:
+    repository = Path(str(repository_root)).resolve()
+    current_refs = sorted(list_refs(repository))
+    ref_results = value.get("refs")
+    if not isinstance(ref_results, list):
+        errors.append("data/branch-preflight.json: refs должен быть массивом")
+        return
+    scanned_refs = [
+        str(item.get("ref")) for item in ref_results if isinstance(item, dict) and _nonempty_string(item.get("ref"))
+    ]
+    if sorted(scanned_refs) != current_refs:
+        errors.append("data/branch-preflight.json: ref snapshot устарел — набор refs изменился")
+    expected_remote_refs = sorted(ref for ref in current_refs if ref.startswith("refs/remotes/"))
+    if value.get("remote_refs_at_scan") != expected_remote_refs:
         errors.append("data/branch-preflight.json: перечень remote refs устарел или неполон")
-    scanned_refs = {
-        item.get("ref") for item in value.get("refs", []) if isinstance(item, dict)
-    }
-    missing = set(expected_remote_refs) - scanned_refs
-    if missing:
-        errors.append(
-            "data/branch-preflight.json: не просканированы remote refs: "
-            + ", ".join(sorted(missing))
-        )
-    decision = value.get("duplicate_decision")
-    if not isinstance(decision, dict) or decision.get("status") not in {
-        "duplicate_found",
-        "no_duplicate",
-    }:
-        errors.append("data/branch-preflight.json: отсутствует duplicate_decision")
-    elif decision.get("status") == "duplicate_found":
-        candidates = decision.get("candidates")
-        if not isinstance(candidates, list) or not candidates:
-            errors.append("data/branch-preflight.json: duplicate_found без candidates")
+
+    active = value.get("active_worktree")
+    if not isinstance(active, dict):
+        errors.append("data/branch-preflight.json: отсутствует active_worktree")
+        active = {}
+    active_ref = active.get("ref")
+    upstream_ref = active.get("upstream_ref")
+    exclusions = active.get("binding_excludes")
+    if not isinstance(exclusions, list) or any(_safe_relative_path(item) is None for item in exclusions):
+        errors.append("data/branch-preflight.json: binding_excludes должен содержать безопасные пути")
+        exclusions = []
+    if active_ref is not None:
+        try:
+            experiment_relative = root.relative_to(repository)
+        except ValueError:
+            errors.append("data/branch-preflight.json: эксперимент находится вне repository_root")
+            expected_exclusions: list[str] = []
         else:
-            for index, candidate in enumerate(candidates):
-                if not isinstance(candidate, dict):
-                    errors.append(f"data/branch-preflight.json: candidate[{index}] не объект")
+            expected_exclusions = sorted(
+                [
+                    (experiment_relative / "data/branch-preflight.json").as_posix(),
+                    (experiment_relative / "data/manifest.json").as_posix(),
+                ]
+            )
+        if exclusions != expected_exclusions:
+            errors.append("data/branch-preflight.json: binding_excludes разрешает только self-reference файлы")
+            exclusions = expected_exclusions
+    declared_tree = active.get("tree_binding_sha256")
+    if not isinstance(declared_tree, str) or not SHA256_RE.fullmatch(declared_tree):
+        errors.append("data/branch-preflight.json: некорректный tree_binding_sha256")
+    elif active_ref is not None and tree_binding_sha256(repository, exclusions) != declared_tree:
+        errors.append("data/branch-preflight.json: active worktree tree binding не совпадает")
+
+    if active_ref is not None:
+        if active_ref not in current_refs or ref_commit(repository, str(active_ref)) != ref_commit(repository, "HEAD"):
+            errors.append("data/branch-preflight.json: active HEAD/ref не совпадает")
+        base_commit = active.get("base_commit")
+        if not isinstance(base_commit, str) or not COMMIT_RE.fullmatch(base_commit):
+            errors.append("data/branch-preflight.json: некорректный worktree base commit")
+        elif ref_commit(repository, base_commit) != base_commit:
+            errors.append("data/branch-preflight.json: worktree base commit отсутствует")
+        else:
+            ancestor = subprocess.run(
+                ["git", "-C", str(repository), "merge-base", "--is-ancestor", base_commit, "HEAD"],
+                check=False,
+                capture_output=True,
+            )
+            if ancestor.returncode != 0:
+                errors.append("data/branch-preflight.json: worktree base commit не предок HEAD")
+        ref_result_by_name = {
+            item.get("ref"): item for item in ref_results if isinstance(item, dict)
+        }
+        active_result = ref_result_by_name.get(active_ref)
+        if not isinstance(active_result, dict) or active_result.get("commit") != base_commit:
+            errors.append("data/branch-preflight.json: active ref scan не связан с worktree base commit")
+        if isinstance(upstream_ref, str):
+            upstream_base = active.get("upstream_base_commit")
+            upstream_result = ref_result_by_name.get(upstream_ref)
+            if (
+                not isinstance(upstream_base, str)
+                or not COMMIT_RE.fullmatch(upstream_base)
+                or not isinstance(upstream_result, dict)
+                or upstream_result.get("commit") != upstream_base
+            ):
+                errors.append("data/branch-preflight.json: upstream scan не связан с upstream base commit")
+            else:
+                current_upstream = ref_commit(repository, upstream_ref)
+                current_head = ref_commit(repository, "HEAD")
+                if current_upstream not in {upstream_base, current_head}:
+                    errors.append("data/branch-preflight.json: upstream ref сдвинут вне base/HEAD")
+
+    snapshot = value.get("ref_snapshot")
+    if not isinstance(snapshot, list):
+        errors.append("data/branch-preflight.json: отсутствует ref_snapshot")
+        snapshot = []
+    excluded_refs = {item for item in (active_ref, upstream_ref) if isinstance(item, str)}
+    expected_snapshot_refs = set(current_refs) - excluded_refs
+    recorded_snapshot_refs = {
+        item.get("ref") for item in snapshot if isinstance(item, dict) and _nonempty_string(item.get("ref"))
+    }
+    if recorded_snapshot_refs != expected_snapshot_refs:
+        errors.append("data/branch-preflight.json: ref snapshot не покрывает точный набор refs")
+    for item in snapshot:
+        if not isinstance(item, dict):
+            errors.append("data/branch-preflight.json: ref snapshot содержит не объект")
+            continue
+        ref = item.get("ref")
+        commit = item.get("commit")
+        if active_ref is None and ref == "HEAD" and commit is None:
+            continue
+        if not _nonempty_string(ref) or not isinstance(commit, str) or not COMMIT_RE.fullmatch(commit):
+            errors.append("data/branch-preflight.json: ref snapshot содержит неверный ref/commit")
+        elif ref_commit(repository, str(ref)) != commit:
+            errors.append(f"data/branch-preflight.json: ref snapshot commit изменился: {ref}")
+
+    experiment_id = str(value.get("experiment_id", ""))
+    expected_decision = duplicate_decision_from_refs(ref_results, experiment_id)
+    if value.get("duplicate_decision") != expected_decision:
+        errors.append("data/branch-preflight.json: duplicate_decision не совпадает с refs — решение подделано")
+
+
+def _validate_trace_ab_links(
+    root: Path,
+    summary: dict[str, Any],
+    entries_by_path: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
+    try:
+        schema = json.loads(TRACE_AB_SCHEMA_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"trace A/B schema: не удалось загрузить: {exc}")
+        return
+    runs = {
+        str(run.get("run_id")): run
+        for run in summary.get("runs", [])
+        if isinstance(run, dict) and _nonempty_string(run.get("run_id"))
+    }
+    links = summary.get("trace_ab_results")
+    if not isinstance(links, list):
+        return
+    represented_runs: set[str] = set()
+    for link_index, link in enumerate(links):
+        prefix = f"trace A/B link[{link_index}]"
+        if not isinstance(link, dict):
+            errors.append(f"{prefix}: нужен объект")
+            continue
+        relative = _safe_relative_path(link.get("path"))
+        if relative is None:
+            errors.append(f"{prefix}: небезопасный path")
+            continue
+        result_path = root / relative
+        if not result_path.is_file():
+            errors.append(f"{prefix}: файл отсутствует: {relative}")
+            continue
+        actual_result_sha = sha256_file(result_path)
+        if link.get("sha256") != actual_result_sha:
+            errors.append(f"{prefix}: sha256 результата не совпадает")
+        manifest_entry = entries_by_path.get(relative)
+        if not isinstance(manifest_entry, dict):
+            errors.append(f"{prefix}: результат не включён в manifest")
+        elif manifest_entry.get("sha256") != actual_result_sha:
+            errors.append(f"{prefix}: hash результата в manifest не совпадает")
+        result = _read_json(result_path, errors)
+        if result is None:
+            continue
+        validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        for schema_error in sorted(validator.iter_errors(result), key=lambda item: list(item.path)):
+            location = ".".join(str(part) for part in schema_error.path) or "$"
+            errors.append(f"{prefix} schema {location}: {schema_error.message}")
+        for invariant_error in validate_trace_ab_result(result):
+            errors.append(f"{prefix}: {invariant_error}")
+        identity = result.get("workload_identity")
+        if not isinstance(identity, dict):
+            continue
+        for side_name, mode in (("trace_off", "off"), ("trace_on", "on")):
+            side = result.get(side_name)
+            if not isinstance(side, dict) or not isinstance(side.get("samples"), list):
+                continue
+            for sample_index, sample in enumerate(side["samples"]):
+                sample_prefix = f"{prefix} {side_name}.samples[{sample_index}]"
+                if not isinstance(sample, dict):
                     continue
-                for field in ("experiment_id", "path", "ref", "commit"):
-                    if not _nonempty_string(candidate.get(field)):
-                        errors.append(f"data/branch-preflight.json: candidate[{index}] без {field}")
-                if isinstance(candidate.get("commit"), str) and not COMMIT_RE.fullmatch(
-                    candidate["commit"]
+                run_id = sample.get("run_id")
+                run = runs.get(str(run_id))
+                if run is None:
+                    errors.append(f"{sample_prefix}: trace A/B run_id не найден в summary")
+                    continue
+                represented_runs.add(str(run_id))
+                binding = run.get("trace_ab")
+                if not isinstance(binding, dict):
+                    errors.append(f"{sample_prefix}: у run отсутствует trace_ab binding")
+                elif (
+                    binding.get("result_path") != relative
+                    or binding.get("pair_id") != sample.get("pair_id")
+                    or binding.get("mode") != mode
                 ):
-                    errors.append(f"data/branch-preflight.json: candidate[{index}] commit неверен")
+                    errors.append(f"{sample_prefix}: trace A/B run/pair/mode link не совпадает")
+                workload = run.get("workload")
+                expected_identity = {
+                    "variant_id": run.get("variant_id"),
+                    "common_prompt_sha256": workload.get("common_prompt_sha256") if isinstance(workload, dict) else None,
+                    "rendered_prompt_sha256": workload.get("rendered_prompt_sha256") if isinstance(workload, dict) else None,
+                    "prompt_token_ids_sha256": workload.get("prompt_token_ids_sha256") if isinstance(workload, dict) else None,
+                    "n_predict": workload.get("n_predict") if isinstance(workload, dict) else None,
+                    "seed": workload.get("seed") if isinstance(workload, dict) else None,
+                }
+                for field, expected in expected_identity.items():
+                    if identity.get(field) != expected:
+                        errors.append(f"{sample_prefix}: workload identity {field} не совпадает с run")
+                raw_artifacts = sample.get("raw_artifacts")
+                if not isinstance(raw_artifacts, list):
+                    continue
+                for raw_value in raw_artifacts:
+                    raw_relative = _safe_relative_path(raw_value)
+                    if raw_relative is None or not raw_relative.startswith("raw/"):
+                        errors.append(f"{sample_prefix}: trace A/B raw path небезопасен")
+                        continue
+                    raw_path = root / raw_relative
+                    if not raw_path.is_file():
+                        errors.append(f"{sample_prefix}: trace A/B raw отсутствует: {raw_relative}")
+                        continue
+                    raw_entry = entries_by_path.get(raw_relative)
+                    if not isinstance(raw_entry, dict):
+                        errors.append(f"{sample_prefix}: trace A/B raw не включён в manifest: {raw_relative}")
+                        continue
+                    capture = raw_entry.get("capture")
+                    if not isinstance(capture, dict) or capture.get("captured") is not True:
+                        errors.append(f"{sample_prefix}: trace A/B raw не имеет capture.captured=true")
+                    if raw_entry.get("sha256") != sha256_file(raw_path):
+                        errors.append(f"{sample_prefix}: trace A/B raw hash не совпадает: {raw_relative}")
+    bound_runs = {
+        run_id
+        for run_id, run in runs.items()
+        if isinstance(run.get("trace_ab"), dict)
+        and run["trace_ab"].get("result_path") in {
+            link.get("path")
+            for link in links
+            if isinstance(link, dict) and isinstance(link.get("path"), str)
+        }
+    }
+    if represented_runs != bound_runs:
+        errors.append("trace A/B: набор sample run_id не совпадает с привязанными summary runs")
 
 
 def validate_experiment(experiment_root: Path | str) -> dict[str, Any]:
@@ -721,6 +1054,7 @@ def validate_experiment(experiment_root: Path | str) -> dict[str, Any]:
         except (OSError, UnicodeDecodeError):
             pass
         run_ids = _validate_run_bindings(summary or {}, commands_text, errors)
+        _validate_trace_ab_links(root, summary or {}, entries_by_path, errors)
         for relative in REQUIRED_RAW_FILES:
             raw_path = root / relative
             if not raw_path.is_file():

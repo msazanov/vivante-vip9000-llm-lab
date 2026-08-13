@@ -11,6 +11,7 @@
     "generated_at_utc",
     "reason",
     "model_used",
+    "trace_ab_results",
     "runs"
   ],
   "properties": {
@@ -20,6 +21,19 @@
     "generated_at_utc": {"type": "string", "format": "date-time"},
     "reason": {"type": "string", "minLength": 1},
     "model_used": {"type": "boolean"},
+    "trace_ab_results": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "pattern": "^results/[^/].+\\.json$"},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
     "runs": {"type": "array", "items": {"$ref": "#/$defs/run"}}
   },
   "allOf": [
@@ -28,10 +42,16 @@
       "then": {
         "properties": {
           "model_used": {"const": false},
+          "trace_ab_results": {"maxItems": 0},
           "runs": {"maxItems": 0}
         }
       },
-      "else": {"properties": {"runs": {"minItems": 1}}}
+      "else": {
+        "properties": {
+          "trace_ab_results": {"minItems": 1},
+          "runs": {"minItems": 1}
+        }
+      }
     }
   ],
   "$defs": {
@@ -54,6 +74,7 @@
         "model",
         "command",
         "workload",
+        "trace_ab",
         "memory_accounting",
         "result"
       ],
@@ -114,6 +135,16 @@
             "prompt_token_ids_sha256": {"$ref": "#/$defs/sha256"},
             "n_predict": {"enum": [4, 32]},
             "seed": {"const": 123}
+          }
+        },
+        "trace_ab": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["result_path", "pair_id", "mode"],
+          "properties": {
+            "result_path": {"type": "string", "pattern": "^results/[^/].+\\.json$"},
+            "pair_id": {"type": "string", "minLength": 1},
+            "mode": {"enum": ["off", "on"]}
           }
         },
         "memory_accounting": {

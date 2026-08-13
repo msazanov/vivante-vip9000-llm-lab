@@ -4,18 +4,18 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "932a57ee88b0dcd60a853d8b33d4df532c580ce45e18756e2b9cdd8bafd728d2",
-      "size_bytes": 3611
+      "sha256": "a2dd93d618af8998507f93b69da3c9a2d2d29a7c3046021c97854ef81a9a663b",
+      "size_bytes": 4582
     },
     {
       "path": "commands.txt",
-      "sha256": "a09552f18edf39dbd3518a06093e3f97eefad95631ea7cfe3ffe41045ac2d195",
-      "size_bytes": 732
+      "sha256": "20c1888d752a38d83208353bf4062ba1146d2dbe29b1fcbcac9608f6d4af3696",
+      "size_bytes": 882
     },
     {
       "path": "data/branch-preflight.json",
-      "sha256": "fc3e66f3f90815274233abec5aaa67bf9280999f5cd5b5d59d88e46b1cb40bf3",
-      "size_bytes": 229918
+      "sha256": "cb228f7dbe2ea02cbf2c44a7e474037c52d59aaed659e6dc4c29359676b52360",
+      "size_bytes": 183868
     },
     {
       "path": "device.json",
@@ -29,13 +29,13 @@
     },
     {
       "path": "hypothesis-preflight.md",
-      "sha256": "b11021d5501e141f3e9392076e5a45c5cee5bc8b6b99298f47001a94814532e3",
-      "size_bytes": 1535
+      "sha256": "4df94a0ae955bc804db900a31af549e4a2d15f74d510d7c60a648e4738edd2de",
+      "size_bytes": 1816
     },
     {
       "path": "results/summary.json",
-      "sha256": "7efe6541dfd37bc6db1d6dbefb0d5e6f38cbf4f04caa50618eb091ac47d02dc7",
-      "size_bytes": 312
+      "sha256": "ae5dba2b444fa29491ef85ba5425a039321eabb8bd8a22f48efcd5aaf2b61eb8",
+      "size_bytes": 338
     }
   ]
 }

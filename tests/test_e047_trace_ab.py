@@ -56,6 +56,24 @@ class E047TraceABTest(unittest.TestCase):
         schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
         self.assertNotEqual([], list(Draft202012Validator(schema).iter_errors(example)))
 
+    def test_schema_requires_exactly_five_off_and_five_on_samples(self):
+        schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+        for side in ("trace_off", "trace_on"):
+            for size in (4, 6):
+                with self.subTest(side=side, size=size):
+                    example = json.loads(EXAMPLE_PATH.read_text(encoding="utf-8"))
+                    samples = example[side]["samples"]
+                    if size == 4:
+                        example[side]["samples"] = samples[:4]
+                    else:
+                        extra = dict(samples[-1])
+                        extra["pair_id"] = "pair-6"
+                        extra["run_id"] = f"{side}-6"
+                        example[side]["samples"] = samples + [extra]
+                    self.assertNotEqual(
+                        [], list(Draft202012Validator(schema).iter_errors(example))
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

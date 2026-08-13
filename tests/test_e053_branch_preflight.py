@@ -53,7 +53,7 @@ class E053BranchPreflightTest(unittest.TestCase):
                 experiment_id="E047",
                 hypothesis_query="сравнить LFM2.5 и Bonsai",
             )
-            self.assertEqual("e053-branch-preflight/v2", manifest["schema_version"])
+            self.assertEqual("e053-branch-preflight/v3", manifest["schema_version"])
             self.assertEqual(["refs/heads/master"], [item["ref"] for item in manifest["refs"]])
             self.assertTrue(manifest["match_found"])
             self.assertFalse(manifest["duplicate_found"])
@@ -105,8 +105,61 @@ class E053BranchPreflightTest(unittest.TestCase):
             decision = manifest["duplicate_decision"]
             self.assertFalse(manifest["match_found"])
             self.assertEqual("duplicate_found", decision["status"])
+            self.assertEqual(1, decision["candidate_count"])
             self.assertEqual("experiments/E047-existing/README.md", decision["candidates"][0]["path"])
             self.assertEqual(40, len(decision["candidates"][0]["commit"]))
+
+    def test_candidate_is_grouped_once_per_experiment_root_and_ref(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            experiment = root / "experiments/E047-existing"
+            experiment.mkdir(parents=True)
+            (experiment / "README.md").write_text("опыт\n", encoding="utf-8")
+            (experiment / "commands.txt").write_text("команда\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "existing"], check=True)
+            manifest = build_manifest(
+                root,
+                ["E047"],
+                experiment_id="E047",
+                hypothesis_query="проверить группировку",
+            )
+            candidates = manifest["duplicate_decision"]["candidates"]
+            self.assertEqual(1, len(candidates))
+            self.assertEqual("experiments/E047-existing", candidates[0]["canonical_path"])
+
+    def test_manifest_snapshots_every_ref_commit_and_active_tree_binding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            (root / "README.md").write_text("основа\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "base"], check=True)
+            subprocess.run(["git", "-C", str(root), "branch", "other"], check=True)
+            subprocess.run(["git", "-C", str(root), "update-ref", "refs/remotes/origin/main", "HEAD"], check=True)
+            manifest = build_manifest(
+                root,
+                ["E047"],
+                experiment_id="E047",
+                hypothesis_query="снимок refs",
+                binding_excludes=("evidence.json", "manifest.json"),
+            )
+            self.assertEqual("e053-branch-preflight/v3", manifest["schema_version"])
+            self.assertEqual(
+                {"refs/heads/other", "refs/remotes/origin/main"},
+                {item["ref"] for item in manifest["ref_snapshot"]},
+            )
+            self.assertTrue(all(len(item["commit"]) == 40 for item in manifest["ref_snapshot"]))
+            active = manifest["active_worktree"]
+            self.assertEqual("refs/heads/master", active["ref"])
+            self.assertEqual(40, len(active["base_commit"]))
+            self.assertEqual(64, len(active["tree_binding_sha256"]))
+            self.assertEqual(["evidence.json", "manifest.json"], active["binding_excludes"])
 
 
 if __name__ == "__main__":

@@ -106,6 +106,7 @@ Bonsai и LFM2.5 без смешения токенизаторов и форм�
             "generated_at_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "reason": "Каркас создан; измерения ещё не выполнялись.",
             "model_used": False,
+            "trace_ab_results": [],
             "runs": [],
         },
     )
@@ -128,6 +129,10 @@ Bonsai и LFM2.5 без смешения токенизаторов и форм�
             "E047",
             "--output",
             str(preflight_path),
+            "--binding-exclude",
+            str(preflight_path.relative_to(repository)),
+            "--binding-exclude",
+            str((root / "data/manifest.json").relative_to(repository)),
         ],
         check=True,
     )
