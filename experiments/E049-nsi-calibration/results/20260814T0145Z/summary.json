@@ -1,0 +1,201 @@
+{
+  "interpretation_ru": {
+    "bandwidth_data_unit": "числа уже масштабированы data-unit; деление на timer не подтверждено",
+    "classification": "rate/volume — статистическая гипотеза по двум наборам размеров и окон",
+    "idle_ratio": "медиана idle-сигнала / медиана read-сигнала; это не физическая единица",
+    "pmu_timer": "исходник ядра и read-back target указывают на миллисекунды"
+  },
+  "master_names": [
+    "gmac",
+    "msi_list0",
+    "de",
+    "eink",
+    "di",
+    "g2d",
+    "gpu",
+    "ve0",
+    "ve1",
+    "ve2",
+    "gic",
+    "msi_lite1",
+    "msi_lite2",
+    "usb_pcie",
+    "iommu0",
+    "iommu1",
+    "isp",
+    "csi",
+    "npu",
+    "cpu0",
+    "cpu1",
+    "total"
+  ],
+  "original_pmu_timer_ms": 0,
+  "point_count": 32,
+  "schema": "a733-sunxi-nsi-calibration/v1",
+  "signals": {
+    "pmu_bandwidth": {
+      "classification": "rate",
+      "confidence": "medium",
+      "idle_cv": 2.0128299124651496,
+      "idle_ratio": 0.13668061366806136,
+      "n": 16,
+      "r2_gap": 0.2381922936602051,
+      "rate_fit": {
+        "intercept": 1406.0710471069206,
+        "n": 16,
+        "r2": 0.5338491560709486,
+        "rmse": 175.1262409371433,
+        "slope": -9.039058442316951e-08
+      },
+      "read_cv": 0.7743407260281227,
+      "volume_fit": {
+        "intercept": 119.0046884555276,
+        "n": 16,
+        "r2": 0.2956568624107435,
+        "rmse": 215.26832525570282,
+        "slope": 4.2938672549343714e-08
+      }
+    },
+    "pmu_bandwidth_rd": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 1.8362085832017265,
+      "idle_ratio": 0.1623931623931624,
+      "n": 16,
+      "r2_gap": 0.12428810502407339,
+      "rate_fit": {
+        "intercept": 929.1855548598578,
+        "n": 16,
+        "r2": 0.41030577143167,
+        "rmse": 140.57618871198284,
+        "slope": -5.655591911402184e-08
+      },
+      "read_cv": 0.7131708863668711,
+      "volume_fit": {
+        "intercept": 107.69963703758975,
+        "n": 16,
+        "r2": 0.2860176664075966,
+        "rmse": 154.68281212476003,
+        "slope": 3.014125972921185e-08
+      }
+    },
+    "pmu_bandwidth_wr": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 2.531099812922394,
+      "idle_ratio": 0.13043478260869565,
+      "n": 16,
+      "r2_gap": 0.19000815643582758,
+      "rate_fit": {
+        "intercept": 318.0598872969688,
+        "n": 16,
+        "r2": 0.19039459793760927,
+        "rmse": 89.88887890653906,
+        "slope": -2.1024346334548965e-08
+      },
+      "read_cv": 1.4677813602763556,
+      "volume_fit": {
+        "intercept": 65.0739035154454,
+        "n": 16,
+        "r2": 0.0003864415017816869,
+        "rmse": 99.88156404769589,
+        "slope": 6.046134300852225e-10
+      }
+    },
+    "pmu_cmd_rd": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 1.7323592394917842,
+      "idle_ratio": 0.23109756097560977,
+      "n": 16,
+      "r2_gap": 0.057643004330385605,
+      "rate_fit": {
+        "intercept": 6646.405767743361,
+        "n": 16,
+        "r2": 0.27409059594509344,
+        "rmse": 1416.8534388684864,
+        "slope": -4.1991047697246904e-07
+      },
+      "read_cv": 1.0058396883580025,
+      "volume_fit": {
+        "intercept": 475.9336458692444,
+        "n": 16,
+        "r2": 0.21644759161470783,
+        "rmse": 1472.0336645534228,
+        "slope": 2.3819176365386558e-07
+      }
+    },
+    "pmu_cmd_wr": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 2.289072577002878,
+      "idle_ratio": 0.23129251700680273,
+      "n": 16,
+      "r2_gap": 0.18413696697716642,
+      "rate_fit": {
+        "intercept": 2190.288644985452,
+        "n": 16,
+        "r2": 0.18562625993589432,
+        "rmse": 638.8505009313669,
+        "slope": -1.4710688254488014e-07
+      },
+      "read_cv": 1.6050450416191617,
+      "volume_fit": {
+        "intercept": 399.48737510270456,
+        "n": 16,
+        "r2": 0.0014892929587279058,
+        "rmse": 707.397828259231,
+        "slope": 8.410931017380715e-09
+      }
+    },
+    "pmu_latency_rd": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 3.855553423634996,
+      "idle_ratio": 1.0384615384615385,
+      "n": 16,
+      "r2_gap": 0.08509667037674262,
+      "rate_fit": {
+        "intercept": -30044.500497219255,
+        "n": 16,
+        "r2": 0.1595917481092064,
+        "rmse": 13578.884725837994,
+        "slope": 2.853974505262968e-06
+      },
+      "read_cv": 3.8061069538834986,
+      "volume_fit": {
+        "intercept": 10044.00686823093,
+        "n": 16,
+        "r2": 0.07449507773246378,
+        "rmse": 14249.78507030449,
+        "slope": -1.2446561238461104e-06
+      }
+    },
+    "pmu_latency_wr": {
+      "classification": "inconclusive",
+      "confidence": "low",
+      "idle_cv": 0.0,
+      "idle_ratio": 1.0,
+      "n": 16,
+      "r2_gap": 0.05207923013069837,
+      "rate_fit": {
+        "intercept": 18.644617141173438,
+        "n": 16,
+        "r2": 0.1280152016773135,
+        "rmse": 2.9384848506952808,
+        "slope": -5.43032343524132e-10
+      },
+      "read_cv": 0.25819888974716115,
+      "volume_fit": {
+        "intercept": 10.867879931851276,
+        "n": 16,
+        "r2": 0.07593597154661513,
+        "rmse": 3.0249627529533645,
+        "slope": 2.669681303368062e-10
+      }
+    }
+  },
+  "status": "complete",
+  "thermal_limit_c": 85.0,
+  "total_master_index": 21
+}
