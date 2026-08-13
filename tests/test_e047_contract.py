@@ -40,6 +40,24 @@ class E047ContractTest(unittest.TestCase):
         self.assertIn("metrics", example)
         self.assertIn("token_char_byte", example["metrics"])
         self.assertIn("quality_metrics", example["metrics"])
+        memory = example["metrics"]["memory_accounting"]
+        self.assertEqual(
+            {
+                "logical_bytes",
+                "unique_weight_bytes",
+                "observed_direct_ddr_read_bytes",
+                "observed_direct_ddr_write_bytes",
+                "inferred_ddr_read_bytes",
+                "inferred_ddr_write_bytes",
+            },
+            set(memory["byte_fields"]),
+        )
+        self.assertEqual(
+            ["measurement_method", "measurement_source", "measurement_confidence"],
+            memory["provenance_fields"],
+        )
+        self.assertIn("observed_direct_is_hardware_counter_only", memory["separation_rules"])
+        self.assertIn("inferred_is_never_reported_as_observed", memory["separation_rules"])
         self.assertIn("trace_overhead", example)
         self.assertEqual(0.01, example["trace_overhead"]["max_allowed_fraction"])
         self.assertEqual("same_model_variant_only", example["quality_rubric"]["exact_token_match_scope"])

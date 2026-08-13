@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e053-experiment-summary-v1.schema.json",
+  "title": "E053 experiment summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "status",
+    "generated_at_utc",
+    "reason",
+    "model_used",
+    "runs"
+  ],
+  "properties": {
+    "schema_version": {"const": "e053-experiment-summary/v1"},
+    "experiment_id": {"type": "string", "pattern": "^E[0-9]{3,}([A-Za-z0-9-]+)?$"},
+    "status": {"enum": ["planned", "passed", "failed", "rejected", "blocked"]},
+    "generated_at_utc": {"type": "string", "format": "date-time"},
+    "reason": {"type": "string", "minLength": 1},
+    "model_used": {"type": "boolean"},
+    "runs": {"type": "array", "items": {"$ref": "#/$defs/run"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "planned"}}},
+      "then": {
+        "properties": {
+          "model_used": {"const": false},
+          "runs": {"maxItems": 0}
+        }
+      },
+      "else": {"properties": {"runs": {"minItems": 1}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "provenance": {
+      "type": "object",
+      "required": ["measurement_method", "measurement_source", "measurement_confidence"],
+      "properties": {
+        "measurement_method": {"type": "string", "minLength": 1},
+        "measurement_source": {"type": "string", "minLength": 1},
+        "measurement_confidence": {"enum": ["high", "medium", "low", "unavailable"]}
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "variant_id",
+        "model",
+        "command",
+        "workload",
+        "memory_accounting",
+        "result"
+      ],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "variant_id": {"type": "string", "minLength": 1},
+        "model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["used", "sha256"],
+          "properties": {
+            "used": {"type": "boolean"},
+            "sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+          },
+          "allOf": [
+            {
+              "if": {"properties": {"used": {"const": true}}},
+              "then": {"properties": {"sha256": {"$ref": "#/$defs/sha256"}}},
+              "else": {"properties": {"sha256": {"type": "null"}}}
+            }
+          ]
+        },
+        "command": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["shell", "sha256", "workload_sha256"],
+          "properties": {
+            "shell": {"type": "string", "minLength": 1},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "workload_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "workload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "common_prompt_text",
+            "common_prompt_sha256",
+            "rendered_prompt_text",
+            "rendered_prompt_sha256",
+            "prompt_token_ids",
+            "prompt_token_ids_encoding",
+            "prompt_token_ids_sha256",
+            "n_predict",
+            "seed"
+          ],
+          "properties": {
+            "common_prompt_text": {"const": "Explain the A733 memory bottleneck in one short sentence."},
+            "common_prompt_sha256": {"const": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de"},
+            "rendered_prompt_text": {"type": "string", "minLength": 1},
+            "rendered_prompt_sha256": {"$ref": "#/$defs/sha256"},
+            "prompt_token_ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "integer", "minimum": 0}
+            },
+            "prompt_token_ids_encoding": {"const": "canonical-json-array-utf8"},
+            "prompt_token_ids_sha256": {"$ref": "#/$defs/sha256"},
+            "n_predict": {"enum": [4, 32]},
+            "seed": {"const": 123}
+          }
+        },
+        "memory_accounting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["logical", "unique_weights", "observed_direct_ddr", "inferred_ddr"],
+          "properties": {
+            "logical": {
+              "allOf": [
+                {"$ref": "#/$defs/provenance"},
+                {
+                  "type": "object",
+                  "required": ["logical_bytes"],
+                  "properties": {
+                    "logical_bytes": {"type": "integer", "minimum": 0},
+                    "measurement_method": {"enum": ["static_tensor_accounting", "runtime_tensor_accounting"]}
+                  }
+                }
+              ]
+            },
+            "unique_weights": {
+              "allOf": [
+                {"$ref": "#/$defs/provenance"},
+                {
+                  "type": "object",
+                  "required": ["unique_weight_bytes"],
+                  "properties": {
+                    "unique_weight_bytes": {"type": "integer", "minimum": 0},
+                    "measurement_method": {"enum": ["static_tensor_accounting", "runtime_tensor_accounting"]}
+                  }
+                }
+              ]
+            },
+            "observed_direct_ddr": {
+              "allOf": [
+                {"$ref": "#/$defs/provenance"},
+                {
+                  "type": "object",
+                  "required": ["observed_direct_ddr_read_bytes", "observed_direct_ddr_write_bytes"],
+                  "properties": {
+                    "observed_direct_ddr_read_bytes": {"type": ["integer", "null"], "minimum": 0},
+                    "observed_direct_ddr_write_bytes": {"type": ["integer", "null"], "minimum": 0},
+                    "measurement_method": {"enum": ["hardware_counter", "pmu_counter_delta", "uncore_counter_delta", "unavailable"]}
+                  }
+                }
+              ]
+            },
+            "inferred_ddr": {
+              "allOf": [
+                {"$ref": "#/$defs/provenance"},
+                {
+                  "type": "object",
+                  "required": ["inferred_ddr_read_bytes", "inferred_ddr_write_bytes"],
+                  "properties": {
+                    "inferred_ddr_read_bytes": {"type": ["integer", "null"], "minimum": 0},
+                    "inferred_ddr_write_bytes": {"type": ["integer", "null"], "minimum": 0},
+                    "measurement_method": {"enum": ["analytical_estimate", "counter_model_fit", "simulation", "unavailable"]}
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {"status": {"enum": ["passed", "failed", "rejected", "blocked"]}}
+        }
+      }
+    }
+  }
+}
