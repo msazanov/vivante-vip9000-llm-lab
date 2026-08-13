@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vivante-vip9000-llm-lab",
-  "generated_at_utc": "2026-08-13T23:29:04.533318+00:00",
+  "generated_at_utc": "2026-08-13T23:30:14.054671+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E047-COMMON-BENCHMARK",
   "hypothesis_query": "сравнить Bonsai-27B GGUF и LFM2.5-2.6B GGUF/ONNX по единому E047 контракту",
@@ -13,7 +13,7 @@
   "refs": [
     {
       "ref": "refs/heads/codex/e047-hard-profiling",
-      "match_count": 545,
+      "match_count": 546,
       "matches": [
         {
           "term": "Bonsai-27B",
@@ -325,7 +325,7 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 176,
+          "occurrences": 177,
           "first_lines": [
             6,
             7,
@@ -466,9 +466,9 @@
           "first_lines": [
             7,
             9,
-            428,
-            437,
-            446
+            429,
+            438,
+            447
           ]
         },
         {
@@ -969,7 +969,7 @@
           ]
         }
       ],
-      "commit": "d1e53fb3516aadd39cc54331135c237fd5ddc65c"
+      "commit": "d9625df3dbd0f4929f1130022619896a73044c8d"
     },
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
@@ -5025,7 +5025,7 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e047-hard-profiling",
-    "base_commit": "d1e53fb3516aadd39cc54331135c237fd5ddc65c",
+    "base_commit": "d9625df3dbd0f4929f1130022619896a73044c8d",
     "upstream_ref": "refs/remotes/origin/codex/e047-hard-profiling",
     "upstream_base_commit": "cb180848e456619a62a5ae921fa46be5bcfae4dd",
     "tree_binding_sha256": "564365f97d6eff1bdbcdaabdf65ed0a939d38ca6dac4330e48b3e98bf8ca8bd1",
@@ -5043,7 +5043,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 9,
-  "match_count": 2583,
+  "match_count": 2584,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -5056,7 +5056,7 @@
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e047-hard-profiling",
-        "commit": "d1e53fb3516aadd39cc54331135c237fd5ddc65c"
+        "commit": "d9625df3dbd0f4929f1130022619896a73044c8d"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
