@@ -17,12 +17,14 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime as _datetime
+import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import re
 import signal
+import stat
 import statistics
 import subprocess
 import sys
@@ -40,8 +42,9 @@ DEFAULT_NSI_ROOT = Path(
 )
 DEFAULT_SYSFS_ROOT = Path("/sys")
 DEFAULT_SIZES_MIB = (32, 64, 128, 256)
-DEFAULT_TIMERS_MS = (100, 250, 500, 1000)
+DEFAULT_WINDOWS_US = (100_000, 250_000, 500_000, 1_000_000)
 DEFAULT_REPETITIONS = 1
+PINNED_HELPER_SHA256 = "5603b2f4ca8a0f917fdbe5c6716e7182561be1459341e99ab91bd573d7bf27d1"
 
 
 class NSIError(RuntimeError):
@@ -54,6 +57,38 @@ class TimerRestoreFailure(NSIError):
 
 class ThermalAbort(NSIError):
     """Сработал тепловой предохранитель калибровки."""
+
+
+def validate_thermal_limit(value: float) -> float:
+    """Reject NaN/Inf and limits outside the fail-closed target range."""
+    value = float(value)
+    if not math.isfinite(value) or value <= 0.0 or value > THERMAL_LIMIT_C:
+        raise NSIError("thermal limit должен быть конечным числом в диапазоне (0, 85]")
+    return value
+
+
+def resolve_pinned_helper(script_path: Path, expected_sha256: str = PINNED_HELPER_SHA256) -> Path:
+    """Resolve only the sibling helper whose digest is embedded in this script."""
+    script = script_path.resolve(strict=True)
+    helper = script.with_name("nsi_sequential_read")
+    try:
+        helper_real = helper.resolve(strict=True)
+        info = helper_real.stat()
+    except OSError as exc:
+        raise NSIError(f"pinned helper недоступен: {exc}") from exc
+    if helper_real.parent != script.parent or helper_real.name != "nsi_sequential_read":
+        raise NSIError("pinned helper вышел за каталог скрипта")
+    if not stat.S_ISREG(info.st_mode) or info.st_mode & 0o022:
+        raise NSIError("pinned helper должен быть regular и не writable для group/other")
+    parent_info = helper_real.parent.stat()
+    if os.geteuid() == 0 and (
+        info.st_uid != 0 or parent_info.st_uid != 0 or parent_info.st_mode & 0o022
+    ):
+        raise NSIError("root-run требует root-owned helper и защищённый parent directory")
+    digest = hashlib.sha256(helper_real.read_bytes()).hexdigest()
+    if digest != expected_sha256:
+        raise NSIError(f"SHA-256 pinned helper не совпал: {digest}")
+    return helper_real
 
 
 def _utc_now() -> str:
@@ -78,6 +113,30 @@ def _parse_timer(text: str) -> int:
     if len(values) != 1 or values[0] < 0:
         raise NSIError(f"ожидалось одно неотрицательное число pmu_timer, получено {text!r}")
     return values[0]
+
+
+def _mountinfo_is_sysfs(path: Path) -> bool:
+    """Verify that the resolved attribute parent belongs to a sysfs mount."""
+    try:
+        lines = Path("/proc/self/mountinfo").read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise NSIError(f"не удалось проверить sysfs identity: {exc}") from exc
+    best_mount = ""
+    best_type = ""
+    resolved = str(path)
+    for line in lines:
+        before, separator, after = line.partition(" - ")
+        if not separator:
+            continue
+        fields = before.split()
+        after_fields = after.split()
+        if len(fields) < 5 or not after_fields:
+            continue
+        mountpoint = fields[4].replace("\\040", " ")
+        if (resolved == mountpoint or resolved.startswith(mountpoint.rstrip("/") + "/")) and len(mountpoint) > len(best_mount):
+            best_mount = mountpoint
+            best_type = after_fields[0]
+    return best_type == "sysfs"
 
 
 class SysfsNSI:
@@ -109,7 +168,7 @@ class SysfsNSI:
         "pmu_latency_wr",
     )
 
-    def __init__(self, root: Path | str) -> None:
+    def __init__(self, root: Path | str, *, allow_test_filesystem: bool = False) -> None:
         self.root = Path(root)
         # Принимаем только каталог hwmon0, а не произвольный файл. Это также
         # не даёт случайно передать сюда путь с именем port_*.
@@ -118,12 +177,41 @@ class SysfsNSI:
         self.timer_path = self.root / "pmu_timer"
         if self.timer_path.name != "pmu_timer":
             raise NSIError("внутренняя ошибка: разрешён только pmu_timer")
+        if not allow_test_filesystem:
+            resolved_parent = self.root.resolve(strict=True)
+            if not str(resolved_parent).startswith("/sys/") or not _mountinfo_is_sysfs(resolved_parent):
+                raise NSIError("pmu_timer должен находиться на sysfs mount; fake разрешён только unit-тестам")
+        flags = os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            self._timer_fd = os.open(self.timer_path, flags)
+            info = os.fstat(self._timer_fd)
+        except OSError as exc:
+            raise NSIError(f"безопасное открытие pmu_timer отклонено: {exc}") from exc
+        if not stat.S_ISREG(info.st_mode):
+            os.close(self._timer_fd)
+            raise NSIError("pmu_timer не является regular sysfs attribute")
+
+    def __del__(self) -> None:
+        fd = getattr(self, "_timer_fd", None)
+        if isinstance(fd, int):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            self._timer_fd = None
+
+    def _read_timer_raw(self) -> str:
+        try:
+            os.lseek(self._timer_fd, 0, os.SEEK_SET)
+            return os.read(self._timer_fd, 128).decode("ascii", errors="strict")
+        except (OSError, UnicodeError) as exc:
+            raise NSIError(f"не удалось безопасно прочитать {self.timer_path}: {exc}") from exc
 
     def read_timer(self) -> int:
         try:
-            text = self.timer_path.read_text(encoding="utf-8")
-        except OSError as exc:
-            raise NSIError(f"не удалось прочитать {self.timer_path}: {exc}") from exc
+            text = self._read_timer_raw()
+        except NSIError:
+            raise
         return _parse_timer(text)
 
     def _write_timer_raw(self, value: int) -> None:
@@ -132,9 +220,14 @@ class SysfsNSI:
         try:
             # sysfs принимает обычную десятичную строку; fsync для sysfs не
             # требуется и на некоторых hwmon mount невозможен.
-            with self.timer_path.open("w", encoding="utf-8") as handle:
-                handle.write(f"{value}\n")
-                handle.flush()
+            os.lseek(self._timer_fd, 0, os.SEEK_SET)
+            payload = f"{value}\n".encode("ascii")
+            written = os.write(self._timer_fd, payload)
+            if written != len(payload):
+                raise OSError(f"short write {written}/{len(payload)}")
+            # Fake regular files need truncation; sysfs rejects/ignores it.
+            if not str(self.timer_path).startswith("/sys/"):
+                os.ftruncate(self._timer_fd, written)
         except OSError as exc:
             raise NSIError(f"не удалось записать pmu_timer={value}: {exc}") from exc
 
@@ -187,6 +280,70 @@ def timer_window(
             raise TimerRestoreFailure(
                 f"КРИТИЧЕСКАЯ ОШИБКА: pmu_timer не восстановлен в {original}"
             ) from exc
+
+
+def run_under_watchdog(nsi: SysfsNSI, child: Callable[[], int]) -> dict[str, Any]:
+    """Run calibration in a child while the parent owns final restoration.
+
+    SIGINT/SIGTERM/SIGHUP are blocked across the save/fork transition. The
+    watchdog parent then forwards them to the child and always restores the
+    saved timer after waitpid. SIGKILL cannot be handled in-process; killing
+    the *child* is covered because this independent parent remains alive.
+    """
+    watched = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+    original = nsi.read_timer()
+    old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, watched)
+    pid = os.fork()
+    if pid == 0:
+        try:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
+            for signum in watched:
+                signal.signal(signum, signal.SIG_DFL)
+            code = int(child())
+        except BaseException:
+            traceback.print_exc()
+            code = 3
+        os._exit(max(0, min(255, code)))
+
+    forwarded: list[int] = []
+    previous_handlers: dict[int, Any] = {}
+
+    def forward(signum: int, _frame: Any) -> None:
+        forwarded.append(signum)
+        try:
+            os.kill(pid, signum)
+        except ProcessLookupError:
+            pass
+
+    try:
+        for signum in watched:
+            previous_handlers[signum] = signal.signal(signum, forward)
+        signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
+        _, wait_status = os.waitpid(pid, 0)
+    finally:
+        signal.pthread_sigmask(signal.SIG_BLOCK, watched)
+        restore_error: BaseException | None = None
+        try:
+            nsi.write_timer(original)
+        except BaseException as exc:
+            restore_error = exc
+        restore_verified = restore_error is None and nsi.read_timer() == original
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
+        signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
+        if not restore_verified:
+            raise TimerRestoreFailure(
+                f"watchdog не восстановил pmu_timer={original}: {restore_error}"
+            )
+    child_signal = os.WTERMSIG(wait_status) if os.WIFSIGNALED(wait_status) else None
+    exit_code = os.waitstatus_to_exitcode(wait_status)
+    return {
+        "exit_code": exit_code,
+        "signal": child_signal,
+        "forwarded_signals": forwarded,
+        "restore_verified": restore_verified,
+        "original_pmu_timer": original,
+    }
 
 
 def fit_line(x_values: Sequence[float], y_values: Sequence[float]) -> dict[str, float | int]:
@@ -244,9 +401,9 @@ def classify_unit_hypothesis(points: Sequence[Mapping[str, float]]) -> dict[str,
     bytes_values = [float(point["bytes"]) for point in points]
     values = [float(point["value"]) for point in points]
     rate_values = [
-        float(point["bytes"]) / (float(point["timer_ms"]) / 1000.0)
+        float(point["bytes"]) / (float(point["window_us"]) / 1_000_000.0)
         for point in points
-        if float(point["timer_ms"]) > 0.0
+        if float(point["window_us"]) > 0.0
     ]
     if len(rate_values) != len(points):
         return {"classification": "insufficient", "confidence": "low", "n": len(points)}
@@ -345,6 +502,22 @@ class JsonlTrace:
         return record
 
 
+def raw_thermal_maxima(path: Path) -> dict[str, float]:
+    """Compute maxima from every persisted raw event, not selected endpoints."""
+    maxima: dict[str, float] = {}
+    with path.open(encoding="utf-8") as handle:
+        for line in handle:
+            record = json.loads(line)
+            state = record.get("telemetry")
+            thermal = state.get("thermal_c") if isinstance(state, Mapping) else None
+            if not isinstance(thermal, Mapping):
+                continue
+            for name, value in thermal.items():
+                numeric = float(value)
+                maxima[str(name)] = max(maxima.get(str(name), -math.inf), numeric)
+    return maxima
+
+
 def _write_json(path: Path, value: Any) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
@@ -386,7 +559,7 @@ def _sleep_with_thermal(
             mode=fields.get("mode"),
             phase="wait",
             buffer_mib=fields.get("buffer_mib"),
-            timer_ms=fields.get("timer_ms"),
+            window_us=fields.get("window_us"),
             pmu=nsi.snapshot(),
             telemetry=last_state,
         )
@@ -402,38 +575,72 @@ def _run_reader(
     limit_c: float,
     trace: JsonlTrace,
     **fields: Any,
-) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
     command = [str(helper), str(size_mib), str(duration_ms)]
+    start_read_fd, start_write_fd = os.pipe()
+    environment = dict(os.environ)
+    environment["E049_START_FD"] = str(start_read_fd)
     try:
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=environment,
+            pass_fds=(start_read_fd,),
         )
     except OSError as exc:
+        os.close(start_read_fd)
+        os.close(start_write_fd)
         raise NSIError(f"не удалось запустить helper {helper}: {exc}") from exc
+    os.close(start_read_fd)
+    assert process.stdout is not None
+    ready = process.stdout.readline()
+    if ready != "READY\n":
+        process.kill()
+        stdout, stderr = process.communicate()
+        os.close(start_write_fd)
+        raise NSIError(f"helper не подтвердил synchronized READY: {ready!r} {stdout!r} {stderr!r}")
+    original = nsi.read_timer()
+    blocked = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+    old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, blocked)
+    try:
+        # Counter window begins before the first workload read. The helper was
+        # already allocated/touched and is blocked on this one-byte gate.
+        nsi.write_timer(int(fields["window_us"]))
+        os.write(start_write_fd, b"S")
+    finally:
+        os.close(start_write_fd)
+        signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
     samples: list[dict[str, Any]] = []
     thermal_abort: ThermalAbort | None = None
-    while process.poll() is None:
-        try:
-            state = _check_thermal(sysfs_root, limit_c)
-        except ThermalAbort as exc:
-            thermal_abort = exc
-            process.send_signal(signal.SIGTERM)
-            break
-        sample = trace.record(
-            "sample",
-            mode=fields.get("mode", "read"),
-            phase="read",
-            buffer_mib=size_mib,
-            timer_ms=fields.get("timer_ms"),
-            pmu=nsi.snapshot(),
-            telemetry=state,
-        )
-        samples.append(sample)
-        time.sleep(0.050)
-    stdout, stderr = process.communicate()
+    read_pmu: dict[str, Any]
+    try:
+        while process.poll() is None:
+            try:
+                state = _check_thermal(sysfs_root, limit_c)
+            except ThermalAbort as exc:
+                thermal_abort = exc
+                process.send_signal(signal.SIGTERM)
+                break
+            sample = trace.record(
+                "sample",
+                mode=fields.get("mode", "read"),
+                phase="read",
+                buffer_mib=size_mib,
+                window_us=fields.get("window_us"),
+                pmu=nsi.snapshot(),
+                telemetry=state,
+            )
+            samples.append(sample)
+            time.sleep(0.010)
+        read_pmu = nsi.snapshot()
+        stdout_tail, stderr = process.communicate()
+        stdout = ready + stdout_tail
+    finally:
+        nsi.write_timer(original)
+        if nsi.read_timer() != original:
+            raise TimerRestoreFailure(f"read-window не восстановил pmu_timer={original}")
     if thermal_abort is not None:
         raise thermal_abort
     if process.returncode != 0:
@@ -445,13 +652,15 @@ def _run_reader(
         "helper_result",
         mode=fields.get("mode", "read"),
         buffer_mib=size_mib,
-        timer_ms=fields.get("timer_ms"),
+        window_us=fields.get("window_us"),
         command=command,
         helper_result=result,
         helper_stdout=stdout,
         helper_stderr=stderr,
     )
-    return result, samples
+    result["window_us"] = int(fields["window_us"])
+    result["window_alignment"] = "helper-ready -> arm-pmu -> release-helper -> helper-stop -> pmu-read"
+    return result, samples, read_pmu
 
 
 def _master_index(names: Sequence[str]) -> int:
@@ -475,7 +684,7 @@ def summarize(
     points: Sequence[Mapping[str, Any]],
     master_names: Sequence[str],
     *,
-    original_timer_ms: int,
+    original_timer_raw: int,
     thermal_limit_c: float,
     status: str,
 ) -> dict[str, Any]:
@@ -487,6 +696,7 @@ def summarize(
         read_points = []
         idle_values: list[float] = []
         read_values: list[float] = []
+        cell_values: dict[str, list[float]] = {}
         for point in points:
             snapshot = point.get("pmu")
             if not isinstance(snapshot, Mapping):
@@ -499,11 +709,13 @@ def summarize(
                 idle_values.append(value)
             elif mode == "read":
                 read_values.append(value)
+                cell_key = f"{point.get('buffer_mib')}MiB@{point.get('window_us')}us"
+                cell_values.setdefault(cell_key, []).append(value)
                 helper = point.get("helper_result")
                 bytes_read = float(helper.get("bytes_read", 0.0)) if isinstance(helper, Mapping) else 0.0
                 read_points.append({
                     "bytes": bytes_read,
-                    "timer_ms": float(point.get("timer_ms", 0.0)),
+                    "window_us": float(point.get("window_us", 0.0)),
                     "value": value,
                 })
         unit = classify_unit_hypothesis(read_points)
@@ -514,18 +726,33 @@ def summarize(
         )
         unit["read_cv"] = coefficient_of_variation(read_values)
         unit["idle_cv"] = coefficient_of_variation(idle_values)
+        unit["cell_cv"] = {
+            key: coefficient_of_variation(values)
+            for key, values in sorted(cell_values.items())
+        }
         signal_summaries[signal_name] = unit
+    thermal_maxima: dict[str, float] = {}
+    for point in points:
+        state = point.get("telemetry")
+        thermal = state.get("thermal_c") if isinstance(state, Mapping) else None
+        if isinstance(thermal, Mapping):
+            for name, value in thermal.items():
+                numeric = float(value)
+                thermal_maxima[str(name)] = max(thermal_maxima.get(str(name), -math.inf), numeric)
     return {
         "schema": SCHEMA,
         "status": status,
-        "original_pmu_timer_ms": original_timer_ms,
+        "original_pmu_timer_raw": original_timer_raw,
         "thermal_limit_c": thermal_limit_c,
         "master_names": list(master_names),
-        "total_master_index": index,
+        "selected_channel_index": index,
+        "selected_channel_name": master_names[index] if master_names else None,
+        "selected_channel_role": "reported aggregate channel; not proven sum",
         "point_count": len(points),
+        "thermal_max_c": thermal_maxima,
         "signals": signal_summaries,
         "interpretation_ru": {
-            "pmu_timer": "исходник ядра и read-back target указывают на миллисекунды",
+            "pmu_timer": "kernel computes clk_hz/1_000_000*value: sysfs value is microseconds",
             "bandwidth_data_unit": "числа уже масштабированы data-unit; деление на timer не подтверждено",
             "classification": "rate/volume — статистическая гипотеза по двум наборам размеров и окон",
             "idle_ratio": "медиана idle-сигнала / медиана read-сигнала; это не физическая единица",
@@ -538,13 +765,13 @@ def _summary_markdown(summary: Mapping[str, Any]) -> str:
         "# E049 — калибровка sunxi-nsi (A733)",
         "",
         f"Статус: **{summary.get('status', 'unknown')}**; исходный `pmu_timer`: "
-        f"`{summary.get('original_pmu_timer_ms')}` мс; thermal abort: "
+        f"`{summary.get('original_pmu_timer_raw')}` raw; thermal abort: "
         f"`{summary.get('thermal_limit_c')} °C`.",
         "",
         "Классификация `rate`/`volume` — только fit-гипотеза. Она не заменяет "
         "документирование аппаратных единиц; сырые значения сохранены в `raw.jsonl`.",
         "",
-        "| Сигнал (master=total) | Гипотеза | Уверенность | R² volume | R² rate | idle ratio | CV read |",
+        "| Сигнал (reported aggregate channel) | Гипотеза | Уверенность | R² volume | R² rate | idle ratio | CV read |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for name, value in (summary.get("signals") or {}).items():
@@ -591,10 +818,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nsi-root", type=Path, default=DEFAULT_NSI_ROOT)
     parser.add_argument("--sysfs-root", type=Path, default=DEFAULT_SYSFS_ROOT)
-    parser.add_argument("--helper", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--sizes-mib", default=",".join(map(str, DEFAULT_SIZES_MIB)))
-    parser.add_argument("--timers-ms", default=",".join(map(str, DEFAULT_TIMERS_MS)))
+    parser.add_argument("--windows-us", default=",".join(map(str, DEFAULT_WINDOWS_US)))
     parser.add_argument("--repetitions", type=int, default=DEFAULT_REPETITIONS)
     parser.add_argument("--thermal-limit-c", type=float, default=THERMAL_LIMIT_C)
     parser.add_argument("--allow-existing", action="store_true")
@@ -603,13 +829,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
     sizes = _parse_csv_ints(args.sizes_mib, "--sizes-mib")
-    timers = _parse_csv_ints(args.timers_ms, "--timers-ms")
+    windows_us = _parse_csv_ints(args.windows_us, "--windows-us")
     if args.repetitions <= 0:
         raise SystemExit("--repetitions должен быть положительным")
-    if args.thermal_limit_c > 85.0 + 1e-9:
-        # Порог нельзя ослабить относительно safety requirement родителя;
-        # ровно 85 °C — требуемая граница abort.
-        raise SystemExit("thermal limit не может быть выше 85 °C")
+    thermal_limit = validate_thermal_limit(args.thermal_limit_c)
+    helper = resolve_pinned_helper(Path(__file__))
     output_dir: Path = args.output_dir
     if output_dir.exists() and any(output_dir.iterdir()) and not args.allow_existing:
         raise SystemExit(f"output-dir уже содержит файлы: {output_dir}; используйте новый каталог")
@@ -627,12 +851,15 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
         "status": "running",
         "started_utc": _utc_now(),
         "nsi_root": str(args.nsi_root),
-        "helper": str(args.helper),
+        "helper": str(helper),
+        "helper_sha256": PINNED_HELPER_SHA256,
         "sizes_mib": list(sizes),
-        "timers_ms": list(timers),
+        "windows_us": list(windows_us),
+        "window_unit": "microseconds",
+        "window_unit_evidence": "kernel computes clk_hz/1_000_000 * sysfs_value",
         "repetitions": args.repetitions,
-        "thermal_limit_c": args.thermal_limit_c,
-        "original_pmu_timer_ms": original_timer,
+        "thermal_limit_c": thermal_limit,
+        "original_pmu_timer_raw": original_timer,
         "initial_pmu": initial,
         "write_surface": ["pmu_timer"],
         "forbidden_write_surface": "all files except exact pmu_timer",
@@ -640,11 +867,11 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
     _write_json(output_dir / "manifest.json", manifest)
     trace.record(
         "start",
-        original_pmu_timer_ms=original_timer,
+        original_pmu_timer_raw=original_timer,
         initial_pmu=initial,
-        thermal_limit_c=args.thermal_limit_c,
+        thermal_limit_c=thermal_limit,
         sizes_mib=list(sizes),
-        timers_ms=list(timers),
+        windows_us=list(windows_us),
         repetitions=args.repetitions,
     )
     points: list[dict[str, Any]] = []
@@ -652,21 +879,21 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for repetition in range(args.repetitions):
             for size_mib in sizes:
-                for timer_ms in timers:
+                for window_us in windows_us:
                     fields = {
                         "repetition": repetition,
                         "buffer_mib": size_mib,
-                        "timer_ms": timer_ms,
+                        "window_us": window_us,
                     }
-                    _check_thermal(args.sysfs_root, args.thermal_limit_c)
+                    _check_thermal(args.sysfs_root, thermal_limit)
                     trace.record("measurement_start", **fields)
-                    with timer_window(nsi, timer_ms):
-                        thermal_before = _check_thermal(args.sysfs_root, args.thermal_limit_c)
+                    with timer_window(nsi, window_us):
+                        thermal_before = _check_thermal(args.sysfs_root, thermal_limit)
                         _sleep_with_thermal(
-                            timer_ms / 1000.0 + 0.050,
+                            window_us / 1_000_000.0 + 0.005,
                             nsi,
                             args.sysfs_root,
-                            args.thermal_limit_c,
+                            thermal_limit,
                             trace,
                             mode="idle",
                             **fields,
@@ -685,22 +912,20 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
                     trace.record("measurement", **idle_point)
 
                     # Новое окно сбрасывает counters перед известным read-stream.
-                    duration_ms = max(150, timer_ms + 50)
-                    with timer_window(nsi, timer_ms):
-                        thermal_before_read = _check_thermal(args.sysfs_root, args.thermal_limit_c)
-                        helper_result, samples = _run_reader(
-                            args.helper,
-                            size_mib,
-                            duration_ms,
-                            nsi,
-                            args.sysfs_root,
-                            args.thermal_limit_c,
-                            trace,
-                            mode="read",
-                            **fields,
-                        )
-                        read_pmu = nsi.snapshot()
-                        read_telemetry = telemetry(args.sysfs_root)
+                    duration_ms = max(1, math.ceil(window_us / 1000.0))
+                    thermal_before_read = _check_thermal(args.sysfs_root, thermal_limit)
+                    helper_result, samples, read_pmu = _run_reader(
+                        helper,
+                        size_mib,
+                        duration_ms,
+                        nsi,
+                        args.sysfs_root,
+                        thermal_limit,
+                        trace,
+                        mode="read",
+                        **fields,
+                    )
+                    read_telemetry = telemetry(args.sysfs_root)
                     read_point = {
                         **fields,
                         "mode": "read",
@@ -734,19 +959,42 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
     summary = summarize(
         points,
         master_names,
-        original_timer_ms=original_timer,
-        thermal_limit_c=args.thermal_limit_c,
+        original_timer_raw=original_timer,
+        thermal_limit_c=thermal_limit,
         status=status,
     )
+    summary["thermal_max_c"] = raw_thermal_maxima(trace.path)
+    summary["thermal_max_source"] = "all telemetry-bearing events in raw.jsonl"
     _write_json(output_dir / "summary.json", summary)
     (output_dir / "summary.md").write_text(_summary_markdown(summary), encoding="utf-8")
     trace.record("complete", status=status, point_count=len(points), summary="summary.json")
     return summary
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+def write_partial_failure(output_dir: Path, exc: BaseException, *, run_id: str) -> None:
+    """Persist failure, raw event and explicitly non-final partial summary."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    failure = {
+        "schema": SCHEMA,
+        "status": "failed",
+        "timestamp_utc": _utc_now(),
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+        "traceback": traceback.format_exc(),
+    }
+    _write_json(output_dir / "failure.json", failure)
+    JsonlTrace(output_dir / "raw.jsonl", run_id).record("failure", **failure)
+    _write_json(output_dir / "summary.partial.json", {
+        "schema": SCHEMA,
+        "status": "failed",
+        "partial": True,
+        "unit_classification": "not-computed",
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+    })
+
+
+def _child_main(args: argparse.Namespace) -> int:
     try:
         summary = run_calibration(args)
     except BaseException as exc:
@@ -755,34 +1003,66 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_dir = getattr(args, "output_dir", None)
         if isinstance(output_dir, Path):
             output_dir.mkdir(parents=True, exist_ok=True)
-            failure = {
-                "schema": SCHEMA,
-                "status": "failed",
-                "timestamp_utc": _utc_now(),
-                "error_type": type(exc).__name__,
-                "error": str(exc),
-                "traceback": traceback.format_exc(),
-            }
-            _write_json(output_dir / "failure.json", failure)
+            run_id = "unknown"
+            manifest_path = output_dir / "manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                run_id = str(manifest.get("run_id", run_id))
             try:
-                run_id = "unknown"
-                manifest_path = output_dir / "manifest.json"
-                if manifest_path.exists():
-                    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                    run_id = str(manifest.get("run_id", run_id))
-                JsonlTrace(output_dir / "raw.jsonl", run_id).record(
-                    "failure",
-                    error_type=type(exc).__name__,
-                    error=str(exc),
-                    traceback=traceback.format_exc(),
-                )
+                write_partial_failure(output_dir, exc, run_id=run_id)
             except BaseException:
-                # Исходная ошибка важнее вторичной ошибки журналирования.
                 pass
         print(f"calibration failed: {exc}", file=sys.stderr)
         return 3
     print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def _emit_watchdog_failure(args: argparse.Namespace, result: Mapping[str, Any]) -> None:
+    """Emit machine-readable partial artifacts when the child cannot do so."""
+    output_dir: Path = args.output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    status = "signal" if result.get("signal") else "child_failure"
+    failure = {
+        "schema": SCHEMA,
+        "status": status,
+        "timestamp_utc": _utc_now(),
+        "watchdog": dict(result),
+        "note_ru": (
+            "SIGKILL нельзя обработать внутри убитого процесса; независимый "
+            "родитель восстановил и проверил pmu_timer."
+        ),
+    }
+    _write_json(output_dir / "watchdog_failure.json", failure)
+    failure_path = output_dir / "failure.json"
+    if not failure_path.exists():
+        _write_json(failure_path, failure)
+    JsonlTrace(output_dir / "raw.jsonl", "watchdog").record("watchdog_failure", **failure)
+    partial = {
+        "schema": SCHEMA,
+        "status": status,
+        "partial": True,
+        "watchdog": dict(result),
+        "unit_classification": "not-computed",
+    }
+    _write_json(output_dir / "summary.partial.json", partial)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    try:
+        validate_thermal_limit(args.thermal_limit_c)
+        nsi = SysfsNSI(args.nsi_root)
+        # Validate the immutable helper before the privileged child is forked.
+        resolve_pinned_helper(Path(__file__))
+        result = run_under_watchdog(nsi, lambda: _child_main(args))
+    except BaseException as exc:
+        print(f"watchdog setup/restore failed: {exc}", file=sys.stderr)
+        return 4
+    if result["exit_code"] != 0:
+        _emit_watchdog_failure(args, result)
+    return int(result["exit_code"])
 
 
 if __name__ == "__main__":

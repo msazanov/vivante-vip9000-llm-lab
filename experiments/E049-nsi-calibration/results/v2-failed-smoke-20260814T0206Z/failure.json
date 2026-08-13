@@ -1,0 +1,8 @@
+{
+  "error": "не удалось запустить helper /run/e049-nsi-v2/nsi_sequential_read: [Errno 13] Permission denied: '/run/e049-nsi-v2/nsi_sequential_read'",
+  "error_type": "NSIError",
+  "schema": "a733-sunxi-nsi-calibration/v1",
+  "status": "failed",
+  "timestamp_utc": "2026-08-13T23:16:58.846046+00:00",
+  "traceback": "Traceback (most recent call last):\n  File \"/run/e049-nsi-v2/nsi_calibrate.py\", line 563, in _run_reader\n    process = subprocess.Popen(\n              ^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.11/subprocess.py\", line 1024, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/usr/lib/python3.11/subprocess.py\", line 1901, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nPermissionError: [Errno 13] Permission denied: '/run/e049-nsi-v2/nsi_sequential_read'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/run/e049-nsi-v2/nsi_calibrate.py\", line 976, in _child_main\n    summary = run_calibration(args)\n              ^^^^^^^^^^^^^^^^^^^^^\n  File \"/run/e049-nsi-v2/nsi_calibrate.py\", line 896, in run_calibration\n    helper_result, samples, read_pmu = _run_reader(\n                                       ^^^^^^^^^^^^\n  File \"/run/e049-nsi-v2/nsi_calibrate.py\", line 574, in _run_reader\n    raise NSIError(f\"не удалось запустить helper {helper}: {exc}\") from exc\nNSIError: не удалось запустить helper /run/e049-nsi-v2/nsi_sequential_read: [Errno 13] Permission denied: '/run/e049-nsi-v2/nsi_sequential_read'\n"
+}

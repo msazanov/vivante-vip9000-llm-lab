@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 static double monotonic_seconds(void) {
     struct timespec ts;
@@ -41,11 +42,12 @@ int main(int argc, char **argv) {
     unsigned long long duration_ms;
     size_t bytes;
     unsigned char *buffer = NULL;
-    volatile const unsigned char *read_buffer;
+    volatile const uint64_t *read_buffer;
     volatile uint64_t sink = 0;
     uint64_t passes = 0;
     double started;
     double ended;
+    const char *start_fd_text;
 
     if (argc != 3 || !parse_positive(argv[1], &size_mib) ||
         !parse_positive(argv[2], &duration_ms) || size_mib > 4096 ||
@@ -67,20 +69,33 @@ int main(int argc, char **argv) {
     for (size_t offset = 0; offset < bytes; offset += 64u) {
         buffer[offset] = (unsigned char)((offset >> 6u) ^ 0x5aU);
     }
-    read_buffer = buffer;
+    read_buffer = (volatile const uint64_t *)(const void *)buffer;
+    start_fd_text = getenv("E049_START_FD");
+    if (start_fd_text != NULL) {
+        unsigned long long start_fd;
+        unsigned char token;
+        if (!parse_positive(start_fd_text, &start_fd) ||
+            start_fd > 1024 || printf("READY\n") < 0 || fflush(stdout) != 0 ||
+            read((int)start_fd, &token, 1) != 1) {
+            fprintf(stderr, "synchronized start failed\n");
+            free(buffer);
+            return 4;
+        }
+    }
     started = monotonic_seconds();
     do {
-        for (size_t offset = 0; offset < bytes; offset += 64u) {
-            sink += (uint64_t)read_buffer[offset];
+        for (size_t offset = 0; offset < bytes / sizeof(uint64_t); ++offset) {
+            sink += read_buffer[offset];
         }
         ++passes;
         ended = monotonic_seconds();
     } while ((ended - started) * 1000.0 < (double)duration_ms);
 
-    printf("{\"bytes_per_pass\":%zu,\"passes\":%" PRIu64
+    printf("{\"bytes_per_pass\":%zu,\"load_width_bytes\":%zu,\"passes\":%" PRIu64
            ",\"bytes_read\":%" PRIu64 ",\"elapsed_s\":%.9f"
            ",\"sink\":%" PRIu64 "}\n",
-           bytes, passes, (uint64_t)bytes * passes, ended - started, sink);
+           bytes, sizeof(uint64_t), passes, (uint64_t)bytes * passes,
+           ended - started, sink);
     free(buffer);
     return 0;
 }

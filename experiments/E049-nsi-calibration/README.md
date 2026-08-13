@@ -1,6 +1,9 @@
 # E049 — калибровка `sunxi-nsi` на A733
 
-Статус этой ветки: **host gate и две bounded-калибровки на target завершены**.
+Статус: **E049 v2 прошёл safety gate и новую bounded-калибровку на target**.
+Два исходных v1 trace сохранены без изменений, но их unit-fit отклонён review:
+они ошибочно трактовали raw timer как миллисекунды и не синхронизировали
+начало workload с окном PMU.
 
 Цель — разделить две гипотезы о счётчиках NSI:
 
@@ -55,6 +58,12 @@ ssh -F /dev/null orangepi@192.168.31.117 \
   'cc -O2 -std=c11 -Wall -Wextra -Werror -pedantic \
     /tmp/e049-nsi/nsi_sequential_read.c \
     -o /tmp/e049-nsi/nsi_sequential_read'
+ssh -tt -F /dev/null orangepi@192.168.31.117 \
+  'sudo -S -p "" sh -c "install -d -o root -g root -m 0755 \
+    /tmp/e049-nsi-v2-root; install -o root -g root -m 0755 \
+    /tmp/e049-nsi/nsi_calibrate.py /tmp/e049-nsi-v2-root/nsi_calibrate.py; \
+    install -o root -g root -m 0755 /tmp/e049-nsi/nsi_sequential_read \
+    /tmp/e049-nsi-v2-root/nsi_sequential_read"'
 ```
 
 Запуск требует root только для записи `pmu_timer`. Пароль не должен попадать
@@ -62,11 +71,11 @@ ssh -F /dev/null orangepi@192.168.31.117 \
 
 ```bash
 ssh -tt -F /dev/null orangepi@192.168.31.117 \
-  'sudo -S -p "" python3 /tmp/e049-nsi/nsi_calibrate.py \
-    --helper /tmp/e049-nsi/nsi_sequential_read \
+  'sudo -S -p "" python3 /tmp/e049-nsi-v2-root/nsi_calibrate.py \
     --output-dir /tmp/e049-nsi/results-<UTC> \
-    --sizes-mib 32,64,128,256 --timers-ms 100,250,500,1000 \
-    --repetitions 1 --thermal-limit-c 85'
+    --sizes-mib 32,64,128,256 \
+    --windows-us 100000,250000,500000,1000000 \
+    --repetitions 3 --thermal-limit-c 85'
 ```
 
 После появления запроса `sudo` пароль вводится отдельным stdin-сообщением
@@ -96,7 +105,8 @@ target это было `0`). Если проверка не совпала, но
 
 В текущем ядре `sunxi_nsi` `pmu_timer` разбирается как decimal и для
 `topology_type=2` умножается на частоту NSI после деления частоты на `1e6`;
-это source-grounded признак миллисекунд. В device tree A733 указаны
+это source-grounded признак **микросекунд**: `clk_hz / 1_000_000` даёт число
+тактов на микросекунду. В device tree A733 указаны
 `ia_pmu_data_unit=16`, `ra/ta/cpu_pmu_data_unit=64`. `pmu_bandwidth_rd/wr`
 масштабируются соответствующим data-unit, но software path не делит их на
 `pmu_timer`, поэтому без этого эксперимента нельзя честно назвать число
@@ -108,7 +118,7 @@ Fit помечает сигнал как `rate` или `volume` только е�
 `inconclusive`. Это калибровка единиц и причинности, а не доказательство
 насыщения LPDDR в полном Bonsai decode.
 
-## Фактический target evidence
+## Фактический target evidence v1 (отклонён для unit inference)
 
 Target: Orange Pi Zero 3W / A733, kernel `6.6.98-sun60iw2`, NSI module
 `sunxi_nsi 1.1.0`, root был нужен только для записи `pmu_timer`. На момент
@@ -153,3 +163,78 @@ Target: Orange Pi Zero 3W / A733, kernel `6.6.98-sun60iw2`, NSI module
 Провальных/остановленных событий в этих двух сериях нет: `raw.jsonl` содержит
 `start`, все `sample`, `helper_result`, `measurement`, `measurement_end` и
 `complete`; `failure.json` отсутствует именно потому, что abort не сработал.
+
+## Review fixes и target evidence v2
+
+V2 открывает `pmu_timer` через `O_NOFOLLOW|O_CLOEXEC`, проверяет basename,
+`fstat` regular attribute и принадлежность пути sysfs mount. Произвольного
+`--helper` больше нет: разрешён только root-owned sibling
+`nsi_sequential_read` с встроенным SHA-256
+`5603b2f4ca8a0f917fdbe5c6716e7182561be1459341e99ab91bd573d7bf27d1`.
+Полный target-run был выполнен скриптом staging SHA-256
+`34c6b77d4c6e1c5f8b5aeec3d977430b9c8ec8f79bf860244ae320b7c38fd852`;
+после запуска host-код получил дополнительную fail-closed проверку ownership
+и расчёт thermal maxima по всему raw trace.
+
+Независимый parent-watchdog блокирует `SIGINT/SIGTERM/SIGHUP` во время
+save/fork, пересылает сигнал worker-процессу и в любом случае восстанавливает
+и проверяет исходный timer. `SIGKILL` нельзя обработать внутри убитого
+процесса; adversarial host-тест убивает child через `SIGKILL` и подтверждает,
+что живой parent восстановил timer. Если погибнет сам watchdog или вся ОС,
+in-process гарантий нет — это остаётся явной границей.
+
+Helper заранее выделяет/touch-ит буфер и ждёт start-gate. После `READY`
+оркестратор сначала arm-ит PMU, затем отпускает helper; поэтому helper не
+читает измеряемый буфер до начала окна. Для v2 применены окна
+`100000/250000/500000/1000000 µs`, то есть те же 100/250/500/1000 ms по
+реальному времени.
+
+| Запуск | Результат | Артефакты |
+|---|---|---|
+| direct `/run` | `Permission denied`, до NSI | отдельный deployment failure, timer не менялся |
+| noexec helper | `failed`, partial summary/watchdog trace сохранены | `results/v2-failed-smoke-20260814T0206Z/` |
+| v2 smoke | 2 точки, `complete` | `results/v2-smoke-20260814T0208Z/` |
+| v2 calibration r3 | 96 точек, `complete` | `results/v2-calibration-20260814T0210Z-r3/` |
+| v3 exact-load calibration r3 | 96 точек, `complete` | `results/v3-calibration-20260814T0230Z-r3/` |
+
+На reported aggregate channel с именем `total` (это **не называется суммой**
+без отдельного доказательства) результат v2:
+
+- `pmu_bandwidth`: volume `R²=0.997879`, rate `R²=0.000550`;
+- `pmu_bandwidth_rd`: volume `R²=0.998503`, rate `R²=0.000666`;
+- `pmu_cmd_rd`: volume `R²=0.998515`, rate `R²=0.000668`.
+
+Это сильное доказательство семантики **объём за окно**, а не уже готовой
+скорости. Коэффициент пересчёта в bytes/MB пока не объявляется: для этого
+нужна отдельная калибровка data-unit и channel-specific semantics. CV теперь
+считается по каждой одинаковой ячейке size/window; большинство read-ячеек
+имеют CV порядка 0.1–2.7%, исключение — `32 MiB @ 100000 µs` (~29%).
+
+Максимумы пересчитаны по всем telemetry-bearing событиям raw JSONL, а не
+только endpoint: CPU `47.492 °C`, DDR `42.346 °C`, GPU `41.912 °C`, NPU
+`41.168 °C`. После полного запуска `pmu_timer=0`; SHA control-файлов
+`port_mode`/`port_select` совпали с предыдущими read-only снимками.
+
+### Финальная v3 проверка known bytes
+
+Дополнительный self-review обнаружил, что v2 helper делал один byte-load на
+cache-line, но называл весь cache-line `bytes_read`. Raw v2 снова сохранён без
+изменений, однако итоговой калибровкой считается v3: helper выполняет
+volatile 64-bit load каждые 8 байт и явно пишет `load_width_bytes=8`, поэтому
+`bytes_read = bytes_per_pass × passes` — точный объём архитектурных load,
+выполненных строго между start-gate и остановкой helper.
+
+V3 на reported aggregate channel:
+
+- `pmu_bandwidth`: volume `R²=0.988737`, rate `R²=0.183826`;
+- `pmu_bandwidth_rd`: volume `R²=0.989454`, rate `R²=0.181989`;
+- `pmu_cmd_rd`: volume `R²=0.988165`, rate `R²=0.183351`.
+
+Точные SHA target-run v3: script
+`186c1467b007bdec55559d05ffbc53011e563f02b66f26120db7b7b4fd6bdf29`, helper
+`5603b2f4ca8a0f917fdbe5c6716e7182561be1459341e99ab91bd573d7bf27d1`.
+
+Итог остаётся устойчивым: `bandwidth*` и `cmd_rd` — накопленный **объём за
+окно**, не готовые MB/s. Конкретный bytes-per-counter unit ещё не объявляется.
+Максимум v3: CPU `56.048 °C`, DDR `49.972 °C`, GPU `52.018 °C`, NPU
+`49.476 °C`; после серии `pmu_timer=0`.

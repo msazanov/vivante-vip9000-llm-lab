@@ -1,0 +1,13 @@
+{
+  "schema": "a733-sunxi-nsi-calibration/deployment-failure-v1",
+  "status": "failed_before_tool_start",
+  "timestamp_utc_approx": "2026-08-13T23:05:00Z",
+  "command_shape": "sudo /run/e049-nsi-v2/nsi_calibrate.py ...",
+  "exit_code": 1,
+  "stderr": "sudo: unable to execute /run/e049-nsi-v2/nsi_calibrate.py: Permission denied",
+  "cause": "/run is mounted noexec on this target",
+  "nsi_opened": false,
+  "pmu_timer_changed": false,
+  "raw_jsonl_available": false,
+  "note_ru": "Процесс инструмента не стартовал, поэтому его JSONL writer физически не мог создать trace; failure сохранён вручную как deployment evidence."
+}

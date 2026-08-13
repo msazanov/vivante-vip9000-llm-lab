@@ -1,0 +1,13 @@
+{
+  "partial": true,
+  "schema": "a733-sunxi-nsi-calibration/v1",
+  "status": "child_failure",
+  "unit_classification": "not-computed",
+  "watchdog": {
+    "exit_code": 3,
+    "forwarded_signals": [],
+    "original_pmu_timer": 0,
+    "restore_verified": true,
+    "signal": null
+  }
+}

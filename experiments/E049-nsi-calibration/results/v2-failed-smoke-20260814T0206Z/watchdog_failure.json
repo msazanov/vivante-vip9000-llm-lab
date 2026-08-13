@@ -1,0 +1,13 @@
+{
+  "note_ru": "SIGKILL нельзя обработать внутри убитого процесса; независимый родитель восстановил и проверил pmu_timer.",
+  "schema": "a733-sunxi-nsi-calibration/v1",
+  "status": "child_failure",
+  "timestamp_utc": "2026-08-13T23:16:58.862239+00:00",
+  "watchdog": {
+    "exit_code": 3,
+    "forwarded_signals": [],
+    "original_pmu_timer": 0,
+    "restore_verified": true,
+    "signal": null
+  }
+}

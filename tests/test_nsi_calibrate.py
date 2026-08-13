@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-import json
+import math
+import os
+import signal
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,7 +16,13 @@ from tooling.nsi_calibrate import (
     TimerRestoreFailure,
     classify_unit_hypothesis,
     fit_line,
+    resolve_pinned_helper,
+    raw_thermal_maxima,
+    run_under_watchdog,
+    summarize,
     timer_window,
+    validate_thermal_limit,
+    write_partial_failure,
 )
 
 
@@ -38,7 +47,7 @@ class FailingRestoreNSI(SysfsNSI):
     """Fail on the second timer write, which is the restoration write."""
 
     def __init__(self, root: Path) -> None:
-        super().__init__(root)
+        super().__init__(root, allow_test_filesystem=True)
         self.write_count = 0
 
     def _write_timer_raw(self, value: int) -> None:
@@ -49,10 +58,82 @@ class FailingRestoreNSI(SysfsNSI):
 
 
 class NsiCalibrationUnitTest(unittest.TestCase):
+    def test_c_helper_reports_exact_architected_load_bytes(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "nsi_sequential_read"
+            compiled = subprocess.run(
+                ["cc", "-O2", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                 "-pedantic", str(root / "tooling" / "nsi_sequential_read.c"),
+                 "-o", str(binary)], text=True, capture_output=True)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            completed = subprocess.run([str(binary), "1", "5"], text=True,
+                                       capture_output=True, check=True)
+            result = __import__("json").loads(completed.stdout)
+            self.assertEqual(result["load_width_bytes"], 8)
+            self.assertEqual(result["bytes_read"],
+                             result["bytes_per_pass"] * result["passes"])
+
+    def test_thermal_limit_rejects_nan_and_infinity(self) -> None:
+        for value in (math.nan, math.inf, -math.inf, -1.0, 85.001):
+            with self.subTest(value=value), self.assertRaises(NSIError):
+                validate_thermal_limit(value)
+
+    def test_timer_symlink_is_rejected_without_following(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "nsi"
+            root.mkdir()
+            victim = Path(tmp) / "victim"
+            victim.write_text("17\n", encoding="utf-8")
+            (root / "pmu_timer").symlink_to(victim)
+            with self.assertRaises(NSIError):
+                SysfsNSI(root, allow_test_filesystem=True)
+            self.assertEqual(victim.read_text(encoding="utf-8"), "17\n")
+
+    def test_pinned_helper_rejects_wrong_path_or_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            script = Path(tmp) / "nsi_calibrate.py"
+            script.write_text("# trusted location\n", encoding="utf-8")
+            helper = Path(tmp) / "nsi_sequential_read"
+            helper.write_bytes(b"known-helper")
+            helper.chmod(0o755)
+            with self.assertRaises(NSIError):
+                resolve_pinned_helper(script, "0" * 64)
+
+    def test_watchdog_restores_timer_after_child_sigkill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_fake_sysfs(Path(tmp), timer=19)
+            nsi = SysfsNSI(root, allow_test_filesystem=True)
+
+            def killed_child() -> int:
+                nsi.write_timer(500)
+                os.kill(os.getpid(), signal.SIGKILL)
+                return 0
+
+            result = run_under_watchdog(nsi, killed_child)
+            self.assertEqual(result["signal"], signal.SIGKILL)
+            self.assertTrue(result["restore_verified"])
+            self.assertEqual(SysfsNSI(root, allow_test_filesystem=True).read_timer(), 19)
+
+    def test_watchdog_restores_timer_after_child_term(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_fake_sysfs(Path(tmp), timer=23)
+            nsi = SysfsNSI(root, allow_test_filesystem=True)
+
+            def terminated_child() -> int:
+                nsi.write_timer(250)
+                os.kill(os.getpid(), signal.SIGTERM)
+                return 0
+
+            result = run_under_watchdog(nsi, terminated_child)
+            self.assertEqual(result["signal"], signal.SIGTERM)
+            self.assertTrue(result["restore_verified"])
+            self.assertEqual(SysfsNSI(root, allow_test_filesystem=True).read_timer(), 23)
+
     def test_timer_window_restores_exact_value(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = make_fake_sysfs(Path(tmp), timer=37)
-            nsi = SysfsNSI(root)
+            nsi = SysfsNSI(root, allow_test_filesystem=True)
             with timer_window(nsi, 250):
                 self.assertEqual(nsi.read_timer(), 250)
             self.assertEqual(nsi.read_timer(), 37)
@@ -79,7 +160,7 @@ class NsiCalibrationUnitTest(unittest.TestCase):
 
     def test_parse_snapshot_has_numeric_vectors(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            nsi = SysfsNSI(make_fake_sysfs(Path(tmp)))
+            nsi = SysfsNSI(make_fake_sysfs(Path(tmp)), allow_test_filesystem=True)
             snapshot = nsi.snapshot()
             self.assertEqual(snapshot["pmu_bandwidth_rd"], [1, 2, 3, 4])
             self.assertEqual(snapshot["available_pmu"], ["npu", "cpu0", "cpu1", "total"])
@@ -91,7 +172,7 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             for timer_ms in (100, 250, 500, 1000):
                 x = float(size * 1024 * 1024)
                 y = 7.0 * x / (timer_ms / 1000.0)
-                points.append({"bytes": x, "timer_ms": timer_ms, "value": y})
+                points.append({"bytes": x, "window_us": timer_ms * 1000, "value": y})
         fit = fit_line([p["bytes"] for p in points], [p["value"] for p in points])
         self.assertGreaterEqual(fit["r2"], 0.0)
         result = classify_unit_hypothesis(points)
@@ -101,6 +182,44 @@ class NsiCalibrationUnitTest(unittest.TestCase):
     def test_fit_line_rejects_degenerate_x(self) -> None:
         with self.assertRaises(NSIError):
             fit_line([1.0, 1.0], [2.0, 3.0])
+
+    def test_summary_reports_cv_per_identical_cell_not_only_aggregate(self) -> None:
+        points = []
+        for value in (100, 110, 90):
+            points.append({
+                "mode": "read", "buffer_mib": 32, "window_us": 100_000,
+                "pmu": {"pmu_bandwidth_rd": [value]},
+                "helper_result": {"bytes_read": 32 * 1024 * 1024},
+                "telemetry": {"thermal_c": {"cpu": 40.0}},
+            })
+        summary = summarize(points, ["reported_total_channel"],
+                            original_timer_raw=0, thermal_limit_c=85.0,
+                            status="complete")
+        cells = summary["signals"]["pmu_bandwidth_rd"]["cell_cv"]
+        self.assertIn("32MiB@100000us", cells)
+        self.assertAlmostEqual(cells["32MiB@100000us"], 0.081649658, places=6)
+        self.assertEqual(summary["selected_channel_role"], "reported aggregate channel; not proven sum")
+
+    def test_failure_always_emits_failure_trace_and_partial_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            write_partial_failure(output, RuntimeError("boom"), run_id="test-run")
+            self.assertTrue((output / "failure.json").is_file())
+            partial = __import__("json").loads(
+                (output / "summary.partial.json").read_text(encoding="utf-8"))
+            self.assertTrue(partial["partial"])
+            events = [__import__("json").loads(line)["event"] for line in
+                      (output / "raw.jsonl").read_text(encoding="utf-8").splitlines()]
+            self.assertIn("failure", events)
+
+    def test_raw_thermal_maxima_uses_all_sample_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "raw.jsonl"
+            path.write_text(
+                '{"telemetry":{"thermal_c":{"cpu":41.0,"ddr":39.0}}}\n'
+                '{"telemetry":{"thermal_c":{"cpu":47.5,"ddr":42.3}}}\n',
+                encoding="utf-8")
+            self.assertEqual(raw_thermal_maxima(path), {"cpu": 47.5, "ddr": 42.3})
 
 
 if __name__ == "__main__":
