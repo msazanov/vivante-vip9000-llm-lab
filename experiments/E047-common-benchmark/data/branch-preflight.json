@@ -1,0 +1,127 @@
+{
+  "schema_version": "e053-branch-preflight/v1",
+  "repository_root": "/tmp/vivante-vip9000-llm-lab",
+  "generated_at_utc": "2026-08-13T22:29:50.455179+00:00",
+  "search_mode": "local_git_refs_read_only",
+  "terms": [
+    "LFM2.5",
+    "LFM",
+    "E047",
+    "E053"
+  ],
+  "refs": [
+    {
+      "ref": "refs/heads/codex/e047-hard-profiling",
+      "match_count": 2,
+      "matches": [
+        {
+          "term": "E053",
+          "path": "experiments/E040-q1-register-lut/README.md",
+          "line": 124,
+          "text": "    stdout.log            88e7f19f0b664ca610637e0532af9438432fa3b385ef615ff2bf6849de54e699"
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
+          "line": 72,
+          "text": "        \"stdout_sha256\": \"88e7f19f0b664ca610637e0532af9438432fa3b385ef615ff2bf6849de54e699\","
+        }
+      ],
+      "experiment_ids": [
+        "E040-Q1-REGISTER-LUT"
+      ],
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8"
+    },
+    {
+      "ref": "refs/heads/main",
+      "match_count": 0,
+      "matches": [],
+      "experiment_ids": [],
+      "commit": "426d1467563da211f9621cc2692ec25cf065880d"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/e022-fused-q1",
+      "match_count": 0,
+      "matches": [],
+      "experiment_ids": [],
+      "commit": "d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/e023-ggml-q1-seam",
+      "match_count": 2,
+      "matches": [
+        {
+          "term": "E053",
+          "path": "experiments/E040-q1-register-lut/README.md",
+          "line": 124,
+          "text": "    stdout.log            88e7f19f0b664ca610637e0532af9438432fa3b385ef615ff2bf6849de54e699"
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
+          "line": 72,
+          "text": "        \"stdout_sha256\": \"88e7f19f0b664ca610637e0532af9438432fa3b385ef615ff2bf6849de54e699\","
+        }
+      ],
+      "experiment_ids": [
+        "E040-Q1-REGISTER-LUT"
+      ],
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/profiling-foundation",
+      "match_count": 6,
+      "matches": [
+        {
+          "term": "E053",
+          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-pp512-tg128-002/summary.json",
+          "line": 34,
+          "text": "      \"metadata.json\": \"f80e115ed2064c571481ade053f0bf19196bc943be8d4ee5e8b6f730b47e0b71\","
+        },
+        {
+          "term": "E053",
+          "path": "benchmarks/results/model-runs.jsonl",
+          "line": 6,
+          "text": "{\"configuration\":{\"backend\":\"cpu\",\"batch\":512,\"context\":512,\"partition\":\"A76 CPUs 6-7; collectors unpinned\",\"threads\":2,\"ubatch\":512},\"date\":\"2026-08-09\",\"evidence\":{\"cpufreq_cooling_max_state\":0,\"elapsed_ns\":194183168554,\"peak_rss_kib\":7483860,\"phase_evidence\":\"missing-empty\",\"pwm_fan_max_state\":4,\"raw_sha256\":{\"metadata.json\":\"f80e115ed2064c571481ade053f0bf19196bc943be8d4ee5e8b6f730b47e0b71\",\"ph"
+        },
+        {
+          "term": "E053",
+          "path": "docs/evidence/a733-ddr-frequency-audit-2026-08-10.md",
+          "line": 59,
+          "text": "  SHA-256 `4a702d0bff118b64c40c3f095290d78a6d9aa551c1e35cf4955da88e0535a58d`;"
+        },
+        {
+          "term": "E053",
+          "path": "docs/evidence/a733-ddr-frequency-audit-2026-08-10.md",
+          "line": 160,
+          "text": "| `sun60i-a733-dram-opp.dtbo` | 794 / 2026-06-18 09:55:11 UTC | `4a702d0bff118b64c40c3f095290d78a6d9aa551c1e35cf4955da88e0535a58d` | активный overlay |"
+        },
+        {
+          "term": "LFM2.5",
+          "path": "docs/evidence/orange-rag-prior-tests.md",
+          "line": 19,
+          "text": "- **Prior local observation —** an old stopped `npu_v2.0.10.2` container had `OOMKilled=true` and mounts for LFM2.5 ONNX files."
+        },
+        {
+          "term": "LFM",
+          "path": "docs/evidence/orange-rag-prior-tests.md",
+          "line": 19,
+          "text": "- **Prior local observation —** an old stopped `npu_v2.0.10.2` container had `OOMKilled=true` and mounts for LFM2.5 ONNX files."
+        }
+      ],
+      "experiment_ids": [],
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878"
+    },
+    {
+      "ref": "refs/remotes/origin/main",
+      "match_count": 0,
+      "matches": [],
+      "experiment_ids": [],
+      "commit": "426d1467563da211f9621cc2692ec25cf065880d"
+    }
+  ],
+  "searched_ref_count": 6,
+  "match_count": 10,
+  "duplicate_found": true,
+  "command": "git for-each-ref --format=%(refname) refs/heads refs/remotes"
+}

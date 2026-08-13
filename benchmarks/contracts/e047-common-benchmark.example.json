@@ -1,0 +1,146 @@
+{
+  "schema_version": "e047-common-benchmark/v1",
+  "experiment_id": "E047",
+  "common_prompt": {
+    "role": "user",
+    "text": "Explain the A733 memory bottleneck in one short sentence.",
+    "text_sha256": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de",
+    "native_chat_template_required": true
+  },
+  "hardware": {
+    "board": "OrangePi Zero 3W",
+    "soc": "Allwinner A733",
+    "npu": "Vivante VIP9000",
+    "thermal_abort_c": 85
+  },
+  "runtime": {
+    "seed": 123,
+    "temperature": 0.0,
+    "top_k": 0,
+    "top_p": 1.0,
+    "min_p": 0.0,
+    "repeat_penalty": 1.0,
+    "context_size": 512,
+    "batch_size": 512,
+    "ubatch_size": 512,
+    "threads": 8,
+    "flash_attention": "on",
+    "mmap": true,
+    "kv_cache": "f16"
+  },
+  "profiles": [
+    {
+      "name": "compatibility",
+      "n_predict": 4,
+      "warmup_runs": 1,
+      "measured_repeats": 5,
+      "interleaved": true
+    },
+    {
+      "name": "main",
+      "n_predict": 32,
+      "warmup_runs": 1,
+      "measured_repeats": 5,
+      "interleaved": true
+    }
+  ],
+  "variants": [
+    {
+      "id": "bonsai-q1-gguf-cpu",
+      "family": "bonsai",
+      "format": "gguf",
+      "backend": "cpu",
+      "model_sha256": null,
+      "npu_partition_status": "not_attempted"
+    },
+    {
+      "id": "lfm25-q4-k-m-gguf-cpu",
+      "family": "lfm2.5",
+      "format": "gguf",
+      "backend": "cpu",
+      "model_sha256": null,
+      "npu_partition_status": "not_attempted"
+    },
+    {
+      "id": "lfm25-q4-onnx-cpu",
+      "family": "lfm2.5",
+      "format": "onnx",
+      "backend": "cpu",
+      "model_sha256": null,
+      "npu_partition_status": "not_attempted"
+    }
+  ],
+  "metrics": {
+    "timers": [
+      "load_ms",
+      "tokenize_ms",
+      "prefill_ms",
+      "time_to_first_token_ms",
+      "decode_ms_including_first_token",
+      "decode_ms_steady_state",
+      "wall_clock_ms"
+    ],
+    "token_char_byte": [
+      "prompt_token_count",
+      "generated_token_count_actual",
+      "generated_token_ids_sha256",
+      "raw_output_sha256",
+      "visible_output_sha256",
+      "generated_unicode_codepoints",
+      "generated_utf8_bytes",
+      "decode_tokens_per_second",
+      "steady_tokens_per_second",
+      "visible_chars_per_second",
+      "utf8_bytes_per_second"
+    ],
+    "memory": [
+      "rss_peak_bytes",
+      "model_mmap_bytes",
+      "declared_weight_bytes_per_token",
+      "observed_ddr_read_bytes_per_token",
+      "observed_ddr_write_bytes_per_token",
+      "observed_counter_method"
+    ],
+    "quality_metrics": [
+      "rubric_version",
+      "score",
+      "status",
+      "criterion_scores",
+      "reviewer_notes"
+    ],
+    "trace_event_fields": [
+      "step",
+      "token_index",
+      "layer_index",
+      "op_index",
+      "op_name",
+      "backend",
+      "start_ns",
+      "end_ns",
+      "duration_ns",
+      "inputs",
+      "outputs",
+      "declared_read_bytes",
+      "declared_write_bytes",
+      "observed_ddr_read_bytes",
+      "observed_ddr_write_bytes"
+    ]
+  },
+  "quality_rubric": {
+    "version": "e047-quality/v1",
+    "max_score": 3,
+    "pass_score": 2,
+    "criteria": [
+      "one_short_sentence",
+      "memory_data_movement",
+      "no_material_false_claim"
+    ],
+    "exact_token_match_scope": "same_model_variant_only"
+  },
+  "trace_overhead": {
+    "off_repeats": 5,
+    "on_repeats": 5,
+    "paired": true,
+    "max_allowed_fraction": 0.01
+  }
+}

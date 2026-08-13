@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e047-common-benchmark-v1.schema.json",
+  "title": "E047 Common Benchmark Contract",
+  "description": "Единый deterministic benchmark для Bonsai и LFM2.5 на OrangePi A733.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "common_prompt",
+    "hardware",
+    "runtime",
+    "profiles",
+    "variants",
+    "metrics",
+    "quality_rubric",
+    "trace_overhead"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "e047-common-benchmark/v1"
+    },
+    "experiment_id": {
+      "type": "string",
+      "pattern": "^E047([a-z0-9-]+)?$"
+    },
+    "common_prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "text",
+        "text_sha256",
+        "native_chat_template_required"
+      ],
+      "properties": {
+        "role": {
+          "const": "user"
+        },
+        "text": {
+          "const": "Explain the A733 memory bottleneck in one short sentence."
+        },
+        "text_sha256": {
+          "const": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de"
+        },
+        "native_chat_template_required": {
+          "const": true
+        }
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["board", "soc", "npu", "thermal_abort_c"],
+      "properties": {
+        "board": {"const": "OrangePi Zero 3W"},
+        "soc": {"const": "Allwinner A733"},
+        "npu": {"const": "Vivante VIP9000"},
+        "thermal_abort_c": {"const": 85}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "temperature",
+        "top_k",
+        "top_p",
+        "min_p",
+        "repeat_penalty",
+        "context_size",
+        "batch_size",
+        "ubatch_size",
+        "threads",
+        "flash_attention",
+        "mmap",
+        "kv_cache"
+      ],
+      "properties": {
+        "seed": {"const": 123},
+        "temperature": {"const": 0.0},
+        "top_k": {"const": 0},
+        "top_p": {"const": 1.0},
+        "min_p": {"const": 0.0},
+        "repeat_penalty": {"const": 1.0},
+        "context_size": {"const": 512},
+        "batch_size": {"const": 512},
+        "ubatch_size": {"const": 512},
+        "threads": {"const": 8},
+        "flash_attention": {"const": "on"},
+        "mmap": {"const": true},
+        "kv_cache": {"const": "f16"}
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "n_predict", "warmup_runs", "measured_repeats", "interleaved"],
+        "properties": {
+          "name": {"enum": ["compatibility", "main"]},
+          "n_predict": {"enum": [4, 32]},
+          "warmup_runs": {"const": 1},
+          "measured_repeats": {"const": 5},
+          "interleaved": {"const": true}
+        }
+      }
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "family", "format", "backend", "model_sha256"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "family": {"enum": ["bonsai", "lfm2.5"]},
+          "format": {"enum": ["gguf", "onnx"]},
+          "backend": {"enum": ["cpu", "npu", "cpu+npu"]},
+          "model_sha256": {
+            "type": ["string", "null"],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "npu_partition_status": {
+            "enum": [
+              "not_attempted",
+              "capability_gate",
+              "partial",
+              "full_graph",
+              "rejected"
+            ]
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["timers", "token_char_byte", "memory", "quality_metrics", "trace_event_fields"],
+      "properties": {
+        "timers": {
+          "const": [
+            "load_ms",
+            "tokenize_ms",
+            "prefill_ms",
+            "time_to_first_token_ms",
+            "decode_ms_including_first_token",
+            "decode_ms_steady_state",
+            "wall_clock_ms"
+          ]
+        },
+        "token_char_byte": {
+          "const": [
+            "prompt_token_count",
+            "generated_token_count_actual",
+            "generated_token_ids_sha256",
+            "raw_output_sha256",
+            "visible_output_sha256",
+            "generated_unicode_codepoints",
+            "generated_utf8_bytes",
+            "decode_tokens_per_second",
+            "steady_tokens_per_second",
+            "visible_chars_per_second",
+            "utf8_bytes_per_second"
+          ]
+        },
+        "memory": {
+          "const": [
+            "rss_peak_bytes",
+            "model_mmap_bytes",
+            "declared_weight_bytes_per_token",
+            "observed_ddr_read_bytes_per_token",
+            "observed_ddr_write_bytes_per_token",
+            "observed_counter_method"
+          ]
+        },
+        "quality_metrics": {
+          "const": [
+            "rubric_version",
+            "score",
+            "status",
+            "criterion_scores",
+            "reviewer_notes"
+          ]
+        },
+        "trace_event_fields": {
+          "const": [
+            "step",
+            "token_index",
+            "layer_index",
+            "op_index",
+            "op_name",
+            "backend",
+            "start_ns",
+            "end_ns",
+            "duration_ns",
+            "inputs",
+            "outputs",
+            "declared_read_bytes",
+            "declared_write_bytes",
+            "observed_ddr_read_bytes",
+            "observed_ddr_write_bytes"
+          ]
+        }
+      }
+    },
+    "quality_rubric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "max_score",
+        "pass_score",
+        "criteria",
+        "exact_token_match_scope"
+      ],
+      "properties": {
+        "version": {"const": "e047-quality/v1"},
+        "max_score": {"const": 3},
+        "pass_score": {"const": 2},
+        "criteria": {
+          "const": [
+            "one_short_sentence",
+            "memory_data_movement",
+            "no_material_false_claim"
+          ]
+        },
+        "exact_token_match_scope": {
+          "const": "same_model_variant_only"
+        }
+      }
+    },
+    "trace_overhead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["off_repeats", "on_repeats", "paired", "max_allowed_fraction"],
+      "properties": {
+        "off_repeats": {"const": 5},
+        "on_repeats": {"const": 5},
+        "paired": {"const": true},
+        "max_allowed_fraction": {"const": 0.01}
+      }
+    }
+  }
+}
