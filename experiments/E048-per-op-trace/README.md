@@ -1,6 +1,6 @@
 # E048 — per-op/per-layer trace для steady-state decode
 
-Статус: `PARTIAL — target smoke PASS, compatibility A/B ещё не выполнен`.
+Статус: `PARTIAL — latest target smoke PASS, compatibility A/B ещё не выполнен`.
 
 Цель E048 — получить минимально инвазивный trace одного CPU decode-графа
 llama.cpp 38c66ad (build number 9594) на A733: границы токена, каждый graph
@@ -18,10 +18,13 @@ node и worker, Q1 4x4/4x8 kernel, фазу F32→Q8, CPU/core, barrier-aware в
 `Release`, `armv8.2-a+dotprod`, `GGML_CPU_REPACK=ON`, `GGML_OPENMP=ON`,
 `GGML_NATIVE=OFF`, build number `9594`.
 
-Последняя локальная версия patch содержит дополнительную правку: перед
-`token_begin` ring resize выполняется с фактическим числом llama threads.
-Она ещё не прошла повторную сборку на target. Поэтому текущий документ не
-выдаёт её как target-proven результат.
+Последняя версия patch содержит дополнительную правку: перед `token_begin`
+ring resize выполняется с фактическим числом llama threads. Она применена к
+изолированной target-копии и подтверждена повторной сборкой
+`llama-completion` (только `llama-context.cpp.o` и relink). Thermal-guarded
+smoke завершился `RC=0`, `overflow_count=0`; прежнее сообщение
+`refusing worker-ring resize` в raw stderr отсутствует. Baseline source/build
+не изменялись.
 
 ## Smoke-результаты
 

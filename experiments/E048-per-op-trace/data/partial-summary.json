@@ -38,5 +38,10 @@
     "status": "pending",
     "max_allowed_overhead_fraction": 0.01
   },
-  "latest_local_patch_resize": "not_yet_rebuilt_on_target"
+  "latest_local_patch_resize": {
+    "status": "target_verified",
+    "rebuild": "llama-completion RC=0",
+    "smoke": "thermal guarded RC=0, overflow_count=0",
+    "resize_warning": "absent"
+  }
 }
