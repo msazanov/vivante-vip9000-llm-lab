@@ -47,6 +47,20 @@ def refresh_manifest_hash(root: Path, relative: str) -> None:
     manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
 
 
+def init_test_repository(root: Path) -> None:
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "config", "user.email", "test@example.invalid"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(root), "config", "user.name", "Test"], check=True
+    )
+    (root / "seed.txt").write_text("seed\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "seed.txt"], check=True)
+    subprocess.run(["git", "-C", str(root), "commit", "-qm", "seed"], check=True)
+
+
 def write_required_planned_files(root: Path) -> None:
     (root / "README.md").write_text("# E047\n\nСтатус: PLANNED.\n", encoding="utf-8")
     (root / "hypothesis-preflight.md").write_text(
@@ -355,6 +369,130 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
 
 
 class E053ExperimentValidatorTest(unittest.TestCase):
+    def test_preflight_rejects_staged_hidden_root_even_with_forged_tree_hash(self):
+        """Подмена одного tree hash не скрывает новый root и его stage-0 blobs."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            init_test_repository(repo)
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-index-bound",
+                repo_root=repo,
+                hypothesis_query="связать stage-0 experiment roots",
+            )
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            hidden = repo / "experiments/E098-staged/README.md"
+            hidden.parent.mkdir(parents=True)
+            hidden.write_text("# Скрытый staged эксперимент\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", str(hidden)], check=True)
+
+            preflight_path = root / "data/branch-preflight.json"
+            preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
+            exclusions = preflight["active_worktree"]["binding_excludes"]
+            preflight["active_worktree"]["tree_binding_sha256"] = tree_binding_sha256(
+                repo, exclusions
+            )
+            preflight_path.write_text(json.dumps(preflight) + "\n", encoding="utf-8")
+            refresh_manifest_hash(root, "data/branch-preflight.json")
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any(
+                    "stage-0 index experiment roots" in error
+                    and "E098-staged" in error
+                    for error in result["errors"]
+                ),
+                result,
+            )
+
+    def test_preflight_rejects_untracked_hidden_experiment_root(self):
+        """Untracked sibling under experiments/E* must not bypass the ref scan."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            init_test_repository(repo)
+            (repo / ".gitignore").write_text(
+                "experiments/E099-hidden/\n", encoding="utf-8"
+            )
+            subprocess.run(["git", "-C", str(repo), "add", ".gitignore"], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo), "commit", "-qm", "ignore hidden root"],
+                check=True,
+            )
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-visible",
+                repo_root=repo,
+                hypothesis_query="найти untracked experiment root",
+            )
+            hidden = repo / "experiments/E099-hidden/README.md"
+            hidden.parent.mkdir(parents=True)
+            hidden.write_text("# Скрытый эксперимент\n", encoding="utf-8")
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any(
+                    "untracked experiment roots" in error
+                    and "experiments/E099-hidden" in error
+                    for error in result["errors"]
+                ),
+                result,
+            )
+
+    def test_preflight_rejects_detached_head_without_supported_immutable_mode(self):
+        """Обычный manifest не может валидировать эксперимент в detached HEAD."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            init_test_repository(repo)
+            subprocess.run(
+                ["git", "-C", str(repo), "checkout", "--detach", "-q", "HEAD"],
+                check=True,
+            )
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-detached",
+                repo_root=repo,
+                hypothesis_query="запретить неоднозначный detached HEAD",
+            )
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any("detached HEAD" in error for error in result["errors"]), result
+            )
+
+    def test_preflight_detached_head_still_checks_tracked_worktree_against_index(self):
+        """Detached HEAD не должен отключать проверку worktree против index."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            init_test_repository(repo)
+            subprocess.run(
+                ["git", "-C", str(repo), "checkout", "--detach", "-q", "HEAD"],
+                check=True,
+            )
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-detached-dirty",
+                repo_root=repo,
+                hypothesis_query="проверить detached worktree",
+            )
+            (repo / "seed.txt").write_text("changed\n", encoding="utf-8")
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any("tracked worktree" in error for error in result["errors"]), result
+            )
+
     def test_scaffold_creates_a_valid_planned_experiment(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

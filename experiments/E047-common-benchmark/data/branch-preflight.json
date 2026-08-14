@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vivante-vip9000-llm-lab",
-  "generated_at_utc": "2026-08-14T00:13:57.523082+00:00",
+  "generated_at_utc": "2026-08-14T00:47:41.204602+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E047-COMMON-BENCHMARK",
   "hypothesis_query": "единый детерминированный протокол Bonsai и LFM2.5 с жёстким послойным профайлингом",
@@ -14,7 +14,7 @@
   "refs": [
     {
       "ref": "refs/heads/codex/e047-hard-profiling",
-      "match_count": 358,
+      "match_count": 559,
       "matches": [
         {
           "term": "E047",
@@ -80,13 +80,13 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 177,
+          "occurrences": 264,
           "first_lines": [
             6,
-            7,
             11,
-            15,
-            246
+            16,
+            20,
+            21
           ]
         },
         {
@@ -95,8 +95,8 @@
           "occurrences": 3,
           "first_lines": [
             3,
-            13,
-            18
+            14,
+            19
           ]
         },
         {
@@ -140,13 +140,13 @@
         {
           "term": "E047",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 13,
+          "occurrences": 23,
           "first_lines": [
-            29,
-            49,
-            63,
             65,
-            210
+            85,
+            99,
+            101,
+            246
           ]
         },
         {
@@ -162,11 +162,11 @@
           "path": "tooling/experiment_validator.py",
           "occurrences": 5,
           "first_lines": [
-            53,
-            517,
-            519,
-            609,
-            698
+            61,
+            529,
+            531,
+            621,
+            715
           ]
         },
         {
@@ -201,13 +201,13 @@
         {
           "term": "E053",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 15,
+          "occurrences": 92,
           "first_lines": [
             2,
-            375,
-            387,
-            485,
-            497
+            12,
+            130,
+            142,
+            184
           ]
         },
         {
@@ -259,11 +259,11 @@
           "path": "tests/test_e053_experiment_validator.py",
           "occurrences": 7,
           "first_lines": [
-            36,
-            40,
-            48,
-            90,
-            102
+            72,
+            76,
+            84,
+            126,
+            138
           ]
         },
         {
@@ -281,10 +281,10 @@
           "occurrences": 8,
           "first_lines": [
             2,
-            41,
-            42,
             49,
-            322
+            50,
+            57,
+            334
           ]
         },
         {
@@ -296,6 +296,18 @@
             85,
             94,
             103
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 17,
+          "first_lines": [
+            10,
+            302,
+            314,
+            322,
+            1081
           ]
         },
         {
@@ -351,13 +363,13 @@
         {
           "term": "LFM2.5",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 32,
+          "occurrences": 41,
           "first_lines": [
             7,
             9,
-            429,
-            438,
-            447
+            330,
+            339,
+            348
           ]
         },
         {
@@ -366,7 +378,7 @@
           "occurrences": 2,
           "first_lines": [
             4,
-            11
+            12
           ]
         },
         {
@@ -384,12 +396,13 @@
         {
           "term": "LFM2.5",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
-            63,
-            66,
-            351,
-            359
+            99,
+            102,
+            512,
+            520,
+            804
           ]
         },
         {
@@ -416,14 +429,21 @@
         "E047",
         "E047-COMMON-BENCHMARK",
         "E047-COMMON-BENCHMARK-V1",
+        "E047-DETACHED",
+        "E047-DETACHED-DIRTY",
         "E047-EXISTING",
         "E047-HARD-PROFILING",
+        "E047-INDEX-BOUND",
         "E047-QUALITY",
         "E047-REVIEW",
+        "E047-REVIEW-HIDDEN",
         "E047-TELEMETRY-EVENT",
         "E047-TRACE-AB-RESULT",
         "E047-TRACE-AB-RESULT-V1",
         "E047-TRACE-EVENT",
+        "E047-VISIBLE",
+        "E049",
+        "E049-NSI-CALIBRATION",
         "E053",
         "E053-BRANCH-PREFLIGHT",
         "E053-DEVICE",
@@ -838,11 +858,11 @@
           ]
         }
       ],
-      "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
+      "commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7"
     },
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
-      "match_count": 89,
+      "match_count": 90,
       "matches": [
         {
           "term": "E047",
@@ -917,7 +937,15 @@
           "path": "experiments/E048-per-op-trace/README.md",
           "occurrences": 1,
           "first_lines": [
-            44
+            91
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E048-per-op-trace/data/partial-summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            60
           ]
         },
         {
@@ -1605,13 +1633,157 @@
           "paths": [
             "experiments/E048-per-op-trace/README.md",
             "experiments/E048-per-op-trace/commands.txt",
+            "experiments/E048-per-op-trace/data/compat-ab-ledger.json",
+            "experiments/E048-per-op-trace/data/compat-ab-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-packed-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-summary.json",
+            "experiments/E048-per-op-trace/data/compat-ab-workload-identity.json",
             "experiments/E048-per-op-trace/data/partial-summary.json",
+            "experiments/E048-per-op-trace/data/trace-v2-allocation-identity-requirement.json",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/token-ids.jsonl",
             "experiments/E048-per-op-trace/raw/trace-capacity4096.jsonl",
             "experiments/E048-per-op-trace/raw/trace-capacity65536.jsonl"
           ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-SOURCE-PROVENANCE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-source-provenance.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TARGET-VS-BASELINE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-target-vs-baseline.diff"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-e048-trace.jsonl.zst"
+          ]
         }
       ],
-      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
     },
     {
       "ref": "refs/heads/main",
@@ -2217,7 +2389,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-      "match_count": 358,
+      "match_count": 538,
       "matches": [
         {
           "term": "E047",
@@ -2283,13 +2455,13 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 177,
+          "occurrences": 249,
           "first_lines": [
             6,
-            7,
             11,
-            15,
-            246
+            16,
+            20,
+            21
           ]
         },
         {
@@ -2298,8 +2470,8 @@
           "occurrences": 3,
           "first_lines": [
             3,
-            13,
-            18
+            14,
+            19
           ]
         },
         {
@@ -2343,13 +2515,13 @@
         {
           "term": "E047",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 13,
+          "occurrences": 19,
           "first_lines": [
-            29,
-            49,
-            63,
-            65,
-            210
+            51,
+            71,
+            85,
+            87,
+            232
           ]
         },
         {
@@ -2365,11 +2537,11 @@
           "path": "tooling/experiment_validator.py",
           "occurrences": 5,
           "first_lines": [
-            53,
-            517,
-            519,
-            609,
-            698
+            57,
+            525,
+            527,
+            617,
+            711
           ]
         },
         {
@@ -2404,13 +2576,13 @@
         {
           "term": "E053",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 15,
+          "occurrences": 92,
           "first_lines": [
             2,
-            375,
-            387,
-            485,
-            497
+            12,
+            130,
+            142,
+            184
           ]
         },
         {
@@ -2462,11 +2634,11 @@
           "path": "tests/test_e053_experiment_validator.py",
           "occurrences": 7,
           "first_lines": [
-            36,
-            40,
-            48,
-            90,
-            102
+            58,
+            62,
+            70,
+            112,
+            124
           ]
         },
         {
@@ -2484,10 +2656,10 @@
           "occurrences": 8,
           "first_lines": [
             2,
-            41,
-            42,
-            49,
-            322
+            45,
+            46,
+            53,
+            330
           ]
         },
         {
@@ -2499,6 +2671,18 @@
             85,
             94,
             103
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 15,
+          "first_lines": [
+            10,
+            302,
+            310,
+            1057,
+            1065
           ]
         },
         {
@@ -2554,13 +2738,13 @@
         {
           "term": "LFM2.5",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 32,
+          "occurrences": 41,
           "first_lines": [
             7,
             9,
-            429,
-            438,
-            447
+            318,
+            327,
+            336
           ]
         },
         {
@@ -2569,7 +2753,7 @@
           "occurrences": 2,
           "first_lines": [
             4,
-            11
+            12
           ]
         },
         {
@@ -2587,12 +2771,13 @@
         {
           "term": "LFM2.5",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
-            63,
-            66,
-            351,
-            359
+            85,
+            88,
+            374,
+            382,
+            666
           ]
         },
         {
@@ -2623,10 +2808,13 @@
         "E047-HARD-PROFILING",
         "E047-QUALITY",
         "E047-REVIEW",
+        "E047-REVIEW-HIDDEN",
         "E047-TELEMETRY-EVENT",
         "E047-TRACE-AB-RESULT",
         "E047-TRACE-AB-RESULT-V1",
         "E047-TRACE-EVENT",
+        "E049",
+        "E049-NSI-CALIBRATION",
         "E053",
         "E053-BRANCH-PREFLIGHT",
         "E053-DEVICE",
@@ -3041,11 +3229,11 @@
           ]
         }
       ],
-      "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
+      "commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3"
     },
     {
       "ref": "refs/remotes/origin/codex/e048-per-op-trace",
-      "match_count": 89,
+      "match_count": 90,
       "matches": [
         {
           "term": "E047",
@@ -3120,7 +3308,15 @@
           "path": "experiments/E048-per-op-trace/README.md",
           "occurrences": 1,
           "first_lines": [
-            44
+            91
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E048-per-op-trace/data/partial-summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            60
           ]
         },
         {
@@ -3808,13 +4004,157 @@
           "paths": [
             "experiments/E048-per-op-trace/README.md",
             "experiments/E048-per-op-trace/commands.txt",
+            "experiments/E048-per-op-trace/data/compat-ab-ledger.json",
+            "experiments/E048-per-op-trace/data/compat-ab-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-packed-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-summary.json",
+            "experiments/E048-per-op-trace/data/compat-ab-workload-identity.json",
             "experiments/E048-per-op-trace/data/partial-summary.json",
+            "experiments/E048-per-op-trace/data/trace-v2-allocation-identity-requirement.json",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/token-ids.jsonl",
             "experiments/E048-per-op-trace/raw/trace-capacity4096.jsonl",
             "experiments/E048-per-op-trace/raw/trace-capacity65536.jsonl"
           ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-SOURCE-PROVENANCE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-source-provenance.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TARGET-VS-BASELINE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-target-vs-baseline.diff"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-e048-trace.jsonl.zst"
+          ]
         }
       ],
-      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
     },
     {
       "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
@@ -4242,11 +4582,19 @@
             "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/manifest.json",
             "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/raw.jsonl",
             "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/summary.json",
-            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/summary.md"
+            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/summary.md",
+            "experiments/E049-nsi-calibration/results/v4-calibration-20260814T003644Z-r3/manifest.json",
+            "experiments/E049-nsi-calibration/results/v4-calibration-20260814T003644Z-r3/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v4-calibration-20260814T003644Z-r3/summary.json",
+            "experiments/E049-nsi-calibration/results/v4-calibration-20260814T003644Z-r3/summary.md",
+            "experiments/E049-nsi-calibration/results/v4-smoke-20260814T003540Z/manifest.json",
+            "experiments/E049-nsi-calibration/results/v4-smoke-20260814T003540Z/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v4-smoke-20260814T003540Z/summary.json",
+            "experiments/E049-nsi-calibration/results/v4-smoke-20260814T003540Z/summary.md"
           ]
         }
       ],
-      "commit": "5bb259003fcdbf394182395a4440d2d61c995232"
+      "commit": "a8b435f6ec3fb29ff33e883d0a2bb93c6babe9ba"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -4430,7 +4778,7 @@
   "ref_snapshot": [
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
-      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
     },
     {
       "ref": "refs/heads/main",
@@ -4446,11 +4794,11 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e048-per-op-trace",
-      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
     },
     {
       "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
-      "commit": "5bb259003fcdbf394182395a4440d2d61c995232"
+      "commit": "a8b435f6ec3fb29ff33e883d0a2bb93c6babe9ba"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -4463,11 +4811,11 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e047-hard-profiling",
-    "base_commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140",
+    "base_commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7",
     "upstream_ref": "refs/remotes/origin/codex/e047-hard-profiling",
-    "upstream_base_commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140",
+    "upstream_base_commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3",
     "tree_binding_source": "git-index-stage0",
-    "tree_binding_sha256": "d85dd664f42f1068f0e4950ff34da9a9bd2294f7c94dd9fcfc857e0a6d682dda",
+    "tree_binding_sha256": "4fd22a13e292900364ea54e746d3853e5fd2dafb2b74fc79f8717935c91a203a",
     "binding_excludes": [
       "experiments/E047-common-benchmark/data/branch-preflight.json",
       "experiments/E047-common-benchmark/data/manifest.json"
@@ -4641,6 +4989,1154 @@
           "E047-COMMON-BENCHMARK"
         ]
       }
+    ],
+    "bound_index_experiment_roots": [
+      {
+        "canonical_path": "experiments/E003-q1-packed-carrier",
+        "experiment_ids": [
+          "E003",
+          "E003-Q1-PACKED-CARRIER"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E003-q1-packed-carrier/README.md",
+            "mode": "100644",
+            "blob_oid": "7e7625fa0ec8b7f46fd884199ec6035da7bca15e"
+          },
+          {
+            "path": "experiments/E003-q1-packed-carrier/vxc_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "650550482136711114c10351dcc0e5fb6c63c7d3"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E019-q1-i16-evis-gemm",
+        "experiment_ids": [
+          "E019",
+          "E019-Q1-I16-EVIS-GEMM"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/README.md",
+            "mode": "100644",
+            "blob_oid": "385dc6a33262607c64925fd2d105319bfc5c643a"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/matrixmul_i16_coordfix.vx",
+            "mode": "100644",
+            "blob_oid": "b222df7b55d54809b135d39aa2922f0d047ab648"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.c",
+            "mode": "100644",
+            "blob_oid": "a2be0c789b721afefed48123037a64fcc0bbbae0"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.h",
+            "mode": "100644",
+            "blob_oid": "a6aad3c6644fce0e16312f89fe85a41611cc105e"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract_cli.c",
+            "mode": "100644",
+            "blob_oid": "73da145b625c2fdda298e46438b5573fc1d751fa"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "5f4c324940fac19dfb5dcc5384359e6bbd036315"
+          },
+          {
+            "path": "experiments/E019-q1-i16-evis-gemm/results/2026-08-11-a733-target.json",
+            "mode": "100644",
+            "blob_oid": "7ef4b0b66a01ac29bad529d172856f472b309faa"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E020-q1-unpack-native-fc",
+        "experiment_ids": [
+          "E020",
+          "E020-Q1-UNPACK-NATIVE-FC"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/README.md",
+            "mode": "100644",
+            "blob_oid": "e070f63a4bc36b3960ba6a7e10d89c028c3b775a"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/q1_unpack_i8.vx",
+            "mode": "100644",
+            "blob_oid": "294cac13850c9e828339b98d447f37b83a138c90"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/q1_unpack_native_fc_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "49401f3263334e42600196f9b9570587933cd9d8"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/fixture.json",
+            "mode": "100644",
+            "blob_oid": "6bce1d1922dd087662de4806d5fdaa0e73f87dcd"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/profile.log",
+            "mode": "100644",
+            "blob_oid": "8a3aeb2ad3ab877521adf980a223191f2aa3fad2"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/fixture.json",
+            "mode": "100644",
+            "blob_oid": "5e31352e184530be2854b00d1e2bc423612667c3"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/profile.log",
+            "mode": "100644",
+            "blob_oid": "5e846feb49bc3d617f4ba9986c627c6e19ecb46e"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/fixture.json",
+            "mode": "100644",
+            "blob_oid": "857144e1f7ae9bed894216d630342994565be0c2"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/profile.log",
+            "mode": "100644",
+            "blob_oid": "6dfbbedfc78ae2696c4513ac9575dd042c074d65"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/fixture.json",
+            "mode": "100644",
+            "blob_oid": "791eb47801c362da9dfd6218ef11ac0e98414264"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/profile.log",
+            "mode": "100644",
+            "blob_oid": "7975eb5810500ea5be4f7b6488aec946500b00f8"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/host_m1024_k128.json",
+            "mode": "100644",
+            "blob_oid": "6def9d80797f93e8c66b00f9f92943e336c4c0a8"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/host_m1024_k5120.json",
+            "mode": "100644",
+            "blob_oid": "0f62e398cfaa1df519a04a71f378d8a4c9abdb13"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k128.log",
+            "mode": "100644",
+            "blob_oid": "1899522916a26b52cc440ec8f79efb26624679da"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k5120.log",
+            "mode": "100644",
+            "blob_oid": "0a0f75a59bfee8d74ee1e1d2774d8cd0df5e867e"
+          },
+          {
+            "path": "experiments/E020-q1-unpack-native-fc/results/target_summary.json",
+            "mode": "100644",
+            "blob_oid": "3dc11aff7e3bd155744a4812adafcd5ad55b76c0"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E020-two-custom-kernel",
+        "experiment_ids": [
+          "E020",
+          "E020-TWO-CUSTOM-KERNEL"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E020-two-custom-kernel/README.md",
+            "mode": "100644",
+            "blob_oid": "5e516d98bb3126ee408ad005c14e1417c27d73c0"
+          },
+          {
+            "path": "experiments/E020-two-custom-kernel/results/2026-08-11-a733-two-custom-kernel.json",
+            "mode": "100644",
+            "blob_oid": "426a2bc6d14ad7be735b48f1f34adeae73a59211"
+          },
+          {
+            "path": "experiments/E020-two-custom-kernel/two_custom_kernel_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "9d2d0fb3cdce4426486c343d143b5a50d5c6ad46"
+          },
+          {
+            "path": "experiments/E020-two-custom-kernel/two_stage_invert.vx",
+            "mode": "100644",
+            "blob_oid": "99af957991e76fa1c188f7f43c4d7a107e812077"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E021-q1-unpack-native-matmul",
+        "experiment_ids": [
+          "E021",
+          "E021-Q1-UNPACK-NATIVE-MATMUL"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/README.md",
+            "mode": "100644",
+            "blob_oid": "b6464d223b462c4a78749efdd2805bbe6d8ac780"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/q1_unpack_i8.vx",
+            "mode": "100644",
+            "blob_oid": "294cac13850c9e828339b98d447f37b83a138c90"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_conv1x1_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "0a61ab2562eeae9b5e9ad87d072e45ce0229163d"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_matmul_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "8296b2a19676f2bf9ffec3cc9d5d5b5865b2160e"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/fixture.json",
+            "mode": "100644",
+            "blob_oid": "6bce1d1922dd087662de4806d5fdaa0e73f87dcd"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/profile.log",
+            "mode": "100644",
+            "blob_oid": "f88e5050f0fe193197cf49b282c33583b6a28a11"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/fixture.json",
+            "mode": "100644",
+            "blob_oid": "5e31352e184530be2854b00d1e2bc423612667c3"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/profile.log",
+            "mode": "100644",
+            "blob_oid": "52cc9e27cd0c64a66c4d90eb5939fe402f9238ba"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/fixture.json",
+            "mode": "100644",
+            "blob_oid": "857144e1f7ae9bed894216d630342994565be0c2"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/profile.log",
+            "mode": "100644",
+            "blob_oid": "80d2e503c505f0591e13ada6db1ebfd46b358ac5"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/fixture.json",
+            "mode": "100644",
+            "blob_oid": "791eb47801c362da9dfd6218ef11ac0e98414264"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/profile.log",
+            "mode": "100644",
+            "blob_oid": "367bfc0cf0b9996a9da7c84ea60a8dd3a3098c0f"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k128.log",
+            "mode": "100644",
+            "blob_oid": "db9e4e252224906d8e20233da6204066ea6a9a94"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k5120.log",
+            "mode": "100644",
+            "blob_oid": "71688c010321839bfedbeeddbdb68aa45467c6ab"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/profile_fc_m96_k5120.log",
+            "mode": "100644",
+            "blob_oid": "1caa4fe0836e48a35b949a105f85e1cdf21b89f4"
+          },
+          {
+            "path": "experiments/E021-q1-unpack-native-matmul/results/target_summary.json",
+            "mode": "100644",
+            "blob_oid": "20785a7a42148f235609ef787ab9e243463f331f"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E022-fused-q1",
+        "experiment_ids": [
+          "E022",
+          "E022-FUSED-Q1"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E022-fused-q1/README.md",
+            "mode": "100644",
+            "blob_oid": "fb39861c50743eaccc4ddac93083c387dcea0630"
+          },
+          {
+            "path": "experiments/E022-fused-q1/dp16x2_b_probe.vx",
+            "mode": "100644",
+            "blob_oid": "a2c0e381bfa394fda58d8db0afb35a15ae4c5892"
+          },
+          {
+            "path": "experiments/E022-fused-q1/dp16x2_b_probe_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "78a5c6a40be2cd9f24836060ce20af5d9091c01e"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_contract.h",
+            "mode": "100644",
+            "blob_oid": "783b1d4d84046cf6ce1f06f6984dd24d29b81e0e"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1.vx",
+            "mode": "100644",
+            "blob_oid": "d1f696739c02f32fbea9454f493931d0c5655505"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "978dc66ce767df4e4d6963b556908929ddbf40a8"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4.vx",
+            "mode": "100644",
+            "blob_oid": "3e114995e2b74712902943b47382e718c89eb163"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120.vx",
+            "mode": "100644",
+            "blob_oid": "1691061cd2711fb6d8c9778925254adcf713d824"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "08c475e8ce102e35a75a22765b6edd7b87937d1f"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales.vx",
+            "mode": "100644",
+            "blob_oid": "1719f513f981d8f419fa39fd280621b513536314"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "b6410fdfad29def0e37f568c29a3a09d71f981d6"
+          },
+          {
+            "path": "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_nbg_builder.c",
+            "mode": "100644",
+            "blob_oid": "93bef1f7edd5be7e93ea9b175c72ca2e8f67ff17"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/alternating.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "c2575c983893c293c97cdec56b4506f30c5a328d"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/alternating.profile.log",
+            "mode": "100644",
+            "blob_oid": "c04c40d84178dcbabd9afcddd87e744e663dffd5"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/mixed.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "9bc704f754b4ae95efef153d9aad628f0c6da3a0"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/mixed.profile.log",
+            "mode": "100644",
+            "blob_oid": "68f0bc4daf40cd485e3fa82fa4d532a99a94c096"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/ones.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "9c85508ebe85aa54c269ccad834c24652497ba70"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/ones.profile.log",
+            "mode": "100644",
+            "blob_oid": "939f2681521195b4c52cc4ebc07c3d7b0bfc7557"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/random.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "913bd73bf9a25e22adc97cc2d386fb4e06368654"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/random.profile.log",
+            "mode": "100644",
+            "blob_oid": "717efa4bae2db78b75827d38b339eb1cb9beb89b"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/zeros.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "2af8c375b5420f989919efc4bbf6c637f680310a"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-patterns/zeros.profile.log",
+            "mode": "100644",
+            "blob_oid": "462449d48c8c01dc31753e81e9b16a7e49a9c8b9"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-host-summary.json",
+            "mode": "100644",
+            "blob_oid": "4a7b7e59103c98ddd013dec7361526a7d9d159e2"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "c2575c983893c293c97cdec56b4506f30c5a328d"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.profile.log",
+            "mode": "100644",
+            "blob_oid": "78ac73c27236b75fdd2d2d4b39bd285524903a8b"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "9bc704f754b4ae95efef153d9aad628f0c6da3a0"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.profile.log",
+            "mode": "100644",
+            "blob_oid": "7583943c0999661e0e90d8b4e23bc1f79fd3c404"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "9c85508ebe85aa54c269ccad834c24652497ba70"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.profile.log",
+            "mode": "100644",
+            "blob_oid": "f575d8926efebc81e49789f72a8ce45da3a768b8"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/random.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "913bd73bf9a25e22adc97cc2d386fb4e06368654"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/random.profile.log",
+            "mode": "100644",
+            "blob_oid": "248331bc717c5f22b10da65174fceda19b3d251a"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "2af8c375b5420f989919efc4bbf6c637f680310a"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.profile.log",
+            "mode": "100644",
+            "blob_oid": "d8681512cfbee6e56a078437d630eb0c681c0b22"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-m1024/golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "70c0d8d369c9d7ee1bf01dc5e9886e9433b5020e"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-m1024/host_summary.json",
+            "mode": "100644",
+            "blob_oid": "8095adefe217959577ed1735bc2de9b654773e61"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-m1024/profile.log",
+            "mode": "100644",
+            "blob_oid": "391a0f195dcb93cdd30370040a81892249ca4d61"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/alternating.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "a16da64525757740e9fb7107f5f63cb02a6209d6"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/alternating.profile.log",
+            "mode": "100644",
+            "blob_oid": "10a8e984a6333ad47bd83e358b27a82e17aeab00"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/mixed.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "ae7acdcd029a7c67940958967159d36b8f09f00e"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/mixed.profile.log",
+            "mode": "100644",
+            "blob_oid": "9cc39608b5aaa0267211ace6136b79cee6f2d263"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/ones.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "da7989c3a21c9ac0c3c2c0791bd727d12f175189"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/ones.profile.log",
+            "mode": "100644",
+            "blob_oid": "0892f897207281d5563ab364ccba9fe249a93edc"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/random.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "686162328b7619e69fd7e1b69644418263d2da61"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/random.profile.log",
+            "mode": "100644",
+            "blob_oid": "002993bd87c2b378a23017d18ffe38a0bcabc5f2"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/zeros.golden_i32.json",
+            "mode": "100644",
+            "blob_oid": "e0052077be7d8f44845fd59a935d0018664d64d4"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-patterns/zeros.profile.log",
+            "mode": "100644",
+            "blob_oid": "b24c323941cc9f22d9325b602e1018a82c500202"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/k5120-rows4-host-summary.json",
+            "mode": "100644",
+            "blob_oid": "6fdfd749e52f36a7ce0498cd64c90c82d4eedc2c"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-generic-target-summary.json",
+            "mode": "100644",
+            "blob_oid": "f057aee60a9aee2191ce390c5717800e56dab60c"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-generic.profile.log",
+            "mode": "100644",
+            "blob_oid": "bb6ace7ab3c3de13531daf408082b85561edba01"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-host-summary.json",
+            "mode": "100644",
+            "blob_oid": "b96119f93d8b1a58cb4fa4f5c1efa4b3c31509a5"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "5072a25f326c6066309022284a7f4412014c843d"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.profile.log",
+            "mode": "100644",
+            "blob_oid": "44b2c61d8c0dd27aac8a88967ac19cdc291e3a62"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "3b171ae3fca7270660bd366b23692d8025c95f3c"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.profile.log",
+            "mode": "100644",
+            "blob_oid": "a8c1526b8b2c3286c5a08dd844c739239d07ee56"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "8460b0dca290dbfc8f178f6b74f04448d86b857f"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.profile.log",
+            "mode": "100644",
+            "blob_oid": "3b1e0cb13ba39c3b3f1a5ecb11d753a06cd8b69c"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "0e357d260d2c4996b9c411581b1823f464b9fa0a"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.profile.log",
+            "mode": "100644",
+            "blob_oid": "e3133ac3ce2cfa2e274065ef3e6f740e43699f90"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "f33429ee1cd065e0a15006ed7cbcce9a44166c2f"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.profile.log",
+            "mode": "100644",
+            "blob_oid": "ae84393b7d79085d58ec376aec4fb46ed975ffc1"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/generic.profile.log",
+            "mode": "100644",
+            "blob_oid": "bd5b1e37c78bb0dea20b41b2e238019e025de340"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/generic_target_summary.json",
+            "mode": "100644",
+            "blob_oid": "6272ea65fb64bc34664ec57d107781ee80826636"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/golden_f32.json",
+            "mode": "100644",
+            "blob_oid": "7677c9bf0224b6f33145215732aa14b6f4e4e2ad"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/host_summary.json",
+            "mode": "100644",
+            "blob_oid": "0c63dd61fb73fd1e000c787bb26e89f6e99e3662"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/profile.log",
+            "mode": "100644",
+            "blob_oid": "f35f2564fe22aab60ef01742c138ac97365840c3"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/thermal_after.txt",
+            "mode": "100644",
+            "blob_oid": "a8c969a4c521b6e0d50af5420f99f99f8da0d8da"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/scaled-m1024/thermal_before.txt",
+            "mode": "100644",
+            "blob_oid": "b0f318b0957069e66672230090c312ad4548e4ba"
+          },
+          {
+            "path": "experiments/E022-fused-q1/results/target_summary.json",
+            "mode": "100644",
+            "blob_oid": "98ff5f893c7d6e141409d2e717dca9662d4e80a6"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E023-ggml-q1-seam",
+        "experiment_ids": [
+          "E023",
+          "E023-GGML-Q1-SEAM"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E023-ggml-q1-seam/README.md",
+            "mode": "100644",
+            "blob_oid": "4581c6f86f2fc4cc0db16ef9c84d3d2bab24d369"
+          },
+          {
+            "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
+            "mode": "100644",
+            "blob_oid": "51791e99e67ba597050b0f34e95722f9de6cec83"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E024-npu-full-projection",
+        "experiment_ids": [
+          "E024",
+          "E024-NPU-FULL-PROJECTION"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E024-npu-full-projection/README.md",
+            "mode": "100644",
+            "blob_oid": "d502ab8e8c7d173cc678ae840cd81f6ad2213db6"
+          },
+          {
+            "path": "experiments/E024-npu-full-projection/results/e024_shape_sweep.json",
+            "mode": "100644",
+            "blob_oid": "66c08b929a30bccb2f5d9e52254a8331444f8b9c"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E025-ddr-frequency",
+        "experiment_ids": [
+          "E025",
+          "E025-DDR-FREQUENCY"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E025-ddr-frequency/README.md",
+            "mode": "100644",
+            "blob_oid": "e24f5378c6873f8d571e6c705596065d7f1938b4"
+          },
+          {
+            "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
+            "mode": "100644",
+            "blob_oid": "fc0f2b4eea91fee9833e8e99cf4c2e36396b7ba0"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E026-cpu-decode-screen",
+        "experiment_ids": [
+          "E026",
+          "E026-CPU-DECODE-SCREEN"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E026-cpu-decode-screen/README.md",
+            "mode": "100644",
+            "blob_oid": "13d724c8552d0668b0a813492355453cc5b06912"
+          },
+          {
+            "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
+            "mode": "100644",
+            "blob_oid": "3fd2f8712b7cbc6f37eafde355bf9527ac8c533a"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E027-poll-scheduling",
+        "experiment_ids": [
+          "E027",
+          "E027-POLL-SCHEDULING"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E027-poll-scheduling/README.md",
+            "mode": "100644",
+            "blob_oid": "08a7ab9c6bf000019611797159067b58b3514ec5"
+          },
+          {
+            "path": "experiments/E027-poll-scheduling/results/e027_poll_scheduling.json",
+            "mode": "100644",
+            "blob_oid": "b6e27630011ef2cfd41c0074fb195df5f7fe9b84"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E028-lto",
+        "experiment_ids": [
+          "E028",
+          "E028-LTO"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E028-lto/README.md",
+            "mode": "100644",
+            "blob_oid": "7da48be9f1fe5814a9d58caeef8020011fadfa54"
+          },
+          {
+            "path": "experiments/E028-lto/results/e028_lto.json",
+            "mode": "100644",
+            "blob_oid": "7f4a9ce913b039a9eb4dc044f0bf54b68e25e7d7"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E029-mtune-a55",
+        "experiment_ids": [
+          "E029",
+          "E029-MTUNE-A55"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E029-mtune-a55/README.md",
+            "mode": "100644",
+            "blob_oid": "55464a0407e46cb3286fa4502d145248dd073926"
+          },
+          {
+            "path": "experiments/E029-mtune-a55/results/e029_mtune_a55.json",
+            "mode": "100644",
+            "blob_oid": "bb9f3c993352a1bc6bbd00b87ae6fe1bfd12c8e2"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E030-q1-paired-reuse",
+        "experiment_ids": [
+          "E030",
+          "E030-Q1-PAIRED-REUSE"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E030-q1-paired-reuse/README.md",
+            "mode": "100644",
+            "blob_oid": "bb22b5923f0a44340f4f3ee633bab423e7f5ec81"
+          },
+          {
+            "path": "experiments/E030-q1-paired-reuse/patches/0001-q1-paired-activation-reuse.patch",
+            "mode": "100644",
+            "blob_oid": "b5c0a1471d606b7946e11482bc248531946df068"
+          },
+          {
+            "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
+            "mode": "100644",
+            "blob_oid": "15e0bbae6648a7fc0a1c1a2fa4f35042119ec3da"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E031-q1-noinline-reuse",
+        "experiment_ids": [
+          "E031",
+          "E031-Q1-NOINLINE-REUSE"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E031-q1-noinline-reuse/README.md",
+            "mode": "100644",
+            "blob_oid": "555f76f4e3c40079077d5b2409ab88e5bd95eaae"
+          },
+          {
+            "path": "experiments/E031-q1-noinline-reuse/patches/0001-q1-half-noinline-reuse.patch",
+            "mode": "100644",
+            "blob_oid": "b830cb58629e22a9c6d15bc1f55b80e8fcc8cbd6"
+          },
+          {
+            "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
+            "mode": "100644",
+            "blob_oid": "f264f9fb3912a17d4cf909f5358265bcd2d3b2f2"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E032-q1-block4-reuse",
+        "experiment_ids": [
+          "E032",
+          "E032-Q1-BLOCK4-REUSE"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E032-q1-block4-reuse/0001-q1-block4-reuse.patch",
+            "mode": "100644",
+            "blob_oid": "c5b83cacff3472b303f9b15441ef38dd1d7b5c82"
+          },
+          {
+            "path": "experiments/E032-q1-block4-reuse/README.md",
+            "mode": "100644",
+            "blob_oid": "273d2fc9107a4d0f1e3a916b8a8dcdd2a9cf40ab"
+          },
+          {
+            "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
+            "mode": "100644",
+            "blob_oid": "2d7198bd4f719169bd5519aafcced7f0952cbc3b"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E033-scheduler-strict0",
+        "experiment_ids": [
+          "E033",
+          "E033-SCHEDULER-STRICT0"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E033-scheduler-strict0/README.md",
+            "mode": "100644",
+            "blob_oid": "a408d48b74bb074d67efa594b86892ea3b419467"
+          },
+          {
+            "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
+            "mode": "100644",
+            "blob_oid": "3b05ebbd444f07f9de18285f13497a493dc071c7"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E034-worker-count-strict0",
+        "experiment_ids": [
+          "E034",
+          "E034-WORKER-COUNT-STRICT0"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E034-worker-count-strict0/README.md",
+            "mode": "100644",
+            "blob_oid": "a1d936a7800f41b3adcaae571527c2101835b7f9"
+          },
+          {
+            "path": "experiments/E034-worker-count-strict0/results/e034_worker_count.json",
+            "mode": "100644",
+            "blob_oid": "dd16bb2d9bfee6140a7fd9b0047bd4d9f598ba49"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E035-poll-screen",
+        "experiment_ids": [
+          "E035",
+          "E035-POLL-SCREEN"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E035-poll-screen/README.md",
+            "mode": "100644",
+            "blob_oid": "387eeb45ec02e3d69cd04d06e142f22561dc43ab"
+          },
+          {
+            "path": "experiments/E035-poll-screen/results/e035_poll.json",
+            "mode": "100644",
+            "blob_oid": "e61804bb2746d55913de57bdcdb89dba01b64f84"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E039-q1-pair-wholek",
+        "experiment_ids": [
+          "E039",
+          "E039-Q1-PAIR-WHOLEK"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E039-q1-pair-wholek/README.md",
+            "mode": "100644",
+            "blob_oid": "d2067ba3805d40bf3835f2c681fb6ace6ddd3381"
+          },
+          {
+            "path": "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+            "mode": "100644",
+            "blob_oid": "e620d11dc1cb42fd9143f36f8378fde1e8afd063"
+          },
+          {
+            "path": "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
+            "mode": "100644",
+            "blob_oid": "24128f7be59595ee728094ee0f3d6b31c7ba1414"
+          },
+          {
+            "path": "experiments/E039-q1-pair-wholek/results/e039_target_summary.json",
+            "mode": "100644",
+            "blob_oid": "330e974a8918ce5f316267cb8419b186af3881f4"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E040-q1-register-lut",
+        "experiment_ids": [
+          "E040",
+          "E040-Q1-REGISTER-LUT"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E040-q1-register-lut/README.md",
+            "mode": "100644",
+            "blob_oid": "4c8fe283bbdcfad39e2f22313f7a963822c49bf4"
+          },
+          {
+            "path": "experiments/E040-q1-register-lut/e040_q1_group_harness.cpp",
+            "mode": "100644",
+            "blob_oid": "6f22180c8c477cf16297e88f7223dee209561f2d"
+          },
+          {
+            "path": "experiments/E040-q1-register-lut/e040_q1_group_wholek.S",
+            "mode": "100644",
+            "blob_oid": "52bdf13874735bc29dfcbacac8065fd114d5b96a"
+          },
+          {
+            "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
+            "mode": "100644",
+            "blob_oid": "17496ee84e30c69c24fee8e6d1da669567330b4d"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E044-cluster-prfm",
+        "experiment_ids": [
+          "E044",
+          "E044-CLUSTER-PRFM"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E044-cluster-prfm/README.md",
+            "mode": "100644",
+            "blob_oid": "c524b4baf7abce883e73f49d7b9add33c3f4e605"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/data/full_temperature_1s.csv",
+            "mode": "100644",
+            "blob_oid": "258b3cc17345abb930c2b7753915ce4110b263e5"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/data/manifest.json",
+            "mode": "100644",
+            "blob_oid": "fa17cc0564856e10f4e8bf8928653950029875de"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/data/screen_results.csv",
+            "mode": "100644",
+            "blob_oid": "7aaed3d0996acb5d8501cb47754b92f8a68ae65a"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.png",
+            "mode": "100644",
+            "blob_oid": "788367288e6c127248e0699732ff2cc16ac71503"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.svg",
+            "mode": "100644",
+            "blob_oid": "6ad6acc9e27b74ecee5f452ed56770c6f1f0ce62"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/generated/e044_screen_throughput.png",
+            "mode": "100644",
+            "blob_oid": "413fa8d72f1c3ca77b47064ad673988fd3a9a35c"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/generated/e044_screen_throughput.svg",
+            "mode": "100644",
+            "blob_oid": "4e2b7204ec6813517046ae99a0d812e687e6d60f"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/plot_e044.py",
+            "mode": "100644",
+            "blob_oid": "e197cecdc16a05f7785ac02d95f6258b021ae682"
+          },
+          {
+            "path": "experiments/E044-cluster-prfm/test_plot_e044.py",
+            "mode": "100644",
+            "blob_oid": "2ae61ca6e22b51187111a11febf3b61ee79dc75e"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E045-dspark-stock-oom",
+        "experiment_ids": [
+          "E045",
+          "E045-DSPARK-STOCK-OOM"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E045-dspark-stock-oom/README.md",
+            "mode": "100644",
+            "blob_oid": "b182bf2cb6aa09ddc7817367dda49925ed8c999b"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
+            "mode": "100644",
+            "blob_oid": "37d85f680769e0326dd807d18d6c7d5bf3ad5816"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/memory_thermal_1s.csv",
+            "mode": "100644",
+            "blob_oid": "fab26b0283d5372125023e0dcfa2358192b0b27c"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/memory_thermal_b_1s.csv",
+            "mode": "100644",
+            "blob_oid": "58a72f1b0e4b9038df1e8911f42f4af112000c39"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/memory_thermal_c_1s.csv",
+            "mode": "100644",
+            "blob_oid": "6c073a91d8768388fd94a85e2794afedfe7e11e5"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/memory_thermal_e_1s.csv",
+            "mode": "100644",
+            "blob_oid": "4259fdf8f18c91b921d67091615f0826dd40da81"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/memory_thermal_f_1s.csv",
+            "mode": "100644",
+            "blob_oid": "683bdc31014fdad269309075dd0f9901623c4b05"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
+            "mode": "100644",
+            "blob_oid": "62c4d80770daaa3848ba5acd760ca3ce0c725c0c"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/speculation_comparison.csv",
+            "mode": "100644",
+            "blob_oid": "0a111c7960150bd63f30877c74633c49d0fb20c2"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/data/speculation_smoke.csv",
+            "mode": "100644",
+            "blob_oid": "be58194b278ae2d2632e13181755dab574157b56"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.png",
+            "mode": "100644",
+            "blob_oid": "2b823fec8fc35f403f48dd8bb6dab19011f65062"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.svg",
+            "mode": "100644",
+            "blob_oid": "c2475736d0f924024bec051266645f8a4599371f"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.png",
+            "mode": "100644",
+            "blob_oid": "d0e96f53733a61fa4062442d600a8f32a49d91b3"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.svg",
+            "mode": "100644",
+            "blob_oid": "1b66063eda1b671046755c1df6fc1afd12d66bbe"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_temperature.png",
+            "mode": "100644",
+            "blob_oid": "f3cb5e985cd9fbf8d8ebca2b5889819c3bc8dfc2"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_temperature.svg",
+            "mode": "100644",
+            "blob_oid": "2de55d79454f301e585e99c00a30c0705744f297"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.png",
+            "mode": "100644",
+            "blob_oid": "61a55e9a5f7ff08886d4185c3bbb41ee40d79cc9"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.svg",
+            "mode": "100644",
+            "blob_oid": "ed844695f718f2f071cca5a709c369ca681de864"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/plot_e045.py",
+            "mode": "100644",
+            "blob_oid": "5e2d9b938725aab057769dcbdb6aceb2466a9a3a"
+          },
+          {
+            "path": "experiments/E045-dspark-stock-oom/test_plot_e045.py",
+            "mode": "100644",
+            "blob_oid": "54ae18571c874bdba745af64bd7d4eb7dfe3228d"
+          }
+        ]
+      },
+      {
+        "canonical_path": "experiments/E047-common-benchmark",
+        "experiment_ids": [
+          "E047",
+          "E047-COMMON-BENCHMARK"
+        ],
+        "entries": [
+          {
+            "path": "experiments/E047-common-benchmark/README.md",
+            "mode": "100644",
+            "blob_oid": "9d1d5152202127de693eb9edccef70d74364c056"
+          },
+          {
+            "path": "experiments/E047-common-benchmark/commands.txt",
+            "mode": "100644",
+            "blob_oid": "84751a443adeecfb3b0e977e72b2689ebbda0144"
+          },
+          {
+            "path": "experiments/E047-common-benchmark/device.json",
+            "mode": "100644",
+            "blob_oid": "b3685d596e49539e979c3915286066c66b672c26"
+          },
+          {
+            "path": "experiments/E047-common-benchmark/environment.json",
+            "mode": "100644",
+            "blob_oid": "23dacaf2a9c731406d5d2488a23b63708d02d457"
+          },
+          {
+            "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+            "mode": "100644",
+            "blob_oid": "4e14747ba1656c7fe09e91aad1cc76de113e4f96"
+          },
+          {
+            "path": "experiments/E047-common-benchmark/results/summary.json",
+            "mode": "100644",
+            "blob_oid": "56e58a49f3522b1cfdb5d6ebea4dea0c6647fd8a"
+          }
+        ]
+      }
     ]
   },
   "remote_refs_at_scan": [
@@ -4653,7 +6149,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 10,
-  "match_count": 895,
+  "match_count": 1278,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -4666,28 +6162,28 @@
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e047-hard-profiling",
-        "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
+        "commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e048-per-op-trace",
-        "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+        "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-        "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
+        "commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/remotes/origin/codex/e048-per-op-trace",
-        "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+        "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
       }
     ]
   },

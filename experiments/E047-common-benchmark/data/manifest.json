@@ -14,8 +14,8 @@
     },
     {
       "path": "data/branch-preflight.json",
-      "sha256": "259303baf4bfca8a534fabe5e24e0382690385b8e0adf97dfaf8f00334b550a4",
-      "size_bytes": 184749
+      "sha256": "603b6650015497ed41df5bc6c58af851a9f3e8d2bb24c5a4164a01c58de2c562",
+      "size_bytes": 254479
     },
     {
       "path": "device.json",

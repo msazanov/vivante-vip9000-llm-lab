@@ -336,6 +336,75 @@ def tree_binding_sha256(
     return _tree_binding(root.resolve(), excludes, source=source)
 
 
+def untracked_experiment_roots(root: Path) -> list[str]:
+    """Return canonical ``experiments/E*`` roots absent from the Git index."""
+
+    root = root.resolve()
+    try:
+        index_entries = _git_tree_entries(root, "index")
+        children = list((root / "experiments").iterdir())
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError, OSError):
+        return []
+    indexed_roots: set[str] = set()
+    for raw_path, _, _ in index_entries:
+        path = Path(raw_path.decode("utf-8", "surrogateescape"))
+        if (
+            len(path.parts) >= 2
+            and path.parts[0].lower() == "experiments"
+            and EXPERIMENT_RE.fullmatch(path.parts[1])
+        ):
+            indexed_roots.add(Path(path.parts[0], path.parts[1]).as_posix())
+    filesystem_roots = {
+        Path("experiments", child.name).as_posix()
+        for child in children
+        if EXPERIMENT_RE.fullmatch(child.name)
+        and (child.is_dir() or child.is_symlink())
+    }
+    return sorted(filesystem_roots - indexed_roots)
+
+
+def index_experiment_root_evidence(
+    root: Path, excludes: Iterable[str] = ()
+) -> list[dict[str, object]]:
+    """Bind stage-0 experiment roots to every indexed path, mode and blob OID."""
+
+    excluded = {Path(value).as_posix().encode("utf-8") for value in excludes}
+    try:
+        entries = _git_tree_entries(root.resolve(), "index")
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        return []
+    grouped: dict[str, dict[str, object]] = {}
+    for raw_path, raw_mode, raw_object_id in entries:
+        if raw_path in excluded:
+            continue
+        path = Path(raw_path.decode("utf-8", "surrogateescape"))
+        if (
+            len(path.parts) < 2
+            or path.parts[0].lower() != "experiments"
+            or not EXPERIMENT_RE.fullmatch(path.parts[1])
+        ):
+            continue
+        canonical = Path(path.parts[0], path.parts[1]).as_posix()
+        root_evidence = grouped.setdefault(
+            canonical,
+            {
+                "canonical_path": canonical,
+                "experiment_ids": _experiment_ids(path.parts[1]),
+                "entries": [],
+            },
+        )
+        entries_value = root_evidence["entries"]
+        assert isinstance(entries_value, list)
+        entries_value.append(
+            {
+                "path": path.as_posix(),
+                "mode": raw_mode.decode("ascii"),
+                "blob_oid": raw_object_id.decode("ascii"),
+            }
+        )
+    return [grouped[canonical] for canonical in sorted(grouped)]
+
+
 def experiment_root_topology(ref_result: dict[str, object]) -> list[dict[str, object]]:
     """Return stable root/ID evidence without circular per-file path details."""
 
@@ -459,6 +528,7 @@ def build_manifest(
     ref_results = scan_refs(root, refs, terms)
     candidates = _duplicate_candidates(ref_results, experiment_id)
     index_topology = experiment_root_topology(scan_index(root, terms))
+    index_root_evidence = index_experiment_root_evidence(root, binding_excludes)
     match_count = sum(int(item["match_count"]) for item in ref_results)
     snapshot_exclusions = {value for value in (active_ref, upstream_ref) if value}
     ref_snapshot = [
@@ -485,6 +555,7 @@ def build_manifest(
             "tree_binding_sha256": _tree_binding(root, binding_excludes, source="index"),
             "binding_excludes": binding_excludes,
             "bound_experiment_roots": index_topology,
+            "bound_index_experiment_roots": index_root_evidence,
         },
         "remote_refs_at_scan": sorted(
             ref for ref in refs if ref.startswith("refs/remotes/")

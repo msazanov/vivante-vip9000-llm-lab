@@ -26,19 +26,23 @@ try:
     from tooling.branch_preflight import (
         duplicate_decision_from_refs,
         experiment_root_topology,
+        index_experiment_root_evidence,
         list_refs,
         ref_commit,
         scan_refs,
         tree_binding_sha256,
+        untracked_experiment_roots,
     )
 except ModuleNotFoundError:  # direct: python3 tooling/experiment_validator.py
     from branch_preflight import (
         duplicate_decision_from_refs,
         experiment_root_topology,
+        index_experiment_root_evidence,
         list_refs,
         ref_commit,
         scan_refs,
         tree_binding_sha256,
+        untracked_experiment_roots,
     )
 
 
@@ -906,36 +910,43 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
         active = {}
     active_ref = active.get("ref")
     upstream_ref = active.get("upstream_ref")
+    current_head = ref_commit(repository, "HEAD")
+    git_repository = current_head is not None
+    if active_ref is None and git_repository:
+        errors.append(
+            "data/branch-preflight.json: detached HEAD запрещён; "
+            "явный immutable commit mode не поддерживается"
+        )
     exclusions = active.get("binding_excludes")
     if not isinstance(exclusions, list) or any(_safe_relative_path(item) is None for item in exclusions):
         errors.append("data/branch-preflight.json: binding_excludes должен содержать безопасные пути")
         exclusions = []
-    if active_ref is not None:
-        try:
-            experiment_relative = root.relative_to(repository)
-        except ValueError:
-            errors.append("data/branch-preflight.json: эксперимент находится вне repository_root")
-            expected_exclusions: list[str] = []
-        else:
-            expected_exclusions = sorted(
-                [
-                    (experiment_relative / "data/branch-preflight.json").as_posix(),
-                    (experiment_relative / "data/manifest.json").as_posix(),
-                ]
-            )
-        if exclusions != expected_exclusions:
-            errors.append("data/branch-preflight.json: binding_excludes разрешает только self-reference файлы")
-            exclusions = expected_exclusions
+    current_experiment_path = None
+    try:
+        experiment_relative = root.relative_to(repository)
+    except ValueError:
+        errors.append("data/branch-preflight.json: эксперимент находится вне repository_root")
+        expected_exclusions: list[str] = []
+    else:
+        current_experiment_path = experiment_relative.as_posix()
+        expected_exclusions = sorted(
+            [
+                (experiment_relative / "data/branch-preflight.json").as_posix(),
+                (experiment_relative / "data/manifest.json").as_posix(),
+            ]
+        )
+    if git_repository and exclusions != expected_exclusions:
+        errors.append("data/branch-preflight.json: binding_excludes разрешает только self-reference файлы")
+        exclusions = expected_exclusions
     declared_tree = active.get("tree_binding_sha256")
     tree_source = active.get("tree_binding_source")
-    if active_ref is not None and tree_source != "git-index-stage0":
+    if git_repository and tree_source != "git-index-stage0":
         errors.append("data/branch-preflight.json: tree_binding_source должен быть git-index-stage0")
     if not isinstance(declared_tree, str) or not SHA256_RE.fullmatch(declared_tree):
         errors.append("data/branch-preflight.json: некорректный tree_binding_sha256")
 
-    current_head = ref_commit(repository, "HEAD")
     base_commit = active.get("base_commit")
-    if active_ref is not None and isinstance(declared_tree, str) and SHA256_RE.fullmatch(declared_tree):
+    if git_repository and isinstance(declared_tree, str) and SHA256_RE.fullmatch(declared_tree):
         binding_source = "index" if current_head == base_commit else "HEAD"
         if tree_binding_sha256(repository, exclusions, source=binding_source) != declared_tree:
             errors.append("data/branch-preflight.json: active Git tree binding не совпадает")
@@ -958,6 +969,43 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
             repository, exclusions, source="index"
         ) != tree_binding_sha256(repository, exclusions, source="HEAD"):
             errors.append("data/branch-preflight.json: Git index не совпадает с доказанным HEAD tree")
+
+    unexpected_untracked_roots = [
+        path
+        for path in untracked_experiment_roots(repository)
+        if path != current_experiment_path
+    ]
+    if unexpected_untracked_roots:
+        errors.append(
+            "data/branch-preflight.json: обнаружены untracked experiment roots: "
+            + ", ".join(unexpected_untracked_roots)
+        )
+
+    bound_index_roots = active.get("bound_index_experiment_roots")
+    if not isinstance(bound_index_roots, list):
+        errors.append(
+            "data/branch-preflight.json: отсутствует bound_index_experiment_roots"
+        )
+        bound_index_roots = []
+    actual_index_roots = index_experiment_root_evidence(repository, exclusions)
+    if bound_index_roots != actual_index_roots:
+        recorded_paths = {
+            str(item.get("canonical_path"))
+            for item in bound_index_roots
+            if isinstance(item, dict)
+        }
+        actual_paths = {
+            str(item.get("canonical_path"))
+            for item in actual_index_roots
+            if isinstance(item, dict)
+        }
+        changed_paths = sorted(recorded_paths ^ actual_paths)
+        if not changed_paths:
+            changed_paths = sorted(actual_paths | recorded_paths)
+        errors.append(
+            "data/branch-preflight.json: stage-0 index experiment roots/modes/blob OIDs изменились: "
+            + ", ".join(changed_paths)
+        )
 
     if active_ref is not None:
         if active_ref not in current_refs or ref_commit(repository, str(active_ref)) != current_head:
@@ -1024,11 +1072,6 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
     if not isinstance(bound_topology, list):
         errors.append("data/branch-preflight.json: отсутствует bound_experiment_roots")
         bound_topology = []
-    current_experiment_path = None
-    try:
-        current_experiment_path = root.relative_to(repository).as_posix()
-    except ValueError:
-        pass
     stored_by_ref = {
         str(item.get("ref")): item for item in ref_results if isinstance(item, dict)
     }
