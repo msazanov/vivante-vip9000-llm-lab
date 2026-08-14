@@ -217,8 +217,10 @@ the publication:
    index/worktree has no modified, staged, or untracked file.
 
 The verifier also requires the excluded preflight and manifest worktree/index
-bytes to equal their committed `HEAD` blobs. This closes the self-reference
-gap without writing a stale parent SHA into either file. Both deterministic
+bytes to equal their committed `HEAD` blobs. It computes the committed-tree
+binding with its own fixed list of exactly those two paths and rejects any
+caller-declared raw, source, or other extra exclusion. This closes the
+self-reference gap without writing a stale parent SHA into either file. Both deterministic
 AArch64 executables are committed under `artifacts/`; their SHA-256 values,
 source/compiler provenance, and disassembly checks are publication-bound.
 `infer_bottleneck()` invokes this global verifier unconditionally before it
@@ -227,6 +229,10 @@ stale ref, mismatched publication tree, or unrelated dirty replacement file.
 The raw bundle's runtime-contract digest is stable across regeneration of the
 publication timestamp and tree-binding envelope, but changes if any runtime
 qualification field changes.
+The global `*.bin` ignore remains in force except for the two exact reviewed
+phase executable names
+`experiments/E055-q1-hot-cold/raw/<phase>/artifacts/harness-O3.bin` and
+`harness-O3-flto.bin`; no other raw or repository binary is made eligible.
 
 `tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
 and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks

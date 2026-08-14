@@ -18,6 +18,12 @@ except ModuleNotFoundError as exc:
     from branch_preflight import tree_binding_sha256
 
 
+EXPECTED_BINDING_EXCLUDES = [
+    "experiments/E055-q1-hot-cold/data/branch-preflight.json",
+    "experiments/E055-q1-hot-cold/data/manifest.json",
+]
+
+
 def _git(root: Path, *args: str) -> str | None:
     result = subprocess.run(["git", *args], cwd=root, text=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -97,7 +103,13 @@ def verify_publication(
         errors.append("preflight base is not an ancestor of publication HEAD")
     excludes = active.get("binding_excludes")
     declared_tree = active.get("tree_binding_sha256")
-    if not isinstance(excludes, list) or tree_binding_sha256(root, excludes, source="HEAD") != declared_tree:
+    if excludes != EXPECTED_BINDING_EXCLUDES:
+        errors.append(
+            "binding_excludes must be exactly the two self-referential E055 metadata paths"
+        )
+    if tree_binding_sha256(
+        root, EXPECTED_BINDING_EXCLUDES, source="HEAD"
+    ) != declared_tree:
         errors.append("committed HEAD tree does not match staged preflight binding")
     active_ref = active.get("ref")
     upstream_ref = active.get("upstream_ref")

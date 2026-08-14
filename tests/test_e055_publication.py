@@ -111,11 +111,69 @@ class E055PublicationBindingTest(unittest.TestCase):
                 binding,
                 tree_binding_sha256(root, excludes, source="HEAD"),
             )
+
+            for label, extra_exclude in (
+                ("raw", artifact_relative),
+                ("code", "base.txt"),
+            ):
+                with self.subTest(extra_exclusion=label):
+                    forged_excludes = [*excludes, extra_exclude]
+                    forged_binding = tree_binding_sha256(
+                        root, forged_excludes, source="HEAD"
+                    )
+                    preflight["active_worktree"].update(
+                        tree_binding_sha256=forged_binding,
+                        binding_excludes=forged_excludes,
+                    )
+                    manifest["publication_binding"].update(
+                        staged_tree_binding_sha256=forged_binding,
+                        binding_excludes=forged_excludes,
+                    )
+                    preflight_path.write_text(
+                        json.dumps(preflight), encoding="utf-8"
+                    )
+                    manifest_path.write_text(
+                        json.dumps(manifest), encoding="utf-8"
+                    )
+                    git(root, "add", str(data.relative_to(root)))
+                    git(root, "commit", "-q", "-m", f"forge {label} exclusion")
+                    git(root, "push", "-q")
+                    errors = verifier.verify_global_publication(
+                        root, preflight_path, manifest_path
+                    )
+                    self.assertTrue(
+                        any("binding_excludes" in item for item in errors), errors
+                    )
+
             raw_artifact.write_bytes(b"post-publication mutation\n")
             errors = verifier.verify_global_publication(
                 root, preflight_path, manifest_path
             )
             self.assertTrue(any("mismatch" in item or "clean" in item for item in errors))
+
+    def test_only_exact_e055_raw_harness_binaries_are_unignored(self) -> None:
+        allowed = (
+            "experiments/E055-q1-hot-cold/raw/phase-a/artifacts/harness-O3.bin",
+            "experiments/E055-q1-hot-cold/raw/phase-a/artifacts/harness-O3-flto.bin",
+        )
+        denied = (
+            "experiments/E055-q1-hot-cold/raw/phase-a/artifacts/harness-debug.bin",
+            "experiments/E055-q1-hot-cold/raw/phase-a/runs/run-a/capture.bin",
+            "experiments/E054-other/raw/phase-a/artifacts/harness-O3.bin",
+            "artifacts/unrelated.bin",
+        )
+        for path in allowed:
+            result = subprocess.run(
+                ["git", "check-ignore", "--no-index", "--quiet", path],
+                cwd=generator.ROOT, check=False,
+            )
+            self.assertEqual(result.returncode, 1, path)
+        for path in denied:
+            result = subprocess.run(
+                ["git", "check-ignore", "--no-index", "--quiet", path],
+                cwd=generator.ROOT, check=False,
+            )
+            self.assertEqual(result.returncode, 0, path)
 
     def test_publication_includes_every_sealed_bundle_component_and_binary(self) -> None:
         relative = {

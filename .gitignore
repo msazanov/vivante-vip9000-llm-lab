@@ -10,6 +10,11 @@ artifacts/private/
 *.bin
 *.blob
 
+# E055 raw phases seal only these reviewed harness executable names. Other
+# binaries remain ignored, including other files beneath the same raw phase.
+!experiments/E055-q1-hot-cold/raw/*/artifacts/harness-O3.bin
+!experiments/E055-q1-hot-cold/raw/*/artifacts/harness-O3-flto.bin
+
 # Native binaries and libraries
 *.so
 *.so.*
@@ -61,5 +66,4 @@ benchmarks/models/.*.tmp
 .idea/
 .DS_Store
 Thumbs.db
-
 

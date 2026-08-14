@@ -115,6 +115,12 @@ canonical `runtime_qualification` object; source, compiler, binaries, PMU
 configuration, and upstream provenance remain exact while publication-envelope
 metadata can be regenerated.
 
+The post-commit verifier owns the exact two-path exclusion constant; it does
+not accept extra exclusions merely because preflight and manifest agree about
+them. The repository's global `*.bin` ignore is narrowed only for
+`raw/<phase>/artifacts/harness-O3.bin` and `harness-O3-flto.bin`. All other
+binaries, including other names beneath an E055 phase, remain ignored.
+
 Only after every cross-check passes does the loader construct a private derived
 sample. The public `infer_bottleneck` entry point accepts committed manifest
 paths only. The existing normalization, exact-pair, complete
