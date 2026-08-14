@@ -1,6 +1,6 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Status: **REVISED STAGE 1 IMPLEMENTED WITH GIT-SEALED RAW INGESTION; NO TARGET RUN**.
+Status: **FIFTH-REVIEW CANDIDATE WITH STRICT GIT-SEALED INGESTION; NO TARGET RUN**.
 
 E055 is a bounded experiment designed to distinguish cache/data-carrier cost
 from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
@@ -23,6 +23,8 @@ The rejected `0ed991b` target qualifier is preserved in
 [`data/review-rejection-stage3-0ed991b.md`](data/review-rejection-stage3-0ed991b.md).
 The rejected `7679828` caller-created-row qualifier is preserved in
 [`data/review-rejection-stage4-7679828.md`](data/review-rejection-stage4-7679828.md).
+The rejected `f8acab9` noncanonical protocol/timing qualifier is preserved in
+[`data/review-rejection-stage5-f8acab9.md`](data/review-rejection-stage5-f8acab9.md).
 Rejected revisions remain evidence of failed approaches; none is target data.
 
 ## Exact kernel and controls
@@ -56,12 +58,14 @@ disassembly proves instruction shape, not board timing.
 
 ## Hot/cold protocol and normalization
 
-- `hot_repeat` warms the fixture, then repeatedly traverses the same carrier
+- `hot_repeat` performs exactly 16 warmup calls, then repeatedly traverses the same carrier
   working set for a time budget or explicit iteration count. The raw result
   records requested/actual bytes, covered lines, warmup count, and a nonzero
   conditioning checksum.
-- `cold_conditioned` writes and verifies every 64-byte line of a separate
-  thrash buffer before the marker, then performs **exactly one** traversal.
+- `cold_conditioned` writes and verifies every 64-byte line of one exact
+  67,108,864-byte thrash buffer before the marker, then performs **exactly one** traversal.
+  It must report exactly 1,048,576 touched lines and checksum
+  `0x8d3ea13d15850279`.
   Any override to more than one iteration or a nonzero time budget is rejected.
   The thrash allocation must be an exact multiple of 64 bytes, so the verifier
   touches every requested byte and never silently drops a remainder.
@@ -115,12 +119,17 @@ Raw qualification requires:
   nonempty exact `core`, `cache`, or `memory` group, supported/valid events,
   exact name/config bindings from `tooling/a733_pmu_exec.c`, and runtime-float
   `running_ratio == 1.0` for every event;
+- the exact launcher sequence `/tmp/a733-pmu-exec -o <sealed-e049c-path>
+  --event-group <group> --min-running-ratio 0.95 --start-on-ready
+  --sync-timeout-ms 5000 --max-temp-c 85 -- <exact-harness-argv>`; the 0.95
+  launcher floor never relaxes the accepted runtime ratio of exactly 1.0;
 - readable thermal telemetry with no trip and maximum temperature at or below
-  its limit; Boolean temperatures are not numbers;
+  the exact 85 °C limit; Boolean temperatures are not numbers;
 - affinity containing only CPU0 (A55) or CPU6 (A76), identical start/end CPU,
   and zero migrations, with every identifier/count an integer rather than a
   Boolean or floating-point lookalike;
 - exact full cache-conditioning coverage metadata and checksum;
+- positive equal `pid` and process-group IDs;
 - `golden_pass=true`, exactly 18 golden cases, a nonzero output checksum, and
   the exact harness stdout artifact cross-bound by the runner's raw-artifact
   hashes;
@@ -144,6 +153,18 @@ or cold conditioning state, malformed checksum, or unbound provenance fails
 closed. PMU values are event counts, not bytes. E055 has no direct DDR-byte
 counter and never relabels refill or access events as traffic.
 
+E049c starts the PMU group immediately before ACK and stops it immediately
+after the `E` marker, but its clocks are not interchangeable. Let `H` be the
+child harness `CLOCK_MONOTONIC_RAW` elapsed time, `M` the parent
+`CLOCK_MONOTONIC` measured interval, and `T/R` an event's perf
+`time_enabled_ns/time_running_ns`. Qualification requires positive uint64
+`H`, `M`, `T`, and `R`, `M + 1 ms >= H`, `T + 1 ms >= H`, `R == T`, and the
+runtime-float ratio exactly 1.0. The 1 ms term is a one-sided cross-clock
+tolerance. There is deliberately no upper bound on `M - H` or `T - M`:
+parent descheduling and perf accounting may make them large. Events in one
+group are not required to report identical `T` unless E049c source semantics
+prove that invariant. These are qualifier checks, not conversions to bytes.
+
 The publication-only `sample.schema.json` describes analyzer-derived output
 and carries `x-e055-analyzer-input=false`. Its evidence object includes the
 containing commit/tree, manifest path/blob, publication identity, and all five
@@ -156,7 +177,10 @@ Working sets round upward to complete 208-byte carriers:
 `64 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 4 MiB, 12.5 MiB`.
 
 Here `12.5 MiB` is binary: exactly `13,107,200` bytes. Working-set rounding
-checks `target + 207` for unsigned overflow before division.
+checks `target + 207` for unsigned overflow before division. Raw ingestion
+accepts only these seven canonical target values, enforces the C++ native-block
+allocation ceiling, and bounds every emitted checksum as canonical nonzero
+uint64 hexadecimal.
 
 CPU0 and CPU6 are measured first. Every cell needs at least five alternating
 hot/cold pairs in each E049c PMU group. Promotion unconditionally requires all
@@ -185,13 +209,17 @@ the publication:
 3. After commit and push, `python3 tooling/verify_e055_publication.py` verifies
    that committed `HEAD` has the staged tree, that the preflight base is its
    ancestor, every manifested file hash/size matches, and both local and
-   remote-tracking refs equal the exact containing commit.
+   remote-tracking refs equal the exact containing commit and the complete
+   index/worktree has no modified, staged, or untracked file.
 
 The verifier also requires the excluded preflight and manifest worktree/index
 bytes to equal their committed `HEAD` blobs. This closes the self-reference
 gap without writing a stale parent SHA into either file. Both deterministic
 AArch64 executables are committed under `artifacts/`; their SHA-256 values,
 source/compiler provenance, and disassembly checks are publication-bound.
+`infer_bottleneck()` invokes this global verifier unconditionally before it
+loads the phase-scoped sealed bundle. A locally sealed phase cannot bypass a
+stale ref, mismatched publication tree, or unrelated dirty replacement file.
 
 `tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
 and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks

@@ -32,6 +32,7 @@ class E055PublicationBindingTest(unittest.TestCase):
             "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
             "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
             "tooling/e055_raw_bundle.py",
             "tooling/e055_capture_scaffold.py",
             "tests/test_e055_raw_bundle.py",
@@ -193,6 +194,16 @@ class E055PublicationBindingTest(unittest.TestCase):
             head = git(root, "rev-parse", "HEAD")
             git(root, "update-ref", "refs/remotes/origin/codex/e055-q1-hot-cold", head)
             self.assertEqual(verifier.verify_publication(root, preflight_path, manifest_path), [])
+            self.assertEqual(
+                verifier.verify_global_publication(root, preflight_path, manifest_path), []
+            )
+            untracked = root / "untracked-replacement.bin"
+            untracked.write_bytes(b"forged replacement")
+            global_errors = verifier.verify_global_publication(
+                root, preflight_path, manifest_path
+            )
+            self.assertTrue(any("clean" in error for error in global_errors), global_errors)
+            untracked.unlink()
             manifest_path.write_text(json.dumps({**manifest, "dirty": True}), encoding="utf-8")
             errors = verifier.verify_publication(root, preflight_path, manifest_path)
             self.assertTrue(any("manifest worktree" in error for error in errors), errors)

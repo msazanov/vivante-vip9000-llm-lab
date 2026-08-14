@@ -5,7 +5,7 @@
   "type": "object",
   "required": [
     "schema", "run_id", "pair_id", "pair_index", "pair_order",
-    "order_index", "build_name", "argv", "environment", "affinity",
+    "order_index", "build_name", "argv", "e049c_argv", "environment", "affinity",
     "exit", "provenance", "artifact_sha256", "target_workload_executed"
   ],
   "properties": {
@@ -19,6 +19,10 @@
     "argv": {
       "type": "array", "minItems": 16, "maxItems": 32,
       "items": {"type": "string", "minLength": 1, "maxLength": 1024}
+    },
+    "e049c_argv": {
+      "type": "array", "minItems": 28, "maxItems": 64,
+      "items": {"type": "string", "minLength": 1, "maxLength": 4096}
     },
     "environment": {
       "type": "object",

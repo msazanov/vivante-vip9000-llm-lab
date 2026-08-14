@@ -132,10 +132,30 @@ def verify_publication(
     return errors
 
 
+def verify_global_publication(
+    root: Path,
+    preflight_path: Path,
+    manifest_path: Path,
+) -> list[str]:
+    """Verify publication bindings plus a globally clean index/worktree."""
+
+    errors = verify_publication(root, preflight_path, manifest_path)
+    status = subprocess.run(
+        ["git", "status", "--porcelain=v2", "--untracked-files=all"],
+        cwd=root, check=False, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if status.returncode != 0:
+        errors.append(f"cannot verify globally clean worktree: {status.stderr.strip()}")
+    elif status.stdout:
+        errors.append("publication requires a globally clean index/worktree")
+    return errors
+
+
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     experiment = root / "experiments/E055-q1-hot-cold/data"
-    errors = verify_publication(
+    errors = verify_global_publication(
         root, experiment / "branch-preflight.json", experiment / "manifest.json"
     )
     print(json.dumps({"schema": "e055-publication-verification/v1",

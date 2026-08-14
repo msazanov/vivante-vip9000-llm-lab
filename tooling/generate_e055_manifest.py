@@ -41,6 +41,7 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage2-bba62cb.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage3-0ed991b.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
+    ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
     ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json",

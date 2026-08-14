@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 from tests.test_e055_raw_bundle import BundleFixture
 from tooling.e055_q1_hotcold import (
@@ -79,7 +80,11 @@ class E055SealedPromotionTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.fixture = BundleFixture(complete_matrix_specs())
         cls.manifest_size = cls.fixture.manifest.stat().st_size
-        cls.result = infer_bottleneck(cls.fixture.manifest)
+        with mock.patch(
+            "tooling.e055_q1_hotcold._require_global_publication_state",
+            return_value=None,
+        ):
+            cls.result = infer_bottleneck(cls.fixture.manifest)
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -110,7 +115,10 @@ class E055SealedPromotionTest(unittest.TestCase):
 
     def test_incomplete_committed_bundle_cannot_reach_promotion(self) -> None:
         with BundleFixture() as fixture:
-            with self.assertRaisesRegex(ValueError, "complete documented"):
+            with mock.patch(
+                "tooling.e055_q1_hotcold._require_global_publication_state",
+                return_value=None,
+            ), self.assertRaisesRegex(ValueError, "complete documented"):
                 infer_bottleneck(fixture.manifest)
 
     def test_four_percent_projected_gain_threshold_is_enforced_on_sealed_phase(self) -> None:
@@ -118,7 +126,11 @@ class E055SealedPromotionTest(unittest.TestCase):
             default_cold_ns=1_040_000, include_adversarial_cell=False,
         )
         with BundleFixture(specs) as fixture:
-            result = infer_bottleneck(fixture.manifest)
+            with mock.patch(
+                "tooling.e055_q1_hotcold._require_global_publication_state",
+                return_value=None,
+            ):
+                result = infer_bottleneck(fixture.manifest)
         self.assertEqual(result["promotion"]["threshold_fraction"], 0.04)
         self.assertAlmostEqual(
             result["promotion"]["projected_q1_gain_fraction"],

@@ -137,7 +137,7 @@ class BundleFixture:
                 "actual_bytes": 64 * 1024 * 1024,
                 "line_bytes": 64,
                 "lines_touched": 1024 * 1024,
-                "checksum": "0xe055c001",
+                "checksum": "0x8d3ea13d15850279",
                 "verified_touched": True,
                 "warmup_calls": 0,
             }
@@ -221,7 +221,7 @@ class BundleFixture:
             "measured_elapsed_ns": elapsed_ns + 1000,
             "thermal": {
                 "guard_enabled": True, "checked": True, "readable": True,
-                "limit_c": 80.0, "max_observed_c": 55.0, "tripped": False,
+                "limit_c": 85.0, "max_observed_c": 55.0, "tripped": False,
             },
             "exit": {"code": 0, "raw_wait_status": 0},
             "failure_reason": None,
@@ -267,6 +267,13 @@ class BundleFixture:
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
             "publication_manifest_sha256": self.publication_manifest_sha256,
         }
+        e049c_argv = [
+            "/tmp/a733-pmu-exec", "-o", e049c_path.relative_to(self.root).as_posix(),
+            "--event-group", spec["pmu_group"],
+            "--min-running-ratio", "0.95", "--start-on-ready",
+            "--sync-timeout-ms", "5000", "--max-temp-c", "85", "--",
+            *argv,
+        ]
         runner = {
             "schema": "e055-runner-capture/v1",
             "run_id": run_id,
@@ -276,6 +283,7 @@ class BundleFixture:
             "order_index": spec["order_index"],
             "build_name": spec["build_name"],
             "argv": argv,
+            "e049c_argv": e049c_argv,
             "environment": {
                 "LC_ALL": "C", "LANG": "C", "E055_BUILD_NAME": spec["build_name"],
             },
@@ -454,7 +462,10 @@ class E055SealedArtifactTest(unittest.TestCase):
 
 class E055RawParserTest(unittest.TestCase):
     def test_canonical_argv_uses_real_harness_options_and_cold_contract(self) -> None:
-        from tooling.e055_raw_bundle import canonical_harness_argv
+        from tooling.e055_raw_bundle import (
+            canonical_e049c_launcher_argv,
+            canonical_harness_argv,
+        )
 
         base = {
             "mode": "full_dotprod", "cache_state": "hot_repeat", "cpu": 6,
@@ -476,6 +487,15 @@ class E055RawParserTest(unittest.TestCase):
         self.assertEqual(cold_argv[cold_argv.index("--iterations") + 1], "1")
         self.assertEqual(cold_argv[cold_argv.index("--budget-ms") + 1], "0")
         self.assertEqual(cold_argv[cold_argv.index("--warmup") + 1], "0")
+        launcher = canonical_e049c_launcher_argv(
+            base, "raw/phase-a/runs/run-a/e049c.json", hot_argv,
+        )
+        self.assertEqual(launcher, (
+            "/tmp/a733-pmu-exec", "-o", "raw/phase-a/runs/run-a/e049c.json",
+            "--event-group", "core", "--min-running-ratio", "0.95",
+            "--start-on-ready", "--sync-timeout-ms", "5000",
+            "--max-temp-c", "85", "--", *hot_argv,
+        ))
 
     def test_valid_sealed_raw_capture_derives_one_immutable_sample(self) -> None:
         with BundleFixture() as fixture:
@@ -494,7 +514,7 @@ class E055RawParserTest(unittest.TestCase):
                  ("stall_backend", "0x24", 102)],
             )
             self.assertEqual(sample.measured_elapsed_ns, 250_001_000)
-            self.assertEqual(sample.thermal_limit_c, 80.0)
+            self.assertEqual(sample.thermal_limit_c, 85.0)
             self.assertEqual(sample.max_temp_c, 55.0)
             published = derived_sample_document(sample)
             self.assertEqual(published["schema"], "e055-derived-sample/v1")
@@ -507,6 +527,14 @@ class E055RawParserTest(unittest.TestCase):
             ).read_text(encoding="utf-8"))
             jsonschema.Draft202012Validator.check_schema(schema)
             jsonschema.validate(published, schema)
+            runner_schema = json.loads((
+                ROOT / "experiments/E055-q1-hot-cold/data/runner-capture.schema.json"
+            ).read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator.check_schema(runner_schema)
+            runner_document = json.loads(
+                fixture.role_path("runner_metadata").read_text(encoding="utf-8")
+            )
+            jsonschema.validate(runner_document, runner_schema)
 
     def test_launcher_floor_does_not_relax_qualification_ratio(self) -> None:
         with BundleFixture() as fixture:
@@ -516,13 +544,219 @@ class E055RawParserTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exactly 1.0"):
                 load_sealed_bundle(fixture.manifest)
 
+    def test_conditioning_is_bound_to_exact_canonical_protocol(self) -> None:
+        hot_mutations = {
+            "hot warmup below canonical 16": lambda raw: raw["cold_conditioning"].update(
+                warmup_calls=1
+            ),
+            "integer sync Boolean": lambda raw: raw["sync"].update(requested=1),
+        }
+        for name, mutate in hot_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_harness_stdout(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+        cold_spec = [{
+            "run_id": "run-cold", "pair_id": "pair-cold", "pair_index": 1,
+            "pair_order": "hot_then_cold", "order_index": 2,
+            "build_name": "O3", "mode": "full_dotprod",
+            "cache_state": "cold_conditioned", "cpu": 6,
+            "target_working_set_bytes": 65536, "pmu_group": "core",
+        }]
+        cold_mutations = {
+            "alternative positive size": lambda raw: raw["cold_conditioning"].update(
+                requested_bytes=65536, actual_bytes=65536, lines_touched=1024
+            ),
+            "alternative nonzero checksum": lambda raw: raw["cold_conditioning"].update(
+                checksum="0xe055c001"
+            ),
+            "floating line count": lambda raw: raw["cold_conditioning"].update(
+                lines_touched=1048576.0
+            ),
+            "Boolean zero warmup": lambda raw: raw["cold_conditioning"].update(
+                warmup_calls=False
+            ),
+        }
+        for name, mutate in cold_mutations.items():
+            with self.subTest(name=name), BundleFixture(cold_spec) as fixture:
+                fixture.mutate_harness_stdout(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+    def test_exact_e049c_launcher_and_thermal_protocol_is_required(self) -> None:
+        runner_mutations = {
+            "missing launcher argv": lambda raw: raw.pop("e049c_argv", None),
+            "wrong sync timeout": lambda raw: raw["e049c_argv"].__setitem__(
+                raw["e049c_argv"].index("5000"), "30000"
+            ),
+            "wrong thermal ceiling": lambda raw: raw["e049c_argv"].__setitem__(
+                raw["e049c_argv"].index("85"), "80"
+            ),
+            "wrong launcher floor": lambda raw: raw["e049c_argv"].__setitem__(
+                raw["e049c_argv"].index("0.95"), "1.0"
+            ),
+        }
+        for name, mutate in runner_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_runner(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+        with BundleFixture() as fixture:
+            fixture.mutate_e049c(lambda raw: raw["thermal"].update(limit_c=84.0))
+            with self.assertRaises(ValueError):
+                load_sealed_bundle(fixture.manifest)
+
+    def test_float_and_integer_boolean_lookalikes_fail_closed(self) -> None:
+        harness_mutations = {
+            "float CPU": lambda raw: raw.update(cpu=6.0),
+            "float target": lambda raw: raw.update(target_working_set_bytes=65536.0),
+            "float actual": lambda raw: raw.update(actual_working_set_bytes=65624.0),
+            "float blocks": lambda raw: raw.update(blocks=316.0),
+            "float logical count": lambda raw: raw["logical_bytes_per_call"].update(
+                q1_packed_bytes=float(raw["logical_bytes_per_call"]["q1_packed_bytes"])
+            ),
+            "integer Boolean sync": lambda raw: raw["sync"].update(ended=1),
+        }
+        for name, mutate in harness_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_harness_stdout(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+        runner_mutations = {
+            "float pair index": lambda raw: raw.update(pair_index=1.0),
+            "float order index": lambda raw: raw.update(order_index=1.0),
+            "float requested CPU": lambda raw: raw["affinity"].update(
+                requested_cpus=[6.0]
+            ),
+            "float effective CPU": lambda raw: raw["affinity"].update(
+                effective_cpus=[6.0]
+            ),
+        }
+        for name, mutate in runner_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_runner(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+        e049c_mutations = {
+            "integer Boolean sync": lambda raw: raw["sync"].update(started=1),
+            "mismatched process group": lambda raw: raw.update(
+                process_group=raw["pid"] + 1
+            ),
+        }
+        for name, mutate in e049c_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_e049c(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+    def test_cpp_working_set_bounds_and_pmu_window_plausibility(self) -> None:
+        maximum_cpp_blocks = (2**31 - 1) // 128
+        oversize_target = maximum_cpp_blocks * 208 + 1
+        spec = [{
+            "run_id": "run-oversize", "pair_id": "pair-oversize", "pair_index": 1,
+            "pair_order": "hot_then_cold", "order_index": 1,
+            "build_name": "O3", "mode": "full_dotprod",
+            "cache_state": "hot_repeat", "cpu": 6,
+            "target_working_set_bytes": oversize_target, "pmu_group": "core",
+        }]
+        with BundleFixture(spec) as fixture:
+            with self.assertRaisesRegex(ValueError, r"C\+\+|working set|native blocks"):
+                load_sealed_bundle(fixture.manifest)
+
+        timing_mutations = {
+            "one nanosecond PMU window": lambda raw: [
+                event.update(time_enabled_ns=1, time_running_ns=1)
+                for event in raw["events"]
+            ],
+        }
+        for name, mutate in timing_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_e049c(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+    def test_valid_cross_clock_and_descheduling_windows_are_not_rejected(self) -> None:
+        valid_mutations = {
+            "perf time exceeds parent measured time": lambda raw: [
+                event.update(
+                    time_enabled_ns=raw["measured_elapsed_ns"] + 100_000_000,
+                    time_running_ns=raw["measured_elapsed_ns"] + 100_000_000,
+                ) for event in raw["events"]
+            ],
+            "parent is scheduler delayed after child timing": lambda raw: raw.update(
+                measured_elapsed_ns=raw["measured_elapsed_ns"] + 10_000_000_000
+            ),
+            "events have distinct valid perf windows": lambda raw: [
+                event.update(
+                    time_enabled_ns=250_000_000 + index * 1_000,
+                    time_running_ns=250_000_000 + index * 1_000,
+                ) for index, event in enumerate(raw["events"])
+            ],
+            "one-sided clock tolerance": lambda raw: (
+                raw.update(measured_elapsed_ns=249_500_000),
+                [event.update(
+                    time_enabled_ns=249_500_000,
+                    time_running_ns=249_500_000,
+                ) for event in raw["events"]],
+            ),
+        }
+        for name, mutate in valid_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_e049c(mutate)
+                bundle = load_sealed_bundle(fixture.manifest)
+                self.assertEqual(len(bundle.samples), 1)
+
+    def test_target_shape_and_checksums_are_canonical_bounded_uint64(self) -> None:
+        noncanonical_spec = [{
+            "run_id": "run-shape", "pair_id": "pair-shape", "pair_index": 1,
+            "pair_order": "hot_then_cold", "order_index": 1,
+            "build_name": "O3", "mode": "full_dotprod",
+            "cache_state": "hot_repeat", "cpu": 6,
+            "target_working_set_bytes": 65537, "pmu_group": "core",
+        }]
+        with BundleFixture(noncanonical_spec) as fixture:
+            with self.assertRaisesRegex(ValueError, "canonical|planned|target"):
+                load_sealed_bundle(fixture.manifest)
+
+        checksum_mutations = {
+            "harness checksum over uint64": lambda raw: raw.update(
+                checksum="0x10000000000000000"
+            ),
+            "conditioning checksum over uint64": lambda raw: raw[
+                "cold_conditioning"
+            ].update(checksum="0x10000000000000000"),
+        }
+        for name, mutate in checksum_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_harness_stdout(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
+        e049c_u64_mutations = {
+            "PMU count over uint64": lambda raw: raw["events"][0].update(
+                value=2**64
+            ),
+            "measured time over uint64": lambda raw: raw.update(
+                measured_elapsed_ns=2**64
+            ),
+        }
+        for name, mutate in e049c_u64_mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_e049c(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
+
     def test_thermal_timing_golden_sync_and_stderr_forgeries_fail_closed(self) -> None:
         mutations = {
             "PMU config": lambda f: f.mutate_e049c(
                 lambda raw: raw["events"][0].update(config="0xff")
             ),
             "thermal": lambda f: f.mutate_e049c(
-                lambda raw: raw["thermal"].update(max_observed_c=81.0)
+                lambda raw: raw["thermal"].update(max_observed_c=86.0)
             ),
             "timing": lambda f: f.mutate_e049c(
                 lambda raw: raw.update(measured_elapsed_ns=999)

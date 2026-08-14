@@ -66,17 +66,16 @@ class E055AArch64Gate(unittest.TestCase):
 
     def test_cold_defaults_to_exactly_one_call(self) -> None:
         result = self.run_harness("--mode", "packed_stream", "--cache-state",
-                                  "cold_conditioned", "--working-set-bytes", "65536",
-                                  "--thrash-bytes", "65536")
+                                  "cold_conditioned", "--working-set-bytes", "65536")
         self.assertEqual(result.returncode, 0, result.stderr)
         data = json.loads(result.stdout)
         self.assertEqual(data["schema"], "e055-q1-hot-cold-harness/v1")
         self.assertEqual((data["iterations"], data["calls"]), (1, 1))
         conditioning = data["cold_conditioning"]
-        self.assertEqual(conditioning["requested_bytes"], 65536)
-        self.assertEqual(conditioning["actual_bytes"], 65536)
-        self.assertEqual(conditioning["lines_touched"] * 64,
-                         conditioning["actual_bytes"])
+        self.assertEqual(conditioning["requested_bytes"], 67_108_864)
+        self.assertEqual(conditioning["actual_bytes"], 67_108_864)
+        self.assertEqual(conditioning["lines_touched"], 1_048_576)
+        self.assertEqual(conditioning["checksum"], "0x8d3ea13d15850279")
 
     def test_hot_default_reports_verified_warmup_conditioning(self) -> None:
         result = self.run_harness("--mode", "packed_stream", "--cache-state",

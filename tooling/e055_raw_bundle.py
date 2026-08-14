@@ -38,6 +38,28 @@ RUN_ROLES = {
 }
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_OID_RE = re.compile(r"^[0-9a-f]{40,64}$")
+UINT64_MAX = (1 << 64) - 1
+NATIVE_CARRIER_BYTES = 208
+MAX_CPP_NATIVE_BLOCKS = ((1 << 31) - 1) // 128
+COLD_THRASH_BYTES = 64 * 1024 * 1024
+CACHE_LINE_BYTES = 64
+COLD_THRASH_LINES = COLD_THRASH_BYTES // CACHE_LINE_BYTES
+COLD_THRASH_CHECKSUM = "0x8d3ea13d15850279"
+HOT_WARMUP_CALLS = 16
+E049C_EXECUTABLE = "/tmp/a733-pmu-exec"
+E049C_SYNC_TIMEOUT_MS = 5000
+E049C_MAX_TEMP_C = 85.0
+E049C_MIN_RUNNING_RATIO = 0.95
+CLOCK_DOMAIN_TOLERANCE_NS = 1_000_000
+CANONICAL_WORKING_SET_BYTES = (
+    64 * 1024,
+    128 * 1024,
+    256 * 1024,
+    512 * 1024,
+    1 * 1024 * 1024,
+    4 * 1024 * 1024,
+    25 * 1024 * 1024 // 2,
+)
 
 
 @dataclass(frozen=True)
@@ -426,6 +448,25 @@ def _positive_int(value: Any, label: str) -> int:
     return value
 
 
+def _positive_u64(value: Any, label: str) -> int:
+    if not _is_int(value) or value <= 0 or value > UINT64_MAX:
+        raise ValueError(f"{label} must be a positive uint64 integer")
+    return value
+
+
+def _nonnegative_u64(value: Any, label: str) -> int:
+    if not _is_int(value) or value < 0 or value > UINT64_MAX:
+        raise ValueError(f"{label} must be a nonnegative uint64 integer")
+    return value
+
+
+def _nonzero_u64_hex(value: Any, label: str) -> str:
+    if not isinstance(value, str) or \
+            re.fullmatch(r"0x[1-9a-f][0-9a-f]{0,15}", value) is None:
+        raise ValueError(f"{label} must be canonical nonzero uint64 hexadecimal")
+    return value
+
+
 def _zero_int(value: Any, label: str) -> int:
     if not _is_int(value) or value != 0:
         raise ValueError(f"{label} must be integer zero")
@@ -510,9 +551,28 @@ def canonical_harness_argv(
     if cell["cache_state"] == "cold_conditioned":
         arguments.extend(("--budget-ms", "0", "--warmup", "0"))
     else:
-        arguments.extend(("--warmup", "16"))
-    arguments.extend(("--thrash-bytes", str(64 * 1024 * 1024), "--sync"))
+        arguments.extend(("--warmup", str(HOT_WARMUP_CALLS)))
+    arguments.extend(("--thrash-bytes", str(COLD_THRASH_BYTES), "--sync"))
     return tuple(arguments)
+
+
+def canonical_e049c_launcher_argv(
+    cell: Mapping[str, Any], output_path: str,
+    harness_argv: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Return the exact E049c wrapper command accepted for E055."""
+
+    if not isinstance(output_path, str) or not output_path:
+        raise ValueError("E049c output path must be a nonempty string")
+    return (
+        E049C_EXECUTABLE, "-o", output_path,
+        "--event-group", str(cell["pmu_group"]),
+        "--min-running-ratio", "0.95",
+        "--start-on-ready",
+        "--sync-timeout-ms", str(E049C_SYNC_TIMEOUT_MS),
+        "--max-temp-c", "85",
+        "--", *harness_argv,
+    )
 
 
 def _validate_qualification(
@@ -569,10 +629,17 @@ def _validate_cell(cell: Any) -> Mapping[str, Any]:
             not _is_int(exact.get("cpu")) or exact.get("cpu") not in (0, 6) or \
             exact.get("pmu_group") not in ("core", "cache", "memory"):
         raise ValueError("run cell mode/cache/CPU/PMU identity is invalid")
-    target = _positive_int(exact.get("target_working_set_bytes"), "target working set")
+    target = _positive_u64(exact.get("target_working_set_bytes"), "target working set")
     blocks = _positive_int(exact.get("blocks"), "native blocks")
     actual = _positive_int(exact.get("actual_working_set_bytes"), "actual working set")
-    if blocks != (target + 207) // 208 or actual != blocks * 208:
+    if target not in CANONICAL_WORKING_SET_BYTES:
+        raise ValueError("target working set is not one canonical planned E055 size")
+    if target > UINT64_MAX - (NATIVE_CARRIER_BYTES - 1):
+        raise ValueError("target working set exceeds the C++ uint64 rounding bound")
+    expected_blocks = (target + NATIVE_CARRIER_BYTES - 1) // NATIVE_CARRIER_BYTES
+    if expected_blocks > MAX_CPP_NATIVE_BLOCKS or blocks > MAX_CPP_NATIVE_BLOCKS:
+        raise ValueError("working set exceeds the C++ native-block allocation bound")
+    if blocks != expected_blocks or actual != blocks * NATIVE_CARRIER_BYTES:
         raise ValueError("run cell does not match the exact 208-byte carrier layout")
     return exact
 
@@ -597,6 +664,15 @@ def _validate_harness(
         "actual_working_set_bytes": cell["actual_working_set_bytes"],
         "blocks": cell["blocks"],
     }
+    for key in ("mode", "cache_state"):
+        if not isinstance(exact.get(key), str):
+            raise ValueError(f"E055 stdout {key} must be a string")
+    numeric_identity = (
+        "cpu", "target_working_set_bytes", "actual_working_set_bytes", "blocks",
+    )
+    for key in numeric_identity:
+        if not _is_int(exact.get(key)):
+            raise ValueError(f"E055 stdout {key} must be an integer, not Boolean/float")
     if any(exact.get(key) != value for key, value in cross.items()):
         raise ValueError("E055 stdout does not match its manifest cell")
     if exact.get("schema") != "e055-q1-hot-cold-harness/v1" or \
@@ -605,10 +681,10 @@ def _validate_harness(
             not _is_int(exact.get("golden_cases")) or \
             exact.get("qualification") != "unqualified_harness_output_requires_E049c_join":
         raise ValueError("E055 stdout lacks the exact build-bound 18-case golden")
-    iterations = _positive_int(exact.get("iterations"), "harness iterations")
-    calls = _positive_int(exact.get("calls"), "harness calls")
-    elapsed = _positive_int(exact.get("elapsed_ns"), "harness elapsed_ns")
-    _positive_int(exact.get("first_call_ns"), "harness first_call_ns")
+    iterations = _positive_u64(exact.get("iterations"), "harness iterations")
+    calls = _positive_u64(exact.get("calls"), "harness calls")
+    elapsed = _positive_u64(exact.get("elapsed_ns"), "harness elapsed_ns")
+    _positive_u64(exact.get("first_call_ns"), "harness first_call_ns")
     if iterations != calls:
         raise ValueError("harness iterations and calls differ")
     if cell["cache_state"] == "cold_conditioned" and calls != 1:
@@ -616,10 +692,7 @@ def _validate_harness(
     rate = _finite_float(exact.get("calls_per_second"), "harness calls_per_second")
     if not math.isclose(rate, calls * 1.0e9 / elapsed, rel_tol=1e-9, abs_tol=1e-9):
         raise ValueError("harness calls_per_second does not match calls/elapsed_ns")
-    checksum = exact.get("checksum")
-    if not isinstance(checksum, str) or re.fullmatch(r"0x[0-9a-f]+", checksum) is None or \
-            int(checksum, 16) == 0:
-        raise ValueError("harness checksum must be nonzero lowercase hexadecimal")
+    checksum = _nonzero_u64_hex(exact.get("checksum"), "harness checksum")
     logical = _exact_keys(
         exact.get("logical_bytes_per_call"),
         {"q1_packed_bytes", "q8_bytes", "total_input_bytes", "output_bytes", "dot_products"},
@@ -633,7 +706,8 @@ def _validate_harness(
         "output_bytes": 16,
         "dot_products": blocks * 512,
     }
-    if dict(logical) != expected_logical:
+    if any(not _is_int(logical.get(key)) for key in expected_logical) or \
+            dict(logical) != expected_logical:
         raise ValueError("harness logical byte/operation counts are inconsistent")
     conditioning = _exact_keys(
         exact.get("cold_conditioning"),
@@ -644,37 +718,44 @@ def _validate_harness(
         "cache conditioning",
     )
     for key in ("requested_bytes", "actual_bytes", "line_bytes", "lines_touched"):
-        _positive_int(conditioning.get(key), f"conditioning {key}")
-    if conditioning.get("verified_touched") is not True or conditioning.get("line_bytes") != 64:
+        _positive_u64(conditioning.get(key), f"conditioning {key}")
+    if not _is_int(conditioning.get("warmup_calls")) or \
+            conditioning.get("warmup_calls") < 0:
+        raise ValueError("conditioning warmup_calls must be a nonnegative integer")
+    if conditioning.get("verified_touched") is not True or \
+            conditioning.get("line_bytes") != CACHE_LINE_BYTES:
         raise ValueError("cache conditioning is not exactly verified at 64-byte lines")
-    condition_checksum = conditioning.get("checksum")
-    if not isinstance(condition_checksum, str) or \
-            re.fullmatch(r"0x[0-9a-f]+", condition_checksum) is None or \
-            int(condition_checksum, 16) == 0:
-        raise ValueError("conditioning checksum is invalid")
+    condition_checksum = _nonzero_u64_hex(
+        conditioning.get("checksum"), "conditioning checksum"
+    )
     if cell["cache_state"] == "hot_repeat":
         if conditioning.get("strategy") != "verified_kernel_warmup" or \
                 not _is_int(conditioning.get("warmup_calls")) or \
-                conditioning["warmup_calls"] <= 0 or \
+                conditioning["warmup_calls"] != HOT_WARMUP_CALLS or \
                 conditioning.get("actual_bytes") != cell["actual_working_set_bytes"] or \
                 conditioning.get("requested_bytes") != cell["actual_working_set_bytes"] or \
-                conditioning.get("lines_touched") != (cell["actual_working_set_bytes"] + 63) // 64:
+                conditioning.get("lines_touched") != \
+                (cell["actual_working_set_bytes"] + CACHE_LINE_BYTES - 1) // CACHE_LINE_BYTES:
             raise ValueError("hot conditioning does not cover the exact working set")
     else:
         if conditioning.get("strategy") != "verified_write_read_each_64B_line" or \
                 conditioning.get("warmup_calls") != 0 or \
-                conditioning.get("requested_bytes") != conditioning.get("actual_bytes") or \
-                conditioning.get("actual_bytes") % 64 != 0 or \
-                conditioning.get("lines_touched") * 64 != conditioning.get("actual_bytes"):
+                conditioning.get("requested_bytes") != COLD_THRASH_BYTES or \
+                conditioning.get("actual_bytes") != COLD_THRASH_BYTES or \
+                conditioning.get("lines_touched") != COLD_THRASH_LINES or \
+                condition_checksum != COLD_THRASH_CHECKSUM:
             raise ValueError("cold conditioning does not cover every requested cache line")
     sync = _exact_keys(
         exact.get("sync"), {"requested", "started", "acknowledged", "ended", "sequence"},
         "harness sync",
     )
-    if sync != {
+    expected_sync = {
         "requested": True, "started": True, "acknowledged": True,
         "ended": True, "sequence": "S/A/E",
-    }:
+    }
+    if any(type(sync.get(key)) is not bool for key in
+           ("requested", "started", "acknowledged", "ended")) or \
+            sync != expected_sync:
         raise ValueError("harness did not complete exact S/ACK/E synchronization")
     return iterations, calls, elapsed, checksum
 
@@ -701,25 +782,32 @@ def _validate_e049c(
             exact.get("event_group") != cell["pmu_group"] or \
             exact.get("failure_reason") is not None:
         raise ValueError("E049c status/source/group/count semantics are invalid")
-    if exact.get("command") != list(argv):
+    if not isinstance(exact.get("command"), list) or \
+            any(not isinstance(item, str) for item in exact["command"]) or \
+            exact.get("command") != list(argv):
         raise ValueError("E049c command does not match exact runner argv")
     if type(exact.get("min_running_ratio")) is not float or \
-            exact.get("min_running_ratio") != 0.95:
+            exact.get("min_running_ratio") != E049C_MIN_RUNNING_RATIO:
         raise ValueError("E049c launcher floor must remain the explicit float 0.95")
     if not _is_int(exact.get("software_group_size_limit")) or \
             exact.get("software_group_size_limit") != 4:
         raise ValueError("E049c software group-size limit is invalid")
     if not _is_int(exact.get("pid")) or exact.get("pid") <= 0 or \
-            not _is_int(exact.get("process_group")) or exact.get("process_group") <= 0:
-        raise ValueError("E049c PID/process group must be positive integers")
+            not _is_int(exact.get("process_group")) or exact.get("process_group") <= 0 or \
+            exact.get("pid") != exact.get("process_group"):
+        raise ValueError("E049c PID must equal its positive integer process group")
     sync = _exact_keys(
         exact.get("sync"), {"mode", "started", "acknowledged", "ended"}, "E049c sync"
     )
-    if sync != {"mode": "start_ack_end", "started": True,
-                "acknowledged": True, "ended": True}:
+    expected_sync = {"mode": "start_ack_end", "started": True,
+                     "acknowledged": True, "ended": True}
+    if any(type(sync.get(key)) is not bool for key in
+           ("started", "acknowledged", "ended")) or sync != expected_sync:
         raise ValueError("E049c did not observe exact S/ACK/E synchronization")
-    measured = _positive_int(exact.get("measured_elapsed_ns"), "E049c measured elapsed")
-    if measured < harness_elapsed_ns:
+    measured = _positive_u64(
+        exact.get("measured_elapsed_ns"), "E049c measured elapsed"
+    )
+    if measured + CLOCK_DOMAIN_TOLERANCE_NS < harness_elapsed_ns:
         raise ValueError("E049c timing window is shorter than raw harness timing")
     thermal = _exact_keys(
         exact.get("thermal"),
@@ -731,7 +819,7 @@ def _validate_e049c(
         raise ValueError("E049c thermal gate did not pass")
     limit = _finite_float(thermal.get("limit_c"), "thermal limit")
     maximum = _finite_float(thermal.get("max_observed_c"), "thermal maximum")
-    if maximum > limit:
+    if limit != E049C_MAX_TEMP_C or maximum > limit:
         raise ValueError("thermal maximum exceeds the configured limit")
     exit_status = _exact_keys(
         exact.get("exit"), {"code", "raw_wait_status"}, "E049c exit"
@@ -765,12 +853,13 @@ def _validate_e049c(
                 item.get("count_semantics") != "event_count_not_bytes" or \
                 item.get("sample_valid") is not True or item.get("error") is not None:
             raise ValueError("E049c event support/count semantics are invalid")
-        if not _is_int(item.get("value")) or item.get("value") < 0:
-            raise ValueError("E049c event value must be a nonnegative integer count")
-        enabled = _positive_int(item.get("time_enabled_ns"), "PMU time_enabled_ns")
-        running = _positive_int(item.get("time_running_ns"), "PMU time_running_ns")
-        if enabled > measured or running != enabled:
-            raise ValueError("PMU enabled/running timing is inconsistent")
+        value = _nonnegative_u64(item.get("value"), "E049c event value")
+        enabled = _positive_u64(item.get("time_enabled_ns"), "PMU time_enabled_ns")
+        running = _positive_u64(item.get("time_running_ns"), "PMU time_running_ns")
+        if running != enabled or enabled + CLOCK_DOMAIN_TOLERANCE_NS < harness_elapsed_ns:
+            raise ValueError(
+                "PMU enabled/running time is shorter than the harness window"
+            )
         ratio = item.get("running_ratio")
         if type(ratio) is not float or not math.isfinite(ratio) or ratio != 1.0:
             raise ValueError("qualified PMU running_ratio must be float exactly 1.0")
@@ -778,7 +867,7 @@ def _validate_e049c(
         qualified_events.append(PmuEventEvidence(
             name=str(name),
             config=str(item["config"]),
-            value=int(item["value"]),
+            value=value,
             time_enabled_ns=enabled,
             time_running_ns=running,
             running_ratio=ratio,
@@ -790,13 +879,15 @@ def _validate_e049c(
 
 def _validate_runner(
     raw: Mapping[str, Any], run: Mapping[str, Any], cell: Mapping[str, Any],
-    argv: tuple[str, ...], provenance: Mapping[str, Any], artifact_map: Mapping[str, SealedArtifact],
+    argv: tuple[str, ...], e049c_argv: tuple[str, ...],
+    provenance: Mapping[str, Any], artifact_map: Mapping[str, SealedArtifact],
 ) -> None:
     exact = _exact_keys(
         raw,
         {
             "schema", "run_id", "pair_id", "pair_index", "pair_order", "order_index",
-            "build_name", "argv", "environment", "affinity", "exit", "provenance",
+            "build_name", "argv", "e049c_argv", "environment", "affinity",
+            "exit", "provenance",
             "artifact_sha256", "target_workload_executed",
         },
         "runner metadata",
@@ -806,8 +897,19 @@ def _validate_runner(
             exact.get("target_workload_executed") is not True or \
             any(exact.get(key) != run.get(key) for key in cross):
         raise ValueError("runner identity does not match the manifest run")
-    if exact.get("argv") != list(argv):
+    for key in ("run_id", "pair_id", "pair_order", "build_name"):
+        if not isinstance(exact.get(key), str):
+            raise ValueError(f"runner {key} must be a string")
+    if not _is_int(exact.get("pair_index")) or not _is_int(exact.get("order_index")):
+        raise ValueError("runner pair/order indexes must be integers, not Boolean/float")
+    if not isinstance(exact.get("argv"), list) or \
+            any(not isinstance(item, str) for item in exact["argv"]) or \
+            exact.get("argv") != list(argv):
         raise ValueError("runner argv is not the exact canonical command")
+    if not isinstance(exact.get("e049c_argv"), list) or \
+            any(not isinstance(item, str) for item in exact["e049c_argv"]) or \
+            exact.get("e049c_argv") != list(e049c_argv):
+        raise ValueError("runner E049c argv is not the exact canonical launcher command")
     environment = _exact_keys(
         exact.get("environment"), {"LC_ALL", "LANG", "E055_BUILD_NAME"},
         "runner non-secret environment",
@@ -820,7 +922,12 @@ def _validate_runner(
         "runner affinity",
     )
     cpu = cell["cpu"]
-    if affinity.get("requested_cpus") != [cpu] or affinity.get("effective_cpus") != [cpu] or \
+    requested = affinity.get("requested_cpus")
+    effective = affinity.get("effective_cpus")
+    if not isinstance(requested, list) or len(requested) != 1 or \
+            not _is_int(requested[0]) or not isinstance(effective, list) or \
+            len(effective) != 1 or not _is_int(effective[0]) or \
+            requested != [cpu] or effective != [cpu] or \
             not all(_is_int(affinity.get(key)) and affinity.get(key) == cpu
                     for key in ("cpu_start", "cpu_end")) or \
             not _is_int(affinity.get("migration_count")) or \
@@ -930,7 +1037,12 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
         runner = _parse_json_object(
             artifact_map["runner_metadata"].payload, "runner metadata"
         )
-        _validate_runner(runner, exact_run, cell, argv, provenance, artifact_map)
+        e049c_argv = canonical_e049c_launcher_argv(
+            cell, artifact_map["e049c_json"].relative_path, argv
+        )
+        _validate_runner(
+            runner, exact_run, cell, argv, e049c_argv, provenance, artifact_map
+        )
         samples.append(DerivedSample(
             run_id=run_id,
             pair_id=exact_run["pair_id"],

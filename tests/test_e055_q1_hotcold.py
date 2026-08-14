@@ -8,6 +8,7 @@ import json
 import pathlib
 import re
 import unittest
+from unittest import mock
 
 import tooling.e055_q1_hotcold as e055
 from tooling.e055_q1_hotcold import (
@@ -232,6 +233,11 @@ class E055Q1HotColdContractTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             actual_working_set((1 << 64) - 207)
 
+    def test_working_set_rejects_shapes_the_cpp_harness_cannot_allocate(self) -> None:
+        maximum_cpp_blocks = (2**31 - 1) // 128
+        with self.assertRaisesRegex(ValueError, r"C\+\+|native blocks"):
+            actual_working_set(maximum_cpp_blocks * 208 + 1)
+
     def test_public_matrix_contains_exact_binary_12_5_mib(self) -> None:
         self.assertEqual(WORKING_SET_BYTES[-1], 13_107_200)
 
@@ -333,6 +339,16 @@ class E055Q1HotColdContractTest(unittest.TestCase):
         }
         with self.assertRaisesRegex(TypeError, "committed raw-bundle manifest"):
             infer_bottleneck(qualified_matrix(adversarial))
+
+    def test_public_promotion_unconditionally_requires_global_publication_state(self) -> None:
+        from tests.test_e055_raw_bundle import BundleFixture
+
+        with BundleFixture() as fixture, mock.patch.object(
+            e055, "_require_global_publication_state",
+            side_effect=ValueError("global publication state rejected"),
+        ) as gate, self.assertRaisesRegex(ValueError, "global publication state rejected"):
+            infer_bottleneck(fixture.manifest)
+        gate.assert_called_once_with()
 
     def test_analyzer_rejects_invalid_pairs_and_incomplete_matrix(self) -> None:
         cases = {}

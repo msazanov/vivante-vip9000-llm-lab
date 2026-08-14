@@ -103,6 +103,15 @@ class E055HarnessContractTest(unittest.TestCase):
         self.assertFalse(stream["additionalProperties"])
         self.assertFalse(runner["additionalProperties"])
 
+    def test_f8acab9_fourth_rereview_rejection_is_preserved(self) -> None:
+        rejection = (
+            ROOT / "experiments/E055-q1-hot-cold/data/"
+            "review-rejection-stage5-f8acab9.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("REJECTED EVIDENCE", rejection)
+        self.assertIn("f8acab9433e4c5549da7caa02a95d93196aa0bd9", rejection)
+        self.assertIn("No Orange Pi workload", rejection)
+
     def test_marker_protocol_uses_fixed_e049c_descriptors(self) -> None:
         self.assertIn("constexpr int kMarkerFd = 9", self.source)
         self.assertIn("constexpr int kAckFd = 8", self.source)

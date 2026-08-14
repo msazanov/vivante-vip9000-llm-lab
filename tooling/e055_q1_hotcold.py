@@ -50,6 +50,7 @@ CPUS = (0, 6)
 MIN_PAIRED_SAMPLES = 5
 PROMOTION_THRESHOLD = 0.04
 MAX_UINT64 = (1 << 64) - 1
+MAX_CPP_NATIVE_BLOCKS = ((1 << 31) - 1) // 128
 UPSTREAM_REPACK_SHA256 = "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
 UPSTREAM_COMMIT = "38c66ad0241da4f9fcce541cda8edc219086cec5"
 UPSTREAM_REF = (
@@ -76,6 +77,22 @@ HARNESS_SOURCE = ROOT / "tooling/e055_q1_hotcold.cpp"
 PMU_SOURCE = ROOT / "tooling/a733_pmu_exec.c"
 
 
+def _require_global_publication_state() -> None:
+    """Require the pushed E055 publication and the entire worktree to be exact."""
+
+    from tooling.verify_e055_publication import verify_global_publication
+
+    errors = verify_global_publication(
+        ROOT,
+        EXPERIMENT_DATA / "branch-preflight.json",
+        PUBLICATION_MANIFEST,
+    )
+    if errors:
+        raise ValueError(
+            "global E055 post-publication verification failed: " + "; ".join(errors)
+        )
+
+
 def actual_working_set(target_bytes: int) -> dict[str, int]:
     """Round a requested set up to complete native Q1/Q8 carrier blocks."""
 
@@ -87,6 +104,10 @@ def actual_working_set(target_bytes: int) -> dict[str, int]:
     if target > MAX_UINT64 - (NATIVE_CARRIER_BYTES - 1):
         raise ValueError("working set rounding would overflow uint64")
     blocks = max(1, (target + NATIVE_CARRIER_BYTES - 1) // NATIVE_CARRIER_BYTES)
+    if blocks > MAX_CPP_NATIVE_BLOCKS:
+        raise ValueError(
+            "working set exceeds the C++ harness native-block allocation bound"
+        )
     return {
         "target_bytes": target,
         "actual_bytes": blocks * NATIVE_CARRIER_BYTES,
@@ -316,6 +337,7 @@ def infer_bottleneck(manifest_path: str | Path) -> dict[str, Any]:
         raise TypeError(
             "E055 promotion requires one committed raw-bundle manifest path"
         )
+    _require_global_publication_state()
     from tooling.e055_raw_bundle import load_sealed_bundle
 
     bundle = load_sealed_bundle(manifest_path)
