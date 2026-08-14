@@ -14,6 +14,7 @@ from pathlib import Path
 from tooling.nsi_calibrate import (
     JsonlTrace,
     NSIError,
+    PINNED_HELPER_SHA256,
     SysfsNSI,
     TimerRestoreFailure,
     classify_unit_hypothesis,
@@ -65,6 +66,12 @@ class FailingRestoreNSI(SysfsNSI):
 
 
 class NsiCalibrationUnitTest(unittest.TestCase):
+    def test_pinned_helper_sha_matches_target_v4_build(self) -> None:
+        self.assertEqual(
+            PINNED_HELPER_SHA256,
+            "0506e6cff3f22816b3b89c7a334b57af6e71945cb3106c561ed46869af5a5d82",
+        )
+
     def test_read_plan_is_exact_aligned_and_rejects_nonfinite_calibration(self) -> None:
         ready = {
             "buffer_bytes": 32 * 1024 * 1024,
