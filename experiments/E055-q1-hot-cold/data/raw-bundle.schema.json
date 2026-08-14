@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-raw-bundle/v1",
+  "title": "E055 Git-sealed raw measurement bundle",
+  "type": "object",
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["role", "path", "sha256", "size_bytes", "git_blob_oid"],
+      "properties": {
+        "role": {
+          "enum": [
+            "harness_executable", "harness_stdout", "harness_stderr",
+            "e049c_json", "e049c_stderr", "runner_metadata"
+          ]
+        },
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$", "maxLength": 4096},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "git_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"}
+      },
+      "additionalProperties": false
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "mode", "cache_state", "cpu", "target_working_set_bytes",
+        "actual_working_set_bytes", "blocks", "pmu_group"
+      ],
+      "properties": {
+        "mode": {"enum": ["packed_stream", "unpack_scale", "full_dotprod"]},
+        "cache_state": {"enum": ["hot_repeat", "cold_conditioned"]},
+        "cpu": {"enum": [0, 6]},
+        "target_working_set_bytes": {"enum": [65536, 131072, 262144, 524288, 1048576, 4194304, 13107200]},
+        "actual_working_set_bytes": {"type": "integer", "minimum": 1},
+        "blocks": {"type": "integer", "minimum": 1},
+        "pmu_group": {"enum": ["core", "cache", "memory"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema", "experiment", "phase_id", "qualification",
+    "build_artifacts", "runs", "target_workload_executed"
+  ],
+  "properties": {
+    "schema": {"const": "e055-raw-bundle/v1"},
+    "experiment": {"const": "E055-Q1-HOT-COLD"},
+    "phase_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "qualification": {
+      "type": "object",
+      "required": [
+        "source_sha256", "compiler_sha256", "compiler_id", "pmu_source_sha256",
+        "upstream_commit", "upstream_ref", "upstream_repack_sha256",
+        "publication_manifest_sha256"
+      ],
+      "properties": {
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "compiler_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "compiler_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "pmu_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "upstream_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "upstream_ref": {"type": "string", "minLength": 1, "maxLength": 512},
+        "upstream_repack_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "publication_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "build_artifacts": {
+      "type": "array", "minItems": 1, "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["build_name", "artifact"],
+        "properties": {
+          "build_name": {"enum": ["O3", "O3-flto"]},
+          "artifact": {"$ref": "#/$defs/artifact"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "runs": {
+      "type": "array", "minItems": 1, "maxItems": 1260,
+      "items": {
+        "type": "object",
+        "required": [
+          "run_id", "pair_id", "pair_index", "pair_order", "order_index",
+          "build_name", "cell", "artifacts"
+        ],
+        "properties": {
+          "run_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+          "pair_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+          "pair_index": {"type": "integer", "minimum": 1, "maximum": 5},
+          "pair_order": {"enum": ["hot_then_cold", "cold_then_hot"]},
+          "order_index": {"enum": [1, 2]},
+          "build_name": {"enum": ["O3", "O3-flto"]},
+          "cell": {"$ref": "#/$defs/cell"},
+          "artifacts": {
+            "type": "object",
+            "required": ["harness_stdout", "harness_stderr", "e049c_json", "e049c_stderr", "runner_metadata"],
+            "properties": {
+              "harness_stdout": {"$ref": "#/$defs/artifact"},
+              "harness_stderr": {"$ref": "#/$defs/artifact"},
+              "e049c_json": {"$ref": "#/$defs/artifact"},
+              "e049c_stderr": {"$ref": "#/$defs/artifact"},
+              "runner_metadata": {"$ref": "#/$defs/artifact"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "target_workload_executed": {"const": true}
+  },
+  "additionalProperties": false
+}

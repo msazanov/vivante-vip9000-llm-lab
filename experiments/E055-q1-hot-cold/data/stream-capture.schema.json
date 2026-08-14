@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-stream-capture/v1",
+  "title": "E055 exact process stream capture",
+  "type": "object",
+  "required": [
+    "schema", "run_id", "producer", "stream", "encoding",
+    "payload_size_bytes", "payload_sha256", "payload_base64"
+  ],
+  "properties": {
+    "schema": {"const": "e055-stream-capture/v1"},
+    "run_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "producer": {"enum": ["e055_harness", "e049c_launcher"]},
+    "stream": {"enum": ["stdout", "stderr"]},
+    "encoding": {"const": "base64"},
+    "payload_size_bytes": {"type": "integer", "minimum": 0, "maximum": 1048576},
+    "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "payload_base64": {"type": "string", "maxLength": 1398104}
+  },
+  "additionalProperties": false
+}

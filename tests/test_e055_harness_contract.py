@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import unittest
 
@@ -76,6 +77,27 @@ class E055HarnessContractTest(unittest.TestCase):
                      "review-rejection-stage3-0ed991b.md").read_text(encoding="utf-8")
         self.assertIn("REJECTED EVIDENCE", rejection)
         self.assertIn("0ed991b1b17c46f46b09ea9ed6731eb585cf60f5", rejection)
+
+    def test_7679828_rejection_and_raw_schemas_are_preserved(self) -> None:
+        data = ROOT / "experiments/E055-q1-hot-cold/data"
+        rejection = (data / "review-rejection-stage4-7679828.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("REJECTED EVIDENCE", rejection)
+        self.assertIn("7679828c8d0891a8d42374279e096b09db87e0f5", rejection)
+        bundle = json.loads((data / "raw-bundle.schema.json").read_text())
+        stream = json.loads((data / "stream-capture.schema.json").read_text())
+        runner = json.loads((data / "runner-capture.schema.json").read_text())
+        self.assertEqual(bundle["properties"]["schema"]["const"],
+                         "e055-raw-bundle/v1")
+        self.assertEqual(bundle["properties"]["runs"]["minItems"], 1)
+        self.assertEqual(stream["properties"]["schema"]["const"],
+                         "e055-stream-capture/v1")
+        self.assertEqual(runner["properties"]["schema"]["const"],
+                         "e055-runner-capture/v1")
+        self.assertFalse(bundle["additionalProperties"])
+        self.assertFalse(stream["additionalProperties"])
+        self.assertFalse(runner["additionalProperties"])
 
     def test_marker_protocol_uses_fixed_e049c_descriptors(self) -> None:
         self.assertIn("constexpr int kMarkerFd = 9", self.source)
