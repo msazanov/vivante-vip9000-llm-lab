@@ -1,0 +1,31 @@
+{
+  "schema": "e049b-output-manifest/v1",
+  "source_experiment": "E048-per-op-trace",
+  "files": [
+    {
+      "path": "data/e049b-summary.json",
+      "sha256": "caebb78d4c54db55c9ea5c2c56bfce7563403989eea800ec67b54ece70199739",
+      "size_bytes": 4934596
+    },
+    {
+      "path": "data/e049b-run-category.csv",
+      "sha256": "e92c3f8c9d9db1d4f56b43efd922712f0e8ed430bea9f6dd3f0af2d913b44c4d",
+      "size_bytes": 843
+    },
+    {
+      "path": "data/e049b-layer-op.csv",
+      "sha256": "ff5901e30e98f8c5d3a9d580f2a889a446f48c02dec1bc782d458d2296019f5e",
+      "size_bytes": 232025
+    },
+    {
+      "path": "charts/e049b-category-latency-stack.png",
+      "sha256": "6806efd7aa767412f450ca32e481157ad59de6e9dbf0dfc9fd1995a5cea871f7",
+      "size_bytes": 88506
+    },
+    {
+      "path": "charts/e049b-top-layer-op-xy.png",
+      "sha256": "2c9512d4d8e41a915b5c0f8cb3f46af449f326bd52b4b0d32fca9f86d44eef6e",
+      "size_bytes": 80250
+    }
+  ]
+}

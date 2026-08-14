@@ -1,0 +1,6 @@
+# E049b post-processing is host-only. It uses the five accepted E048 trace-on
+# artifacts; no Orange Pi workload is started.
+MPLCONFIGDIR=/tmp/e049b-mpl python3 tooling/e049b_trace_analysis.py --repo-root .
+
+# TDD unit tests for interval semantics, fused events, categories and stats.
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_e049b_trace_analysis.py' -v
