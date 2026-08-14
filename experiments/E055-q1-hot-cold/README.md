@@ -230,9 +230,18 @@ qualification field changes.
 
 `tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
 and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks
-regular-file and single-link invariants, and closes all descriptors on success
-or partial failure. It contains no process, remote-login, harness, or board
-execution path. Actual capture remains disabled until independent acceptance.
+regular-file and single-link invariants, records the original device/inode and
+role size bound, and closes all descriptors on success or partial failure.
+`populate_reserved()` reopens one original inode without following links,
+takes a nonblocking exclusive lock, requires a zero-length placeholder, writes
+and synchronizes one bounded nonempty payload, and refuses a second population
+or a replaced inode. A producer such as E049c that creates its own output with
+`O_EXCL` must not receive a placeholder path directly; a future runner must
+capture its output separately and populate the reserved role through this
+primitive. The CLI reservation report contains paths only and is not a
+standalone population token. The scaffold contains no process, remote-login,
+harness, or board execution path. Actual capture remains disabled until an
+accepted runner composes these primitives.
 
 ## Reproduction of revised Stage 1
 

@@ -8,6 +8,7 @@ from unittest import mock
 import tempfile
 import unittest
 
+import tooling.e055_capture_scaffold as capture_scaffold
 from tooling.e055_capture_scaffold import RunPlan, reserve_phase, safe_environment
 
 
@@ -95,6 +96,37 @@ class E055CaptureScaffoldTest(unittest.TestCase):
         self.assertNotIn("subprocess", text)
         self.assertNotIn("ssh", text.lower())
         self.assertNotIn("password", text.lower())
+
+    def test_reserved_outputs_are_populated_once_through_inode_bound_handle(self) -> None:
+        populate = getattr(capture_scaffold, "populate_reserved", None)
+        self.assertTrue(
+            callable(populate),
+            "O_EXCL placeholders need an inode-bound one-shot population primitive",
+        )
+        reservations = reserve_phase(self.phase, self.plans)
+        reservation = next(
+            item for item in reservations
+            if getattr(item, "path", None) == self.phase / "bundle.json"
+        )
+        payload = b'{"schema":"e055-raw-bundle/v1"}\n'
+        result = populate(reservation, payload)
+        self.assertEqual((self.phase / "bundle.json").read_bytes(), payload)
+        self.assertEqual(result.size_bytes, len(payload))
+        with self.assertRaisesRegex(FileExistsError, "already populated"):
+            populate(reservation, payload)
+
+    def test_population_rejects_replaced_placeholder_inode(self) -> None:
+        populate = getattr(capture_scaffold, "populate_reserved", None)
+        self.assertTrue(callable(populate))
+        reservations = reserve_phase(self.phase, self.plans)
+        reservation = next(
+            item for item in reservations
+            if getattr(item, "path", None) == self.phase / "bundle.json"
+        )
+        reservation.path.unlink()
+        reservation.path.write_bytes(b"")
+        with self.assertRaisesRegex(OSError, "identity"):
+            populate(reservation, b"replacement must fail\n")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -25,12 +27,49 @@ RUN_FILENAMES = (
     "e049c.stderr.capture.json",
     "runner.json",
 )
+MAX_BUNDLE_BYTES = 16 * 1024 * 1024
+MAX_EXECUTABLE_BYTES = 32 * 1024 * 1024
+RUN_FILE_LIMITS = {
+    "harness.stdout.capture.json": 256 * 1024,
+    "harness.stderr.capture.json": 1024 * 1024,
+    "e049c.json": 256 * 1024,
+    "e049c.stderr.capture.json": 1024 * 1024,
+    "runner.json": 256 * 1024,
+}
 
 
 @dataclass(frozen=True)
 class RunPlan:
     run_id: str
     build_name: str
+
+
+@dataclass(frozen=True)
+class ReservedOutput:
+    """One exclusive empty placeholder bound to its original inode."""
+
+    path: Path
+    device: int
+    inode: int
+    maximum_size_bytes: int
+
+    def is_file(self) -> bool:
+        return self.path.is_file()
+
+    def stat(self) -> os.stat_result:
+        return self.path.stat()
+
+    def as_posix(self) -> str:
+        return self.path.as_posix()
+
+
+@dataclass(frozen=True)
+class PopulationResult:
+    """Observable result of one completed placeholder population."""
+
+    path: Path
+    size_bytes: int
+    sha256: str
 
 
 def safe_environment(build_name: str) -> dict[str, str]:
@@ -56,7 +95,7 @@ def _validate_plans(planned_runs: Sequence[RunPlan]) -> tuple[RunPlan, ...]:
     return plans
 
 
-def _reserve(path: Path) -> int:
+def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
     flags = (
         os.O_WRONLY | os.O_CREAT | os.O_EXCL
         | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
@@ -66,12 +105,65 @@ def _reserve(path: Path) -> int:
     if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
         os.close(descriptor)
         raise OSError(f"reserved path is not one regular file: {path}")
-    return descriptor
+    return descriptor, ReservedOutput(
+        path=path,
+        device=status.st_dev,
+        inode=status.st_ino,
+        maximum_size_bytes=maximum_size_bytes,
+    )
+
+
+def populate_reserved(reservation: ReservedOutput, payload: bytes) -> PopulationResult:
+    """Populate one original placeholder exactly once without following links.
+
+    Producers that insist on creating their own output with ``O_EXCL`` cannot
+    receive the placeholder path directly. A future runner must capture such
+    output separately and pass the exact resulting bytes through this function.
+    """
+
+    if not isinstance(reservation, ReservedOutput):
+        raise TypeError("reservation must be an E055 ReservedOutput")
+    if not isinstance(payload, bytes) or not payload or \
+            len(payload) > reservation.maximum_size_bytes:
+        raise ValueError("population payload must be nonempty and within its role bound")
+    flags = os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+    descriptor = os.open(reservation.path, flags)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        before = os.fstat(descriptor)
+        identity = (reservation.device, reservation.inode)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or \
+                (before.st_dev, before.st_ino) != identity:
+            raise OSError("reserved output identity changed before population")
+        if before.st_size != 0:
+            raise FileExistsError("reserved output is already populated")
+        remaining = memoryview(payload)
+        while remaining:
+            written = os.write(descriptor, remaining)
+            if written <= 0:
+                raise OSError("reserved output population made no progress")
+            remaining = remaining[written:]
+        os.fsync(descriptor)
+        after = os.fstat(descriptor)
+        if (after.st_dev, after.st_ino) != identity or \
+                after.st_size != len(payload) or after.st_nlink != 1:
+            raise OSError("reserved output identity or size changed during population")
+        path_status = reservation.path.lstat()
+        if (path_status.st_dev, path_status.st_ino) != identity or \
+                not stat.S_ISREG(path_status.st_mode) or path_status.st_nlink != 1:
+            raise OSError("reserved output identity changed after population")
+    finally:
+        os.close(descriptor)
+    return PopulationResult(
+        path=reservation.path,
+        size_bytes=len(payload),
+        sha256=hashlib.sha256(payload).hexdigest(),
+    )
 
 
 def reserve_phase(
     phase_dir: Path, planned_runs: Sequence[RunPlan],
-) -> tuple[Path, ...]:
+) -> tuple[ReservedOutput, ...]:
     """Exclusively reserve every raw role without starting any measurement."""
 
     plans = _validate_plans(planned_runs)
@@ -89,22 +181,27 @@ def reserve_phase(
     os.mkdir(artifact_dir, 0o700)
     os.mkdir(runs_dir, 0o700)
 
-    paths: list[Path] = [phase / "bundle.json"]
+    outputs: list[tuple[Path, int]] = [(phase / "bundle.json", MAX_BUNDLE_BYTES)]
     for build_name in sorted({plan.build_name for plan in plans}):
-        paths.append(artifact_dir / f"harness-{build_name}.bin")
+        outputs.append((
+            artifact_dir / f"harness-{build_name}.bin", MAX_EXECUTABLE_BYTES,
+        ))
     for plan in plans:
         run_dir = runs_dir / plan.run_id
         os.mkdir(run_dir, 0o700)
-        paths.extend(run_dir / name for name in RUN_FILENAMES)
+        outputs.extend((run_dir / name, RUN_FILE_LIMITS[name]) for name in RUN_FILENAMES)
 
     descriptors: list[int] = []
+    reservations: list[ReservedOutput] = []
     try:
-        for path in paths:
-            descriptors.append(_reserve(path))
+        for path, maximum_size_bytes in outputs:
+            descriptor, reservation = _reserve(path, maximum_size_bytes)
+            descriptors.append(descriptor)
+            reservations.append(reservation)
     finally:
         for descriptor in descriptors:
             os.close(descriptor)
-    return tuple(paths)
+    return tuple(reservations)
 
 
 def main() -> int:
@@ -116,11 +213,11 @@ def main() -> int:
     if not isinstance(raw, list):
         raise ValueError("plan JSON must be a list")
     plans = tuple(RunPlan(**item) for item in raw)
-    paths = reserve_phase(arguments.phase_dir, plans)
+    reservations = reserve_phase(arguments.phase_dir, plans)
     print(json.dumps({
         "schema": "e055-capture-reservation/v1",
         "target_workload_executed": False,
-        "reserved_paths": [path.as_posix() for path in paths],
+        "reserved_paths": [item.path.as_posix() for item in reservations],
     }, sort_keys=True, separators=(",", ":")))
     return 0
 

@@ -126,10 +126,16 @@ penalties, and 4% promotion threshold operate only on those private rows.
 Stage 1 adds a capture-reservation scaffold, not a board executor. It creates a
 new phase directory and every planned output with
 `O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC`, checks regular-file/link-count
-invariants, and refuses existing paths or symlinks before any workload could
-start. It emits only fixed schemas, canonical paths, and the minimal safe
-environment. Actual command execution remains disabled until independent
-acceptance.
+invariants, records each original device/inode and role size bound, and refuses
+existing paths or symlinks before any workload could start. Its one-shot
+population primitive verifies the original inode under an exclusive lock,
+requires an empty placeholder, writes and synchronizes one bounded payload,
+and then refuses reuse. A child producer that independently opens output with
+`O_EXCL` cannot use the already-reserved path; a future runner must capture
+those bytes separately before populating the reservation. The path-only CLI
+report is not a transferable inode token. The scaffold emits only fixed
+schemas, canonical paths, and the minimal safe environment. Actual command
+execution remains disabled until an accepted runner composes these primitives.
 
 ## Tests and acceptance
 

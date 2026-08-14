@@ -21,6 +21,102 @@ def git(root: pathlib.Path, *args: str) -> str:
 
 
 class E055PublicationBindingTest(unittest.TestCase):
+    def test_raw_phase_stays_in_tree_binding_through_commit_and_push(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="e055-raw-publication-") as raw:
+            workspace = pathlib.Path(raw)
+            root = workspace / "work"
+            remote = workspace / "remote.git"
+            remote.mkdir()
+            git(remote, "init", "--bare", "-q")
+            root.mkdir()
+            git(root, "init", "-q", "-b", "codex/e055-q1-hot-cold")
+            git(root, "config", "user.name", "E055 Test")
+            git(root, "config", "user.email", "e055@example.invalid")
+            git(root, "remote", "add", "origin", str(remote))
+            (root / "base.txt").write_text("base\n", encoding="utf-8")
+            git(root, "add", "base.txt")
+            git(root, "commit", "-q", "-m", "base")
+            git(root, "push", "-q", "-u", "origin", "codex/e055-q1-hot-cold")
+            base = git(root, "rev-parse", "HEAD")
+
+            data = root / "experiments/E055-q1-hot-cold/data"
+            phase = root / "experiments/E055-q1-hot-cold/raw/phase-a"
+            data.mkdir(parents=True)
+            phase.mkdir(parents=True)
+            raw_artifact = phase / "capture.bin"
+            raw_bundle = phase / "bundle.json"
+            raw_artifact.write_bytes(b"immutable raw capture\n")
+            raw_bundle.write_text('{"schema":"fixture"}\n', encoding="utf-8")
+            git(root, "add", str(phase.relative_to(root)))
+
+            excludes = [
+                "experiments/E055-q1-hot-cold/data/branch-preflight.json",
+                "experiments/E055-q1-hot-cold/data/manifest.json",
+            ]
+            self.assertNotIn(raw_artifact.relative_to(root).as_posix(), excludes)
+            binding = tree_binding_sha256(root, excludes, source="index")
+            preflight = {
+                "active_worktree": {
+                    "base_commit": base,
+                    "ref": "refs/heads/codex/e055-q1-hot-cold",
+                    "upstream_ref": (
+                        "refs/remotes/origin/codex/e055-q1-hot-cold"
+                    ),
+                    "tree_binding_source": "git-index-stage0",
+                    "tree_binding_sha256": binding,
+                    "binding_excludes": excludes,
+                }
+            }
+            artifact_relative = raw_artifact.relative_to(root).as_posix()
+            bundle_relative = raw_bundle.relative_to(root).as_posix()
+            manifest = {
+                "schema": "e055-q1-hot-cold-manifest/v2",
+                "publication_binding": {
+                    "mode": "e047-staged-index-plus-post-commit-ref-verification",
+                    "preflight_base_commit": base,
+                    "staged_tree_binding_sha256": binding,
+                    "active_ref": "refs/heads/codex/e055-q1-hot-cold",
+                    "upstream_ref": (
+                        "refs/remotes/origin/codex/e055-q1-hot-cold"
+                    ),
+                    "binding_excludes": excludes,
+                },
+                "files": [
+                    {
+                        "path": relative,
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                        "size_bytes": path.stat().st_size,
+                    }
+                    for relative, path in (
+                        (artifact_relative, raw_artifact),
+                        (bundle_relative, raw_bundle),
+                    )
+                ],
+            }
+            preflight_path = data / "branch-preflight.json"
+            manifest_path = data / "manifest.json"
+            preflight_path.write_text(json.dumps(preflight), encoding="utf-8")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            git(root, "add", str(data.relative_to(root)))
+            git(root, "commit", "-q", "-m", "publish raw phase")
+            git(root, "push", "-q")
+
+            self.assertEqual(
+                verifier.verify_global_publication(
+                    root, preflight_path, manifest_path
+                ),
+                [],
+            )
+            self.assertEqual(
+                binding,
+                tree_binding_sha256(root, excludes, source="HEAD"),
+            )
+            raw_artifact.write_bytes(b"post-publication mutation\n")
+            errors = verifier.verify_global_publication(
+                root, preflight_path, manifest_path
+            )
+            self.assertTrue(any("mismatch" in item or "clean" in item for item in errors))
+
     def test_publication_includes_every_sealed_bundle_component_and_binary(self) -> None:
         relative = {
             path.relative_to(generator.ROOT).as_posix() for path in generator.PUBLISHED
