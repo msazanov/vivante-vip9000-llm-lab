@@ -7,9 +7,9 @@
 #include <unistd.h>
 
 // E049d measurement gate. When LLAMA_E049D_STEADY_PMU is absent this object
-// performs no I/O. In enabled mode it skips the first single-token graph,
-// emits S and waits for A before the next graph, then emits E after exactly
-// three successful measured graphs. The fixed descriptors match a733_pmu_exec.
+// performs no I/O. In enabled mode it emits S and waits for A before the first
+// single-token graph, then emits E after exactly three successful single-token
+// graphs. The fixed descriptors match a733_pmu_exec.
 class e049d_steady_pmu {
 public:
     e049d_steady_pmu() {
@@ -20,10 +20,6 @@ public:
     bool before_graph(uint32_t n_tokens, bool & measured) {
         measured = false;
         if (!enabled_ || n_tokens != 1 || measured_count_ >= measured_limit_) {
-            return true;
-        }
-        if (!skipped_first_single_) {
-            skipped_first_single_ = true;
             return true;
         }
         if (measured_count_ == 0 && (!write_marker('S') || !wait_for_ack())) {
@@ -64,6 +60,5 @@ private:
     }
 
     bool enabled_ = false;
-    bool skipped_first_single_ = false;
     uint32_t measured_count_ = 0;
 };

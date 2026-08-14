@@ -1,0 +1,28 @@
+warning: no usable GPU found, --gpu-layers option will be ignored
+warning: one possible reason is that llama.cpp was compiled without GPU support
+warning: consult docs/build.md for compilation instructions
+0.00.012.234 I llama_completion: llama backend init
+0.00.012.268 I llama_completion: load the model and apply lora adapter, if any
+0.22.997.666 W llama_context: n_ctx_seq (512) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+0.23.145.096 I common_init_from_params: warming up the model with an empty run - please wait ... (--no-warmup to disable)
+0.24.760.997 I llama_completion: llama threadpool init, n_threads = 8
+0.24.761.044 I 
+0.24.761.191 I system_info: n_threads = 8 (n_threads_batch = 8) / 8 | CPU : NEON = 1 | ARM_FMA = 1 | DOTPROD = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 | 
+0.24.761.192 I 
+0.24.761.415 I sampler seed: 123
+0.24.761.435 I sampler params: 
+	repeat_last_n = 0, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = -1
+	top_k = 0, top_p = 1.000, min_p = 0.000, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.24.761.446 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> ?top-k -> ?typical -> ?top-p -> ?min-p -> ?xtc -> temp-ext -> dist 
+0.24.761.448 I generate: n_ctx = 512, n_batch = 512, n_predict = 4, n_keep = 0
+0.24.761.448 I 
+0.34.581.840 I common_perf_print:    sampling time =      16.06 ms
+0.34.581.843 I common_perf_print:    samplers time =      12.05 ms /    18 tokens
+0.34.581.852 I common_perf_print:        load time =   24434.39 ms
+0.34.581.854 I common_perf_print: prompt eval time =    6311.46 ms /    14 tokens (  450.82 ms per token,     2.22 tokens per second)
+0.34.581.870 I common_perf_print:        eval time =    3492.07 ms /     3 runs   ( 1164.02 ms per token,     0.86 tokens per second)
+0.34.581.872 I common_perf_print:       total time =    9820.86 ms /    17 tokens
+0.34.581.873 I common_perf_print: unaccounted time =       1.27 ms /   0.0 %      (total - sampling - prompt eval - eval) / (total)
+0.34.581.874 I common_perf_print:    graphs reused =          2

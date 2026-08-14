@@ -1,0 +1,15 @@
+captured_utc=2026-08-14T04:07:48Z
+/sys/devices/system/cpu/cpufreq/policy0 governor=ondemand
+/sys/devices/system/cpu/cpufreq/policy0 current_khz=780000
+/sys/devices/system/cpu/cpufreq/policy0 max_khz=1794000
+/sys/devices/system/cpu/cpufreq/policy6 governor=ondemand
+/sys/devices/system/cpu/cpufreq/policy6 current_khz=416000
+/sys/devices/system/cpu/cpufreq/policy6 max_khz=2002000
+/sys/class/thermal/thermal_zone0 cpub_thermal_zone 35898 
+/sys/class/thermal/thermal_zone1 ddr_thermal_zone 35526 
+/sys/class/thermal/thermal_zone2 npu_thermal_zone 36704 
+/sys/class/thermal/thermal_zone3 cpul_thermal_zone 37944 
+/sys/class/thermal/thermal_zone4 gpu_thermal_zone 37014 
+/sys/class/thermal/thermal_zone5 cpul_idle_zone 35898 
+/sys/class/thermal/thermal_zone6 cpub_idle_zone 37944 
+/sys/class/thermal/thermal_zone7 skin_zone 31588 

@@ -1,0 +1,175 @@
+{
+  "schema_version": "e049d-steady-pmu/v2",
+  "status": "accepted",
+  "optimization_claim": false,
+  "measured_tokens_per_sample": 3,
+  "sample_count": 15,
+  "all_samples_valid": true,
+  "stock_token_capture_sha256": "12aa19bdb7d3920cc33ffc097ea685539ca85aff060ecdb2f3b2c1cf0af718b5",
+  "generated_token_ids": [
+    271,
+    248068,
+    198,
+    8160
+  ],
+  "overall": {
+    "median_elapsed_ns_for_3_tokens": 2685805021,
+    "median_seconds_per_token": 0.8952683403333334,
+    "median_steady_tokens_per_s": 1.1169835399604013,
+    "min_steady_tokens_per_s": 0.8566977676503397,
+    "max_steady_tokens_per_s": 1.165073096190899,
+    "max_observed_temp_c": 69.856
+  },
+  "groups": {
+    "core": {
+      "valid_repeats": 5,
+      "elapsed_ns": [
+        2610772525,
+        3491946852,
+        2574945735,
+        3108926081,
+        3362212859
+      ],
+      "median_elapsed_ns_for_3_tokens": 3108926081,
+      "median_seconds_per_token": 1.0363086936666666,
+      "median_steady_tokens_per_s": 0.9649634381255654,
+      "max_observed_temp_c": 67.083,
+      "events": {
+        "cpu_cycles": {
+          "raw_counts": [
+            37608829917,
+            46779914804,
+            37182450087,
+            42821591695,
+            45188707245
+          ],
+          "median_raw_count": 42821591695,
+          "median_event_count_per_token": 14273863898.333334,
+          "semantics": "event count; not bytes"
+        },
+        "instructions": {
+          "raw_counts": [
+            45488694360,
+            59220169263,
+            44974154950,
+            53307699279,
+            57522049227
+          ],
+          "median_raw_count": 53307699279,
+          "median_event_count_per_token": 17769233093.0,
+          "semantics": "event count; not bytes"
+        },
+        "stall_backend": {
+          "raw_counts": [
+            11133983170,
+            13117281137,
+            10922378054,
+            12236783077,
+            12691068117
+          ],
+          "median_raw_count": 12236783077,
+          "median_event_count_per_token": 4078927692.3333335,
+          "semantics": "event count; not bytes"
+        }
+      }
+    },
+    "cache": {
+      "valid_repeats": 5,
+      "elapsed_ns": [
+        2584422151,
+        3477770352,
+        2588466234,
+        3474848645,
+        2591120567
+      ],
+      "median_elapsed_ns_for_3_tokens": 2591120567,
+      "median_seconds_per_token": 0.8637068556666666,
+      "median_steady_tokens_per_s": 1.1578002344651221,
+      "max_observed_temp_c": 68.853,
+      "events": {
+        "l1d_cache_refill": {
+          "raw_counts": [
+            83740191,
+            90451466,
+            89612487,
+            84095626,
+            88185555
+          ],
+          "median_raw_count": 88185555,
+          "median_event_count_per_token": 29395185.0,
+          "semantics": "event count; not bytes"
+        },
+        "l2d_cache_refill": {
+          "raw_counts": [
+            140094397,
+            148682957,
+            139778409,
+            148135883,
+            140278636
+          ],
+          "median_raw_count": 140278636,
+          "median_event_count_per_token": 46759545.333333336,
+          "semantics": "event count; not bytes"
+        },
+        "l3d_cache_refill": {
+          "raw_counts": [
+            127017875,
+            119866836,
+            125164978,
+            122322290,
+            122991823
+          ],
+          "median_raw_count": 122991823,
+          "median_event_count_per_token": 40997274.333333336,
+          "semantics": "event count; not bytes"
+        }
+      }
+    },
+    "memory": {
+      "valid_repeats": 5,
+      "elapsed_ns": [
+        2685805021,
+        3501818393,
+        2617841857,
+        3469653395,
+        2580269610
+      ],
+      "median_elapsed_ns_for_3_tokens": 2685805021,
+      "median_seconds_per_token": 0.8952683403333334,
+      "median_steady_tokens_per_s": 1.1169835399604013,
+      "max_observed_temp_c": 69.856,
+      "events": {
+        "mem_access": {
+          "raw_counts": [
+            25178404921,
+            27400998192,
+            24921476244,
+            27312131129,
+            24899097694
+          ],
+          "median_raw_count": 25178404921,
+          "median_event_count_per_token": 8392801640.333333,
+          "semantics": "event count; not bytes"
+        },
+        "bus_access": {
+          "raw_counts": [
+            1800905662,
+            1817399986,
+            1797176605,
+            1810650721,
+            1792667199
+          ],
+          "median_raw_count": 1800905662,
+          "median_event_count_per_token": 600301887.3333334,
+          "semantics": "event count; not bytes"
+        }
+      }
+    }
+  },
+  "counter_semantics": "ARM PMU event counts only; never DDR bytes",
+  "derived_core_ratios": {
+    "median_instructions_per_cycle": 1.244878977378704,
+    "median_stall_backend_events_per_cycle": 0.2857619857794499,
+    "warning": "ratio of separately reduced event medians; not a DDR bandwidth measure"
+  }
+}

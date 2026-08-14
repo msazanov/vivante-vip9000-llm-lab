@@ -1,0 +1,25 @@
+{
+  "schema_version": "e049c-arm-pmu/v2",
+  "status": "ok",
+  "sample_valid": true,
+  "event_source": "armv8_pmuv3_raw_config",
+  "counter_semantics": "event counts only; no DDR-byte conversion",
+  "event_group": "cache",
+  "software_group_size_limit": 4,
+  "event_group_size": 3,
+  "software_group_size_limit_semantics": "conservative launcher policy; not measured hardware PMU capacity",
+  "min_running_ratio": 0.950000,
+  "pid": 208934,
+  "process_group": 208934,
+  "command": ["env", "LLAMA_E049D_STEADY_PMU=1", "E048_TOKEN_IDS_PATH=/home/orangepi/vip9000-lab/results/e049d-v2-20260814/series/cache-r3/token-ids.jsonl", "LD_PRELOAD=/home/orangepi/vip9000-lab/e048-token-capture.so", "taskset", "-c", "0-7", "/home/orangepi/vip9000-lab/build/e049d-steady-pmu-a733/bin/llama-completion", "-m", "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf", "-p", "Explain the A733 memory bottleneck in one short sentence.", "-c", "512", "-b", "512", "-ub", "512", "-n", "4", "--temp", "0", "--seed", "123", "--top-k", "0", "--top-p", "1", "--min-p", "0", "--repeat-penalty", "1", "--repeat-last-n", "0", "-t", "8", "-tb", "8", "-C", "0xff", "--cpu-strict", "0", "--poll", "50", "-fa", "on", "-nkvo", "-ngl", "0", "-ctk", "f16", "-ctv", "f16", "--fit", "off", "--device", "none", "--mmap", "--perf", "--no-conversation", "--no-display-prompt", "--simple-io"],
+  "sync": {"mode": "start_ack_end", "started": true, "acknowledged": true, "ended": true},
+  "measured_elapsed_ns": 2588466234,
+  "thermal": {"guard_enabled": true, "checked": true, "readable": true, "limit_c": 85.000, "max_observed_c": 68.263, "tripped": false},
+  "exit": {"code": 0, "raw_wait_status": 0},
+  "failure_reason": null,
+  "events": [
+    {"name": "l1d_cache_refill", "config": "0x3", "meaning": "ARMv8 PMUv3 L1D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 89612487, "time_enabled_ns": 20375406185, "time_running_ns": 20375406185, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "l2d_cache_refill", "config": "0x17", "meaning": "ARMv8 PMUv3 L2D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 139778409, "time_enabled_ns": 20375406185, "time_running_ns": 20375406185, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "l3d_cache_refill", "config": "0x2a", "meaning": "ARMv8 PMUv3 L3D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 125164978, "time_enabled_ns": 20375406185, "time_running_ns": 20375406185, "running_ratio": 1.000000000, "errno": 0, "error": null}
+  ]
+}

@@ -1,0 +1,32 @@
+captured_utc=2026-08-14T04:19:57Z
+Linux orangepizero3w 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr  7 04:26:52 UTC 2026 aarch64 GNU/Linux
+uid=1000(orangepi) gid=1000(orangepi)
+perf_event_paranoid=2
+baseline_commit=38c66ad0241da4f9fcce541cda8edc219086cec5
+17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0  /home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf
+7e40075c79990c2ba58bf4f4e5f692efdcd283504e3ea83a653324ddf4eea2b2  /home/orangepi/vip9000-lab/e048-token-capture.so
+891eb1b5d34797774762e3b5198b58322c92ee59203412ec5e7667c4cc2acb18  /home/orangepi/vip9000-lab/build/cpu-38c66-native-git/bin/llama-completion
+4515143ac8d5e9fdc762f938c2ead493cbe1d2377f1f5cf82ac37eaf56b8fbf8  /home/orangepi/vip9000-lab/build/e049d-steady-pmu-a733/bin/llama-completion
+445687b6791a70a28dd7cff7dc73cda6254b29447a31c90d11ca18b4e71b3443  /home/orangepi/vip9000-lab/build/e049d-steady-pmu-a733/bin/libllama.so
+ee2b157f9fdb8a3de608feec7d08882aa809ae590dd66b0441175f23e77a2c6d  /home/orangepi/vip9000-lab/src/e049d-steady-pmu-38c66/src/e049d-steady-pmu.h
+a4c1be74a10fc213d0bec5f68b199a8e7b57d28da9952ecb36af3d2efeb7b534  /tmp/e049d-steady-pmu-20260814/a733-pmu-exec
+e3326e46a00f4e8ead906625dd710d448d60d03d267957c2844fb771ba495e5c  /tmp/e049d-v2-run-one.sh
+c9ba706ffd9333d4dae1de7bdee08890cc664efb9b3abefa2a84781c5c15abd6  /tmp/e049d-v2-series.sh
+CMAKE_BUILD_TYPE:STRING=Release
+GGML_CPU_ARM_ARCH:STRING=armv8.2-a+dotprod
+GGML_CPU_REPACK:BOOL=ON
+GGML_NATIVE:BOOL=OFF
+GGML_OPENMP:BOOL=ON
+LLAMA_BUILD_EXAMPLES:BOOL=ON
+LLAMA_BUILD_SERVER:BOOL=OFF
+LLAMA_BUILD_TESTS:BOOL=OFF
+state_before=raw/series/state-before.txt
+state_after=raw/series/state-after.txt
+governors_before=policy0:ondemand,policy6:ondemand
+governors_after=policy0:ondemand,policy6:ondemand
+thermal_limit_c=85
+series_max_observed_c=69.856
+series_runs=15
+series_valid_runs=15
+model_payload_committed=false
+proprietary_payload_committed=false

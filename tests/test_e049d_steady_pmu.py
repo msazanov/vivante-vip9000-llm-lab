@@ -28,11 +28,20 @@ int main() {
             return 4;
         }
     }
-    const uint32_t token_counts[] = { 4, 1, 1, 1, 1, 1 };
+    const char * singles_value = std::getenv("E049D_TEST_SINGLE_COUNT");
+    const uint32_t singles = singles_value == nullptr ? 3U : static_cast<uint32_t>(std::strtoul(singles_value, nullptr, 10));
     e049d_steady_pmu gate;
-    for (uint32_t n_tokens : token_counts) {
+    bool measured = false;
+    if (!gate.before_graph(4, measured)) {
+        return 2;
+    }
+    std::printf("%d ", measured ? 1 : 0);
+    if (!gate.after_graph(measured)) {
+        return 3;
+    }
+    for (uint32_t index = 0; index < singles; ++index) {
         bool measured = false;
-        if (!gate.before_graph(n_tokens, measured)) {
+        if (!gate.before_graph(1, measured)) {
             return 2;
         }
         std::printf("%d ", measured ? 1 : 0);
@@ -41,7 +50,7 @@ int main() {
         }
     }
     std::printf("\n");
-    return 0;
+    return singles == 3 ? 0 : 5;
 }
 """
 
@@ -83,7 +92,7 @@ class E049dSteadyPmuTest(unittest.TestCase):
             [str(self.binary)], env=env, text=True, capture_output=True, timeout=5
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertEqual(proc.stdout, "0 0 0 0 0 0 \n")
+        self.assertEqual(proc.stdout, "0 0 0 0 \n")
 
     def test_patch_places_gate_immediately_around_graph_compute(self) -> None:
         self.assertTrue(PATCH.is_file(), f"missing integration patch: {PATCH}")
@@ -96,7 +105,7 @@ class E049dSteadyPmuTest(unittest.TestCase):
         self.assertIn('#include "e049d-steady-pmu.h"', patch)
         self.assertIn("e049d_steady_pmu e049d_pmu;", patch)
 
-    def test_enabled_gate_skips_first_single_decode_and_marks_next_three(self) -> None:
+    def test_enabled_gate_marks_exactly_three_single_decode_graphs(self) -> None:
         ack_read, ack_write = os.pipe()
         marker_read, marker_write = os.pipe()
         ack_read_high = fcntl.fcntl(ack_read, fcntl.F_DUPFD, 100)
@@ -124,8 +133,45 @@ class E049dSteadyPmuTest(unittest.TestCase):
             self.assertEqual(os.read(marker_read, 1), b"E")
             stdout, stderr = proc.communicate(timeout=5)
             self.assertEqual(proc.returncode, 0, stderr)
-            self.assertEqual(stdout, "0 0 1 1 1 0 \n")
+            self.assertEqual(stdout, "0 1 1 1 \n")
             self.assertEqual(os.read(marker_read, 1), b"")
+        finally:
+            for fd in (ack_write, marker_read, ack_read_high, marker_write_high):
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+
+    def test_two_single_decodes_fail_protocol_without_end_marker(self) -> None:
+        ack_read, ack_write = os.pipe()
+        marker_read, marker_write = os.pipe()
+        ack_read_high = fcntl.fcntl(ack_read, fcntl.F_DUPFD, 100)
+        marker_write_high = fcntl.fcntl(marker_write, fcntl.F_DUPFD, 100)
+        os.close(ack_read)
+        os.close(marker_write)
+
+        env = os.environ.copy()
+        env["LLAMA_E049D_STEADY_PMU"] = "1"
+        env["E049D_TEST_ACK_FD"] = str(ack_read_high)
+        env["E049D_TEST_MARKER_FD"] = str(marker_write_high)
+        env["E049D_TEST_SINGLE_COUNT"] = "2"
+        try:
+            proc = subprocess.Popen(
+                [str(self.binary)],
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                pass_fds=(ack_read_high, marker_write_high),
+            )
+            os.close(ack_read_high)
+            os.close(marker_write_high)
+            self.assertEqual(os.read(marker_read, 1), b"S")
+            self.assertEqual(os.write(ack_write, b"A"), 1)
+            stdout, stderr = proc.communicate(timeout=5)
+            self.assertEqual(proc.returncode, 5, stderr)
+            self.assertEqual(stdout, "0 1 1 \n")
+            self.assertEqual(os.read(marker_read, 2), b"")
         finally:
             for fd in (ack_write, marker_read, ack_read_high, marker_write_high):
                 try:
