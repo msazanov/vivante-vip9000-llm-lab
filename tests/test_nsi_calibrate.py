@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 import os
 import signal
@@ -10,6 +11,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from tooling.nsi_calibrate import (
     JsonlTrace,
@@ -473,6 +475,53 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             failure_dirs = list(parent.glob("existing-v3.setup-failure-*"))
             self.assertEqual(len(failure_dirs), 1)
             self.assertTrue((failure_dirs[0] / "summary.partial.json").is_file())
+
+    def test_nonempty_requested_output_tree_is_immutable_even_with_allow_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            output = parent / "published-v4"
+            output.mkdir()
+            (output / "raw.jsonl").write_bytes(b'{"old":true}\n')
+            (output / "manifest.json").write_bytes(b'{"status":"complete"}\n')
+
+            def tree_hashes() -> dict[str, str]:
+                return {
+                    path.relative_to(output).as_posix(): hashlib.sha256(
+                        path.read_bytes()
+                    ).hexdigest()
+                    for path in sorted(output.rglob("*"))
+                    if path.is_file()
+                }
+
+            before = tree_hashes()
+
+            def run_child(_nsi: object, child: object) -> dict[str, object]:
+                return {
+                    "exit_code": child(),
+                    "signal": None,
+                    "forwarded_signals": [],
+                    "restore_verified": True,
+                    "original_pmu_timer": 0,
+                }
+
+            with (
+                mock.patch("tooling.nsi_calibrate.SysfsNSI", return_value=object()),
+                mock.patch("tooling.nsi_calibrate.resolve_pinned_helper", return_value=Path("/pinned")),
+                mock.patch("tooling.nsi_calibrate.run_under_watchdog", side_effect=run_child),
+            ):
+                exit_code = main([
+                    "--output-dir", str(output),
+                    "--allow-existing",
+                ])
+
+            self.assertEqual(tree_hashes(), before)
+            self.assertEqual(exit_code, 4)
+            failure_dirs = list(parent.glob("published-v4.setup-failure-*"))
+            self.assertEqual(len(failure_dirs), 1)
+            self.assertEqual(
+                {path.name for path in failure_dirs[0].iterdir()},
+                {"failure.json", "raw.jsonl", "summary.partial.json"},
+            )
 
     def test_raw_thermal_maxima_uses_all_sample_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

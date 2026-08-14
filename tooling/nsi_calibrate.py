@@ -1237,6 +1237,23 @@ def _parse_csv_ints(raw: str, option: str) -> tuple[int, ...]:
     return tuple(values)
 
 
+def _require_empty_output_dir(output_dir: Path) -> None:
+    """Reject pre-existing evidence trees before any privileged setup."""
+    if not output_dir.exists():
+        return
+    if not output_dir.is_dir():
+        raise NSIError(f"output-dir существует и не является каталогом: {output_dir}")
+    try:
+        first_entry = next(output_dir.iterdir(), None)
+    except OSError as exc:
+        raise NSIError(f"не удалось проверить output-dir {output_dir}: {exc}") from exc
+    if first_entry is not None:
+        raise NSIError(
+            f"output-dir уже содержит файлы: {output_dir}; "
+            "существующие результаты неизменяемы, используйте новый каталог"
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--nsi-root", type=Path, default=DEFAULT_NSI_ROOT)
@@ -1258,8 +1275,7 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
     thermal_limit = validate_thermal_limit(args.thermal_limit_c)
     helper = resolve_pinned_helper(Path(__file__))
     output_dir: Path = args.output_dir
-    if output_dir.exists() and any(output_dir.iterdir()) and not args.allow_existing:
-        raise SystemExit(f"output-dir уже содержит файлы: {output_dir}; используйте новый каталог")
+    _require_empty_output_dir(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     run_id = f"e049-{_datetime.datetime.now(_datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
     trace = JsonlTrace(output_dir / "raw.jsonl", run_id)
@@ -1512,6 +1528,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
+        # Проверяем immutability до sysfs/helper/watchdog. Флаг
+        # --allow-existing сохранён только для CLI-совместимости и не может
+        # разрешить запись в уже опубликованный непустой evidence tree.
+        _require_empty_output_dir(args.output_dir)
         validate_thermal_limit(args.thermal_limit_c)
         nsi = SysfsNSI(args.nsi_root)
         # Validate the immutable helper before the privileged child is forked.
