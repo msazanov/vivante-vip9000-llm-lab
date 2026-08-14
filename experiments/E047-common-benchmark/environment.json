@@ -1,4 +1,5 @@
 {
+  "schema_version": "e053-environment/v1",
   "captured": false,
   "status": "planned",
   "note": "Заполнить версиями llama.cpp, ORT, компилятора и параметрами запуска."

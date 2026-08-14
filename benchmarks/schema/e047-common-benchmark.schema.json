@@ -143,7 +143,7 @@
     "metrics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["timers", "token_char_byte", "memory", "quality_metrics", "trace_event_fields"],
+      "required": ["timers", "token_char_byte", "memory_accounting", "quality_metrics", "trace_event_fields"],
       "properties": {
         "timers": {
           "const": [
@@ -171,15 +171,37 @@
             "utf8_bytes_per_second"
           ]
         },
-        "memory": {
-          "const": [
-            "rss_peak_bytes",
-            "model_mmap_bytes",
-            "declared_weight_bytes_per_token",
-            "observed_ddr_read_bytes_per_token",
-            "observed_ddr_write_bytes_per_token",
-            "observed_counter_method"
-          ]
+        "memory_accounting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["byte_fields", "provenance_fields", "separation_rules"],
+          "properties": {
+            "byte_fields": {
+              "const": [
+                "logical_bytes",
+                "unique_weight_bytes",
+                "observed_direct_ddr_read_bytes",
+                "observed_direct_ddr_write_bytes",
+                "inferred_ddr_read_bytes",
+                "inferred_ddr_write_bytes"
+              ]
+            },
+            "provenance_fields": {
+              "const": [
+                "measurement_method",
+                "measurement_source",
+                "measurement_confidence"
+              ]
+            },
+            "separation_rules": {
+              "const": [
+                "logical_bytes_are_algorithmic_tensor_touches",
+                "unique_weight_bytes_are_distinct_weight_storage_referenced",
+                "observed_direct_is_hardware_counter_only",
+                "inferred_is_never_reported_as_observed"
+              ]
+            }
+          }
         },
         "quality_metrics": {
           "const": [
@@ -203,10 +225,16 @@
             "duration_ns",
             "inputs",
             "outputs",
-            "declared_read_bytes",
-            "declared_write_bytes",
-            "observed_ddr_read_bytes",
-            "observed_ddr_write_bytes"
+            "memory.logical.logical_read_bytes",
+            "memory.logical.logical_write_bytes",
+            "memory.unique_weights.unique_weight_bytes",
+            "memory.observed_direct_ddr.observed_direct_ddr_read_bytes",
+            "memory.observed_direct_ddr.observed_direct_ddr_write_bytes",
+            "memory.inferred_ddr.inferred_ddr_read_bytes",
+            "memory.inferred_ddr.inferred_ddr_write_bytes",
+            "memory.*.measurement_method",
+            "memory.*.measurement_source",
+            "memory.*.measurement_confidence"
           ]
         }
       }

@@ -4,38 +4,38 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "e19cdc85f1a3d7736ef689295ca5927a7575b1c8781ca11d1cf28ed1c8bcccf7",
-      "size_bytes": 2534
+      "sha256": "3227e71255ea24f48ef2a0a3126e5be6cbe43a8561e840be9fdd3bc62d677556",
+      "size_bytes": 5445
     },
     {
       "path": "commands.txt",
-      "sha256": "b16f923665ac2f63e4c3afdba35431151f09f44760de5a5c123c46d17a6f7ef6",
-      "size_bytes": 576
+      "sha256": "20c1888d752a38d83208353bf4062ba1146d2dbe29b1fcbcac9608f6d4af3696",
+      "size_bytes": 882
     },
     {
       "path": "data/branch-preflight.json",
-      "sha256": "34b25da7a80bcdbf899ded84c6a316212cbe0063bd9a54946a2b25c16e9c858f",
-      "size_bytes": 4735
+      "sha256": "a3f425dcaa5dc624e4318949340196d7feb4c28dc75ed45478b3d194e67c536a",
+      "size_bytes": 295993
     },
     {
       "path": "device.json",
-      "sha256": "d51c92642ac622fd8d8fb445b26cc36ddf762fa876c20be50395336bf57bff33",
-      "size_bytes": 153
+      "sha256": "535a2368747b671f63eb844837618764cd70893c87b1e672cd72e16c1ccc1817",
+      "size_bytes": 191
     },
     {
       "path": "environment.json",
-      "sha256": "8fe10da0b759db52036cfacda27d6fc70c3c5dc8c943c6870d120c4400b5853a",
-      "size_bytes": 177
+      "sha256": "57305f6f4831de0700881e9252a7c70b5c83098c53cc571d87955e80dd3a6de6",
+      "size_bytes": 220
     },
     {
       "path": "hypothesis-preflight.md",
-      "sha256": "c37c2ab611fe0d691811a2364e2a05a527e3db1fe53d04cf860b03f9926493a1",
-      "size_bytes": 1189
+      "sha256": "59b537b82ce88485610008b46a525da056021943de77144c22ac0c2eb5664791",
+      "size_bytes": 1994
     },
     {
       "path": "results/summary.json",
-      "sha256": "7663e45d64320cc00232b37d6f8a4d1d365db9e24dcfbcad9e03e2783aa9363d",
-      "size_bytes": 275
+      "sha256": "ae5dba2b444fa29491ef85ba5425a039321eabb8bd8a22f48efcd5aaf2b61eb8",
+      "size_bytes": 338
     }
   ]
 }

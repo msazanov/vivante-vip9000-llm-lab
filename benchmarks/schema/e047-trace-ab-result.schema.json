@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e047-trace-ab-result-v1.schema.json",
+  "title": "E047 trace A/B result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ab_result_id",
+    "workload_identity",
+    "workload_identity_sha256",
+    "trace_off",
+    "trace_on",
+    "statistics",
+    "token_stream_equal",
+    "classification"
+  ],
+  "properties": {
+    "schema_version": {"const": "e047-trace-ab-result/v1"},
+    "ab_result_id": {"type": "string", "minLength": 1},
+    "workload_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variant_id",
+        "contract_sha256",
+        "common_prompt_sha256",
+        "rendered_prompt_sha256",
+        "prompt_token_ids_sha256",
+        "n_predict",
+        "seed"
+      ],
+      "properties": {
+        "variant_id": {"type": "string", "minLength": 1},
+        "contract_sha256": {"$ref": "#/$defs/sha256"},
+        "common_prompt_sha256": {"const": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de"},
+        "rendered_prompt_sha256": {"$ref": "#/$defs/sha256"},
+        "prompt_token_ids_sha256": {"$ref": "#/$defs/sha256"},
+        "n_predict": {"enum": [4, 32]},
+        "seed": {"const": 123}
+      }
+    },
+    "workload_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "trace_off": {"$ref": "#/$defs/side"},
+    "trace_on": {"$ref": "#/$defs/side"},
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "off_median_ms",
+        "on_median_ms",
+        "off_p95_ms",
+        "on_p95_ms",
+        "median_overhead_fraction",
+        "p95_overhead_fraction"
+      ],
+      "properties": {
+        "off_median_ms": {"type": "number", "exclusiveMinimum": 0},
+        "on_median_ms": {"type": "number", "exclusiveMinimum": 0},
+        "off_p95_ms": {"type": "number", "exclusiveMinimum": 0},
+        "on_p95_ms": {"type": "number", "exclusiveMinimum": 0},
+        "median_overhead_fraction": {"type": "number"},
+        "p95_overhead_fraction": {"type": "number"}
+      }
+    },
+    "token_stream_equal": {"type": "boolean"},
+    "classification": {"enum": ["PASS", "TRACE_ONLY", "INVALID"]}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifactLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^raw/[^/].+"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pair_id",
+        "run_id",
+        "latency_ms",
+        "token_ids_sha256",
+        "token_capture_artifact",
+        "execution_artifact",
+        "raw_artifacts"
+      ],
+      "properties": {
+        "pair_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": "string", "minLength": 1},
+        "latency_ms": {"type": "number", "exclusiveMinimum": 0},
+        "token_ids_sha256": {"$ref": "#/$defs/sha256"},
+        "token_capture_artifact": {"$ref": "#/$defs/artifactLink"},
+        "execution_artifact": {"$ref": "#/$defs/artifactLink"},
+        "raw_artifacts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^raw/[^/].+"}
+        }
+      }
+    },
+    "side": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workload_identity_sha256", "samples"],
+      "properties": {
+        "workload_identity_sha256": {"$ref": "#/$defs/sha256"},
+        "samples": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {"$ref": "#/$defs/sample"}
+        }
+      }
+    }
+  }
+}

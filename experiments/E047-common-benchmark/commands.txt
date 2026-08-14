@@ -1,5 +1,5 @@
 # План команд; фактический инференс ещё не запускался.
-python3 tooling/branch_preflight.py --repo . --term LFM2.5 --term LFM --term E047 --term E053 --output experiments/E047-common-benchmark/data/branch-preflight.json
+python3 tooling/branch_preflight.py --repo . --experiment-id E047-common-benchmark --hypothesis-query 'сравнить Bonsai-27B GGUF и LFM2.5-2.6B GGUF/ONNX по единому E047 контракту' --term LFM2.5 --term Bonsai-27B --term E047 --output experiments/E047-common-benchmark/data/branch-preflight.json --binding-exclude experiments/E047-common-benchmark/data/branch-preflight.json --binding-exclude experiments/E047-common-benchmark/data/manifest.json
 python3 tooling/experiment_validator.py --experiment experiments/E047-common-benchmark --json
 # После запуска добавить точную команду llama.cpp/ONNX Runtime, включая все
 # параметры E047, и сохранить stdout/stderr без фильтрации в raw/.

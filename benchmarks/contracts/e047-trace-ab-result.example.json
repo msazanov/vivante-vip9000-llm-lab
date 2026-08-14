@@ -1,0 +1,44 @@
+{
+  "schema_version": "e047-trace-ab-result/v1",
+  "ab_result_id": "bonsai-q1-main-trace-ab-001",
+  "workload_identity": {
+    "variant_id": "bonsai-q1-gguf-cpu",
+    "contract_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "common_prompt_sha256": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de",
+    "rendered_prompt_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "prompt_token_ids_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "n_predict": 32,
+    "seed": 123
+  },
+  "workload_identity_sha256": "4efb039d884a2a791abdff0b5f73c61f16fedf1e9ce3c7290bdf3d875f00b790",
+  "trace_off": {
+    "workload_identity_sha256": "4efb039d884a2a791abdff0b5f73c61f16fedf1e9ce3c7290bdf3d875f00b790",
+    "samples": [
+      {"pair_id": "pair-1", "run_id": "off-1", "latency_ms": 1000.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/off-1.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/off-1.capture.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/off-1.tokens.json", "raw/off-1.capture.json"]},
+      {"pair_id": "pair-2", "run_id": "off-2", "latency_ms": 1001.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/off-2.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/off-2.capture.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/off-2.tokens.json", "raw/off-2.capture.json"]},
+      {"pair_id": "pair-3", "run_id": "off-3", "latency_ms": 999.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/off-3.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/off-3.capture.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/off-3.tokens.json", "raw/off-3.capture.json"]},
+      {"pair_id": "pair-4", "run_id": "off-4", "latency_ms": 1002.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/off-4.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/off-4.capture.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/off-4.tokens.json", "raw/off-4.capture.json"]},
+      {"pair_id": "pair-5", "run_id": "off-5", "latency_ms": 998.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/off-5.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/off-5.capture.json", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/off-5.tokens.json", "raw/off-5.capture.json"]}
+    ]
+  },
+  "trace_on": {
+    "workload_identity_sha256": "4efb039d884a2a791abdff0b5f73c61f16fedf1e9ce3c7290bdf3d875f00b790",
+    "samples": [
+      {"pair_id": "pair-1", "run_id": "on-1", "latency_ms": 1005.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/on-1.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/on-1.trace.jsonl", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/on-1.tokens.json", "raw/on-1.trace.jsonl"]},
+      {"pair_id": "pair-2", "run_id": "on-2", "latency_ms": 1006.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/on-2.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/on-2.trace.jsonl", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/on-2.tokens.json", "raw/on-2.trace.jsonl"]},
+      {"pair_id": "pair-3", "run_id": "on-3", "latency_ms": 1004.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/on-3.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/on-3.trace.jsonl", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/on-3.tokens.json", "raw/on-3.trace.jsonl"]},
+      {"pair_id": "pair-4", "run_id": "on-4", "latency_ms": 1007.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/on-4.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/on-4.trace.jsonl", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/on-4.tokens.json", "raw/on-4.trace.jsonl"]},
+      {"pair_id": "pair-5", "run_id": "on-5", "latency_ms": 1003.0, "token_ids_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "token_capture_artifact": {"path": "raw/on-5.tokens.json", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}, "execution_artifact": {"path": "raw/on-5.trace.jsonl", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}, "raw_artifacts": ["raw/on-5.tokens.json", "raw/on-5.trace.jsonl"]}
+    ]
+  },
+  "statistics": {
+    "off_median_ms": 1000.0,
+    "on_median_ms": 1005.0,
+    "off_p95_ms": 1002.0,
+    "on_p95_ms": 1007.0,
+    "median_overhead_fraction": 0.005,
+    "p95_overhead_fraction": 0.00499001996
+  },
+  "token_stream_equal": true,
+  "classification": "PASS"
+}
