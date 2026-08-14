@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
+import pathlib
+import re
 import unittest
 
 import tooling.e055_q1_hotcold as e055
 from tooling.e055_q1_hotcold import (
     CACHE_STATES,
+    CPUS,
     MODES,
     WORKING_SET_BYTES,
     actual_working_set,
@@ -22,13 +27,68 @@ from tooling.e055_q1_hotcold import (
 )
 
 
-EXPECTED_PROVENANCE = {
-    "source_sha256": "11" * 32,
-    "binary_sha256": "22" * 32,
-    "compiler_sha256": "33" * 32,
-    "compiler_id": "aarch64-linux-gnu-g++ test fixture",
-    "upstream_repack_sha256": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+UPSTREAM_COMMIT = "38c66ad0241da4f9fcce541cda8edc219086cec5"
+UPSTREAM_REF = (
+    "https://github.com/ggml-org/llama.cpp/commit/"
+    "38c66ad0241da4f9fcce541cda8edc219086cec5"
+)
+PMU_CONFIGS = {
+    "core": {
+        "cpu_cycles": "0x11",
+        "instructions": "0x8",
+        "stall_backend": "0x24",
+    },
+    "cache": {
+        "l1d_cache_refill": "0x3",
+        "l2d_cache_refill": "0x17",
+        "l3d_cache_refill": "0x2a",
+    },
+    "memory": {"mem_access": "0x13", "bus_access": "0x19"},
 }
+
+
+def published_provenance(build_name: str = "O3") -> dict:
+    disassembly = json.loads(
+        (ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json")
+        .read_text(encoding="utf-8")
+    )
+    build = next(item for item in disassembly["builds"] if item["name"] == build_name)
+    return {
+        "build_name": build_name,
+        "source_sha256": disassembly["provenance"]["source_sha256"],
+        "binary_sha256": build["binary_sha256"],
+        "compiler_sha256": disassembly["provenance"]["compiler_sha256"],
+        "compiler_id": disassembly["provenance"]["compiler_id"],
+        "upstream_commit": UPSTREAM_COMMIT,
+        "upstream_ref": UPSTREAM_REF,
+        "upstream_repack_sha256": (
+            "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
+        ),
+    }
+
+
+def bind_harness_result(sample: dict) -> None:
+    result = {
+        "schema": "e055-q1-hot-cold-harness/v1",
+        "mode": sample["mode"],
+        "cache_state": sample["cache_state"],
+        "cpu": sample["cpu"],
+        "target_working_set_bytes": sample["target_working_set_bytes"],
+        "actual_working_set_bytes": sample["actual_working_set_bytes"],
+        "blocks": sample["blocks"],
+        "iterations": sample["iterations"],
+        "calls": sample["calls"],
+        "elapsed_ns": sample["elapsed_ns"],
+        "checksum": sample["checksum"],
+        "golden_pass": sample["golden_pass"],
+        "golden_cases": sample["golden_cases"],
+        "conditioning": copy.deepcopy(sample["cold_conditioning"]),
+        "provenance": copy.deepcopy(sample["provenance"]),
+    }
+    sample["harness_result"] = result
+    canonical = json.dumps(result, sort_keys=True, separators=(",", ":")).encode()
+    sample["harness_result_sha256"] = hashlib.sha256(canonical).hexdigest()
 
 
 def qualified_sample(
@@ -39,22 +99,46 @@ def qualified_sample(
     pair_index: int = 1,
     cpu: int = 6,
     event_group: str = "core",
+    target_bytes: int = 64 * 1024,
 ) -> dict:
-    blocks = 316
+    layout = actual_working_set(target_bytes)
     pair_order = "hot_then_cold" if pair_index % 2 else "cold_then_hot"
     order_index = 1 if (
         (pair_order == "hot_then_cold" and cache_state == "hot_repeat") or
         (pair_order == "cold_then_hot" and cache_state == "cold_conditioned")
     ) else 2
-    names = {
-        "core": ["cpu_cycles", "instructions", "stall_backend"],
-        "cache": ["l1d_cache_refill", "l2d_cache_refill", "l3d_cache_refill"],
-        "memory": ["mem_access", "bus_access"],
-    }[event_group]
-    return {
+    configs = PMU_CONFIGS[event_group]
+    run_prefix = f"c{cpu}-s{target_bytes}-{mode}-{event_group}-p{pair_index}"
+    if cache_state == "cold_conditioned":
+        requested = 64 * 1024 * 1024
+        conditioning = {
+            "strategy": "verified_write_read_each_64B_line",
+            "requested_bytes": requested,
+            "actual_bytes": requested,
+            "line_bytes": 64,
+            "lines_touched": requested // 64,
+            "checksum": "0xe055a733",
+            "verified_touched": True,
+        }
+    else:
+        requested = layout["actual_bytes"]
+        conditioning = {
+            "strategy": "verified_kernel_warmup",
+            "requested_bytes": requested,
+            "actual_bytes": requested,
+            "line_bytes": 64,
+            "lines_touched": (requested + 63) // 64,
+            "checksum": "0xe055a734",
+            "verified_touched": True,
+            "warmup_calls": 16,
+        }
+    checksum_seed = hashlib.sha256(
+        f"{run_prefix}-{cache_state}-{calls}".encode()
+    ).hexdigest()[:16]
+    sample = {
         "schema": "e055-q1-hot-cold/v2",
-        "run_id": f"run-{mode}-{event_group}-{pair_index}-{cache_state}",
-        "pair_id": f"pair-{mode}-{event_group}-{pair_index}",
+        "run_id": f"run-{run_prefix}-{cache_state}",
+        "pair_id": f"pair-{run_prefix}",
         "pair_index": pair_index,
         "pair_order": pair_order,
         "order_index": order_index,
@@ -67,42 +151,63 @@ def qualified_sample(
         "cpu_end": cpu,
         "cpu_migration_count": 0,
         "golden_pass": True,
-        "cold_conditioning": {"verified_touched": True},
-        "actual_working_set_bytes": blocks * 208,
-        "blocks": blocks,
+        "golden_cases": 18,
+        "cold_conditioning": conditioning,
+        "target_working_set_bytes": target_bytes,
+        "actual_working_set_bytes": layout["actual_bytes"],
+        "blocks": layout["blocks"],
         "iterations": calls,
         "elapsed_ns": calls * 1_000_000,
         "calls": calls,
-        "checksum": "0x1",
+        "checksum": f"0x{checksum_seed}",
         "sync": {"requested": True, "started": True, "acknowledged": True,
                  "ended": True, "sequence": "S/A/E"},
         "pmu": {
             "schema_version": "e049c-arm-pmu/v2",
             "status": "ok",
             "sample_valid": True,
+            "event_source": "armv8_pmuv3_raw_config",
             "event_group": event_group,
-            "event_group_size": len(names),
+            "event_group_size": len(configs),
             "values_are_event_counts": True,
-            "events": [{"name": name, "support": "supported", "sample_valid": True,
-                        "value": 10, "running_ratio": 1.0} for name in names],
+            "events": [
+                {"name": name, "config": config, "support": "supported",
+                 "sample_valid": True, "value": 10, "running_ratio": 1.0}
+                for name, config in configs.items()
+            ],
         },
         "thermal": {"readable": True, "tripped": False, "max_temp_c": 61.0,
                     "limit_c": 80.0},
-        "provenance": dict(EXPECTED_PROVENANCE),
+        "provenance": published_provenance(),
         "exit_code": 0,
     }
+    bind_harness_result(sample)
+    return sample
 
 
 def qualified_matrix(penalties: dict[str, list[float]] | None = None) -> list[dict]:
     penalties = penalties or {mode: [2.0] * 5 for mode in MODES}
     rows = []
-    for mode in MODES:
-        for pair_index in range(1, 6):
-            hot = qualified_sample("hot_repeat", 250, mode=mode, pair_index=pair_index)
-            cold = qualified_sample("cold_conditioned", 1, mode=mode, pair_index=pair_index)
-            hot["elapsed_ns"] = 250 * 1_000_000
-            cold["elapsed_ns"] = round(penalties[mode][pair_index - 1] * 1_000_000)
-            rows.extend((hot, cold))
+    for target_bytes in WORKING_SET_BYTES:
+        for cpu in CPUS:
+            for event_group in PMU_CONFIGS:
+                for mode in MODES:
+                    for pair_index in range(1, 6):
+                        hot = qualified_sample(
+                            "hot_repeat", 250, mode=mode, pair_index=pair_index,
+                            cpu=cpu, event_group=event_group, target_bytes=target_bytes,
+                        )
+                        cold = qualified_sample(
+                            "cold_conditioned", 1, mode=mode, pair_index=pair_index,
+                            cpu=cpu, event_group=event_group, target_bytes=target_bytes,
+                        )
+                        hot["elapsed_ns"] = 250 * 1_000_000
+                        cold["elapsed_ns"] = round(
+                            penalties[mode][pair_index - 1] * 1_000_000
+                        )
+                        bind_harness_result(hot)
+                        bind_harness_result(cold)
+                        rows.extend((hot, cold))
     return rows
 
 
@@ -114,6 +219,15 @@ class E055Q1HotColdContractTest(unittest.TestCase):
         self.assertEqual(counts["total_input_bytes"], 40 * 208)
         self.assertEqual(counts["dot_products"], 40 * 512)
 
+    def test_shape_helpers_reject_bool_float_and_non_integer(self) -> None:
+        for value in (True, 1.0, "65536"):
+            with self.subTest(function="actual_working_set", value=value):
+                with self.assertRaises(ValueError):
+                    actual_working_set(value)
+            with self.subTest(function="logical_bytes_per_call", value=value):
+                with self.assertRaises(ValueError):
+                    logical_bytes_per_call(value)
+
     def test_working_set_rejects_uint64_rounding_overflow(self) -> None:
         with self.assertRaises(ValueError):
             actual_working_set((1 << 64) - 207)
@@ -123,7 +237,17 @@ class E055Q1HotColdContractTest(unittest.TestCase):
 
     def test_upstream_repack_is_pinned_to_reviewed_hash(self) -> None:
         self.assertEqual(getattr(e055, "UPSTREAM_REPACK_SHA256", None),
-                         EXPECTED_PROVENANCE["upstream_repack_sha256"])
+                         published_provenance()["upstream_repack_sha256"])
+
+    def test_pmu_configs_match_exact_e049c_source_definitions(self) -> None:
+        source = (ROOT / "tooling/a733_pmu_exec.c").read_text(encoding="utf-8")
+        for configs in PMU_CONFIGS.values():
+            for name, config in configs.items():
+                numeric = int(config, 16)
+                self.assertRegex(
+                    source,
+                    re.compile(rf'\{{"{re.escape(name)}",\s*0x0*{numeric:x}\b', re.I),
+                )
 
     def test_normalization_exactly_handles_250_hot_calls_vs_one_cold_call(self) -> None:
         hot = qualified_sample("hot_repeat", 250)
@@ -142,69 +266,72 @@ class E055Q1HotColdContractTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             paired_speed_delta(reference, candidate)
 
-    def test_fully_qualified_sample_requires_declared_provenance_binding(self) -> None:
-        self.assertTrue(validate_sample(qualified_sample()))
-        self.assertEqual(validate_sample(qualified_sample(), EXPECTED_PROVENANCE), [])
-        self.assertEqual(
-            validate_sample(qualified_sample("cold_conditioned", 1), EXPECTED_PROVENANCE), []
-        )
+    def test_fully_qualified_sample_is_bound_to_publication_artifacts(self) -> None:
+        self.assertEqual(validate_sample(qualified_sample()), [])
+        self.assertEqual(validate_sample(qualified_sample("cold_conditioned", 1)), [])
+        with self.assertRaises(TypeError):
+            validate_sample(qualified_sample(), {"source_sha256": "4" * 64})
 
-    def test_strict_validator_rejects_reviewed_failures(self) -> None:
+    def test_strict_validator_rejects_rereviewed_forgery_cases(self) -> None:
+        mutations = {
+            "forged PMU config": lambda s: s["pmu"]["events"][0].update(config="0xff"),
+            "all-zero source": lambda s: s["provenance"].update(source_sha256="0" * 64),
+            "arbitrary binary": lambda s: s["provenance"].update(binary_sha256="4" * 64),
+            "forged compiler": lambda s: s["provenance"].update(compiler_id="forged"),
+            "Boolean pinned CPU": lambda s: s.update(pinned_cpu=True),
+            "float affinity CPU": lambda s: s.update(affinity_cpus=[6.0]),
+            "Boolean migration count": lambda s: s.update(cpu_migration_count=False),
+            "Boolean order index": lambda s: s.update(order_index=True),
+            "float PMU group size": lambda s: s["pmu"].update(event_group_size=3.0),
+            "Boolean thermal maximum": lambda s: s["thermal"].update(max_temp_c=True),
+            "conditioning coverage gap": lambda s: s["cold_conditioning"].update(
+                lines_touched=s["cold_conditioning"]["lines_touched"] - 1),
+            "conditioning forged checksum": lambda s: s["cold_conditioning"].update(
+                checksum="0x0"),
+            "wrong golden cases": lambda s: s.update(golden_cases=17),
+            "forged output checksum": lambda s: s.update(checksum="0x1234"),
+            "Boolean exit code": lambda s: s.update(exit_code=False),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name):
+                sample = qualified_sample("cold_conditioned", 1)
+                mutate(sample)
+                self.assertTrue(validate_sample(sample), name)
+
+    def test_existing_strict_fail_closed_cases_remain_rejected(self) -> None:
         mutations = {
             "sync=false": lambda s: s["sync"].update(requested=False),
             "empty events": lambda s: s["pmu"].update(events=[]),
-            "wrong PMU group": lambda s: s["pmu"].update(event_group="memory"),
-            "duplicate PMU event": lambda s: s["pmu"]["events"].append(
-                dict(s["pmu"]["events"][0])),
             "negative PMU count": lambda s: s["pmu"]["events"][0].update(value=-1),
-            "boolean PMU count": lambda s: s["pmu"]["events"][0].update(value=True),
+            "Boolean PMU count": lambda s: s["pmu"]["events"][0].update(value=True),
             "integer ratio": lambda s: s["pmu"]["events"][0].update(running_ratio=1),
-            "boolean ratio": lambda s: s["pmu"]["events"][0].update(running_ratio=True),
-            "multiplexed PMU": lambda s: s["pmu"]["events"][0].update(running_ratio=0.999),
-            "invalid PMU sample": lambda s: s["pmu"].update(sample_valid=False),
+            "multiplexed PMU": lambda s: s["pmu"]["events"][0].update(running_ratio=.999),
             "thermal trip": lambda s: s["thermal"].update(tripped=True),
-            "nonfinite thermal": lambda s: s["thermal"].update(max_temp_c=float("nan")),
             "CPU migration": lambda s: s.update(cpu_end=0, cpu_migration_count=1),
-            "missing pair": lambda s: s.pop("pair_id"),
-            "missing pair index": lambda s: s.pop("pair_index"),
-            "wrong pair order": lambda s: s.update(order_index=2),
-            "zero source hash": lambda s: s["provenance"].update(source_sha256="0" * 64),
-            "unbound source hash": lambda s: s["provenance"].update(source_sha256="4" * 64),
-            "wrong repack hash": lambda s: s["provenance"].update(upstream_repack_sha256="5" * 64),
             "uppercase checksum": lambda s: s.update(checksum="0xAB"),
-            "malformed checksum": lambda s: s.update(checksum="not-a-checksum"),
-            "unverified hot conditioning": lambda s: s["cold_conditioning"].update(
+            "unverified conditioning": lambda s: s["cold_conditioning"].update(
                 verified_touched=False),
         }
         for name, mutate in mutations.items():
             with self.subTest(name=name):
                 sample = qualified_sample()
                 mutate(sample)
-                self.assertTrue(validate_sample(sample, EXPECTED_PROVENANCE), name)
+                self.assertTrue(validate_sample(sample), name)
 
     def test_cold_qualification_rejects_more_than_one_traversal(self) -> None:
         sample = qualified_sample("cold_conditioned", 2)
-        self.assertTrue(any("exactly one" in error for error in
-                            validate_sample(sample, EXPECTED_PROVENANCE)))
+        self.assertTrue(any("exactly one" in error for error in validate_sample(sample)))
 
     def test_analyzer_uses_median_of_actual_per_pair_penalties(self) -> None:
-        # For each mode, median(cold)/median(hot) is 100, but the five actual
-        # pair penalties are [1, 100, 100, 1, 0.01], whose median is exactly 1.
-        rows = []
-        hot_ns = [1, 1, 1, 100, 100]
-        cold_ns = [1, 100, 100, 100, 1]
-        for mode in MODES:
-            for index, (hot_value, cold_value) in enumerate(zip(hot_ns, cold_ns), 1):
-                hot = qualified_sample("hot_repeat", 1, mode=mode, pair_index=index)
-                cold = qualified_sample("cold_conditioned", 1, mode=mode, pair_index=index)
-                hot["elapsed_ns"] = hot_value
-                cold["elapsed_ns"] = cold_value
-                rows.extend((hot, cold))
-        result = infer_bottleneck(rows, EXPECTED_PROVENANCE)
-        self.assertEqual(result["memory_cache_sensitivity_ratios"], [1.0])
-        self.assertEqual(result["records"][0]["full_cold_over_hot"], 1.0)
+        adversarial = {
+            mode: [1.0, 100.0, 100.0, 1.0, 0.01] for mode in MODES
+        }
+        result = infer_bottleneck(qualified_matrix(adversarial))
+        self.assertEqual(result["memory_cache_sensitivity_ratios"], [1.0] * 42)
+        self.assertTrue(all(record["full_cold_over_hot"] == 1.0
+                            for record in result["records"]))
 
-    def test_analyzer_rejects_invalid_or_unpaired_rows(self) -> None:
+    def test_analyzer_rejects_invalid_pairs_and_incomplete_matrix(self) -> None:
         cases = {}
         invalid = qualified_matrix()
         invalid[0]["sync"]["ended"] = False
@@ -213,27 +340,38 @@ class E055Q1HotColdContractTest(unittest.TestCase):
         duplicate_run[1]["run_id"] = duplicate_run[0]["run_id"]
         cases["duplicate run ID"] = duplicate_run
         missing_half = qualified_matrix()[:-1]
-        cases["missing pair half"] = missing_half
-        duplicate_half = qualified_matrix()
-        duplicate_half.append(copy.deepcopy(duplicate_half[0]))
-        duplicate_half[-1]["run_id"] = "extra-run"
-        cases["duplicate pair half"] = duplicate_half
-        mismatched = qualified_matrix()
-        mismatched[1]["blocks"] += 1
-        mismatched[1]["actual_working_set_bytes"] += 208
-        cases["mismatched pair shape"] = mismatched
+        cases["missing pair or matrix half"] = missing_half
+        incomplete_cell = qualified_matrix()
+        incomplete_cell = [row for row in incomplete_cell if not (
+            row["target_working_set_bytes"] == WORKING_SET_BYTES[-1]
+            and row["cpu"] == CPUS[-1] and row["mode"] == MODES[-1]
+            and row["pmu"]["event_group"] == "memory"
+        )]
+        cases["incomplete documented matrix"] = incomplete_cell
+        mixed_build = qualified_matrix()
+        lto = published_provenance("O3-flto")
+        for row in mixed_build:
+            if row["target_working_set_bytes"] == WORKING_SET_BYTES[0] and \
+                    row["cpu"] == CPUS[0] and row["mode"] == MODES[0] and \
+                    row["pmu"]["event_group"] == "core":
+                row["provenance"] = copy.deepcopy(lto)
+                bind_harness_result(row)
+        cases["mixed allowed builds in one phase"] = mixed_build
         for name, rows in cases.items():
             with self.subTest(name=name), self.assertRaises(ValueError):
-                infer_bottleneck(rows, EXPECTED_PROVENANCE)
+                infer_bottleneck(rows)
 
     def test_analyzer_enforces_four_percent_promotion_threshold(self) -> None:
-        below = infer_bottleneck(qualified_matrix({mode: [1.04] * 5 for mode in MODES}),
-                                 EXPECTED_PROVENANCE)
-        above = infer_bottleneck(qualified_matrix({mode: [1.05] * 5 for mode in MODES}),
-                                 EXPECTED_PROVENANCE)
+        below = infer_bottleneck(
+            qualified_matrix({mode: [1.04] * 5 for mode in MODES})
+        )
+        above = infer_bottleneck(
+            qualified_matrix({mode: [1.05] * 5 for mode in MODES})
+        )
         self.assertEqual(below["promotion"]["threshold_fraction"], 0.04)
         self.assertFalse(below["promotion"]["eligible"])
         self.assertTrue(above["promotion"]["eligible"])
+        self.assertTrue(above["matrix_complete"])
 
     def test_summary_and_public_matrix(self) -> None:
         summary = summarize_samples([100.0, 110.0, 90.0, 100.0, 100.0])

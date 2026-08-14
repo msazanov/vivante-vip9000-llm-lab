@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import pathlib
 import subprocess
@@ -45,6 +46,10 @@ class E055PublicationBindingTest(unittest.TestCase):
             data.mkdir(parents=True)
             source = root / "source.cpp"
             source.write_text("source\n", encoding="utf-8")
+            (root / "tooling").mkdir()
+            (root / "tooling/a733_pmu_exec.c").write_text(
+                "/* PMU fixture */\n", encoding="utf-8"
+            )
             preflight = {
                 "active_worktree": {
                     "base_commit": "a" * 40,
@@ -60,6 +65,27 @@ class E055PublicationBindingTest(unittest.TestCase):
             }
             preflight_path = data / "branch-preflight.json"
             preflight_path.write_text(json.dumps(preflight), encoding="utf-8")
+            (data / "disassembly-review.json").write_text(json.dumps({
+                "status": "PASS",
+                "provenance": {
+                    "source_sha256": "1" * 64,
+                    "compiler_sha256": "2" * 64,
+                    "compiler_id": "aarch64-linux-gnu-g++ test",
+                },
+                "builds": [{"name": "O3", "binary_sha256": "3" * 64,
+                            "golden_pass": True, "golden_cases": 18}],
+            }), encoding="utf-8")
+            (data / "upstream-source-binding.json").write_text(json.dumps({
+                "repository": "https://github.com/ggml-org/llama.cpp",
+                "commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+                "immutable_ref": (
+                    "https://github.com/ggml-org/llama.cpp/commit/"
+                    "38c66ad0241da4f9fcce541cda8edc219086cec5"
+                ),
+                "sha256": (
+                    "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
+                ),
+            }), encoding="utf-8")
             payload = generator.build_payload(
                 root=root,
                 experiment=experiment,
@@ -74,6 +100,16 @@ class E055PublicationBindingTest(unittest.TestCase):
             self.assertEqual(binding["staged_tree_binding_sha256"], "b" * 64)
             self.assertEqual(payload["upstream_source_binding"]["repack_cpp_sha256"],
                              "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d")
+            runtime = payload["runtime_qualification"]
+            self.assertEqual(runtime["source_sha256"], "1" * 64)
+            self.assertEqual(runtime["allowed_builds"], {"O3": "3" * 64})
+            self.assertEqual(runtime["upstream_commit"],
+                             "38c66ad0241da4f9fcce541cda8edc219086cec5")
+            self.assertEqual(runtime["pmu_group_configs"]["core"]["instructions"],
+                             "0x8")
+            self.assertEqual(runtime["pmu_source_sha256"], hashlib.sha256(
+                (root / "tooling/a733_pmu_exec.c").read_bytes()
+            ).hexdigest())
 
     def test_post_commit_verifier_requires_head_local_and_upstream_exact_commit(self) -> None:
         with tempfile.TemporaryDirectory(prefix="e055-binding-") as raw:

@@ -16,10 +16,13 @@ a software thrash loop proves an architectural cache miss.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import re
 import statistics
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 
@@ -48,19 +51,38 @@ MIN_PAIRED_SAMPLES = 5
 PROMOTION_THRESHOLD = 0.04
 MAX_UINT64 = (1 << 64) - 1
 UPSTREAM_REPACK_SHA256 = "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
+UPSTREAM_COMMIT = "38c66ad0241da4f9fcce541cda8edc219086cec5"
+UPSTREAM_REF = (
+    "https://github.com/ggml-org/llama.cpp/commit/"
+    "38c66ad0241da4f9fcce541cda8edc219086cec5"
+)
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 CHECKSUM_RE = re.compile(r"^0x[0-9a-f]+$")
-PMU_GROUP_EVENTS = {
-    "core": {"cpu_cycles", "instructions", "stall_backend"},
-    "cache": {"l1d_cache_refill", "l2d_cache_refill", "l3d_cache_refill"},
-    "memory": {"mem_access", "bus_access"},
+PMU_GROUP_CONFIGS = {
+    "core": {"cpu_cycles": "0x11", "instructions": "0x8", "stall_backend": "0x24"},
+    "cache": {
+        "l1d_cache_refill": "0x3",
+        "l2d_cache_refill": "0x17",
+        "l3d_cache_refill": "0x2a",
+    },
+    "memory": {"mem_access": "0x13", "bus_access": "0x19"},
 }
+PMU_GROUP_EVENTS = {group: set(configs) for group, configs in PMU_GROUP_CONFIGS.items()}
+ROOT = Path(__file__).resolve().parents[1]
+EXPERIMENT_DATA = ROOT / "experiments/E055-q1-hot-cold/data"
+PUBLICATION_MANIFEST = EXPERIMENT_DATA / "manifest.json"
+DISASSEMBLY_REVIEW = EXPERIMENT_DATA / "disassembly-review.json"
+UPSTREAM_BINDING = EXPERIMENT_DATA / "upstream-source-binding.json"
+HARNESS_SOURCE = ROOT / "tooling/e055_q1_hotcold.cpp"
+PMU_SOURCE = ROOT / "tooling/a733_pmu_exec.c"
 
 
 def actual_working_set(target_bytes: int) -> dict[str, int]:
     """Round a requested set up to complete native Q1/Q8 carrier blocks."""
 
-    target = int(target_bytes)
+    if not _is_int(target_bytes):
+        raise ValueError("working set must be an integer")
+    target = target_bytes
     if target <= 0:
         raise ValueError("working set must be positive")
     if target > MAX_UINT64 - (NATIVE_CARRIER_BYTES - 1):
@@ -81,7 +103,9 @@ def logical_bytes_per_call(blocks: int) -> dict[str, int]:
     be converted into bandwidth without an independent hardware measurement.
     """
 
-    count = int(blocks)
+    if not _is_int(blocks):
+        raise ValueError("blocks must be an integer")
+    count = blocks
     if count <= 0:
         raise ValueError("blocks must be positive")
     q1 = count * Q1_BLOCK_BYTES
@@ -123,6 +147,95 @@ def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _canonical_mapping_sha256(value: Mapping[str, Any]) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def load_publication_contract() -> dict[str, Any]:
+    """Load the immutable runtime qualifier from committed E055 artifacts.
+
+    Callers do not supply expected hashes. The publication manifest pins the
+    disassembly report, harness source, compiler, allowed binaries, upstream
+    commit/ref and repack blob. Any cross-artifact disagreement fails closed.
+    """
+
+    try:
+        manifest = json.loads(PUBLICATION_MANIFEST.read_text(encoding="utf-8"))
+        disassembly = json.loads(DISASSEMBLY_REVIEW.read_text(encoding="utf-8"))
+        upstream = json.loads(UPSTREAM_BINDING.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"cannot load E055 publication contract: {exc}") from exc
+    runtime = manifest.get("runtime_qualification")
+    if not isinstance(runtime, Mapping) or runtime.get("schema") != "e055-runtime-qualification/v1":
+        raise ValueError("manifest has no E055 runtime qualification contract")
+    provenance = disassembly.get("provenance")
+    builds = disassembly.get("builds")
+    if not isinstance(provenance, Mapping) or not isinstance(builds, list):
+        raise ValueError("disassembly provenance/builds are malformed")
+    if disassembly.get("status") != "PASS" or not builds or any(
+        not isinstance(item, Mapping) or item.get("golden_pass") is not True
+        or item.get("golden_cases") != 18 for item in builds
+    ):
+        raise ValueError("allowed harness builds lack the exact 18-case golden")
+    expected_builds = {
+        item.get("name"): item.get("binary_sha256")
+        for item in builds if isinstance(item, Mapping)
+    }
+    publication_hashes = [
+        provenance.get("source_sha256"), provenance.get("compiler_sha256"),
+        upstream.get("sha256"), *expected_builds.values(),
+    ]
+    if any(not isinstance(value, str) or SHA256_RE.fullmatch(value) is None
+           or value == "0" * 64 for value in publication_hashes):
+        raise ValueError("publication provenance contains an invalid or all-zero SHA-256")
+    runtime_builds = runtime.get("allowed_builds")
+    if not isinstance(runtime_builds, Mapping) or dict(runtime_builds) != expected_builds:
+        raise ValueError("manifest allowed builds do not match disassembly evidence")
+    exact_fields = {
+        "harness_schema": HARNESS_SCHEMA,
+        "golden_cases": 18,
+        "source_sha256": provenance.get("source_sha256"),
+        "compiler_sha256": provenance.get("compiler_sha256"),
+        "compiler_id": provenance.get("compiler_id"),
+        "upstream_commit": upstream.get("commit"),
+        "upstream_ref": upstream.get("immutable_ref"),
+        "upstream_repack_sha256": upstream.get("sha256"),
+    }
+    for key, value in exact_fields.items():
+        if runtime.get(key) != value:
+            raise ValueError(f"manifest runtime {key} does not match publication evidence")
+    if runtime.get("pmu_group_configs") != PMU_GROUP_CONFIGS:
+        raise ValueError("manifest PMU configs do not match E049c definitions")
+    if runtime.get("pmu_source_sha256") != _sha256_file(PMU_SOURCE):
+        raise ValueError("manifest does not pin the exact E049c PMU source")
+    if upstream.get("commit") != UPSTREAM_COMMIT or upstream.get("immutable_ref") != UPSTREAM_REF \
+            or upstream.get("sha256") != UPSTREAM_REPACK_SHA256:
+        raise ValueError("upstream source binding is not the reviewed immutable blob")
+    if _sha256_file(HARNESS_SOURCE) != runtime.get("source_sha256"):
+        raise ValueError("published harness source hash does not match the working tree")
+    manifested = {
+        item.get("path"): item for item in manifest.get("files", [])
+        if isinstance(item, Mapping)
+    }
+    relevant = (HARNESS_SOURCE, PMU_SOURCE, DISASSEMBLY_REVIEW, UPSTREAM_BINDING)
+    for path in relevant:
+        relative = path.relative_to(ROOT).as_posix()
+        item = manifested.get(relative)
+        if not isinstance(item, Mapping) or item.get("sha256") != _sha256_file(path) \
+                or item.get("size_bytes") != path.stat().st_size:
+            raise ValueError(f"manifest does not bind runtime artifact {relative}")
+    return dict(runtime)
+
+
 def ns_per_traversal(sample: Mapping[str, Any]) -> float:
     """Normalize a sample before comparing different call counts."""
 
@@ -141,7 +254,6 @@ def traversals_per_second(sample: Mapping[str, Any]) -> float:
 
 def validate_sample(
     sample: Mapping[str, Any],
-    expected_provenance: Mapping[str, Any] | None = None,
 ) -> list[str]:
     """Return contract violations for one harness/PMU joined sample.
 
@@ -149,6 +261,16 @@ def validate_sample(
     violation in its raw result.  ``observed_ddr_*`` is intentionally forbidden
     here: E055 has PMU event counts, not a direct DDR-byte counter.
     """
+
+    try:
+        contract = load_publication_contract()
+    except ValueError as exc:
+        return [str(exc)]
+    return _validate_sample(sample, contract)
+
+
+def _validate_sample(sample: Mapping[str, Any], contract: Mapping[str, Any]) -> list[str]:
+    """Validate one sample against an already verified publication contract."""
 
     errors: list[str] = []
     if sample.get("schema") != SCHEMA:
@@ -160,9 +282,18 @@ def validate_sample(
     if not _is_int(sample.get("cpu")) or int(sample["cpu"]) not in CPUS:
         errors.append("cpu must be A55 CPU0 or A76 CPU6")
     cpu = sample.get("cpu")
-    if sample.get("pinned_cpu") != cpu or sample.get("cpu_start") != cpu or sample.get("cpu_end") != cpu:
+    for key in ("pinned_cpu", "cpu_start", "cpu_end"):
+        if not _is_int(sample.get(key)):
+            errors.append(f"{key} must be an integer CPU identifier")
+    if sample.get("pinned_cpu") != cpu or sample.get("cpu_start") != cpu or \
+            sample.get("cpu_end") != cpu:
         errors.append("sample must remain pinned to the declared CPU")
-    if sample.get("affinity_cpus") != [cpu] or sample.get("cpu_migration_count") != 0:
+    affinity = sample.get("affinity_cpus")
+    if not isinstance(affinity, list) or len(affinity) != 1 or not _is_int(affinity[0]) \
+            or affinity != [cpu]:
+        errors.append("affinity must contain one exact integer CPU")
+    if not _is_int(sample.get("cpu_migration_count")) or \
+            sample.get("cpu_migration_count") != 0:
         errors.append("affinity must contain exactly the declared CPU with no migration")
     if not isinstance(sample.get("run_id"), str) or not sample["run_id"]:
         errors.append("run_id is required")
@@ -172,7 +303,7 @@ def validate_sample(
         errors.append("pair_index must be a positive integer")
     if sample.get("pair_order") not in ("hot_then_cold", "cold_then_hot"):
         errors.append("pair_order is invalid")
-    if sample.get("order_index") not in (1, 2):
+    if not _is_int(sample.get("order_index")) or sample.get("order_index") not in (1, 2):
         errors.append("order_index must be 1 or 2")
     expected_order = {
         ("hot_then_cold", "hot_repeat"): 1,
@@ -184,14 +315,57 @@ def validate_sample(
         errors.append("order_index does not match pair_order and cache_state")
     if sample.get("golden_pass") is not True:
         errors.append("golden_pass must be true for a qualified sample")
-    cold = sample.get("cold_conditioning")
-    if not isinstance(cold, Mapping):
+    if sample.get("golden_cases") != 18 or not _is_int(sample.get("golden_cases")):
+        errors.append("golden_cases must be exactly 18")
+    conditioning = sample.get("cold_conditioning")
+    if not isinstance(conditioning, Mapping):
         errors.append("cold_conditioning metadata is required")
-    elif cold.get("verified_touched") is not True:
-        errors.append("cache conditioning must be verified for both hot and cold samples")
-    for key in ("actual_working_set_bytes", "blocks", "iterations", "elapsed_ns", "calls"):
+    else:
+        required = {
+            "strategy", "requested_bytes", "actual_bytes", "line_bytes",
+            "lines_touched", "checksum", "verified_touched",
+        }
+        if not required.issubset(conditioning):
+            errors.append("cold_conditioning is missing full coverage fields")
+        if conditioning.get("verified_touched") is not True:
+            errors.append("cache conditioning must be verified for both hot and cold samples")
+        for key in ("requested_bytes", "actual_bytes", "line_bytes", "lines_touched"):
+            if not _is_int(conditioning.get(key)) or conditioning.get(key, 0) <= 0:
+                errors.append(f"cold_conditioning {key} must be a positive integer")
+        condition_checksum = conditioning.get("checksum")
+        if not isinstance(condition_checksum, str) or \
+                CHECKSUM_RE.fullmatch(condition_checksum) is None or \
+                int(condition_checksum, 16) == 0:
+            errors.append("cold_conditioning checksum must be nonzero lowercase hexadecimal")
+        if conditioning.get("line_bytes") != 64:
+            errors.append("cold_conditioning line_bytes must be 64")
+        requested = conditioning.get("requested_bytes")
+        actual = conditioning.get("actual_bytes")
+        lines = conditioning.get("lines_touched")
+        if all(_is_int(value) for value in (requested, actual, lines)):
+            if requested != actual:
+                errors.append("cold_conditioning requested and actual bytes must match")
+            if sample.get("cache_state") == "cold_conditioned":
+                if conditioning.get("strategy") != "verified_write_read_each_64B_line":
+                    errors.append("cold sample requires exact verified thrash strategy")
+                if actual % 64 != 0 or lines * 64 != actual:
+                    errors.append("cold conditioning must cover every requested 64-byte line")
+            elif sample.get("cache_state") == "hot_repeat":
+                if conditioning.get("strategy") != "verified_kernel_warmup":
+                    errors.append("hot sample requires exact verified warmup strategy")
+                if not _is_int(conditioning.get("warmup_calls")) or \
+                        conditioning.get("warmup_calls", 0) <= 0:
+                    errors.append("hot conditioning requires positive integer warmup_calls")
+                if actual != sample.get("actual_working_set_bytes") or \
+                        lines != (actual + 63) // 64:
+                    errors.append("hot conditioning coverage must match the working set")
+    for key in ("target_working_set_bytes", "actual_working_set_bytes", "blocks",
+                "iterations", "elapsed_ns", "calls"):
         if not _is_int(sample.get(key)) or int(sample[key]) <= 0:
             errors.append(f"{key} must be a positive integer")
+    target_working_set = sample.get("target_working_set_bytes")
+    if _is_int(target_working_set) and target_working_set not in WORKING_SET_BYTES:
+        errors.append("target_working_set_bytes is outside the documented seven-size matrix")
     checksum = sample.get("checksum")
     if not isinstance(checksum, str) or CHECKSUM_RE.fullmatch(checksum) is None:
         errors.append("checksum must use exact lowercase hexadecimal 0x schema")
@@ -219,6 +393,8 @@ def validate_sample(
         group = pmu.get("event_group")
         if group not in PMU_GROUP_EVENTS:
             errors.append("PMU event_group must be core, cache, or memory")
+        if pmu.get("event_source") != "armv8_pmuv3_raw_config":
+            errors.append("PMU event_source must be armv8_pmuv3_raw_config")
         if pmu.get("values_are_event_counts") is not True:
             errors.append("PMU values must be explicitly labelled event counts")
         events = pmu.get("events")
@@ -230,7 +406,10 @@ def validate_sample(
                 names != PMU_GROUP_EVENTS[group] or len(events) != len(PMU_GROUP_EVENTS[group])
             ):
                 errors.append("PMU events must exactly match the selected group")
-            if pmu.get("event_group_size") != len(events):
+            if (
+                not _is_int(pmu.get("event_group_size"))
+                or pmu.get("event_group_size") != len(events)
+            ):
                 errors.append("PMU event_group_size must match the exact event list")
             for event in events:
                 if not isinstance(event, Mapping):
@@ -238,6 +417,9 @@ def validate_sample(
                     continue
                 if event.get("support") != "supported" or event.get("sample_valid") is not True:
                     errors.append("every PMU event must be supported and sample_valid")
+                if group in PMU_GROUP_CONFIGS and \
+                        event.get("config") != PMU_GROUP_CONFIGS[group].get(event.get("name")):
+                    errors.append("PMU event config must exactly match E049c a733_pmu_exec.c")
                 if not _is_int(event.get("value")) or event.get("value", -1) < 0:
                     errors.append("PMU event value must be a non-negative integer count")
                 ratio = event.get("running_ratio")
@@ -251,43 +433,94 @@ def validate_sample(
     if _is_int(sample.get("actual_working_set_bytes")) and _is_int(sample.get("blocks")):
         if int(sample["actual_working_set_bytes"]) != int(sample["blocks"]) * NATIVE_CARRIER_BYTES:
             errors.append("actual_working_set_bytes does not match native carrier blocks")
+    if _is_int(target_working_set) and target_working_set > 0:
+        expected_layout = actual_working_set(target_working_set)
+        if sample.get("actual_working_set_bytes") != expected_layout["actual_bytes"] or \
+                sample.get("blocks") != expected_layout["blocks"]:
+            errors.append("working-set layout does not match the documented target size")
     thermal = sample.get("thermal")
     if not isinstance(thermal, Mapping) or thermal.get("readable") is not True \
             or thermal.get("tripped") is not False:
         errors.append("thermal gate must be readable and pass")
-    elif not isinstance(thermal.get("max_temp_c"), (int, float)) \
-            or not isinstance(thermal.get("limit_c"), (int, float)) \
+    elif not _is_number(thermal.get("max_temp_c")) \
+            or not _is_number(thermal.get("limit_c")) \
             or not math.isfinite(float(thermal["max_temp_c"])) \
             or not math.isfinite(float(thermal["limit_c"])) \
             or thermal["max_temp_c"] > thermal["limit_c"]:
         errors.append("thermal maximum must not exceed its limit")
     provenance = sample.get("provenance")
     provenance_keys = (
-        "source_sha256", "binary_sha256", "compiler_sha256",
-        "upstream_repack_sha256", "compiler_id",
+        "build_name", "source_sha256", "binary_sha256", "compiler_sha256",
+        "compiler_id", "upstream_commit", "upstream_ref", "upstream_repack_sha256",
     )
-    if not isinstance(expected_provenance, Mapping):
-        errors.append("declared expected provenance binding is required")
-    else:
-        for key in provenance_keys:
-            if key not in expected_provenance:
-                errors.append(f"expected provenance is missing {key}")
-        if expected_provenance.get("upstream_repack_sha256") != UPSTREAM_REPACK_SHA256:
-            errors.append("expected provenance does not pin the reviewed upstream repack.cpp")
     if not isinstance(provenance, Mapping):
         errors.append("provenance is required")
     else:
+        if set(provenance) != set(provenance_keys):
+            errors.append("provenance must contain the exact publication-bound fields")
         for key in ("source_sha256", "binary_sha256", "compiler_sha256", "upstream_repack_sha256"):
             value = provenance.get(key)
             if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None or value == "0" * 64:
                 errors.append(f"{key} must be a nonzero lowercase SHA-256")
         if not isinstance(provenance.get("compiler_id"), str) or not provenance["compiler_id"]:
             errors.append("compiler_id is required")
-        if isinstance(expected_provenance, Mapping):
-            for key in provenance_keys:
-                if provenance.get(key) != expected_provenance.get(key):
-                    errors.append(f"{key} does not match declared expected provenance")
-    if sample.get("exit_code") != 0:
+        build_name = provenance.get("build_name")
+        allowed_builds = contract.get("allowed_builds")
+        expected_provenance = {
+            "build_name": build_name,
+            "source_sha256": contract.get("source_sha256"),
+            "binary_sha256": (
+                allowed_builds.get(build_name) if isinstance(allowed_builds, Mapping) else None
+            ),
+            "compiler_sha256": contract.get("compiler_sha256"),
+            "compiler_id": contract.get("compiler_id"),
+            "upstream_commit": contract.get("upstream_commit"),
+            "upstream_ref": contract.get("upstream_ref"),
+            "upstream_repack_sha256": contract.get("upstream_repack_sha256"),
+        }
+        if not isinstance(build_name, str) or not isinstance(allowed_builds, Mapping) or \
+                build_name not in allowed_builds:
+            errors.append("build_name is not allowed by the publication manifest")
+        for key in provenance_keys:
+            if provenance.get(key) != expected_provenance.get(key):
+                errors.append(f"{key} does not match immutable publication provenance")
+    harness_result = sample.get("harness_result")
+    harness_result_sha256 = sample.get("harness_result_sha256")
+    if not isinstance(harness_result, Mapping):
+        errors.append("exact harness_result is required")
+    else:
+        expected_result_keys = {
+            "schema", "mode", "cache_state", "cpu", "target_working_set_bytes",
+            "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns",
+            "checksum", "golden_pass", "golden_cases", "conditioning", "provenance",
+        }
+        if set(harness_result) != expected_result_keys:
+            errors.append("harness_result has unexpected or missing fields")
+        result_matches = {
+            "schema": HARNESS_SCHEMA,
+            "mode": sample.get("mode"),
+            "cache_state": sample.get("cache_state"),
+            "cpu": sample.get("cpu"),
+            "target_working_set_bytes": sample.get("target_working_set_bytes"),
+            "actual_working_set_bytes": sample.get("actual_working_set_bytes"),
+            "blocks": sample.get("blocks"),
+            "iterations": sample.get("iterations"),
+            "calls": sample.get("calls"),
+            "elapsed_ns": sample.get("elapsed_ns"),
+            "checksum": sample.get("checksum"),
+            "golden_pass": sample.get("golden_pass"),
+            "golden_cases": sample.get("golden_cases"),
+            "conditioning": sample.get("cold_conditioning"),
+            "provenance": sample.get("provenance"),
+        }
+        if dict(harness_result) != result_matches:
+            errors.append("sample fields do not match the exact harness_result")
+        calculated_result_hash = _canonical_mapping_sha256(harness_result)
+        if not isinstance(harness_result_sha256, str) or \
+                SHA256_RE.fullmatch(harness_result_sha256) is None or \
+                harness_result_sha256 != calculated_result_hash:
+            errors.append("harness_result_sha256 does not bind the exact harness result")
+    if not _is_int(sample.get("exit_code")) or sample.get("exit_code") != 0:
         errors.append("exit_code must be zero")
     return errors
 
@@ -322,7 +555,8 @@ def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> floa
 
     if hot.get("cache_state") != "hot_repeat" or cold.get("cache_state") != "cold_conditioned":
         raise ValueError("expected hot_repeat followed by cold_conditioned")
-    keys = ("mode", "cpu", "actual_working_set_bytes", "blocks")
+    keys = ("mode", "cpu", "target_working_set_bytes",
+            "actual_working_set_bytes", "blocks")
     if any(hot.get(key) != cold.get(key) for key in keys):
         raise ValueError("cold penalty requires like-for-like samples")
     return ns_per_traversal(cold) / ns_per_traversal(hot)
@@ -330,7 +564,6 @@ def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> floa
 
 def infer_bottleneck(
     rows: Iterable[Mapping[str, Any]],
-    expected_provenance: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a cautious memory-vs-unpack inference from comparable controls.
 
@@ -343,12 +576,43 @@ def infer_bottleneck(
     samples = list(rows)
     if not samples:
         raise ValueError("E055 inference requires qualified samples")
+    try:
+        contract = load_publication_contract()
+    except ValueError as exc:
+        raise ValueError(f"invalid E055 publication contract: {exc}") from exc
     qualification_errors = []
     for index, sample in enumerate(samples):
-        for error in validate_sample(sample, expected_provenance):
+        for error in _validate_sample(sample, contract):
             qualification_errors.append(f"row {index}: {error}")
     if qualification_errors:
         raise ValueError("invalid E055 samples: " + "; ".join(qualification_errors))
+    phase_provenance = {
+        tuple((key, sample["provenance"][key]) for key in sorted(sample["provenance"]))
+        for sample in samples
+    }
+    if len(phase_provenance) != 1:
+        raise ValueError("one E055 phase must use one exact publication-bound build")
+
+    # Promotion is a phase-level decision. It is forbidden until the complete
+    # documented 7-size x 2-CPU x 3-mode x 3-PMU-group paired matrix exists.
+    expected_matrix_cells = {
+        (target, cpu, mode, pmu_group)
+        for target in WORKING_SET_BYTES for cpu in CPUS
+        for mode in MODES for pmu_group in PMU_GROUP_CONFIGS
+    }
+    observed_matrix_counts: dict[tuple[Any, ...], int] = defaultdict(int)
+    for sample in samples:
+        observed_matrix_counts[
+            (sample["target_working_set_bytes"], sample["cpu"], sample["mode"],
+             sample["pmu"]["event_group"])
+        ] += 1
+    if set(observed_matrix_counts) != expected_matrix_cells or \
+            any(observed_matrix_counts[cell] < 2 * MIN_PAIRED_SAMPLES
+                for cell in expected_matrix_cells):
+        raise ValueError(
+            "promotion requires the complete documented 7x2x3x2x3 matrix "
+            "with at least five exact hot/cold pairs per cell"
+        )
 
     run_ids = [str(sample["run_id"]) for sample in samples]
     if len(run_ids) != len(set(run_ids)):
@@ -364,7 +628,8 @@ def infer_bottleneck(
         pmu = sample["pmu"]
         provenance = sample["provenance"]
         cell = (
-            sample["mode"], sample["cpu"], sample["actual_working_set_bytes"],
+            sample["mode"], sample["cpu"], sample["target_working_set_bytes"],
+            sample["actual_working_set_bytes"],
             sample["blocks"], pmu["event_group"],
             tuple(provenance[key] for key in sorted(provenance)),
         )
@@ -389,8 +654,11 @@ def infer_bottleneck(
             cold = by_state["cold_conditioned"]
             if len({row["cache_state"] for row in pair_rows}) != 2:
                 raise ValueError(f"{pair_id} contains a duplicate pair half")
-            match_keys = ("pair_index", "pair_order", "mode", "cpu", "pinned_cpu",
-                          "actual_working_set_bytes", "blocks", "provenance")
+            match_keys = (
+                "pair_index", "pair_order", "mode", "cpu", "pinned_cpu",
+                "target_working_set_bytes", "actual_working_set_bytes", "blocks",
+                "golden_cases", "provenance",
+            )
             if any(hot[key] != cold[key] for key in match_keys):
                 raise ValueError(f"{pair_id} hot/cold metadata mismatch")
             pair_index = int(hot["pair_index"])
@@ -418,9 +686,9 @@ def infer_bottleneck(
     control_tracking_ratios: list[float] = []
     coordinates: dict[tuple[Any, ...], dict[str, dict[str, Any]]] = defaultdict(dict)
     for cell, summary in cell_summaries.items():
-        mode, cpu, size, blocks, pmu_group, provenance = cell
-        coordinates[(cpu, size, blocks, pmu_group, provenance)][mode] = summary
-    for (cpu, size, blocks, pmu_group, _), mode_summaries in sorted(
+        mode, cpu, target, size, blocks, pmu_group, provenance = cell
+        coordinates[(cpu, target, size, blocks, pmu_group, provenance)][mode] = summary
+    for (cpu, target, size, blocks, pmu_group, _), mode_summaries in sorted(
         coordinates.items(), key=lambda item: str(item[0])
     ):
         if set(mode_summaries) != set(MODES):
@@ -436,6 +704,7 @@ def infer_bottleneck(
         records.append({
             "kind": "median_of_per_pair_cold_penalties",
             "cpu": cpu,
+            "target_working_set_bytes": target,
             "actual_working_set_bytes": size,
             "blocks": blocks,
             "pmu_group": pmu_group,
@@ -471,6 +740,9 @@ def infer_bottleneck(
         "schema": "e055-q1-inference/v1",
         "classification": classification,
         "confidence": confidence,
+        "matrix_complete": True,
+        "matrix_expected_cells": len(expected_matrix_cells),
+        "matrix_qualified_rows": len(samples),
         "cell_count": len(cell_summaries),
         "memory_cache_sensitivity_ratios": memory_ratios,
         "full_to_control_cold_penalty_ratio_of_ratios": control_tracking_ratios,

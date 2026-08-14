@@ -1,9 +1,13 @@
 {
-  "schema": "e055-upstream-source-binding/v1",
+  "schema": "e055-upstream-source-binding/v2",
+  "repository": "https://github.com/ggml-org/llama.cpp",
+  "commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+  "immutable_ref": "https://github.com/ggml-org/llama.cpp/commit/38c66ad0241da4f9fcce541cda8edc219086cec5",
   "path": "ggml/src/ggml-cpu/arch/arm/repack.cpp",
   "sha256": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
-  "source_scope": "local upstream stock source used to derive the E039 fixture",
+  "size_bytes": 269785,
+  "source_scope": "immutable upstream stock source used to derive the E039 fixture",
   "payload_included": false,
-  "verification": "sha256sum before Stage 1 publication",
+  "verification": "downloaded from the immutable commit ref and SHA-256 checked before Stage 1 publication",
   "target_workload_executed": false
 }

@@ -19,6 +19,8 @@ review rejection is preserved in
 [`data/review-rejection-stage1-51d1c1c.md`](data/review-rejection-stage1-51d1c1c.md).
 The rejected `bba62cb` revision and its defects are preserved separately in
 [`data/review-rejection-stage2-bba62cb.md`](data/review-rejection-stage2-bba62cb.md).
+The rejected `0ed991b` target qualifier is preserved in
+[`data/review-rejection-stage3-0ed991b.md`](data/review-rejection-stage3-0ed991b.md).
 
 ## Exact kernel and controls
 
@@ -26,7 +28,9 @@ The harness includes the E039 fixture and calls its unmodified
 `native_simd_group`: one native carrier is a 72-byte `block_q1_0x4` plus four
 34-byte `block_q8_0` blocks, or 208 input bytes and 128 Q1 values. E039's scalar
 oracle must match the DOTPROD output bit-for-bit over 18 cases. No GGUF or model
-tensor is part of this bounded Stage 1 publication. The local upstream
+tensor is part of this bounded Stage 1 publication. The upstream source is the
+immutable `ggml-org/llama.cpp` commit
+`38c66ad0241da4f9fcce541cda8edc219086cec5`. Its
 `ggml/src/ggml-cpu/arch/arm/repack.cpp` is pinned by SHA-256
 `6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d`;
 the source binding is recorded in
@@ -50,7 +54,9 @@ disassembly proves instruction shape, not board timing.
 ## Hot/cold protocol and normalization
 
 - `hot_repeat` warms the fixture, then repeatedly traverses the same carrier
-  working set for a time budget or explicit iteration count.
+  working set for a time budget or explicit iteration count. The raw result
+  records requested/actual bytes, covered lines, warmup count, and a nonzero
+  conditioning checksum.
 - `cold_conditioned` writes and verifies every 64-byte line of a separate
   thrash buffer before the marker, then performs **exactly one** traversal.
   Any override to more than one iteration or a nonzero time budget is rejected.
@@ -82,15 +88,30 @@ unqualified. A target runner must join it with E049c and produce strict
 `e055-q1-hot-cold/v2`. Qualification requires:
 
 - exact fd9 `S`, fd8 `ACK`, fd9 `E` synchronization;
-- E049c v2 `sample_valid=true`, one nonempty exact `core`, `cache`, or `memory`
-  group, supported/valid events, and `running_ratio == 1.0` for every event;
+- E049c v2 `sample_valid=true`, `event_source=armv8_pmuv3_raw_config`, one
+  nonempty exact `core`, `cache`, or `memory` group, supported/valid events,
+  exact name/config bindings from `tooling/a733_pmu_exec.c`, and runtime-float
+  `running_ratio == 1.0` for every event;
 - readable thermal telemetry with no trip and maximum temperature at or below
-  its limit;
+  its limit; Boolean temperatures are not numbers;
 - affinity containing only CPU0 (A55) or CPU6 (A76), identical start/end CPU,
-  and zero migrations;
-- run ID, pair ID, pair order, within-pair order, zero exit code, exact golden,
-  and source/binary/compiler/upstream-repack SHA-256 provenance exactly matching
-  a declared target-series manifest.
+  and zero migrations, with every identifier/count an integer rather than a
+  Boolean or floating-point lookalike;
+- exact full cache-conditioning coverage metadata and checksum;
+- `golden_pass=true`, exactly 18 golden cases, and a canonical SHA-256 binding
+  of every joined field to the exact harness result;
+- source, allowed O3/O3-LTO binary, compiler, immutable upstream commit/ref,
+  and repack SHA-256 provenance loaded from the committed manifest,
+  disassembly report, and source binding. Callers cannot supply substitute
+  expected hashes.
+
+The exact E049c event/config groups are:
+
+| Group | Events and raw configs |
+|---|---|
+| `core` | `cpu_cycles=0x11`, `instructions=0x8`, `stall_backend=0x24` |
+| `cache` | `l1d_cache_refill=0x3`, `l2d_cache_refill=0x17`, `l3d_cache_refill=0x2a` |
+| `memory` | `mem_access=0x13`, `bus_access=0x19` |
 
 `sync=false`, missing/empty PMU events, negative or Boolean counts, non-float or
 non-finite running ratios, a thermal failure, CPU migration, an unverified hot
@@ -108,9 +129,13 @@ Here `12.5 MiB` is binary: exactly `13,107,200` bytes. Working-set rounding
 checks `target + 207` for unsigned overflow before division.
 
 CPU0 and CPU6 are measured first. Every cell needs at least five alternating
-pairs/repeats in each E049c PMU group. Only if the resulting component model
-predicts at least a 4% Q1 gain may one bounded all-core production-shape gate
-and a subsequent optimization be recommended. The analyzer implements this as
+hot/cold pairs in each E049c PMU group. Promotion unconditionally requires all
+seven sizes × two CPUs × three modes × two cache states × three PMU groups:
+126 paired phase cells and at least 1,260 qualified rows for five pairs. A
+partial matrix raises an error rather than returning a preliminary promotion.
+Only if the complete component model predicts at least a 4% Q1 gain may one
+bounded all-core production-shape gate and a subsequent optimization be
+recommended. The analyzer implements this as
 `promotion.threshold_fraction = 0.04`; its projected gain is an optimistic
 component bound from replacing full cold latency with full hot latency, not an
 end-to-end model speedup claim. Failures are published as raw evidence rather
@@ -142,16 +167,22 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
   tests.test_e055_aarch64_gate tests.test_e055_publication -v
 ```
 
-The cross command used by the test is:
+The cross build deliberately compiles fixed-name objects before linking. A
+one-shot driver invocation leaves a random temporary assembler-object name in
+the ELF string table and therefore cannot support an exact reproducible binary
+SHA-256. The O3 commands used by the test are:
 
 ```text
 aarch64-linux-gnu-g++ -std=c++17 -O3 -Wall -Wextra -Werror \
-  -march=armv8.2-a+dotprod tooling/e055_q1_hotcold.cpp \
-  experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S \
-  -o /tmp/e055-q1-hotcold-aarch64
+  -march=armv8.2-a+dotprod -c tooling/e055_q1_hotcold.cpp -o e055_cpp.o
+aarch64-linux-gnu-g++ -march=armv8.2-a+dotprod -c \
+  experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S -o e055_asm.o
+aarch64-linux-gnu-g++ -O3 e055_cpp.o e055_asm.o -o e055
 ```
 
-The disassembly gate repeats the same build with `-flto`. Both binaries must
+The disassembly gate repeats the C++ compile and link with `-flto`, retaining
+the fixed `e055_lto_cpp.o` and `e055_asm.o` basenames. Two clean build
+directories must produce identical final hashes. Both binaries must
 retain load/vector-consume controls without calls or SDOT and retain SDOT in
 the stock full kernel.
 

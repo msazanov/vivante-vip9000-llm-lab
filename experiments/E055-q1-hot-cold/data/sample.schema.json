@@ -3,7 +3,14 @@
   "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-q1-hot-cold/v2/sample.schema.json",
   "title": "E055 qualified Q1 hot/cold sample",
   "type": "object",
-  "required": ["schema", "run_id", "pair_id", "pair_index", "pair_order", "order_index", "mode", "cache_state", "cpu", "pinned_cpu", "affinity_cpus", "cpu_start", "cpu_end", "cpu_migration_count", "golden_pass", "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns", "checksum", "cold_conditioning", "sync", "pmu", "thermal", "provenance", "exit_code"],
+  "required": [
+    "schema", "run_id", "pair_id", "pair_index", "pair_order", "order_index",
+    "mode", "cache_state", "cpu", "pinned_cpu", "affinity_cpus", "cpu_start",
+    "cpu_end", "cpu_migration_count", "golden_pass", "golden_cases",
+    "target_working_set_bytes", "actual_working_set_bytes", "blocks", "iterations",
+    "calls", "elapsed_ns", "checksum", "cold_conditioning", "harness_result",
+    "harness_result_sha256", "sync", "pmu", "thermal", "provenance", "exit_code"
+  ],
   "properties": {
     "schema": {"const": "e055-q1-hot-cold/v2"},
     "run_id": {"type": "string", "minLength": 1},
@@ -15,12 +22,19 @@
     "cache_state": {"enum": ["hot_repeat", "cold_conditioned"]},
     "cpu": {"enum": [0, 6]},
     "pinned_cpu": {"enum": [0, 6]},
-    "affinity_cpus": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"enum": [0, 6]}},
+    "affinity_cpus": {
+      "type": "array", "minItems": 1, "maxItems": 1,
+      "items": {"enum": [0, 6]}
+    },
     "cpu_start": {"enum": [0, 6]},
     "cpu_end": {"enum": [0, 6]},
     "cpu_migration_count": {"const": 0},
     "golden_pass": {"const": true},
-    "actual_working_set_bytes": {"type": "integer", "minimum": 208},
+    "golden_cases": {"const": 18},
+    "target_working_set_bytes": {
+      "enum": [65536, 131072, 262144, 524288, 1048576, 4194304, 13107200]
+    },
+    "actual_working_set_bytes": {"type": "integer", "minimum": 1},
     "blocks": {"type": "integer", "minimum": 1},
     "iterations": {"type": "integer", "minimum": 1},
     "calls": {"type": "integer", "minimum": 1},
@@ -28,53 +42,123 @@
     "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-f]+$"},
     "observed_ddr_read_bytes": {"type": "null"},
     "observed_ddr_write_bytes": {"type": "null"},
-    "cold_conditioning": {"type": "object", "required": ["verified_touched"], "properties": {"verified_touched": {"const": true}}},
-    "sync": {"type": "object", "required": ["requested", "started", "acknowledged", "ended", "sequence"], "properties": {"requested": {"const": true}, "started": {"const": true}, "acknowledged": {"const": true}, "ended": {"const": true}, "sequence": {"const": "S/A/E"}}, "additionalProperties": false},
+    "cold_conditioning": {
+      "type": "object",
+      "required": [
+        "strategy", "requested_bytes", "actual_bytes", "line_bytes",
+        "lines_touched", "checksum", "verified_touched"
+      ],
+      "properties": {
+        "strategy": {"enum": ["verified_kernel_warmup", "verified_write_read_each_64B_line"]},
+        "requested_bytes": {"type": "integer", "minimum": 1},
+        "actual_bytes": {"type": "integer", "minimum": 1},
+        "line_bytes": {"const": 64},
+        "lines_touched": {"type": "integer", "minimum": 1},
+        "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-f]+$"},
+        "verified_touched": {"const": true},
+        "warmup_calls": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "harness_result": {
+      "type": "object",
+      "required": [
+        "schema", "mode", "cache_state", "cpu", "target_working_set_bytes",
+        "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns",
+        "checksum", "golden_pass", "golden_cases", "conditioning", "provenance"
+      ],
+      "properties": {
+        "schema": {"const": "e055-q1-hot-cold-harness/v1"},
+        "golden_pass": {"const": true},
+        "golden_cases": {"const": 18}
+      },
+      "additionalProperties": true
+    },
+    "harness_result_sha256": {
+      "type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"
+    },
+    "sync": {
+      "type": "object",
+      "required": ["requested", "started", "acknowledged", "ended", "sequence"],
+      "properties": {
+        "requested": {"const": true}, "started": {"const": true},
+        "acknowledged": {"const": true}, "ended": {"const": true},
+        "sequence": {"const": "S/A/E"}
+      },
+      "additionalProperties": false
+    },
     "pmu": {
       "type": "object",
-      "required": ["schema_version", "status", "sample_valid", "event_group", "event_group_size", "events", "values_are_event_counts"],
+      "required": [
+        "schema_version", "status", "sample_valid", "event_source", "event_group",
+        "event_group_size", "values_are_event_counts", "events"
+      ],
       "properties": {
         "schema_version": {"const": "e049c-arm-pmu/v2"},
         "status": {"const": "ok"},
         "sample_valid": {"const": true},
+        "event_source": {"const": "armv8_pmuv3_raw_config"},
         "event_group": {"enum": ["core", "cache", "memory"]},
-        "event_group_size": {"enum": [2, 3]},
+        "event_group_size": {"type": "integer", "minimum": 2, "maximum": 3},
+        "values_are_event_counts": {"const": true},
         "events": {
-          "type": "array",
-          "minItems": 2,
-          "maxItems": 3,
+          "type": "array", "minItems": 2, "maxItems": 3,
           "items": {
             "type": "object",
-            "required": ["name", "support", "sample_valid", "value", "running_ratio"],
+            "required": ["name", "config", "support", "sample_valid", "value", "running_ratio"],
             "properties": {
-              "name": {"type": "string", "minLength": 1},
+              "name": {"type": "string"},
+              "config": {"enum": ["0x11", "0x8", "0x24", "0x3", "0x17", "0x2a", "0x13", "0x19"]},
               "support": {"const": "supported"},
               "sample_valid": {"const": true},
               "value": {"type": "integer", "minimum": 0},
-              "running_ratio": {"type": "number", "const": 1.0, "description": "Python qualifier additionally requires runtime type float, excluding integer and Boolean JSON decoders."}
+              "running_ratio": {
+                "type": "number", "const": 1.0,
+                "description": "Python qualification additionally requires runtime type float."
+              }
             }
           }
-        },
-        "values_are_event_counts": {"const": true}
+        }
+      },
+      "additionalProperties": true
+    },
+    "thermal": {
+      "type": "object",
+      "required": ["readable", "tripped", "max_temp_c", "limit_c"],
+      "properties": {
+        "readable": {"const": true}, "tripped": {"const": false},
+        "max_temp_c": {"type": "number"}, "limit_c": {"type": "number"}
       }
     },
-    "thermal": {"type": "object", "required": ["readable", "tripped", "max_temp_c", "limit_c"], "properties": {"readable": {"const": true}, "tripped": {"const": false}, "max_temp_c": {"type": "number"}, "limit_c": {"type": "number"}}},
-    "provenance": {"type": "object", "required": ["source_sha256", "binary_sha256", "compiler_sha256", "compiler_id", "upstream_repack_sha256"], "properties": {"source_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "binary_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "compiler_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "compiler_id": {"type": "string", "minLength": 1}, "upstream_repack_sha256": {"const": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"}}, "additionalProperties": false},
+    "provenance": {
+      "type": "object",
+      "required": [
+        "build_name", "source_sha256", "binary_sha256", "compiler_sha256",
+        "compiler_id", "upstream_commit", "upstream_ref", "upstream_repack_sha256"
+      ],
+      "properties": {
+        "build_name": {"enum": ["O3", "O3-flto"]},
+        "source_sha256": {"const": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281"},
+        "binary_sha256": {"enum": ["9c3ea8fed87fec1f3f8cf84d6a941a135daf276174e4f52c78174c66cfe600f9", "884069f79c782ef2196e5462c73448f178a22686472b68abd100730a13987f97"]},
+        "compiler_sha256": {"const": "02c0ad2419ba416252e76336155e26b6d8009224909be2669ee0fa8fe31dd4b6"},
+        "compiler_id": {"const": "aarch64-linux-gnu-g++ (GCC) 16.1.0"},
+        "upstream_commit": {"const": "38c66ad0241da4f9fcce541cda8edc219086cec5"},
+        "upstream_ref": {"const": "https://github.com/ggml-org/llama.cpp/commit/38c66ad0241da4f9fcce541cda8edc219086cec5"},
+        "upstream_repack_sha256": {"const": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"}
+      },
+      "additionalProperties": false
+    },
     "exit_code": {"const": 0}
   },
-  "additionalProperties": true,
   "allOf": [
     {
       "if": {"properties": {"cache_state": {"const": "cold_conditioned"}}},
-      "then": {
-        "properties": {
-          "iterations": {"const": 1},
-          "calls": {"const": 1},
-          "cold_conditioning": {
-            "properties": {"verified_touched": {"const": true}}
-          }
-        }
-      }
+      "then": {"properties": {"cold_conditioning": {"properties": {"strategy": {"const": "verified_write_read_each_64B_line"}}}}}
+    },
+    {
+      "if": {"properties": {"cache_state": {"const": "hot_repeat"}}},
+      "then": {"properties": {"cold_conditioning": {"required": ["warmup_calls"], "properties": {"strategy": {"const": "verified_kernel_warmup"}}}}}
     }
-  ]
+  ],
+  "additionalProperties": true
 }

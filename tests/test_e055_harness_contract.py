@@ -41,6 +41,11 @@ class E055HarnessContractTest(unittest.TestCase):
         self.assertEqual(schema["properties"]["schema"]["const"], "e055-q1-hot-cold/v2")
         self.assertEqual(schema["properties"]["cpu"]["enum"], [0, 6])
         self.assertEqual(schema["properties"]["observed_ddr_read_bytes"]["type"], "null")
+        self.assertEqual(schema["properties"]["golden_cases"]["const"], 18)
+        event = schema["properties"]["pmu"]["properties"]["events"]["items"]
+        self.assertIn("config", event["required"])
+        self.assertIn("0x2a", event["properties"]["config"]["enum"])
+        self.assertIn("harness_result_sha256", schema["required"])
 
     def test_all_three_controls_and_checksum_are_present(self) -> None:
         for mode in ("packed_stream", "unpack_scale", "full_dotprod"):
@@ -65,6 +70,12 @@ class E055HarnessContractTest(unittest.TestCase):
                      "review-rejection-stage1-51d1c1c.md").read_text(encoding="utf-8")
         self.assertIn("REJECTED EVIDENCE", rejection)
         self.assertIn("51d1c1c", rejection)
+
+    def test_latest_rejected_target_qualifier_is_preserved(self) -> None:
+        rejection = (ROOT / "experiments/E055-q1-hot-cold/data/"
+                     "review-rejection-stage3-0ed991b.md").read_text(encoding="utf-8")
+        self.assertIn("REJECTED EVIDENCE", rejection)
+        self.assertIn("0ed991b1b17c46f46b09ea9ed6731eb585cf60f5", rejection)
 
     def test_marker_protocol_uses_fixed_e049c_descriptors(self) -> None:
         self.assertIn("constexpr int kMarkerFd = 9", self.source)

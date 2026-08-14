@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T06:16:09.079153+00:00",
+  "generated_at_utc": "2026-08-14T07:08:55.934730+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "bba62cbb7abd8737281355f5f784e30904037cc6",
-    "staged_tree_binding_sha256": "d9c9cdd167206dc0b0e562f6cb1fea5bc8efff4f111d0198cf688a0b0dcd99cd",
+    "preflight_base_commit": "0ed991b1b17c46f46b09ea9ed6731eb585cf60f5",
+    "staged_tree_binding_sha256": "fe15946dc83b70174319656ac7d180c518262e84940966e70b8096890f562011",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -17,23 +17,58 @@
   },
   "upstream_source_binding": {
     "path": "ggml/src/ggml-cpu/arch/arm/repack.cpp",
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "immutable_ref": "https://github.com/ggml-org/llama.cpp/commit/38c66ad0241da4f9fcce541cda8edc219086cec5",
     "repack_cpp_sha256": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
     "payload_publication": "local-only source; hash published"
   },
-  "sample_provenance_contract": "Every target series must declare actual source, binary, compiler, and upstream repack hashes; validate_sample requires their exact binding.",
+  "runtime_qualification": {
+    "schema": "e055-runtime-qualification/v1",
+    "harness_schema": "e055-q1-hot-cold-harness/v1",
+    "golden_cases": 18,
+    "source_sha256": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281",
+    "compiler_sha256": "02c0ad2419ba416252e76336155e26b6d8009224909be2669ee0fa8fe31dd4b6",
+    "compiler_id": "aarch64-linux-gnu-g++ (GCC) 16.1.0",
+    "allowed_builds": {
+      "O3": "9c3ea8fed87fec1f3f8cf84d6a941a135daf276174e4f52c78174c66cfe600f9",
+      "O3-flto": "884069f79c782ef2196e5462c73448f178a22686472b68abd100730a13987f97"
+    },
+    "upstream_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "upstream_ref": "https://github.com/ggml-org/llama.cpp/commit/38c66ad0241da4f9fcce541cda8edc219086cec5",
+    "upstream_repack_sha256": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
+    "pmu_group_configs": {
+      "core": {
+        "cpu_cycles": "0x11",
+        "instructions": "0x8",
+        "stall_backend": "0x24"
+      },
+      "cache": {
+        "l1d_cache_refill": "0x3",
+        "l2d_cache_refill": "0x17",
+        "l3d_cache_refill": "0x2a"
+      },
+      "memory": {
+        "mem_access": "0x13",
+        "bus_access": "0x19"
+      }
+    },
+    "pmu_source_sha256": "f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0"
+  },
+  "sample_provenance_contract": "validate_sample loads exact source, binary, compiler, PMU config and upstream identities from these committed publication artifacts; callers cannot inject an expected provenance mapping.",
   "model_payload_included": false,
   "target_workload_executed": false,
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 8615,
-      "sha256": "5cf22abdd44b1f9895265a196e02ba3c0040b93d03b78339c169bc609f24fcd0",
+      "size_bytes": 10504,
+      "sha256": "599c44583e349094949d5e52b3d354b05e9c9580f1cdc34e83e31623e10217eb",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 2415353,
-      "sha256": "0b558e24203b6e71895ee49ddb9e46790bf6dcb19762539e25eddb27d040cf08",
+      "size_bytes": 2422271,
+      "sha256": "3c618f5e09d64ed0c8216d0a9f3841eefc55d36f7c48517cf90643d6abb9eadc",
       "role": "e055-stage1"
     },
     {
@@ -55,33 +90,45 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage3-0ed991b.md",
+      "size_bytes": 1094,
+      "sha256": "04062b3863bcf1f65ed977c646ecca2a50e72e42b9165d9127bbb254bb53feff",
+      "role": "e055-stage1"
+    },
+    {
       "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
-      "size_bytes": 1717,
-      "sha256": "542d156d0484a9e8bddb5e2b61a6781f379f883091a5e91b00a8e1a8ea637cfb",
+      "size_bytes": 2380,
+      "sha256": "5ec94362aed0c259bcc38e2c7f395e3e1d66387a141cf51231251df308f84773",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
-      "size_bytes": 386,
-      "sha256": "592a5e29134635be72876f5d0172435f69854ec85f8709713787677292e15f55",
+      "size_bytes": 686,
+      "sha256": "461dc732c176eca7cabf815fb99411c52ff4ca5c1518821ee3e40c2491717187",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-      "size_bytes": 4678,
-      "sha256": "020a3fb98afb93e2c3c9f59c3d6b16816cefddcde8df4526ec2a38a5495eb8c1",
+      "size_bytes": 7255,
+      "sha256": "c0202ab6922ec959595a34c96e997c70cf3345df0cf21a991f87ba64196cdf52",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_q1_hotcold.cpp",
-      "size_bytes": 25450,
-      "sha256": "11b4e100ead0aab2da7271921188afd860b59fb7ef8a5e87714fd376c27bb9af",
+      "size_bytes": 26068,
+      "sha256": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 23990,
-      "sha256": "37488cb89ac54e77612169e8da03f7fe33d2f49fa2282fb27ef612b8610daa05",
+      "size_bytes": 38335,
+      "sha256": "2f7feb89b0d334d6b43df0048cc8f67b19508d628fa1305f38fb6e0a7671b58b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/a733_pmu_exec.c",
+      "size_bytes": 40165,
+      "sha256": "f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0",
       "role": "e055-stage1"
     },
     {
@@ -98,32 +145,32 @@
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 4626,
-      "sha256": "6909ab2a1a58b5be4c59b0936ba42eda05bc07853b9b94d95c44df13687c5d8a",
+      "size_bytes": 6636,
+      "sha256": "36d81441f069671e4141fe9eab913fda643fb353d041bd00c1f42f7cbfc9c420",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_harness_contract.py",
-      "size_bytes": 4167,
-      "sha256": "496043e2754fb18db334676a5dac3d47d48dc5b75b63a340e8bec2173707d6af",
+      "size_bytes": 4865,
+      "sha256": "8a8c400fe7fff35c861e3931fcb38e8bf963d5fff7d409938b0f6f1f3154e6a8",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_q1_hotcold.py",
-      "size_bytes": 11308,
-      "sha256": "7e8e6832d234558d19d58809eb0adc25928ac75b20a8e4649dadba2a7fdb56de",
+      "size_bytes": 16682,
+      "sha256": "d2d4c7794db95fee2c0636af899db7fc945378cd23b582705b7e4175d125262c",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_aarch64_gate.py",
-      "size_bytes": 4922,
-      "sha256": "1c491b140b1c6a0649d04ecd0c00c5f628a1b3849b8c57c4d8d8b3ee83a72300",
+      "size_bytes": 7440,
+      "sha256": "3b6994dd930bdf9f231257410c3e6efec42b96607a54a59a8a1c73dd5c1dfe30",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 6621,
-      "sha256": "ba5e5c77ec46cd7e25d9b1cc95a3ce5ac30dc9403eabf19dddc22431daa9b572",
+      "size_bytes": 8474,
+      "sha256": "abf2ff044120ced725ffd9fde5855e908aafa5f29a79c4729bfdddc72b52336b",
       "role": "e055-stage1"
     },
     {

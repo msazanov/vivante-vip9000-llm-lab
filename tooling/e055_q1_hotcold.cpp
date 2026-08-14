@@ -367,16 +367,19 @@ static bool run_golden(unsigned &case_count) {
 }
 
 struct cold_result {
-    uint64_t bytes = 0;
+    uint64_t requested_bytes = 0;
+    uint64_t actual_bytes = 0;
     uint64_t lines = 0;
+    uint64_t warmup_calls = 0;
     uint64_t checksum = 0;
     bool verified_touched = false;
 };
 
 static cold_result condition_cold(std::vector<uint8_t> &buffer) {
     cold_result result;
-    result.bytes = static_cast<uint64_t>(buffer.size());
-    result.lines = result.bytes / kCacheLineBytes;
+    result.requested_bytes = static_cast<uint64_t>(buffer.size());
+    result.actual_bytes = static_cast<uint64_t>(buffer.size());
+    result.lines = result.actual_bytes / kCacheLineBytes;
     uint64_t checksum = kCanarySeed;
     for (uint64_t line = 0; line < result.lines; ++line) {
         uint8_t *base = buffer.data() + line * kCacheLineBytes;
@@ -492,9 +495,10 @@ static std::string json_result(const options &opt,
         "\"output_bytes\":%" PRIu64 ",\"dot_products\":%" PRIu64 "},"
         "\"checksum\":\"0x%" PRIx64 "\","
         "\"cold_conditioning\":{\"strategy\":\"%s\","
-        "\"thrash_bytes\":%" PRIu64 ",\"line_bytes\":%" PRIu64 ","
+        "\"requested_bytes\":%" PRIu64 ",\"actual_bytes\":%" PRIu64 ","
+        "\"line_bytes\":%" PRIu64 ","
         "\"lines_touched\":%" PRIu64 ",\"checksum\":\"0x%" PRIx64 "\","
-        "\"verified_touched\":%s},"
+        "\"verified_touched\":%s,\"warmup_calls\":%" PRIu64 "},"
         "\"sync\":{\"requested\":%s,\"started\":%s,"
         "\"acknowledged\":%s,\"ended\":%s,\"sequence\":\"S/A/E\"},"
         "\"qualification\":\"unqualified_harness_output_requires_E049c_join\"}\n",
@@ -503,8 +507,8 @@ static std::string json_result(const options &opt,
         iterations, calls, elapsed_ns, first_call_ns, calls_per_second,
         bytes.q1_packed_bytes, bytes.q8_bytes, bytes.total_input_bytes,
         bytes.output_bytes, bytes.dot_products, checksum, conditioning_strategy,
-        cold.bytes, kCacheLineBytes, cold.lines, cold.checksum,
-        conditioning_verified ? "true" : "false",
+        cold.requested_bytes, cold.actual_bytes, kCacheLineBytes, cold.lines,
+        cold.checksum, conditioning_verified ? "true" : "false", cold.warmup_calls,
         opt.sync ? "true" : "false", marker_started ? "true" : "false",
         marker_ack ? "true" : "false", marker_ended ? "true" : "false");
     if (written < 0 || static_cast<size_t>(written) >= sizeof(buffer)) {
@@ -562,9 +566,16 @@ int main(int argc, char **argv) {
     }
 
     if (opt.cache_state == "hot_repeat") {
+        cold.requested_bytes = actual_bytes;
+        cold.actual_bytes = actual_bytes;
+        cold.lines = (actual_bytes + kCacheLineBytes - 1) / kCacheLineBytes;
+        cold.warmup_calls = opt.warmup;
+        cold.checksum = kCanarySeed;
         for (uint64_t i = 0; i < opt.warmup; ++i) {
-            (void)run_one(opt.mode, b0.data(), q8.data(), blocks);
+            cold.checksum = mix_checksum(
+                cold.checksum, run_one(opt.mode, b0.data(), q8.data(), blocks));
         }
+        cold.verified_touched = opt.warmup > 0;
     }
 
     const bool marker_requested = opt.sync;

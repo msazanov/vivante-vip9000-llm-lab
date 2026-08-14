@@ -9,11 +9,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 try:
-    from tooling.e055_q1_hotcold import UPSTREAM_REPACK_SHA256
+    from tooling.e055_q1_hotcold import (
+        HARNESS_SCHEMA,
+        PMU_GROUP_CONFIGS,
+        UPSTREAM_COMMIT,
+        UPSTREAM_REF,
+        UPSTREAM_REPACK_SHA256,
+    )
 except ModuleNotFoundError as exc:
     if exc.name != "tooling":
         raise
-    from e055_q1_hotcold import UPSTREAM_REPACK_SHA256
+    from e055_q1_hotcold import (
+        HARNESS_SCHEMA,
+        PMU_GROUP_CONFIGS,
+        UPSTREAM_COMMIT,
+        UPSTREAM_REF,
+        UPSTREAM_REPACK_SHA256,
+    )
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,11 +39,13 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage2-bba62cb.md",
+    ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage3-0ed991b.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
     ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json",
     ROOT / "tooling/e055_q1_hotcold.cpp",
     ROOT / "tooling/e055_q1_hotcold.py",
+    ROOT / "tooling/a733_pmu_exec.c",
     ROOT / "tooling/check_e055_disassembly.py",
     ROOT / "tooling/verify_e055_publication.py",
     ROOT / "tooling/generate_e055_manifest.py",
@@ -68,6 +82,21 @@ def build_payload(
 
     preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
     active = preflight["active_worktree"]
+    disassembly = json.loads(
+        (experiment / "data/disassembly-review.json").read_text(encoding="utf-8")
+    )
+    upstream = json.loads(
+        (experiment / "data/upstream-source-binding.json").read_text(encoding="utf-8")
+    )
+    if disassembly.get("status") != "PASS" or not disassembly.get("builds") or any(
+        item.get("golden_pass") is not True or item.get("golden_cases") != 18
+        for item in disassembly.get("builds", []) if isinstance(item, dict)
+    ):
+        raise ValueError("every allowed runtime build must pass exactly 18 golden cases")
+    disassembly_provenance = disassembly["provenance"]
+    allowed_builds = {
+        item["name"]: item["binary_sha256"] for item in disassembly["builds"]
+    }
     files = []
     for path in published:
         files.append({
@@ -92,12 +121,30 @@ def build_payload(
         },
         "upstream_source_binding": {
             "path": "ggml/src/ggml-cpu/arch/arm/repack.cpp",
+            "repository": upstream["repository"],
+            "commit": upstream["commit"],
+            "immutable_ref": upstream["immutable_ref"],
             "repack_cpp_sha256": UPSTREAM_REPACK_SHA256,
             "payload_publication": "local-only source; hash published",
         },
+        "runtime_qualification": {
+            "schema": "e055-runtime-qualification/v1",
+            "harness_schema": HARNESS_SCHEMA,
+            "golden_cases": 18,
+            "source_sha256": disassembly_provenance["source_sha256"],
+            "compiler_sha256": disassembly_provenance["compiler_sha256"],
+            "compiler_id": disassembly_provenance["compiler_id"],
+            "allowed_builds": allowed_builds,
+            "upstream_commit": UPSTREAM_COMMIT,
+            "upstream_ref": UPSTREAM_REF,
+            "upstream_repack_sha256": UPSTREAM_REPACK_SHA256,
+            "pmu_group_configs": PMU_GROUP_CONFIGS,
+            "pmu_source_sha256": sha256(root / "tooling/a733_pmu_exec.c"),
+        },
         "sample_provenance_contract": (
-            "Every target series must declare actual source, binary, compiler, and "
-            "upstream repack hashes; validate_sample requires their exact binding."
+            "validate_sample loads exact source, binary, compiler, PMU config and "
+            "upstream identities from these committed publication artifacts; callers "
+            "cannot inject an expected provenance mapping."
         ),
         "model_payload_included": False,
         "target_workload_executed": False,
