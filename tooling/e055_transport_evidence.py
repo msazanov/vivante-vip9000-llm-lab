@@ -10,7 +10,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import os
+from pathlib import Path
 import re
+import stat
+import subprocess
 from typing import Any, Mapping, Sequence
 
 
@@ -23,11 +27,126 @@ BOARD_IDENTITY_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 PYTHON_REALPATH_RE = re.compile(r"^/usr/bin/python3(?:\.[0-9]+)?$")
 PYTHON_VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+(?:[A-Za-z0-9.+-]{0,32})?$")
 OPENSSH_VERSION_RE = re.compile(r"^OpenSSH_[A-Za-z0-9._,+-]{1,96}$")
+GIT_OID_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 DEPLOYMENT_BASE = "/tmp/e055-q1-hot-cold"
 
 
 def _strict_int(value: Any, *, minimum: int = 0) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value >= minimum
+
+
+def _read_regular_file(path: Path, maximum: int) -> tuple[bytes, os.stat_result]:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1 or \
+                before.st_size < 1 or before.st_size > maximum:
+            raise ValueError("local provenance file is not one bounded regular file")
+        chunks: list[bytes] = []
+        remaining = before.st_size
+        while remaining:
+            chunk = os.read(descriptor, min(remaining, 1024 * 1024))
+            if not chunk:
+                raise ValueError("local provenance file was truncated")
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        if os.read(descriptor, 1):
+            raise ValueError("local provenance file grew while reading")
+        after = os.fstat(descriptor)
+        if (before.st_dev, before.st_ino, before.st_size, before.st_mode) != (
+            after.st_dev, after.st_ino, after.st_size, after.st_mode
+        ):
+            raise ValueError("local provenance file identity changed")
+        return b"".join(chunks), before
+    finally:
+        os.close(descriptor)
+
+
+def _git(root: Path, *arguments: str) -> str:
+    result = subprocess.run(
+        ("git", *arguments), cwd=root, check=False, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        raise ValueError("Git provenance query failed")
+    return result.stdout.strip()
+
+
+def _expected_pins_document(value: Any) -> dict[str, Any]:
+    if type(value) is not ExpectedTransportPins or \
+            value.schema != "e055-expected-transport-pins/v1" or \
+            value.trust_mode != "pinned_host_key":
+        raise ValueError("independent expected transport pins are required")
+    if not isinstance(value.endpoint_label, str) or \
+            not 1 <= len(value.endpoint_label) <= 128 or \
+            any(ord(character) < 32 for character in value.endpoint_label) or \
+            not isinstance(value.board_identity, str) or \
+            BOARD_IDENTITY_RE.fullmatch(value.board_identity) is None or \
+            not isinstance(value.host_key_fingerprint, str) or \
+            HOST_KEY_RE.fullmatch(value.host_key_fingerprint) is None:
+        raise ValueError("expected endpoint pins are invalid")
+    for digest in (
+        value.known_hosts_sha256, value.target_endpoint_sha256,
+        value.helper_source_sha256, value.openssh_sha256,
+    ):
+        if not isinstance(digest, str) or SHA256_RE.fullmatch(digest) is None or \
+                digest == "0" * 64:
+            raise ValueError("expected transport digest is invalid")
+    if not _strict_int(value.helper_source_size_bytes, minimum=1) or \
+            value.helper_source_size_bytes > 1024 * 1024 or \
+            not isinstance(value.helper_git_blob_oid, str) or \
+            GIT_OID_RE.fullmatch(value.helper_git_blob_oid) is None or \
+            not _strict_int(value.openssh_size_bytes, minimum=1) or \
+            value.openssh_size_bytes > 32 * 1024 * 1024:
+        raise ValueError("expected local implementation pins are invalid")
+    return {
+        "schema": value.schema, "trust_mode": value.trust_mode,
+        "endpoint_label": value.endpoint_label,
+        "board_identity": value.board_identity,
+        "host_key_fingerprint": value.host_key_fingerprint,
+        "known_hosts_sha256": value.known_hosts_sha256,
+        "target_endpoint_sha256": value.target_endpoint_sha256,
+        "helper_source_sha256": value.helper_source_sha256,
+        "helper_source_size_bytes": value.helper_source_size_bytes,
+        "helper_git_blob_oid": value.helper_git_blob_oid,
+        "openssh_sha256": value.openssh_sha256,
+        "openssh_size_bytes": value.openssh_size_bytes,
+    }
+
+
+def _verify_local_implementation(
+    value: TransportImplementationEvidence,
+    pins: ExpectedTransportPins,
+    repository_root: Path,
+) -> None:
+    if not isinstance(repository_root, Path) or not repository_root.is_absolute():
+        raise ValueError("repository root must be one absolute Path")
+    helper = repository_root / value.helper_source_path
+    try:
+        helper.relative_to(repository_root)
+    except ValueError as exc:
+        raise ValueError("helper source escaped the repository") from exc
+    helper_payload, helper_status = _read_regular_file(helper, 1024 * 1024)
+    openssh_payload, openssh_status = _read_regular_file(
+        Path(value.openssh_path), 32 * 1024 * 1024,
+    )
+    if hashlib.sha256(helper_payload).hexdigest() != pins.helper_source_sha256 or \
+            helper_status.st_size != pins.helper_source_size_bytes or \
+            hashlib.sha256(openssh_payload).hexdigest() != pins.openssh_sha256 or \
+            openssh_status.st_size != pins.openssh_size_bytes:
+        raise ValueError("actual local helper/OpenSSH bytes do not match expected pins")
+    if _git(repository_root, "status", "--porcelain=v2", "--", value.helper_source_path):
+        raise ValueError("helper source is dirty, staged, deleted, or untracked")
+    head = _git(repository_root, "ls-tree", "HEAD", "--", value.helper_source_path)
+    index = _git(repository_root, "ls-files", "--stage", "--", value.helper_source_path)
+    head_fields = head.split()
+    index_fields = index.split()
+    if len(head_fields) < 3 or len(index_fields) < 2 or \
+            head_fields[0] not in ("100644", "100755") or head_fields[1] != "blob" or \
+            index_fields[0] != head_fields[0] or index_fields[1] != head_fields[2] or \
+            head_fields[2] != pins.helper_git_blob_oid:
+        raise ValueError("helper source is not bound to one identical HEAD/index blob")
 
 
 @dataclass(frozen=True)
@@ -71,14 +190,36 @@ class TransportImplementationEvidence:
     helper_source_path: str
     helper_source_sha256: str
     helper_source_size_bytes: int
+    helper_git_blob_oid: str
     openssh_path: str
     openssh_sha256: str
     openssh_size_bytes: int
     openssh_mode: int
     openssh_version: str
+    config_file: str
     client_config: tuple[str, ...]
     client_config_sha256: str
+    known_hosts_sha256: str
+    target_endpoint_sha256: str
     credential_mode: str
+
+
+@dataclass(frozen=True)
+class ExpectedTransportPins:
+    """Independent caller policy; never derived from a transport response."""
+
+    schema: str
+    trust_mode: str
+    endpoint_label: str
+    board_identity: str
+    host_key_fingerprint: str
+    known_hosts_sha256: str
+    target_endpoint_sha256: str
+    helper_source_sha256: str
+    helper_source_size_bytes: int
+    helper_git_blob_oid: str
+    openssh_sha256: str
+    openssh_size_bytes: int
 
 
 @dataclass(frozen=True)
@@ -250,20 +391,17 @@ def _implementation_document(value: Any) -> dict[str, Any]:
     if type(value) is not TransportImplementationEvidence:
         raise ValueError("transport implementation evidence has a noncanonical type")
     if value.schema != "e055-openssh-implementation/v1" or \
-            value.implementation not in ("openssh_fixed_helper", "test_fixture") or \
-            value.credential_mode not in (
-                "external_agent_or_identity", "test_fixture",
-            ):
-        raise ValueError("transport implementation identity is invalid")
-    if value.implementation == "openssh_fixed_helper" and \
+            value.implementation != "openssh_fixed_helper" or \
             value.credential_mode != "external_agent_or_identity":
-        raise ValueError("OpenSSH credentials must remain external")
+        raise ValueError("transport implementation identity is invalid")
     if value.helper_source_path != "tooling/e055_remote_helper.py" or \
             not isinstance(value.helper_source_sha256, str) or \
             SHA256_RE.fullmatch(value.helper_source_sha256) is None or \
             value.helper_source_sha256 == "0" * 64 or \
             not _strict_int(value.helper_source_size_bytes, minimum=1) or \
-            value.helper_source_size_bytes > 1024 * 1024:
+            value.helper_source_size_bytes > 1024 * 1024 or \
+            not isinstance(value.helper_git_blob_oid, str) or \
+            GIT_OID_RE.fullmatch(value.helper_git_blob_oid) is None:
         raise ValueError("transport helper source identity is invalid")
     if not isinstance(value.openssh_path, str) or \
             not value.openssh_path.startswith("/") or \
@@ -278,29 +416,61 @@ def _implementation_document(value: Any) -> dict[str, Any]:
             not isinstance(value.openssh_version, str) or \
             OPENSSH_VERSION_RE.fullmatch(value.openssh_version) is None:
         raise ValueError("local OpenSSH executable identity is invalid")
+    if value.config_file != "/dev/null" or \
+            not isinstance(value.known_hosts_sha256, str) or \
+            SHA256_RE.fullmatch(value.known_hosts_sha256) is None or \
+            value.known_hosts_sha256 == "0" * 64 or \
+            not isinstance(value.target_endpoint_sha256, str) or \
+            SHA256_RE.fullmatch(value.target_endpoint_sha256) is None or \
+            value.target_endpoint_sha256 == "0" * 64:
+        raise ValueError("OpenSSH execution boundary pins are invalid")
     if not isinstance(value.client_config, tuple) or not value.client_config or \
             len(set(value.client_config)) != len(value.client_config):
         raise ValueError("OpenSSH client config must be one unique tuple")
-    reviewed_keys = {
+    exact_keys = {
         "BatchMode", "StrictHostKeyChecking", "UserKnownHostsFile",
         "GlobalKnownHostsFile", "CheckHostIP", "PasswordAuthentication",
         "KbdInteractiveAuthentication", "NumberOfPasswordPrompts",
         "ForwardAgent", "ClearAllForwardings", "PermitLocalCommand",
         "RequestTTY", "ConnectTimeout", "ConnectionAttempts",
         "ServerAliveInterval", "ServerAliveCountMax", "LogLevel",
+        "IdentitiesOnly", "ProxyCommand", "ProxyJump", "CanonicalizeHostname",
     }
+    parsed: dict[str, str] = {}
     for option in value.client_config:
         if not isinstance(option, str) or not 3 <= len(option) <= 128 or \
                 any(ord(character) < 32 or ord(character) > 126 for character in option):
             raise ValueError("OpenSSH client config contains invalid text")
         key, separator, setting = option.partition("=")
         lowered = option.lower()
-        if separator != "=" or key not in reviewed_keys or not setting or any(
+        if separator != "=" or key not in exact_keys or key in parsed or not setting or any(
             secret in lowered for secret in (
                 "sshpass", "password=", "token=", "secret=", "identityfile=",
             )
         ):
             raise ValueError("OpenSSH client config is unreviewed or sensitive")
+        parsed[key] = setting
+    fixed = {
+        "BatchMode": "yes", "StrictHostKeyChecking": "yes",
+        "UserKnownHostsFile": "external-pinned-file",
+        "GlobalKnownHostsFile": "/dev/null", "CheckHostIP": "no",
+        "PasswordAuthentication": "no", "KbdInteractiveAuthentication": "no",
+        "NumberOfPasswordPrompts": "0", "ForwardAgent": "no",
+        "ClearAllForwardings": "yes", "PermitLocalCommand": "no",
+        "RequestTTY": "no", "ConnectionAttempts": "1", "LogLevel": "ERROR",
+        "IdentitiesOnly": "yes", "ProxyCommand": "none", "ProxyJump": "none",
+        "CanonicalizeHostname": "no",
+    }
+    if set(parsed) != exact_keys or any(parsed.get(key) != setting for key, setting in fixed.items()):
+        raise ValueError("OpenSSH client config does not enforce exact safe semantics")
+    for key, minimum, maximum in (
+        ("ConnectTimeout", 1, 60), ("ServerAliveInterval", 1, 30),
+        ("ServerAliveCountMax", 1, 6),
+    ):
+        setting = parsed.get(key, "")
+        if not setting.isascii() or not setting.isdigit() or \
+                not minimum <= int(setting) <= maximum:
+            raise ValueError("OpenSSH timeout configuration is outside safe bounds")
     config_bytes = ("\n".join(value.client_config) + "\n").encode("ascii")
     if not isinstance(value.client_config_sha256, str) or \
             value.client_config_sha256 != hashlib.sha256(config_bytes).hexdigest():
@@ -311,13 +481,17 @@ def _implementation_document(value: Any) -> dict[str, Any]:
         "helper_source_path": value.helper_source_path,
         "helper_source_sha256": value.helper_source_sha256,
         "helper_source_size_bytes": value.helper_source_size_bytes,
+        "helper_git_blob_oid": value.helper_git_blob_oid,
         "openssh_path": value.openssh_path,
         "openssh_sha256": value.openssh_sha256,
         "openssh_size_bytes": value.openssh_size_bytes,
         "openssh_mode": value.openssh_mode,
         "openssh_version": value.openssh_version,
+        "config_file": value.config_file,
         "client_config": list(value.client_config),
         "client_config_sha256": value.client_config_sha256,
+        "known_hosts_sha256": value.known_hosts_sha256,
+        "target_endpoint_sha256": value.target_endpoint_sha256,
         "credential_mode": value.credential_mode,
     }
 
@@ -396,6 +570,8 @@ def validate_transport_evidence(
     expected_artifacts: Sequence[Mapping[str, Any]],
     *,
     implementation_evidence: TransportImplementationEvidence,
+    expected_pins: ExpectedTransportPins,
+    repository_root: Path,
     exclusive_request_id: str,
     exclusive_request_nonce: str,
     readback_request_id: str,
@@ -434,11 +610,28 @@ def validate_transport_evidence(
             readback.request_nonce != readback_request_nonce or \
             readback.deployment_root != layout.deployment_root:
         raise ValueError("fresh readback proof is invalid")
+    pins_document = _expected_pins_document(expected_pins)
     receipt_identity = _validate_identity(receipt.endpoint_identity)
     readback_identity = _validate_identity(readback.endpoint_identity)
     if receipt_identity != readback_identity:
         raise ValueError("deploy and readback endpoint identities differ")
+    if receipt_identity.trust_mode != expected_pins.trust_mode or \
+            receipt_identity.endpoint_label != expected_pins.endpoint_label or \
+            receipt_identity.board_identity != expected_pins.board_identity or \
+            receipt_identity.host_key_fingerprint != expected_pins.host_key_fingerprint:
+        raise ValueError("transport endpoint does not match independent expected pins")
     implementation_document = _implementation_document(implementation_evidence)
+    if implementation_evidence.known_hosts_sha256 != expected_pins.known_hosts_sha256 or \
+            implementation_evidence.target_endpoint_sha256 != expected_pins.target_endpoint_sha256 or \
+            implementation_evidence.helper_source_sha256 != expected_pins.helper_source_sha256 or \
+            implementation_evidence.helper_source_size_bytes != expected_pins.helper_source_size_bytes or \
+            implementation_evidence.helper_git_blob_oid != expected_pins.helper_git_blob_oid or \
+            implementation_evidence.openssh_sha256 != expected_pins.openssh_sha256 or \
+            implementation_evidence.openssh_size_bytes != expected_pins.openssh_size_bytes:
+        raise ValueError("implementation evidence does not match independent expected pins")
+    _verify_local_implementation(
+        implementation_evidence, expected_pins, repository_root,
+    )
     receipt_runtime = _runtime_document(
         receipt.runtime, implementation_evidence, operation_sequence=1,
         request_id=exclusive_request_id, request_nonce=exclusive_request_nonce,
@@ -517,6 +710,7 @@ def validate_transport_evidence(
             "transport and endpoint remain operationally trusted"
         ),
         "endpoint_identity": _identity_document(receipt_identity),
+        "expected_pins": pins_document,
         "implementation_evidence": implementation_document,
         "deployment_root": layout.deployment_root,
         "lock_path": layout.lock_path,
@@ -565,6 +759,9 @@ def validate_serialized_transport_evidence(
     value: Any,
     layout: DeploymentLayout,
     expected_artifacts: Sequence[Mapping[str, Any]],
+    *,
+    expected_pins: ExpectedTransportPins,
+    repository_root: Path,
 ) -> dict[str, Any]:
     """Validate committed JSON evidence through the same canonical model."""
 
@@ -573,7 +770,7 @@ def validate_serialized_transport_evidence(
         {
             "schema", "trust_statement", "endpoint_identity", "deployment_root",
             "lock_path", "requests", "exclusive_receipt", "fresh_readback",
-            "implementation_evidence",
+            "implementation_evidence", "expected_pins",
         },
         "transport evidence",
     )
@@ -595,14 +792,39 @@ def validate_serialized_transport_evidence(
 
     identity = identity_from(identity_raw, "transport endpoint identity")
 
+    pins_raw = _exact_mapping(
+        exact.get("expected_pins"),
+        {
+            "schema", "trust_mode", "endpoint_label", "board_identity",
+            "host_key_fingerprint", "known_hosts_sha256",
+            "target_endpoint_sha256", "helper_source_sha256",
+            "helper_source_size_bytes", "helper_git_blob_oid", "openssh_sha256",
+            "openssh_size_bytes",
+        },
+        "expected transport pins",
+    )
+    serialized_pins = ExpectedTransportPins(
+        pins_raw.get("schema"), pins_raw.get("trust_mode"),
+        pins_raw.get("endpoint_label"), pins_raw.get("board_identity"),
+        pins_raw.get("host_key_fingerprint"), pins_raw.get("known_hosts_sha256"),
+        pins_raw.get("target_endpoint_sha256"),
+        pins_raw.get("helper_source_sha256"),
+        pins_raw.get("helper_source_size_bytes"), pins_raw.get("helper_git_blob_oid"),
+        pins_raw.get("openssh_sha256"), pins_raw.get("openssh_size_bytes"),
+    )
+    if serialized_pins != expected_pins:
+        raise ValueError("serialized expected pins differ from caller policy")
+
     implementation_raw = _exact_mapping(
         exact.get("implementation_evidence"),
         {
             "schema", "implementation", "helper_source_path",
-            "helper_source_sha256", "helper_source_size_bytes", "openssh_path",
+            "helper_source_sha256", "helper_source_size_bytes", "helper_git_blob_oid",
+            "openssh_path",
             "openssh_sha256", "openssh_size_bytes", "openssh_mode",
-            "openssh_version", "client_config", "client_config_sha256",
-            "credential_mode",
+            "openssh_version", "config_file", "client_config",
+            "client_config_sha256", "known_hosts_sha256",
+            "target_endpoint_sha256", "credential_mode",
         },
         "transport implementation evidence",
     )
@@ -614,12 +836,16 @@ def validate_serialized_transport_evidence(
         implementation_raw.get("helper_source_path"),
         implementation_raw.get("helper_source_sha256"),
         implementation_raw.get("helper_source_size_bytes"),
+        implementation_raw.get("helper_git_blob_oid"),
         implementation_raw.get("openssh_path"),
         implementation_raw.get("openssh_sha256"),
         implementation_raw.get("openssh_size_bytes"),
         implementation_raw.get("openssh_mode"),
-        implementation_raw.get("openssh_version"), tuple(client_config),
+        implementation_raw.get("openssh_version"),
+        implementation_raw.get("config_file"), tuple(client_config),
         implementation_raw.get("client_config_sha256"),
+        implementation_raw.get("known_hosts_sha256"),
+        implementation_raw.get("target_endpoint_sha256"),
         implementation_raw.get("credential_mode"),
     )
 
@@ -734,6 +960,8 @@ def validate_serialized_transport_evidence(
     canonical = validate_transport_evidence(
         receipt, readback, layout, expected_artifacts,
         implementation_evidence=implementation,
+        expected_pins=expected_pins,
+        repository_root=repository_root,
         exclusive_request_id=exclusive_request.get("request_id"),
         exclusive_request_nonce=exclusive_request.get("request_nonce"),
         readback_request_id=readback_request.get("request_id"),

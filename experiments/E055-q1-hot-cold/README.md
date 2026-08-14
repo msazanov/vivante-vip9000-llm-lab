@@ -94,7 +94,7 @@ The standalone harness emits `e055-q1-hot-cold-harness/v1`, explicitly marked
 unqualified. The analyzer does not accept a caller-created joined sample
 mapping, even if all fields and an unkeyed JSON hash are internally
 consistent. Its only input is the path to a committed
-`e055-raw-bundle/v1` manifest under this experiment's `raw/<phase>/`
+`e055-raw-bundle/v2` manifest under this experiment's `raw/<phase>/`
 directory. The loader derives every sample from these exact roles:
 
 - harness stdout and stderr stream envelopes;
@@ -113,6 +113,17 @@ not self-referential: its containing commit, tree, and own blob ID are derived
 from Git and attached to every derived row. Git proves byte immutability, not
 that a device produced those bytes; this limitation is deliberate and must be
 reported with every result.
+
+The target transport is a narrow adapter around the system `/usr/bin/ssh` and
+`/usr/bin/sftp`; it is not an SSH implementation. Credentials stay in the
+caller's external key or agent configuration and are never copied into Git or
+raw evidence. A run requires separately supplied immutable pins for the host
+key fingerprint, board identity digest, known-hosts file digest, sanitized
+host/port digest, committed helper blob, and local OpenSSH executable. The
+adapter executes with `-F /dev/null`, strict known-host checking, no password
+or interactive prompts, no forwarding, proxy, TTY, or local commands, and
+bounded connect/alive timeouts. Outer raw/runner v1 is rejected for this target
+phase because it predates these pins; qualification begins at v2.
 
 Raw qualification requires:
 
@@ -272,8 +283,9 @@ standalone population token. The scaffold contains no process, remote-login,
 harness, or board execution path.
 
 `tooling/e055_target_executor.py` composes those primitives but remains
-disabled unless a reviewed transport object is explicitly injected. It has no
-SSH or board implementation. Its only plan is 20 O3 runs: CPU0 then CPU6,
+disabled unless a reviewed transport object and independent expected pins are
+explicitly injected. The narrow transport adapter invokes the system OpenSSH
+executables; it does not implement SSH. Its only plan is 20 O3 runs: CPU0 then CPU6,
 pair indexes 1–5, odd pairs hot→cold, even pairs cold→hot, 64 KiB,
 `full_dotprod`, and the `core` PMU group. It reserves the complete local phase
 before transport preparation, deploys only the publication-bound harness and
@@ -300,10 +312,9 @@ request check. Each result must report the exact role, path, SHA-256, byte size,
 mode, device and inode for both executables, and both observations must agree
 exactly. A future real transport must perform a new remote stat/read/hash for
 every readback request and must never return a cached observation. The endpoint
-identity must also agree. A real SSH transport must pin the board identity and
-host-key fingerprint when available; otherwise it must explicitly use the
-`operationally_trusted` classification. The current module still contains no
-SSH implementation.
+identity must also agree. The adapter requires exact caller-provided board,
+host-key, known-hosts, endpoint, helper, and OpenSSH pins; unpinned
+`operationally_trusted` evidence is rejected.
 
 These records are replay-resistant transport evidence, not cryptographic device
 attestation. An injected transport and its remote endpoint can lie consistently,

@@ -39,6 +39,7 @@ from tooling.e055_raw_bundle import (
 )
 from tooling.e055_transport_evidence import (
     ExclusiveDeploymentReceipt,
+    ExpectedTransportPins,
     FreshReadbackProof,
     TransportImplementationEvidence,
     canonical_deployment_layout,
@@ -339,13 +340,19 @@ def _ensure_raw_parent(root: Path) -> Path:
 class E055TargetExecutor:
     """Package one exact microgate through a caller-injected target transport."""
 
-    def __init__(self, repository_root: Path, transport: TargetTransport | None = None) -> None:
+    def __init__(
+        self, repository_root: Path, transport: TargetTransport | None = None,
+        expected_transport_pins: ExpectedTransportPins | None = None,
+    ) -> None:
         self.repository_root = Path(repository_root).resolve()
         self.transport = transport
+        self.expected_transport_pins = expected_transport_pins
 
     def execute(self, phase_id: str) -> PhaseExecutionResult:
         if self.transport is None:
             raise RuntimeError("E055 target execution is disabled without an injected transport")
+        if type(self.expected_transport_pins) is not ExpectedTransportPins:
+            raise RuntimeError("E055 target execution requires independent expected transport pins")
         if not isinstance(phase_id, str) or PHASE_ID_RE.fullmatch(phase_id) is None:
             raise ValueError("phase_id must be canonical and bounded")
         plan = limited_o3_microgate_plan()
@@ -422,6 +429,8 @@ class E055TargetExecutor:
                     "mode": artifact.mode,
                 } for artifact in prepared),
                 implementation_evidence=self.transport.implementation_evidence(),
+                expected_pins=self.expected_transport_pins,
+                repository_root=self.repository_root,
                 exclusive_request_id=exclusive_request[0],
                 exclusive_request_nonce=exclusive_request[1],
                 readback_request_id=readback_request[0],
@@ -510,7 +519,7 @@ class E055TargetExecutor:
                     )
                 }
                 runner = {
-                    "schema": "e055-runner-capture/v1",
+                    "schema": "e055-runner-capture/v2",
                     "run_id": run.run_id,
                     "pair_id": run.pair_id,
                     "pair_index": run.pair_index,
@@ -574,7 +583,7 @@ class E055TargetExecutor:
             object_format,
         )
         bundle = {
-            "schema": "e055-raw-bundle/v1",
+            "schema": "e055-raw-bundle/v2",
             "experiment": "E055-Q1-HOT-COLD",
             "phase_id": phase_id,
             "qualification": qualification,

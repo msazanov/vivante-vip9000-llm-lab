@@ -221,7 +221,7 @@ class E055CaptureScaffoldTest(unittest.TestCase):
             item for item in reservations
             if getattr(item, "path", None) == self.phase / "bundle.json"
         )
-        payload = b'{"schema":"e055-raw-bundle/v1"}\n'
+        payload = b'{"schema":"e055-raw-bundle/v2"}\n'
         result = populate(reservation, payload)
         self.assertEqual((self.phase / "bundle.json").read_bytes(), payload)
         self.assertEqual(result.size_bytes, len(payload))

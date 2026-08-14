@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-raw-bundle/v1",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-raw-bundle/v2",
   "title": "E055 Git-sealed raw measurement bundle",
   "type": "object",
   "$defs": {
@@ -75,30 +75,59 @@
       "type": "object",
       "required": [
         "schema", "implementation", "helper_source_path", "helper_source_sha256",
-        "helper_source_size_bytes", "openssh_path", "openssh_sha256",
-        "openssh_size_bytes", "openssh_mode", "openssh_version", "client_config",
-        "client_config_sha256", "credential_mode"
+        "helper_source_size_bytes", "helper_git_blob_oid", "openssh_path",
+        "openssh_sha256", "openssh_size_bytes", "openssh_mode", "openssh_version",
+        "config_file", "client_config", "client_config_sha256",
+        "known_hosts_sha256", "target_endpoint_sha256", "credential_mode"
       ],
       "properties": {
         "schema": {"const": "e055-openssh-implementation/v1"},
-        "implementation": {"enum": ["openssh_fixed_helper", "test_fixture"]},
+        "implementation": {"const": "openssh_fixed_helper"},
         "helper_source_path": {"const": "tooling/e055_remote_helper.py"},
         "helper_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "helper_source_size_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "helper_git_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"},
         "openssh_path": {"type": "string", "pattern": "^/[A-Za-z0-9._/-]+/ssh$", "maxLength": 4096},
         "openssh_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "openssh_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
         "openssh_mode": {"const": 493},
         "openssh_version": {"type": "string", "pattern": "^OpenSSH_[A-Za-z0-9._,+-]{1,96}$"},
-        "client_config": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"type": "string", "minLength": 3, "maxLength": 128}},
+        "config_file": {"const": "/dev/null"},
+        "client_config": {"type": "array", "minItems": 21, "maxItems": 21, "uniqueItems": true, "items": {"type": "string", "minLength": 3, "maxLength": 128}},
         "client_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "credential_mode": {"enum": ["external_agent_or_identity", "test_fixture"]}
+        "known_hosts_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target_endpoint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "credential_mode": {"const": "external_agent_or_identity"}
+      },
+      "additionalProperties": false
+    },
+    "expectedTransportPins": {
+      "type": "object",
+      "required": [
+        "schema", "trust_mode", "endpoint_label", "board_identity",
+        "host_key_fingerprint", "known_hosts_sha256", "target_endpoint_sha256",
+        "helper_source_sha256", "helper_source_size_bytes", "helper_git_blob_oid",
+        "openssh_sha256", "openssh_size_bytes"
+      ],
+      "properties": {
+        "schema": {"const": "e055-expected-transport-pins/v1"},
+        "trust_mode": {"const": "pinned_host_key"},
+        "endpoint_label": {"type": "string", "minLength": 1, "maxLength": 128},
+        "board_identity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "host_key_fingerprint": {"type": "string", "pattern": "^SHA256:[A-Za-z0-9+/]{43}$"},
+        "known_hosts_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "target_endpoint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "helper_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "helper_source_size_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
+        "helper_git_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"},
+        "openssh_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "openssh_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432}
       },
       "additionalProperties": false
     },
     "transportEvidence": {
       "type": "object",
-      "required": ["schema", "trust_statement", "endpoint_identity", "implementation_evidence", "deployment_root", "lock_path", "requests", "exclusive_receipt", "fresh_readback"],
+      "required": ["schema", "trust_statement", "endpoint_identity", "expected_pins", "implementation_evidence", "deployment_root", "lock_path", "requests", "exclusive_receipt", "fresh_readback"],
       "properties": {
         "schema": {"const": "e055-transport-evidence/v2"},
         "trust_statement": {"const": "replay-resistant transport evidence only; no cryptographic device attestation; transport and endpoint remain operationally trusted"},
@@ -106,13 +135,14 @@
           "type": "object",
           "required": ["trust_mode", "endpoint_label", "board_identity", "host_key_fingerprint"],
           "properties": {
-            "trust_mode": {"enum": ["test_fixture", "pinned_host_key", "operationally_trusted"]},
+            "trust_mode": {"const": "pinned_host_key"},
             "endpoint_label": {"type": "string", "minLength": 1, "maxLength": 256},
-            "board_identity": {"type": "string", "minLength": 1, "maxLength": 256},
-            "host_key_fingerprint": {"type": ["string", "null"], "pattern": "^SHA256:[A-Za-z0-9+/]{43}$"}
+            "board_identity": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "host_key_fingerprint": {"type": "string", "pattern": "^SHA256:[A-Za-z0-9+/]{43}$"}
           },
           "additionalProperties": false
         },
+        "expected_pins": {"$ref": "#/$defs/expectedTransportPins"},
         "implementation_evidence": {"$ref": "#/$defs/transportImplementation"},
         "deployment_root": {"type": "string", "pattern": "^/tmp/e055-q1-hot-cold/deployments/[0-9a-f]{64}$"},
         "lock_path": {"const": "/tmp/e055-q1-hot-cold/locks/a733-target.lock"},
@@ -199,7 +229,7 @@
     "build_artifacts", "runs", "transport_evidence", "target_workload_executed"
   ],
   "properties": {
-    "schema": {"const": "e055-raw-bundle/v1"},
+    "schema": {"const": "e055-raw-bundle/v2"},
     "experiment": {"const": "E055-Q1-HOT-COLD"},
     "phase_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
     "qualification": {

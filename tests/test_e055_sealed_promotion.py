@@ -84,7 +84,10 @@ class E055SealedPromotionTest(unittest.TestCase):
             "tooling.e055_q1_hotcold._require_global_publication_state",
             return_value=None,
         ):
-            cls.result = infer_bottleneck(cls.fixture.manifest)
+            cls.result = infer_bottleneck(
+                cls.fixture.manifest,
+                expected_transport_pins=cls.fixture.expected_pins,
+            )
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -119,7 +122,10 @@ class E055SealedPromotionTest(unittest.TestCase):
                 "tooling.e055_q1_hotcold._require_global_publication_state",
                 return_value=None,
             ), self.assertRaisesRegex(ValueError, "complete documented"):
-                infer_bottleneck(fixture.manifest)
+                infer_bottleneck(
+                    fixture.manifest,
+                    expected_transport_pins=fixture.expected_pins,
+                )
 
     def test_four_percent_projected_gain_threshold_is_enforced_on_sealed_phase(self) -> None:
         specs = complete_matrix_specs(
@@ -130,7 +136,10 @@ class E055SealedPromotionTest(unittest.TestCase):
                 "tooling.e055_q1_hotcold._require_global_publication_state",
                 return_value=None,
             ):
-                result = infer_bottleneck(fixture.manifest)
+                result = infer_bottleneck(
+                    fixture.manifest,
+                    expected_transport_pins=fixture.expected_pins,
+                )
         self.assertEqual(result["promotion"]["threshold_fraction"], 0.04)
         self.assertAlmostEqual(
             result["promotion"]["projected_q1_gain_fraction"],

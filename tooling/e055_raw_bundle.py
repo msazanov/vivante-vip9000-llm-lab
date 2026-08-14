@@ -21,13 +21,14 @@ import subprocess
 from typing import Any, Mapping
 
 from tooling.e055_transport_evidence import (
+    ExpectedTransportPins,
     canonical_deployment_layout,
     canonical_remote_output_path,
     validate_serialized_transport_evidence,
 )
 
 
-BUNDLE_SCHEMA = "e055-raw-bundle/v1"
+BUNDLE_SCHEMA = "e055-raw-bundle/v2"
 PHASE_PREFIX = PurePosixPath("experiments/E055-q1-hot-cold/raw")
 MAX_MANIFEST_BYTES = 16 * 1024 * 1024
 ROLE_SIZE_LIMITS = {
@@ -395,7 +396,7 @@ def seal_bundle_files(manifest_path: str | Path) -> SealedBundleFiles:
     except (UnicodeDecodeError, ValueError) as exc:
         raise ValueError(f"raw bundle manifest is not exact UTF-8 JSON: {exc}") from exc
     if not isinstance(document, Mapping) or document.get("schema") != BUNDLE_SCHEMA:
-        raise ValueError("raw bundle manifest schema is not e055-raw-bundle/v1")
+        raise ValueError("raw bundle manifest schema is not e055-raw-bundle/v2")
 
     sealed: list[SealedArtifact] = []
     paths: set[str] = {manifest_relative}
@@ -917,7 +918,7 @@ def _validate_runner(
         "runner metadata",
     )
     cross = ("run_id", "pair_id", "pair_index", "pair_order", "order_index", "build_name")
-    if exact.get("schema") != "e055-runner-capture/v1" or \
+    if exact.get("schema") != "e055-runner-capture/v2" or \
             exact.get("target_workload_executed") is not True or \
             any(exact.get(key) != run.get(key) for key in cross):
         raise ValueError("runner identity does not match the manifest run")
@@ -974,7 +975,9 @@ def _validate_runner(
         raise ValueError("runner raw-artifact SHA-256 cross-binding mismatch")
 
 
-def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
+def load_sealed_bundle(
+    manifest_path: str | Path, *, expected_transport_pins: ExpectedTransportPins,
+) -> SealedBundle:
     """Load, parse, cross-check, and derive samples from one committed bundle."""
 
     files = seal_bundle_files(manifest_path)
@@ -1022,6 +1025,8 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
                 "mode": 0o755,
             },
         ),
+        expected_pins=expected_transport_pins,
+        repository_root=files.repository_root,
     )
 
     samples: list[DerivedSample] = []

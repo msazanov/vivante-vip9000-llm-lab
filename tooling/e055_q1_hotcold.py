@@ -376,7 +376,9 @@ def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> floa
     return ns_per_traversal(cold) / ns_per_traversal(hot)
 
 
-def infer_bottleneck(manifest_path: str | Path) -> dict[str, Any]:
+def infer_bottleneck(
+    manifest_path: str | Path, *, expected_transport_pins: Any = None,
+) -> dict[str, Any]:
     """Infer a bottleneck only from one committed, Git-sealed raw bundle."""
 
     if not isinstance(manifest_path, (str, Path)):
@@ -386,7 +388,9 @@ def infer_bottleneck(manifest_path: str | Path) -> dict[str, Any]:
     _require_global_publication_state()
     from tooling.e055_raw_bundle import load_sealed_bundle
 
-    bundle = load_sealed_bundle(manifest_path)
+    bundle = load_sealed_bundle(
+        manifest_path, expected_transport_pins=expected_transport_pins,
+    )
     samples = [
         {
             "run_id": sample.run_id,

@@ -37,8 +37,9 @@ documents, AArch64 C++/assembly harness, `unittest`, QEMU user mode.
 - Modify: `tests/test_e055_harness_contract.py`
 
 **Interfaces:**
-- Produces schemas `e055-raw-bundle/v1`, `e055-stream-capture/v1`, and
-  `e055-runner-capture/v1` for later parsers.
+- Produces schemas `e055-raw-bundle/v2`, `e055-stream-capture/v1`, and
+  `e055-runner-capture/v2` for later parsers. Outer v1 records are rejected by
+  the target-phase loader because they predate the independent transport pins.
 
 - [ ] **Step 1: Write failing schema and rejection-evidence tests**
 
@@ -47,7 +48,7 @@ def test_7679828_rejection_and_raw_schemas_are_preserved(self):
     rejection = DATA / "review-rejection-stage4-7679828.md"
     self.assertIn("REJECTED EVIDENCE", rejection.read_text())
     bundle = json.loads((DATA / "raw-bundle.schema.json").read_text())
-    self.assertEqual(bundle["properties"]["schema"]["const"], "e055-raw-bundle/v1")
+    self.assertEqual(bundle["properties"]["schema"]["const"], "e055-raw-bundle/v2")
     self.assertEqual(bundle["properties"]["runs"]["minItems"], 1260)
 ```
 
@@ -130,7 +131,7 @@ and `884069f79c782ef2196e5462c73448f178a22686472b68abd100730a13987f97`.
 ```python
 def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
     manifest = _require_committed_regular_file(Path(manifest_path), MAX_MANIFEST_BYTES)
-    parsed = _parse_exact_json(manifest.bytes, "e055-raw-bundle/v1")
+    parsed = _parse_exact_json(manifest.bytes, "e055-raw-bundle/v2")
     artifacts = tuple(_seal_declared_artifact(item, manifest.repo) for item in _entries(parsed))
     _reject_aliases_duplicates_and_unmanifested_files(manifest, artifacts)
     return _parse_and_derive(manifest, parsed, artifacts)

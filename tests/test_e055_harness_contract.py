@@ -93,12 +93,12 @@ class E055HarnessContractTest(unittest.TestCase):
         stream = json.loads((data / "stream-capture.schema.json").read_text())
         runner = json.loads((data / "runner-capture.schema.json").read_text())
         self.assertEqual(bundle["properties"]["schema"]["const"],
-                         "e055-raw-bundle/v1")
+                         "e055-raw-bundle/v2")
         self.assertEqual(bundle["properties"]["runs"]["minItems"], 1)
         self.assertEqual(stream["properties"]["schema"]["const"],
                          "e055-stream-capture/v1")
         self.assertEqual(runner["properties"]["schema"]["const"],
-                         "e055-runner-capture/v1")
+                         "e055-runner-capture/v2")
         self.assertFalse(bundle["additionalProperties"])
         self.assertFalse(stream["additionalProperties"])
         self.assertFalse(runner["additionalProperties"])

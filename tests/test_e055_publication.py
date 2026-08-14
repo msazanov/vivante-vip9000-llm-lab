@@ -187,12 +187,18 @@ class E055PublicationBindingTest(unittest.TestCase):
             "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
             "tooling/e055_raw_bundle.py",
             "tooling/e055_capture_scaffold.py",
             "tooling/e055_transport_evidence.py",
+            "tooling/e055_remote_helper.py",
+            "tooling/e055_openssh_transport.py",
             "tests/test_e055_raw_bundle.py",
             "tests/test_e055_sealed_promotion.py",
             "tests/test_e055_capture_scaffold.py",
+            "tests/test_e055_transport_runtime.py",
+            "tests/test_e055_remote_helper.py",
+            "tests/test_e055_openssh_transport.py",
         }
         self.assertTrue(required.issubset(relative), sorted(required - relative))
 

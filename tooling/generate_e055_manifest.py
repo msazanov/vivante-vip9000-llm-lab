@@ -42,6 +42,7 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage3-0ed991b.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
+    ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
@@ -58,6 +59,8 @@ PUBLISHED = (
     ROOT / "tooling/e055_capture_scaffold.py",
     ROOT / "tooling/e055_target_executor.py",
     ROOT / "tooling/e055_transport_evidence.py",
+    ROOT / "tooling/e055_remote_helper.py",
+    ROOT / "tooling/e055_openssh_transport.py",
     ROOT / "tooling/build_e055_pmu_artifact.py",
     ROOT / "tooling/a733_pmu_exec.c",
     ROOT / "tooling/check_e055_disassembly.py",
@@ -71,10 +74,14 @@ PUBLISHED = (
     ROOT / "tests/test_e055_target_executor.py",
     ROOT / "tests/test_e055_aarch64_gate.py",
     ROOT / "tests/test_e055_publication.py",
+    ROOT / "tests/test_e055_transport_runtime.py",
+    ROOT / "tests/test_e055_remote_helper.py",
+    ROOT / "tests/test_e055_openssh_transport.py",
     ROOT / "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
     ROOT / "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
     ROOT / "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
     ROOT / "docs/superpowers/plans/2026-08-14-e055-git-sealed-raw-bundles.md",
+    ROOT / "docs/superpowers/specs/2026-08-14-e055-openssh-transport-design.md",
 )
 
 

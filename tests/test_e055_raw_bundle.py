@@ -23,6 +23,7 @@ from tooling.e055_raw_bundle import (
 )
 from tooling.e055_transport_evidence import (
     EndpointIdentity,
+    ExpectedTransportPins,
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
     RemoteRuntimeObservation,
@@ -66,6 +67,12 @@ class BundleFixture:
         self.git("init", "-q")
         self.git("config", "user.email", "e055-test@example.invalid")
         self.git("config", "user.name", "E055 Test")
+        helper_source = ROOT / "tooling/e055_remote_helper.py"
+        helper = self.root / "tooling/e055_remote_helper.py"
+        helper.parent.mkdir()
+        shutil.copyfile(helper_source, helper)
+        self.git("add", "tooling/e055_remote_helper.py")
+        self.git("commit", "-q", "-m", "pin helper fixture")
         self.run_dir.parent.mkdir(parents=True)
         artifact_dir = self.phase / "artifacts"
         artifact_dir.mkdir()
@@ -100,27 +107,52 @@ class BundleFixture:
             },
         )
         endpoint = EndpointIdentity(
-            "test_fixture", "sealed-bundle-fixture", "fake-a733", None
+            "pinned_host_key", "sealed-bundle-fixture",
+            "sha256:" + "6" * 64,
+            "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         )
         client_config = (
             "BatchMode=yes", "StrictHostKeyChecking=yes",
             "UserKnownHostsFile=external-pinned-file",
+            "GlobalKnownHostsFile=/dev/null", "CheckHostIP=no",
+            "PasswordAuthentication=no", "KbdInteractiveAuthentication=no",
+            "NumberOfPasswordPrompts=0", "ForwardAgent=no",
+            "ClearAllForwardings=yes", "PermitLocalCommand=no", "RequestTTY=no",
+            "ConnectTimeout=10", "ConnectionAttempts=1", "ServerAliveInterval=5",
+            "ServerAliveCountMax=2", "LogLevel=ERROR", "IdentitiesOnly=yes",
+            "ProxyCommand=none", "ProxyJump=none", "CanonicalizeHostname=no",
         )
+        helper_payload = helper.read_bytes()
+        helper_hash = hashlib.sha256(helper_payload).hexdigest()
+        helper_blob = self.git("rev-parse", "HEAD:tooling/e055_remote_helper.py")
+        openssh = Path("/usr/bin/ssh")
+        openssh_payload = openssh.read_bytes()
+        known_hosts_sha256 = "1" * 64
+        target_endpoint_sha256 = "2" * 64
         implementation = TransportImplementationEvidence(
-            "e055-openssh-implementation/v1", "test_fixture",
-            "tooling/e055_remote_helper.py", "9" * 64, 32768,
-            "/usr/bin/ssh", "8" * 64, 112233, 0o755,
-            "OpenSSH_9.9p2", client_config,
+            "e055-openssh-implementation/v1", "openssh_fixed_helper",
+            "tooling/e055_remote_helper.py", helper_hash, len(helper_payload),
+            helper_blob, "/usr/bin/ssh",
+            hashlib.sha256(openssh_payload).hexdigest(), len(openssh_payload), 0o755,
+            "OpenSSH_9.9p2", "/dev/null", client_config,
             hashlib.sha256(("\n".join(client_config) + "\n").encode("ascii"))
             .hexdigest(),
-            "test_fixture",
+            known_hosts_sha256, target_endpoint_sha256,
+            "external_agent_or_identity",
+        )
+        self.expected_pins = ExpectedTransportPins(
+            "e055-expected-transport-pins/v1", "pinned_host_key",
+            endpoint.endpoint_label, endpoint.board_identity,
+            endpoint.host_key_fingerprint, known_hosts_sha256,
+            target_endpoint_sha256, helper_hash, len(helper_payload), helper_blob,
+            implementation.openssh_sha256, implementation.openssh_size_bytes,
         )
         def runtime(sequence: int, request_id: str, nonce: str):
             return RemoteRuntimeObservation(
                 "e055-remote-runtime-observation/v1", sequence,
                 request_id, nonce,
-                "/tmp/e055-q1-hot-cold/helpers/" + "9" * 64 + "/helper.py",
-                "9" * 64, 32768, 0o700, 7, 9001,
+                "/tmp/e055-q1-hot-cold/helpers/" + helper_hash + "/helper.py",
+                helper_hash, len(helper_payload), 0o700, 7, 9001,
                 "e055-remote-helper/v1", "/usr/bin/python3",
                 "/usr/bin/python3.13", "3.13.7", "7" * 64,
                 6839896, 0o755, 7, 42,
@@ -150,13 +182,13 @@ class BundleFixture:
                 "e055-fresh-readback-proof/v1", 2,
                 "c" * 64, "d" * 64,
                 self.layout.deployment_root,
-                EndpointIdentity(
-                    "test_fixture", "sealed-bundle-fixture", "fake-a733", None
-                ),
+                endpoint,
                 readback_observations, runtime(2, "c" * 64, "d" * 64),
             ),
             self.layout, expected,
             implementation_evidence=implementation,
+            expected_pins=self.expected_pins,
+            repository_root=self.root,
             exclusive_request_id="a" * 64,
             exclusive_request_nonce="b" * 64,
             readback_request_id="c" * 64,
@@ -170,6 +202,11 @@ class BundleFixture:
 
     def close(self) -> None:
         self.temp.cleanup()
+
+    def load(self):
+        return load_sealed_bundle(
+            self.manifest, expected_transport_pins=self.expected_pins,
+        )
 
     def __enter__(self) -> "BundleFixture":
         return self
@@ -382,7 +419,7 @@ class BundleFixture:
             "e049c.json", "target-harness.stderr.raw"
         )
         runner = {
-            "schema": "e055-runner-capture/v1",
+            "schema": "e055-runner-capture/v2",
             "run_id": run_id,
             "pair_id": spec["pair_id"],
             "pair_index": spec["pair_index"],
@@ -456,7 +493,7 @@ class BundleFixture:
             "runtime_qualification_sha256": self.runtime_qualification_sha256,
         }
         return {
-            "schema": "e055-raw-bundle/v1",
+            "schema": "e055-raw-bundle/v2",
             "experiment": "E055-Q1-HOT-COLD",
             "phase_id": "phase-a",
             "qualification": qualification,
@@ -592,6 +629,27 @@ class E055SealedArtifactTest(unittest.TestCase):
 
 
 class E055RawParserTest(unittest.TestCase):
+    def test_outer_v1_bundle_and_runner_are_rejected(self) -> None:
+        with BundleFixture() as fixture:
+            fixture.payload["schema"] = "e055-raw-bundle/v1"
+            fixture.write_manifest()
+            fixture.commit("adversarial outer v1 bundle")
+            with self.assertRaisesRegex(ValueError, "v2"):
+                fixture.load()
+
+        with BundleFixture() as fixture:
+            runner = json.loads(
+                fixture.role_path("runner_metadata").read_text(encoding="utf-8")
+            )
+            runner["schema"] = "e055-runner-capture/v1"
+            fixture.role_path("runner_metadata").write_text(
+                json.dumps(runner, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            fixture.reseal_roles({"runner_metadata"})
+            with self.assertRaisesRegex(ValueError, "runner"):
+                fixture.load()
+
     def test_qualification_uses_cycle_free_runtime_contract_digest(self) -> None:
         digest_function = getattr(
             e055_q1_hotcold, "runtime_qualification_sha256", None
@@ -682,7 +740,7 @@ class E055RawParserTest(unittest.TestCase):
 
     def test_valid_sealed_raw_capture_derives_one_immutable_sample(self) -> None:
         with BundleFixture() as fixture:
-            bundle = load_sealed_bundle(fixture.manifest)
+            bundle = fixture.load()
             self.assertEqual(len(bundle.samples), 1)
             sample = bundle.samples[0]
             self.assertEqual(sample.run_id, "run-a")
@@ -768,7 +826,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_transport_evidence(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_launcher_floor_does_not_relax_qualification_ratio(self) -> None:
         with BundleFixture() as fixture:
@@ -776,7 +834,7 @@ class E055RawParserTest(unittest.TestCase):
                 lambda raw: raw["events"][0].update(running_ratio=0.95)
             )
             with self.assertRaisesRegex(ValueError, "exactly 1.0"):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
     def test_conditioning_is_bound_to_exact_canonical_protocol(self) -> None:
         hot_mutations = {
@@ -789,7 +847,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_harness_stdout(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
         cold_spec = [{
             "run_id": "run-cold", "pair_id": "pair-cold", "pair_index": 1,
@@ -816,7 +874,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture(cold_spec) as fixture:
                 fixture.mutate_harness_stdout(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_exact_e049c_launcher_and_thermal_protocol_is_required(self) -> None:
         runner_mutations = {
@@ -835,12 +893,12 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_runner(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
         with BundleFixture() as fixture:
             fixture.mutate_e049c(lambda raw: raw["thermal"].update(limit_c=84.0))
             with self.assertRaises(ValueError):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
     def test_float_and_integer_boolean_lookalikes_fail_closed(self) -> None:
         harness_mutations = {
@@ -857,7 +915,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_harness_stdout(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
         runner_mutations = {
             "float pair index": lambda raw: raw.update(pair_index=1.0),
@@ -873,7 +931,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_runner(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
         e049c_mutations = {
             "integer Boolean sync": lambda raw: raw["sync"].update(started=1),
@@ -885,7 +943,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_e049c(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_cpp_working_set_bounds_and_pmu_window_plausibility(self) -> None:
         maximum_cpp_blocks = (2**31 - 1) // 128
@@ -899,7 +957,7 @@ class E055RawParserTest(unittest.TestCase):
         }]
         with BundleFixture(spec) as fixture:
             with self.assertRaisesRegex(ValueError, r"C\+\+|working set|native blocks"):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
         timing_mutations = {
             "one nanosecond PMU window": lambda raw: [
@@ -911,7 +969,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_e049c(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_valid_cross_clock_and_descheduling_windows_are_not_rejected(self) -> None:
         valid_mutations = {
@@ -941,7 +999,7 @@ class E055RawParserTest(unittest.TestCase):
         for name, mutate in valid_mutations.items():
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_e049c(mutate)
-                bundle = load_sealed_bundle(fixture.manifest)
+                bundle = fixture.load()
                 self.assertEqual(len(bundle.samples), 1)
 
     def test_target_shape_and_checksums_are_canonical_bounded_uint64(self) -> None:
@@ -954,7 +1012,7 @@ class E055RawParserTest(unittest.TestCase):
         }]
         with BundleFixture(noncanonical_spec) as fixture:
             with self.assertRaisesRegex(ValueError, "canonical|planned|target"):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
         checksum_mutations = {
             "harness checksum over uint64": lambda raw: raw.update(
@@ -968,7 +1026,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_harness_stdout(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
         e049c_u64_mutations = {
             "PMU count over uint64": lambda raw: raw["events"][0].update(
@@ -982,7 +1040,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_e049c(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_thermal_timing_golden_sync_and_stderr_forgeries_fail_closed(self) -> None:
         mutations = {
@@ -1012,7 +1070,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 mutate(fixture)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_semantic_append_is_rejected_even_when_resealed_and_committed(self) -> None:
         with BundleFixture() as fixture:
@@ -1020,7 +1078,7 @@ class E055RawParserTest(unittest.TestCase):
             path.write_bytes(path.read_bytes() + b"\n")
             fixture.reseal_roles({"e049c_json"})
             with self.assertRaisesRegex(ValueError, "exactly one JSON object"):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
     def test_runner_unknown_or_secret_environment_and_cpu_forgery_fail_closed(self) -> None:
         mutations = {
@@ -1045,7 +1103,7 @@ class E055RawParserTest(unittest.TestCase):
             with self.subTest(name=name), BundleFixture() as fixture:
                 fixture.mutate_runner(mutate)
                 with self.assertRaises(ValueError):
-                    load_sealed_bundle(fixture.manifest)
+                    fixture.load()
 
     def test_raw_files_cannot_be_swapped_between_pairs_or_builds(self) -> None:
         specs = [
@@ -1078,7 +1136,7 @@ class E055RawParserTest(unittest.TestCase):
             fixture.write_manifest()
             fixture.commit("swap E049c files across pairs and builds")
             with self.assertRaises(ValueError):
-                load_sealed_bundle(fixture.manifest)
+                fixture.load()
 
     def test_truncate_append_role_swap_and_duplicate_blob_fail_closed(self) -> None:
         for mutation in ("truncate", "append", "role_swap", "duplicate"):

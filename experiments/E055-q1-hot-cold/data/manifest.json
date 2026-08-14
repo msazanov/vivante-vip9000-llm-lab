@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T13:08:20.012666+00:00",
+  "generated_at_utc": "2026-08-14T14:27:16.632711+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "ea432ee3916cd9db1dbe781819ce9a1d0868281d",
-    "staged_tree_binding_sha256": "ea571b6192d16fd493a1134eb141b0c29ca348602ebd9daedef89a74a40f0c57",
+    "preflight_base_commit": "d389d9105f3f635cd8b7ac2851151f91ae8dbf04",
+    "staged_tree_binding_sha256": "2a615753425f8683a98cc43fbc02629242f2b77f9ad3c3f6bcf29604f5ba1877",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -66,14 +66,14 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 22667,
-      "sha256": "e0efa96e9d9596f5ae08b70d42199f99b59018a6341c04d5f3c65a8cc464b041",
+      "size_bytes": 23451,
+      "sha256": "acea59505ae150695b0d133d6c855a110feb752b27de632d5a4d5ceca406886a",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3072209,
-      "sha256": "cfad5b747592f394705a90a4b7e65d994d360f087c0f70c131db9228ad2ad726",
+      "size_bytes": 3078179,
+      "sha256": "bc6541c126e07ed16c01e04622d13dff77ed1c33d854f09ef770eb3bcab8b0e3",
       "role": "e055-stage1"
     },
     {
@@ -113,6 +113,12 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
+      "size_bytes": 1203,
+      "sha256": "dbe805989b9f0458cba35a066f0da4f5335f37d878e32a33b59a84e6bb60c5ba",
+      "role": "e055-stage1"
+    },
+    {
       "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
       "size_bytes": 2592,
       "sha256": "bc7050681fce7fcac0ed53b5913ec9ea7af4193c7155eda0adc98f280054ebf7",
@@ -138,14 +144,14 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
-      "size_bytes": 10455,
-      "sha256": "dc75b1c8240616509593c1eb554afb507c8dfa70d6d606a307185000d52d80a1",
+      "size_bytes": 15947,
+      "sha256": "c52451b6a7ca9d0be053fe604b2a35fba5892cd3083b24e8634dbd60719d7d29",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
-      "size_bytes": 9520,
-      "sha256": "f775ea9dabf593ee46fdd33d2efb3ca645dcc49bf539bbb4ad229dd37a9ced2b",
+      "size_bytes": 14972,
+      "sha256": "85f0ee5dc8ad4c45dd4e2e08724bb65338006619bc73529453054eae77bad3bf",
       "role": "e055-stage1"
     },
     {
@@ -180,14 +186,14 @@
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 28429,
-      "sha256": "39f53e4e54ea30abbbd5f2690d6b69487d054c323d0c16e0a2f40c983496f144",
+      "size_bytes": 28540,
+      "sha256": "7d1538b8cca0009902ab76dde7f00de866fff06dbc9170298ece12d65213b432",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_raw_bundle.py",
-      "size_bytes": 52584,
-      "sha256": "c700cbf4dd77512fcf287b6ed5aac8ad215d95eb850a12c72eb334502e1e0273",
+      "size_bytes": 52763,
+      "sha256": "4cb103d1f074f21ac6112b58c19b16fcef380c96cb2e8c3debe766e3ec992f43",
       "role": "e055-stage1"
     },
     {
@@ -198,14 +204,26 @@
     },
     {
       "path": "tooling/e055_target_executor.py",
-      "size_bytes": 24232,
-      "sha256": "9e2028ac7f6c41b9c1f953140ca2893c15d873c6bdb04765141ae514dfe97530",
+      "size_bytes": 24896,
+      "sha256": "3d9d2092af5bca5e90d13ea776f2b0f681cb1bb63727c9ecdad2bf12ca6fad3d",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_transport_evidence.py",
-      "size_bytes": 20188,
-      "sha256": "6859f1ed9fa6dd5df9b41417eab5122ebed7891d1d376637d3e3ab6396a90be6",
+      "size_bytes": 45313,
+      "sha256": "49059fb7e223ace48bef8dc98c641c93a0b4a75b39d4c98107c11f81606a60eb",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_remote_helper.py",
+      "size_bytes": 34510,
+      "sha256": "eab966a905542695b444c69d6b0ad17c5cf7fdfb9eab1918fa6ad16c9e334623",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_openssh_transport.py",
+      "size_bytes": 34109,
+      "sha256": "cb6bc8c43ec0e536239b26220f826b4dea7363f9fb856cf4779c5b0ce6c0dc23",
       "role": "e055-stage1"
     },
     {
@@ -234,14 +252,14 @@
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 9041,
-      "sha256": "2d94878ac1c0eb8740da7342532f48a780c8fe03cc56acf66ac979beaa1234fe",
+      "size_bytes": 9446,
+      "sha256": "c225ed3e8f2b4c781e44494ecc7408a13ed1b3cc73a15b462714c5e4ae3f23ad",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_harness_contract.py",
       "size_bytes": 6657,
-      "sha256": "1f017fa756862960873688be5dcc9f8597e4d83660fb00ffc56f41141be3478d",
+      "sha256": "62bd6b2040e76be845200d1669c616997ff2074e2802616e96c68cd44138df7f",
       "role": "e055-stage1"
     },
     {
@@ -252,26 +270,26 @@
     },
     {
       "path": "tests/test_e055_raw_bundle.py",
-      "size_bytes": 50823,
-      "sha256": "8d46f681eb46f8f948d6e90399c56df31b69f495a3a00b232d9758bc9b29f030",
+      "size_bytes": 54603,
+      "sha256": "4717628855f3fcf576f852886115acac9a88222efe40cc9cf82cd7f80f852a8f",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_sealed_promotion.py",
-      "size_bytes": 5968,
-      "sha256": "577e34fbb157ea43ae5438a30c69549138e91d5d69be2a68bdfa183f81c0502d",
+      "size_bytes": 6278,
+      "sha256": "ab7f96d218a3f54b28e36dca3837af8c62d7283ecb120ee4605971ac9eb96002",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_capture_scaffold.py",
       "size_bytes": 10407,
-      "sha256": "362edea11cfe418e66d61d914789fc8ecb7cfc00590114f314bee8033d2a30cc",
+      "sha256": "d6e873186972167c8d0a820dd3e210612c7fa433c0cec63558011fc4ab9aad22",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_target_executor.py",
-      "size_bytes": 26798,
-      "sha256": "5bf35025f4e2511da0bf4db7f52fb81033a2b11fca55355670756901c35ff0ed",
+      "size_bytes": 30417,
+      "sha256": "85f4b5a29552672f2770f889562d394fcee6aa24450b3158b16dcc84f3122134",
       "role": "e055-stage1"
     },
     {
@@ -282,8 +300,26 @@
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 19464,
-      "sha256": "ae55d64c6dd05ad858c62439e473ea57bada3bc1ade9a5d61276768716faf3eb",
+      "size_bytes": 19794,
+      "sha256": "61f863a9b25ad3bb7d717bb12ad5f94bb4e034c32f01b038fe46571b87fd27be",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_transport_runtime.py",
+      "size_bytes": 14059,
+      "sha256": "4199c5f9bf0f3b51ce83521cf69e56afda3450593a7a38cfa488aa01f3bb9af9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_remote_helper.py",
+      "size_bytes": 12885,
+      "sha256": "009555697ec68af11601887e1ec49ab2e2d710f6f91b4fa777295580eefd6d47",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_openssh_transport.py",
+      "size_bytes": 17940,
+      "sha256": "393508507c682de35812d233845fa4fe100392e71a685709b812b8708bce3d19",
       "role": "e055-stage1"
     },
     {
@@ -301,13 +337,19 @@
     {
       "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
       "size_bytes": 8732,
-      "sha256": "0d7faa0c033915f74245b742d3813649d165896826df77d38330c99deda5cb33",
+      "sha256": "a55ff46cf08da2b654e35c8372690787deaa93d4335b77a240d3b9c52f4175df",
       "role": "e055-stage1"
     },
     {
       "path": "docs/superpowers/plans/2026-08-14-e055-git-sealed-raw-bundles.md",
-      "size_bytes": 16623,
-      "sha256": "ddb5fc204d4fe60dc77d757c09b80a06c5735b79329642320363a9f29ef01a2a",
+      "size_bytes": 16735,
+      "sha256": "4eb87ec61d606e8115e384a283ca91d4a52a4bef8c449e7c78012fb2555300f0",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-14-e055-openssh-transport-design.md",
+      "size_bytes": 7653,
+      "sha256": "40845d845c6d72d5853d9726609c4b52f14c470ef5c39430e2eb42abebf0b478",
       "role": "e055-stage1"
     }
   ]

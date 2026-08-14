@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from dataclasses import replace
 import hashlib
+import json
+from pathlib import Path
+import subprocess
 import unittest
 
 from tooling.e055_transport_evidence import (
     EndpointIdentity,
+    ExpectedTransportPins,
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
     RemoteRuntimeObservation,
@@ -20,6 +24,7 @@ from tooling.e055_transport_evidence import (
 
 class E055TransportRuntimeEvidenceTest(unittest.TestCase):
     def setUp(self) -> None:
+        self.repository_root = Path(__file__).resolve().parents[1]
         self.exclusive_id = "1" * 64
         self.exclusive_nonce = "2" * 64
         self.readback_id = "3" * 64
@@ -49,27 +54,57 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             "sha256:" + "c" * 64,
             "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
         )
+        helper = self.repository_root / "tooling/e055_remote_helper.py"
+        helper_payload = helper.read_bytes()
+        helper_blob = subprocess.run(
+            ["git", "rev-parse", "HEAD:tooling/e055_remote_helper.py"],
+            cwd=self.repository_root, check=True, text=True,
+            stdout=subprocess.PIPE,
+        ).stdout.strip()
+        openssh = Path("/usr/bin/ssh")
+        openssh_payload = openssh.read_bytes()
+        self.client_config = (
+            "BatchMode=yes", "StrictHostKeyChecking=yes",
+            "UserKnownHostsFile=external-pinned-file",
+            "GlobalKnownHostsFile=/dev/null", "CheckHostIP=no",
+            "PasswordAuthentication=no", "KbdInteractiveAuthentication=no",
+            "NumberOfPasswordPrompts=0", "ForwardAgent=no",
+            "ClearAllForwardings=yes", "PermitLocalCommand=no", "RequestTTY=no",
+            "ConnectTimeout=10", "ConnectionAttempts=1", "ServerAliveInterval=5",
+            "ServerAliveCountMax=2", "LogLevel=ERROR", "IdentitiesOnly=yes",
+            "ProxyCommand=none", "ProxyJump=none", "CanonicalizeHostname=no",
+        )
+        self.known_hosts_sha256 = "1" * 64
+        self.target_endpoint_sha256 = "2" * 64
         self.implementation = TransportImplementationEvidence(
             schema="e055-openssh-implementation/v1",
             implementation="openssh_fixed_helper",
             helper_source_path="tooling/e055_remote_helper.py",
-            helper_source_sha256="d" * 64,
-            helper_source_size_bytes=32768,
+            helper_source_sha256=hashlib.sha256(helper_payload).hexdigest(),
+            helper_source_size_bytes=len(helper_payload),
+            helper_git_blob_oid=helper_blob,
             openssh_path="/usr/bin/ssh",
-            openssh_sha256="e" * 64,
-            openssh_size_bytes=112233,
+            openssh_sha256=hashlib.sha256(openssh_payload).hexdigest(),
+            openssh_size_bytes=len(openssh_payload),
             openssh_mode=0o755,
             openssh_version="OpenSSH_9.9p2",
-            client_config=(
-                "BatchMode=yes",
-                "StrictHostKeyChecking=yes",
-                "UserKnownHostsFile=external-pinned-file",
-            ),
+            config_file="/dev/null",
+            client_config=self.client_config,
             client_config_sha256=hashlib.sha256(
-                b"BatchMode=yes\nStrictHostKeyChecking=yes\n"
-                b"UserKnownHostsFile=external-pinned-file\n"
+                ("\n".join(self.client_config) + "\n").encode("ascii")
             ).hexdigest(),
+            known_hosts_sha256=self.known_hosts_sha256,
+            target_endpoint_sha256=self.target_endpoint_sha256,
             credential_mode="external_agent_or_identity",
+        )
+        self.expected_pins = ExpectedTransportPins(
+            "e055-expected-transport-pins/v1", "pinned_host_key",
+            self.identity.endpoint_label, self.identity.board_identity,
+            self.identity.host_key_fingerprint, self.known_hosts_sha256,
+            self.target_endpoint_sha256, self.implementation.helper_source_sha256,
+            self.implementation.helper_source_size_bytes, helper_blob,
+            self.implementation.openssh_sha256,
+            self.implementation.openssh_size_bytes,
         )
 
     def runtime(
@@ -81,10 +116,11 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             request_id=request_id,
             request_nonce=nonce,
             helper_path=(
-                "/tmp/e055-q1-hot-cold/helpers/" + "d" * 64 + "/helper.py"
+                "/tmp/e055-q1-hot-cold/helpers/"
+                + self.implementation.helper_source_sha256 + "/helper.py"
             ),
-            helper_sha256="d" * 64,
-            helper_size_bytes=32768,
+            helper_sha256=self.implementation.helper_source_sha256,
+            helper_size_bytes=self.implementation.helper_source_size_bytes,
             helper_mode=0o700,
             helper_device=7,
             helper_inode=9001,
@@ -135,6 +171,8 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
         return validate_transport_evidence(
             receipt, readback, self.layout, self.expected,
             implementation_evidence=self.implementation,
+            expected_pins=self.expected_pins,
+            repository_root=self.repository_root,
             exclusive_request_id=self.exclusive_id,
             exclusive_request_nonce=self.exclusive_nonce,
             readback_request_id=self.readback_id,
@@ -147,7 +185,7 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
         self.assertEqual(document["schema"], "e055-transport-evidence/v2")
         self.assertEqual(
             document["implementation_evidence"]["helper_source_sha256"],
-            "d" * 64,
+            self.implementation.helper_source_sha256,
         )
         self.assertEqual(
             document["fresh_readback"]["runtime"]["python_realpath"],
@@ -172,7 +210,7 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
         mutations = (
             replace(
                 self.implementation,
-                client_config=self.implementation.client_config + ("SSHPASS=hunter2",),
+                client_config=self.implementation.client_config + ("UnreviewedOption=value",),
             ),
             replace(self.implementation, credential_mode="embedded_password"),
             replace(self.implementation, openssh_sha256="0" * 64),
@@ -183,11 +221,100 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
                     validate_transport_evidence(
                         receipt, readback, self.layout, self.expected,
                         implementation_evidence=implementation,
+                        expected_pins=self.expected_pins,
+                        repository_root=self.repository_root,
                         exclusive_request_id=self.exclusive_id,
                         exclusive_request_nonce=self.exclusive_nonce,
                         readback_request_id=self.readback_id,
                         readback_request_nonce=self.readback_nonce,
                     )
+
+    def test_insecure_known_host_proxy_and_timeout_semantics_fail_closed(self) -> None:
+        receipt, readback = self.evidence()
+        def changed(key: str, value: str) -> tuple[str, ...]:
+            return tuple(
+                f"{key}={value}" if option.startswith(key + "=") else option
+                for option in self.client_config
+            )
+        insecure_sets = (
+            changed("StrictHostKeyChecking", "accept-new"),
+            changed("ProxyCommand", "nc attacker 22"),
+            changed("ConnectTimeout", "0"),
+        )
+        for options in insecure_sets:
+            implementation = replace(
+                self.implementation, client_config=options,
+                client_config_sha256=hashlib.sha256(
+                    ("\n".join(options) + "\n").encode("ascii")
+                ).hexdigest(),
+            )
+            with self.subTest(options=options):
+                with self.assertRaises(ValueError):
+                    validate_transport_evidence(
+                        receipt, readback, self.layout, self.expected,
+                        implementation_evidence=implementation,
+                        expected_pins=self.expected_pins,
+                        repository_root=self.repository_root,
+                        exclusive_request_id=self.exclusive_id,
+                        exclusive_request_nonce=self.exclusive_nonce,
+                        readback_request_id=self.readback_id,
+                        readback_request_nonce=self.readback_nonce,
+                    )
+
+    def test_operational_or_self_asserted_endpoint_identity_is_not_a_pin(self) -> None:
+        receipt, readback = self.evidence()
+        forged = EndpointIdentity(
+            "operationally_trusted", "attacker-selected", "attacker-selected", None
+        )
+        with self.assertRaises(ValueError):
+            self.validate(
+                replace(receipt, endpoint_identity=forged),
+                replace(readback, endpoint_identity=forged),
+            )
+
+    def test_recomputed_claimed_helper_and_openssh_hashes_are_not_expected_pins(self) -> None:
+        receipt, readback = self.evidence()
+        forged_implementation = replace(
+            self.implementation, helper_source_sha256="6" * 64,
+            openssh_sha256="5" * 64,
+        )
+        forged_receipt = replace(
+            receipt, runtime=replace(
+                receipt.runtime, helper_path=(
+                    "/tmp/e055-q1-hot-cold/helpers/" + "6" * 64 + "/helper.py"
+                ), helper_sha256="6" * 64,
+            ),
+        )
+        forged_readback = replace(
+            readback, runtime=replace(
+                readback.runtime, helper_path=(
+                    "/tmp/e055-q1-hot-cold/helpers/" + "6" * 64 + "/helper.py"
+                ), helper_sha256="6" * 64,
+            ),
+        )
+        with self.assertRaises(ValueError):
+            validate_transport_evidence(
+                forged_receipt, forged_readback, self.layout, self.expected,
+                implementation_evidence=forged_implementation,
+                expected_pins=self.expected_pins,
+                repository_root=self.repository_root,
+                exclusive_request_id=self.exclusive_id,
+                exclusive_request_nonce=self.exclusive_nonce,
+                readback_request_id=self.readback_id,
+                readback_request_nonce=self.readback_nonce,
+            )
+
+    def test_outer_raw_and_runner_schemas_explicitly_migrate_to_v2(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        raw_schema = json.loads((
+            root / "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json"
+        ).read_text(encoding="utf-8"))
+        runner_schema = json.loads((
+            root / "experiments/E055-q1-hot-cold/data/runner-capture.schema.json"
+        ).read_text(encoding="utf-8"))
+        self.assertEqual("e055-raw-bundle/v2", raw_schema["properties"]["schema"]["const"])
+        self.assertEqual("e055-runner-capture/v2",
+                         runner_schema["properties"]["schema"]["const"])
 
 
 if __name__ == "__main__":

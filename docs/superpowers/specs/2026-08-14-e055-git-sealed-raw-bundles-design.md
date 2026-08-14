@@ -33,7 +33,7 @@ runs/<run-id>/e049c.stderr.capture.json
 runs/<run-id>/runner.json
 ```
 
-`bundle.json` has schema `e055-raw-bundle/v1`. It contains the phase ID,
+`bundle.json` has schema `e055-raw-bundle/v2`. It contains the phase ID,
 qualification hashes, the canonical digest of the immutable runtime
 qualification object, one shared executable artifact per build,
 and one run entry per measurement. Each run entry binds its run ID, pair ID,
@@ -49,7 +49,7 @@ The analyzer decodes and rehashes the payload before parsing it. A shared
 executable is listed once at bundle scope; runs refer to its build name rather
 than reusing its path as a run role.
 
-`runner.json` has schema `e055-runner-capture/v1`. It records the exact harness
+`runner.json` has schema `e055-runner-capture/v2`. It records the exact harness
 argv, a minimal explicitly non-secret environment, process exit status,
 affinity, endpoint CPUs, migration count, build name, and exact
 source/binary/compiler/upstream/runtime-contract hashes. The only permitted

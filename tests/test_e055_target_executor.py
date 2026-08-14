@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -22,6 +23,7 @@ from tooling.e055_target_executor import (
 from tooling.e055_raw_bundle import load_sealed_bundle
 from tooling.e055_transport_evidence import (
     EndpointIdentity,
+    ExpectedTransportPins,
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
     RemoteRuntimeObservation,
@@ -31,6 +33,40 @@ from tooling.e055_transport_evidence import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+HELPER_PATH = ROOT / "tooling/e055_remote_helper.py"
+HELPER_PAYLOAD = HELPER_PATH.read_bytes()
+HELPER_SHA256 = hashlib.sha256(HELPER_PAYLOAD).hexdigest()
+HELPER_BLOB = subprocess.run(
+    ["git", "rev-parse", "HEAD:tooling/e055_remote_helper.py"], cwd=ROOT,
+    check=True, text=True, stdout=subprocess.PIPE,
+).stdout.strip()
+OPENSSH_PATH = Path("/usr/bin/ssh")
+OPENSSH_PAYLOAD = OPENSSH_PATH.read_bytes()
+OPENSSH_SHA256 = hashlib.sha256(OPENSSH_PAYLOAD).hexdigest()
+KNOWN_HOSTS_SHA256 = "1" * 64
+TARGET_ENDPOINT_SHA256 = "2" * 64
+FAKE_BOARD = "sha256:" + "3" * 64
+FAKE_FINGERPRINT = "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+CLIENT_CONFIG = (
+    "BatchMode=yes", "StrictHostKeyChecking=yes",
+    "UserKnownHostsFile=external-pinned-file", "GlobalKnownHostsFile=/dev/null",
+    "CheckHostIP=no", "PasswordAuthentication=no",
+    "KbdInteractiveAuthentication=no", "NumberOfPasswordPrompts=0",
+    "ForwardAgent=no", "ClearAllForwardings=yes", "PermitLocalCommand=no",
+    "RequestTTY=no", "ConnectTimeout=10", "ConnectionAttempts=1",
+    "ServerAliveInterval=5", "ServerAliveCountMax=2", "LogLevel=ERROR",
+    "IdentitiesOnly=yes", "ProxyCommand=none", "ProxyJump=none",
+    "CanonicalizeHostname=no",
+)
+
+
+def fixture_expected_pins() -> ExpectedTransportPins:
+    return ExpectedTransportPins(
+        "e055-expected-transport-pins/v1", "pinned_host_key", "fake-transport",
+        FAKE_BOARD, FAKE_FINGERPRINT, KNOWN_HOSTS_SHA256,
+        TARGET_ENDPOINT_SHA256, HELPER_SHA256, len(HELPER_PAYLOAD), HELPER_BLOB,
+        OPENSSH_SHA256, len(OPENSSH_PAYLOAD),
+    )
 
 
 class FakeTransport:
@@ -42,20 +78,18 @@ class FakeTransport:
         self.restored = 0
         self.actions = []
         self.requests = []
-        self.helper_sha256 = "9" * 64
+        self.helper_sha256 = HELPER_SHA256
 
     def implementation_evidence(self) -> TransportImplementationEvidence:
-        config = (
-            "BatchMode=yes", "StrictHostKeyChecking=yes",
-            "UserKnownHostsFile=external-pinned-file",
-        )
         return TransportImplementationEvidence(
-            "e055-openssh-implementation/v1", "test_fixture",
-            "tooling/e055_remote_helper.py", self.helper_sha256, 32768,
-            "/usr/bin/ssh", "8" * 64, 112233, 0o755,
-            "OpenSSH_9.9p2", config,
-            hashlib.sha256(("\n".join(config) + "\n").encode("ascii")).hexdigest(),
-            "test_fixture",
+            "e055-openssh-implementation/v1", "openssh_fixed_helper",
+            "tooling/e055_remote_helper.py", self.helper_sha256,
+            len(HELPER_PAYLOAD), HELPER_BLOB, "/usr/bin/ssh", OPENSSH_SHA256,
+            len(OPENSSH_PAYLOAD), 0o755, "OpenSSH_9.9p2", "/dev/null",
+            CLIENT_CONFIG,
+            hashlib.sha256(("\n".join(CLIENT_CONFIG) + "\n").encode("ascii")).hexdigest(),
+            KNOWN_HOSTS_SHA256, TARGET_ENDPOINT_SHA256,
+            "external_agent_or_identity",
         )
 
     def runtime_observation(
@@ -65,7 +99,7 @@ class FakeTransport:
             "e055-remote-runtime-observation/v1", sequence,
             request_id, request_nonce,
             "/tmp/e055-q1-hot-cold/helpers/" + self.helper_sha256 + "/helper.py",
-            self.helper_sha256, 32768, 0o700, 7, 9001,
+            self.helper_sha256, len(HELPER_PAYLOAD), 0o700, 7, 9001,
             "e055-remote-helper/v1", "/usr/bin/python3",
             "/usr/bin/python3.13", "3.13.7", "7" * 64,
             6839896, 0o755, 7, 42,
@@ -114,7 +148,7 @@ class FakeTransport:
             lock_acquired_exclusively=True,
             deployment_created_exclusively=True,
             endpoint_identity=EndpointIdentity(
-                "test_fixture", "fake-transport", "fake-a733", None
+                "pinned_host_key", "fake-transport", FAKE_BOARD, FAKE_FINGERPRINT
             ),
             artifacts=self._observations(
                 artifacts, operation_sequence=1,
@@ -140,7 +174,7 @@ class FakeTransport:
             request_nonce=request_nonce,
             deployment_root=deployment_root,
             endpoint_identity=EndpointIdentity(
-                "test_fixture", "fake-transport", "fake-a733", None
+                "pinned_host_key", "fake-transport", FAKE_BOARD, FAKE_FINGERPRINT
             ),
             artifacts=self._observations(
                 artifacts, operation_sequence=2,
@@ -375,11 +409,25 @@ class E055TargetExecutorTest(unittest.TestCase):
                        cwd=self.root, check=True)
         subprocess.run(["git", "config", "user.email", "e055@example.invalid"],
                        cwd=self.root, check=True)
+        helper = self.root / "tooling/e055_remote_helper.py"
+        helper.parent.mkdir()
+        shutil.copyfile(HELPER_PATH, helper)
         experiment = self.root / "experiments/E055-q1-hot-cold"
         experiment.mkdir(parents=True)
+        subprocess.run(["git", "add", "tooling/e055_remote_helper.py"],
+                       cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "pin helper fixture"],
+                       cwd=self.root, check=True)
+        self.expected_pins = fixture_expected_pins()
 
     def tearDown(self) -> None:
         self.temp.cleanup()
+
+    def executor(self, transport) -> E055TargetExecutor:
+        return E055TargetExecutor(
+            self.root, transport=transport,
+            expected_transport_pins=self.expected_pins,
+        )
 
     def test_plan_is_exact_bounded_twenty_run_o3_microgate(self) -> None:
         plan = limited_o3_microgate_plan()
@@ -424,7 +472,7 @@ class E055TargetExecutorTest(unittest.TestCase):
     def test_missing_deploy_and_readback_proof_refuses_before_capture(self) -> None:
         transport = NoProofTransport()
         with self.assertRaisesRegex(ValueError, "proof|receipt|prepare"):
-            E055TargetExecutor(self.root, transport=transport).execute("phase-no-proof")
+            self.executor(transport).execute("phase-no-proof")
         self.assertEqual(transport.captures, [])
         self.assertEqual(transport.restored, 1)
 
@@ -440,7 +488,7 @@ class E055TargetExecutorTest(unittest.TestCase):
             with self.subTest(mutation=mutation):
                 transport = MutatingProofTransport(mutation)
                 with self.assertRaises(ValueError):
-                    E055TargetExecutor(self.root, transport=transport).execute(
+                    self.executor(transport).execute(
                         f"phase-forged-{index}"
                     )
                 self.assertEqual(transport.captures, [])
@@ -448,7 +496,7 @@ class E055TargetExecutorTest(unittest.TestCase):
 
     def test_fake_transport_populates_exact_streams_runner_and_manifest(self) -> None:
         transport = FakeTransport()
-        result = E055TargetExecutor(self.root, transport=transport).execute("phase-a")
+        result = self.executor(transport).execute("phase-a")
         self.assertEqual(result.run_count, 20)
         self.assertEqual(len(transport.prepared), 2)
         for artifact in transport.prepared:
@@ -548,12 +596,14 @@ class E055TargetExecutorTest(unittest.TestCase):
         subprocess.run(["git", "add", "-A"], cwd=self.root, check=True)
         subprocess.run(["git", "commit", "-q", "-m", "sealed fake phase"],
                        cwd=self.root, check=True)
-        sealed = load_sealed_bundle(result.manifest_path)
+        sealed = load_sealed_bundle(
+            result.manifest_path, expected_transport_pins=self.expected_pins,
+        )
         self.assertEqual(len(sealed.samples), 20)
 
     def test_failed_target_run_preserves_captured_bytes_and_stops(self) -> None:
         transport = FakeTransport(fail_at=3)
-        executor = E055TargetExecutor(self.root, transport=transport)
+        executor = self.executor(transport)
         with self.assertRaisesRegex(TargetRunFailure, "cpu0-pair2-cold"):
             executor.execute("phase-fail")
         self.assertEqual(len(transport.captures), 3)
@@ -573,7 +623,7 @@ class E055TargetExecutorTest(unittest.TestCase):
     def test_transport_exception_is_recorded_without_leaking_exception_text(self) -> None:
         transport = RaisingTransport()
         with self.assertRaisesRegex(TargetRunFailure, "partial phase preserved"):
-            E055TargetExecutor(self.root, transport=transport).execute("phase-error")
+            self.executor(transport).execute("phase-error")
         self.assertEqual(transport.restored, 1)
         runner = self.root / (
             "experiments/E055-q1-hot-cold/raw/phase-error/"
@@ -586,7 +636,7 @@ class E055TargetExecutorTest(unittest.TestCase):
     def test_restore_failure_preserves_primary_target_failure(self) -> None:
         transport = RaisingAndRestoreFailingTransport()
         with self.assertRaises(BaseExceptionGroup) as caught:
-            E055TargetExecutor(self.root, transport=transport).execute("phase-double-fail")
+            self.executor(transport).execute("phase-double-fail")
         failures = caught.exception.exceptions
         self.assertEqual(len(failures), 2)
         self.assertIsInstance(failures[0], TargetRunFailure)
@@ -609,7 +659,7 @@ class E055TargetExecutorTest(unittest.TestCase):
         (raw / "phase-existing").mkdir()
         transport = FakeTransport()
         with self.assertRaises(FileExistsError):
-            E055TargetExecutor(self.root, transport=transport).execute("phase-existing")
+            self.executor(transport).execute("phase-existing")
         self.assertEqual(transport.prepared, [])
         self.assertEqual(transport.captures, [])
         self.assertEqual(transport.restored, 0)
@@ -617,7 +667,7 @@ class E055TargetExecutorTest(unittest.TestCase):
     def test_malformed_transport_value_fails_closed_and_records_failure(self) -> None:
         transport = MalformedTransport()
         with self.assertRaises(TargetRunFailure):
-            E055TargetExecutor(self.root, transport=transport).execute("phase-malformed")
+            self.executor(transport).execute("phase-malformed")
         runner = self.root / (
             "experiments/E055-q1-hot-cold/raw/phase-malformed/"
             "runs/cpu0-pair1-hot/runner.json"
