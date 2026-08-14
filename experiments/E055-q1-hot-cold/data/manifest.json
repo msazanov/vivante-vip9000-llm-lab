@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T11:47:13.565780+00:00",
+  "generated_at_utc": "2026-08-14T12:30:11.224355+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "5782dc52a9488226d71faef82d2459e2b76fc747",
-    "staged_tree_binding_sha256": "ddb001e360d2521ded90dde0c620e209e32bfe907199b62a27dd9f7a160e983f",
+    "preflight_base_commit": "b39e0bde579b8846449adc85f6157adf950f33e1",
+    "staged_tree_binding_sha256": "374af38c76d93cbee5e4a2b1798e136ea43b22a33b132f794386663c520004ed",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -53,10 +53,10 @@
         "bus_access": "0x19"
       }
     },
-    "pmu_source_sha256": "d2ce0da48e4329ae05abd891ce1d312cb39f63b44b5509f77d3d3d583578d02e",
+    "pmu_source_sha256": "981e9b4860218b155088fa4a38fe616ce4aa617a99e4130258506dc01ebdc2e9",
     "pmu_artifact_path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-    "pmu_binary_sha256": "93875cc5c6bd2cfdd7e3174ee30f29b8776b2604432e7cee2811c50b4fce7246",
-    "pmu_binary_size_bytes": 74488,
+    "pmu_binary_sha256": "0e4568bbb33f22474bb1377b5cc2a17ad84532e5f0d77f8e72350df811a23dea",
+    "pmu_binary_size_bytes": 74720,
     "pmu_compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
     "pmu_compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0"
   },
@@ -66,14 +66,14 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 21060,
-      "sha256": "2745af4d65985ceb65d9ad6453205a90e189b1fdd84fc34e778dab387cc5b039",
+      "size_bytes": 22059,
+      "sha256": "480904b54613735be12e14c30932b31371d9ff839a03095dade9a26e9e154e9d",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3070461,
-      "sha256": "2794ca037f5d45ab1c8249c5d0c10d8583baeb825130df38d6b5b5dff74c6f57",
+      "size_bytes": 3072194,
+      "sha256": "df66ddcf7a1c3aaa680b5aa6800f8980f25519d13917d509fa5028b0fedef0bb",
       "role": "e055-stage1"
     },
     {
@@ -121,7 +121,7 @@
     {
       "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
       "size_bytes": 902,
-      "sha256": "85fa2490d5b4fd3ddaae0093c9082d584557a94f405bf328cf803e5728e91e08",
+      "sha256": "9be200cd4615f0022c9b57099b38635fb8bf52d95a7342d4e46c4fa205f61870",
       "role": "e055-stage1"
     },
     {
@@ -138,14 +138,14 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
-      "size_bytes": 8683,
-      "sha256": "ed2d4ac5e76e20c92bb2f81665f5f652be98fad22c4bb4866500372a9c655e5a",
+      "size_bytes": 10455,
+      "sha256": "dc75b1c8240616509593c1eb554afb507c8dfa70d6d606a307185000d52d80a1",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
-      "size_bytes": 7748,
-      "sha256": "599996c53c48e632d390655fb7fe51dd7bc969d82d375d594d0951afa2b0dbd2",
+      "size_bytes": 9520,
+      "sha256": "f775ea9dabf593ee46fdd33d2efb3ca645dcc49bf539bbb4ad229dd37a9ced2b",
       "role": "e055-stage1"
     },
     {
@@ -168,8 +168,8 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-      "size_bytes": 74488,
-      "sha256": "93875cc5c6bd2cfdd7e3174ee30f29b8776b2604432e7cee2811c50b4fce7246",
+      "size_bytes": 74720,
+      "sha256": "0e4568bbb33f22474bb1377b5cc2a17ad84532e5f0d77f8e72350df811a23dea",
       "role": "e055-stage1"
     },
     {
@@ -192,20 +192,20 @@
     },
     {
       "path": "tooling/e055_capture_scaffold.py",
-      "size_bytes": 10223,
-      "sha256": "7ac33771b288a8c8bd9ab31c695eb1f8baebcaccbf916dc6f6a3fea46c1d42ac",
+      "size_bytes": 11541,
+      "sha256": "cd0100006da1164cf16c9b7bae3c5c04522cfded8a5384d78b546f9e2bed45ea",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_target_executor.py",
-      "size_bytes": 23226,
-      "sha256": "e6d2f220fa91cf4bd8d3bcddf1ddaa6119da177d280f2e6c9eba35d0aa165a88",
+      "size_bytes": 24232,
+      "sha256": "9e2028ac7f6c41b9c1f953140ca2893c15d873c6bdb04765141ae514dfe97530",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_transport_evidence.py",
-      "size_bytes": 15593,
-      "sha256": "da6090c6882497c679f6e6b036f35d9b93f5dd828611911829eda3c54fe7a0e3",
+      "size_bytes": 20188,
+      "sha256": "6859f1ed9fa6dd5df9b41417eab5122ebed7891d1d376637d3e3ab6396a90be6",
       "role": "e055-stage1"
     },
     {
@@ -216,8 +216,8 @@
     },
     {
       "path": "tooling/a733_pmu_exec.c",
-      "size_bytes": 48284,
-      "sha256": "d2ce0da48e4329ae05abd891ce1d312cb39f63b44b5509f77d3d3d583578d02e",
+      "size_bytes": 52398,
+      "sha256": "981e9b4860218b155088fa4a38fe616ce4aa617a99e4130258506dc01ebdc2e9",
       "role": "e055-stage1"
     },
     {
@@ -252,8 +252,8 @@
     },
     {
       "path": "tests/test_e055_raw_bundle.py",
-      "size_bytes": 49645,
-      "sha256": "b0505d927d9ca386fe05ff98f2d9e323def7433aa569517354c452a835ff6ecb",
+      "size_bytes": 50823,
+      "sha256": "8d46f681eb46f8f948d6e90399c56df31b69f495a3a00b232d9758bc9b29f030",
       "role": "e055-stage1"
     },
     {
@@ -264,14 +264,14 @@
     },
     {
       "path": "tests/test_e055_capture_scaffold.py",
-      "size_bytes": 8128,
-      "sha256": "eab37248e8d01f5096b2a97b804aedf3aaafd82c8718da9ab6982de726dca7a0",
+      "size_bytes": 10407,
+      "sha256": "362edea11cfe418e66d61d914789fc8ecb7cfc00590114f314bee8033d2a30cc",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_target_executor.py",
-      "size_bytes": 23066,
-      "sha256": "b273aace6b8f7dd7f7aeb137d70554c73e0072337966f9401cbca8ab9a2aa872",
+      "size_bytes": 26798,
+      "sha256": "5bf35025f4e2511da0bf4db7f52fb81033a2b11fca55355670756901c35ff0ed",
       "role": "e055-stage1"
     },
     {
