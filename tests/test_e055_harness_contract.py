@@ -38,7 +38,7 @@ class E055HarnessContractTest(unittest.TestCase):
             (ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json")
             .read_text(encoding="utf-8")
         )
-        self.assertEqual(schema["properties"]["schema"]["const"], "e055-q1-hot-cold/v1")
+        self.assertEqual(schema["properties"]["schema"]["const"], "e055-q1-hot-cold/v2")
         self.assertEqual(schema["properties"]["cpu"]["enum"], [0, 6])
         self.assertEqual(schema["properties"]["observed_ddr_read_bytes"]["type"], "null")
 
@@ -48,6 +48,23 @@ class E055HarnessContractTest(unittest.TestCase):
         self.assertIn("volatile uint64_t g_checksum", self.source)
         self.assertIn("noinline, noclone, used", self.source)
         self.assertIn("golden mismatch", self.source)
+
+    def test_rejected_serial_control_shape_cannot_return(self) -> None:
+        packed = self.source.split("static uint64_t packed_stream_only", 1)[1].split(
+            "static uint64_t unpack_scale_only", 1)[0]
+        unpack = self.source.split("static uint64_t unpack_scale_only", 1)[1].split(
+            "static uint64_t run_one", 1)[0]
+        self.assertNotIn("for (size_t i", packed)
+        self.assertNotIn("mix_checksum(hash", packed)
+        self.assertNotIn("g_float_sink", unpack)
+        self.assertNotIn("sum_s8", unpack)
+        self.assertIn("vector accumulators", self.source)
+
+    def test_first_stage_review_rejection_is_preserved(self) -> None:
+        rejection = (ROOT / "experiments/E055-q1-hot-cold/data/"
+                     "review-rejection-stage1-51d1c1c.md").read_text(encoding="utf-8")
+        self.assertIn("REJECTED EVIDENCE", rejection)
+        self.assertIn("51d1c1c", rejection)
 
     def test_marker_protocol_uses_fixed_e049c_descriptors(self) -> None:
         self.assertIn("constexpr int kMarkerFd = 9", self.source)

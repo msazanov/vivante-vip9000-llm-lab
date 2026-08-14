@@ -1,64 +1,79 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-q1-hot-cold/v1/sample.schema.json",
-  "title": "E055 Q1 hot/cold sample",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-q1-hot-cold/v2/sample.schema.json",
+  "title": "E055 qualified Q1 hot/cold sample",
   "type": "object",
-  "required": [
-    "schema", "mode", "cache_state", "cpu", "golden_pass",
-    "golden_cases", "target_working_set_bytes", "actual_working_set_bytes",
-    "blocks", "iterations", "calls", "elapsed_ns", "checksum",
-    "cold_conditioning", "sync", "pmu"
-  ],
+  "required": ["schema", "run_id", "pair_id", "pair_order", "order_index", "mode", "cache_state", "cpu", "pinned_cpu", "affinity_cpus", "cpu_start", "cpu_end", "cpu_migration_count", "golden_pass", "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns", "checksum", "cold_conditioning", "sync", "pmu", "thermal", "provenance", "exit_code"],
   "properties": {
-    "schema": {"const": "e055-q1-hot-cold/v1"},
+    "schema": {"const": "e055-q1-hot-cold/v2"},
+    "run_id": {"type": "string", "minLength": 1},
+    "pair_id": {"type": "string", "minLength": 1},
+    "pair_order": {"enum": ["hot_then_cold", "cold_then_hot"]},
+    "order_index": {"enum": [1, 2]},
     "mode": {"enum": ["packed_stream", "unpack_scale", "full_dotprod"]},
     "cache_state": {"enum": ["hot_repeat", "cold_conditioned"]},
     "cpu": {"enum": [0, 6]},
+    "pinned_cpu": {"enum": [0, 6]},
+    "affinity_cpus": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"enum": [0, 6]}},
+    "cpu_start": {"enum": [0, 6]},
+    "cpu_end": {"enum": [0, 6]},
+    "cpu_migration_count": {"const": 0},
     "golden_pass": {"const": true},
-    "golden_cases": {"type": "integer", "minimum": 18},
-    "target_working_set_bytes": {"type": "integer", "minimum": 1},
     "actual_working_set_bytes": {"type": "integer", "minimum": 208},
     "blocks": {"type": "integer", "minimum": 1},
     "iterations": {"type": "integer", "minimum": 1},
     "calls": {"type": "integer", "minimum": 1},
     "elapsed_ns": {"type": "integer", "minimum": 1},
-    "first_call_ns": {"type": "integer", "minimum": 1},
-    "calls_per_second": {"type": "number", "exclusiveMinimum": 0},
     "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-fA-F]+$"},
     "observed_ddr_read_bytes": {"type": "null"},
     "observed_ddr_write_bytes": {"type": "null"},
-    "cold_conditioning": {
-      "type": "object",
-      "required": ["strategy", "thrash_bytes", "line_bytes", "lines_touched", "verified_touched"],
-      "properties": {
-        "strategy": {"const": "verified_write_read_each_64B_line"},
-        "thrash_bytes": {"type": "integer", "minimum": 0},
-        "line_bytes": {"const": 64},
-        "lines_touched": {"type": "integer", "minimum": 0},
-        "verified_touched": {"type": "boolean"}
-      },
-      "additionalProperties": true
-    },
-    "sync": {
-      "type": "object",
-      "required": ["requested", "started", "acknowledged", "ended"],
-      "properties": {
-        "requested": {"type": "boolean"},
-        "started": {"type": "boolean"},
-        "acknowledged": {"type": "boolean"},
-        "ended": {"type": "boolean"}
-      },
-      "additionalProperties": false
-    },
+    "cold_conditioning": {"type": "object", "required": ["verified_touched"], "properties": {"verified_touched": {"type": "boolean"}}},
+    "sync": {"type": "object", "required": ["requested", "started", "acknowledged", "ended", "sequence"], "properties": {"requested": {"const": true}, "started": {"const": true}, "acknowledged": {"const": true}, "ended": {"const": true}, "sequence": {"const": "S/A/E"}}, "additionalProperties": false},
     "pmu": {
       "type": "object",
-      "required": ["events", "values_are_event_counts"],
+      "required": ["schema_version", "status", "sample_valid", "event_group", "event_group_size", "events", "values_are_event_counts"],
       "properties": {
-        "events": {"type": "array"},
+        "schema_version": {"const": "e049c-arm-pmu/v2"},
+        "status": {"const": "ok"},
+        "sample_valid": {"const": true},
+        "event_group": {"enum": ["core", "cache", "memory"]},
+        "event_group_size": {"enum": [2, 3]},
+        "events": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["name", "support", "sample_valid", "value", "running_ratio"],
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "support": {"const": "supported"},
+              "sample_valid": {"const": true},
+              "value": {"type": "integer", "minimum": 0},
+              "running_ratio": {"const": 1.0}
+            }
+          }
+        },
         "values_are_event_counts": {"const": true}
-      },
-      "additionalProperties": true
-    }
+      }
+    },
+    "thermal": {"type": "object", "required": ["readable", "tripped", "max_temp_c", "limit_c"], "properties": {"readable": {"const": true}, "tripped": {"const": false}, "max_temp_c": {"type": "number"}, "limit_c": {"type": "number"}}},
+    "provenance": {"type": "object", "required": ["source_sha256", "binary_sha256", "compiler_sha256", "compiler_id"], "properties": {"source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "compiler_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "compiler_id": {"type": "string", "minLength": 1}}},
+    "exit_code": {"const": 0}
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {"properties": {"cache_state": {"const": "cold_conditioned"}}},
+      "then": {
+        "properties": {
+          "iterations": {"const": 1},
+          "calls": {"const": 1},
+          "cold_conditioning": {
+            "properties": {"verified_touched": {"const": true}}
+          }
+        }
+      }
+    }
+  ]
 }

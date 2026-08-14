@@ -48,6 +48,8 @@ struct options {
     int cpu_label = -1;
     bool sync = false;
     bool self_test = false;
+    bool iterations_explicit = false;
+    bool budget_explicit = false;
     const char *json_out = nullptr;
 };
 
@@ -129,9 +131,11 @@ static bool parse_options(int argc, char **argv, options &out) {
         } else if (std::strcmp(arg, "--iterations") == 0) {
             value = require_value(arg);
             if (value == nullptr || !parse_u64(value, out.iterations)) return false;
+            out.iterations_explicit = true;
         } else if (std::strcmp(arg, "--budget-ms") == 0) {
             value = require_value(arg);
             if (value == nullptr || !parse_u64(value, out.budget_ms)) return false;
+            out.budget_explicit = true;
         } else if (std::strcmp(arg, "--thrash-bytes") == 0) {
             value = require_value(arg);
             if (value == nullptr || !parse_u64(value, out.thrash_bytes)) return false;
@@ -164,11 +168,18 @@ static bool parse_options(int argc, char **argv, options &out) {
         std::fprintf(stderr, "working set and thrash buffer must be positive\n");
         return false;
     }
-    if (out.cache_state == "cold_conditioned" && out.iterations == 0) {
+    if (out.cache_state == "cold_conditioned") {
         // A cold sample is one explicitly conditioned traversal.  Repeating
         // after it would turn the rest of the PMU window into a hot sample.
+        if ((out.iterations_explicit && out.iterations != 1) ||
+            (out.budget_explicit && out.budget_ms != 0)) {
+            std::fprintf(stderr,
+                         "cold_conditioned requires --iterations 1 and --budget-ms 0\n");
+            return false;
+        }
         out.iterations = 1;
         out.budget_ms = 0;
+        out.warmup = 0;
     }
     return true;
 }
@@ -190,55 +201,64 @@ static uint64_t mix_checksum(uint64_t hash, uint64_t value) {
     return hash;
 }
 
-static uint64_t sum_s8(int8x16_t value) {
-    const int16x8_t lo = vmovl_s8(vget_low_s8(value));
-    const int16x8_t hi = vmovl_s8(vget_high_s8(value));
-    return static_cast<uint64_t>(static_cast<int32_t>(vaddvq_s16(lo)) +
-                                 static_cast<int32_t>(vaddvq_s16(hi)));
-}
-
 // The following function is deliberately a memory-only control.  It walks
-// exactly the Q1 and Q8 carrier bytes that the native group consumes, but does
-// not unpack, scale, or dot-product them.  The checksum is externally
-// observable and therefore prevents the compiler from deleting the traversal.
+// Q1/Q8 in the stock block order.  Four bounded vector accumulators consume
+// the loads; only one final reduction and one global sink update are observable.
+// Thus the control has no serial per-byte hash, although vector XOR/add and the
+// final reduction remain measurable control overhead.
 __attribute__((noinline, noclone, used))
 static uint64_t packed_stream_only(const block_q1_0x4 *b,
                                    const block_q8_0 *q8, int nb) {
-    uint64_t hash = kCanarySeed;
+    uint8x16_t acc0 = vdupq_n_u8(0x15);
+    uint8x16_t acc1 = vdupq_n_u8(0x2a);
+    uint8x16_t acc2 = vdupq_n_u8(0x51);
+    uint8x16_t acc3 = vdupq_n_u8(0xa2);
+    uint64_t scale_bits = kCanarySeed;
     for (int l = 0; l < nb; ++l) {
-        const uint8_t *q1 = reinterpret_cast<const uint8_t *>(b + l);
-        for (size_t i = 0; i < sizeof(block_q1_0x4); ++i) {
-            hash = mix_checksum(hash, q1[i]);
-        }
+        uint64_t q1_scale_bits = 0;
+        std::memcpy(&q1_scale_bits, b[l].d, sizeof(q1_scale_bits));
+        scale_bits ^= q1_scale_bits;
+        const uint8_t *b_qs = reinterpret_cast<const uint8_t *>(b[l].qs);
         for (int k = 0; k < 4; ++k) {
-            const uint8_t *q8_bytes = reinterpret_cast<const uint8_t *>(q8 + l * 4 + k);
-            for (size_t i = 0; i < sizeof(block_q8_0); ++i) {
-                hash = mix_checksum(hash, q8_bytes[i]);
-            }
+            const block_q8_0 *a = q8 + l * 4 + k;
+            uint16_t q8_scale_bits = 0;
+            std::memcpy(&q8_scale_bits, &a->d, sizeof(q8_scale_bits));
+            scale_bits += q8_scale_bits;
+            acc0 = veorq_u8(acc0, vld1q_u8(b_qs + k * 16));
+            acc1 = vaddq_u8(acc1, vld1q_u8(reinterpret_cast<const uint8_t *>(a->qs)));
+            acc2 = veorq_u8(acc2, vld1q_u8(reinterpret_cast<const uint8_t *>(a->qs + 16)));
+            acc3 = vaddq_u8(acc3, veorq_u8(acc0, acc2));
         }
     }
-    g_checksum ^= hash;
+    const uint64_t reduced = static_cast<uint64_t>(vaddvq_u8(acc0)) |
+                             (static_cast<uint64_t>(vaddvq_u8(acc1)) << 8) |
+                             (static_cast<uint64_t>(vaddvq_u8(acc2)) << 16) |
+                             (static_cast<uint64_t>(vaddvq_u8(acc3)) << 24);
+    const uint64_t hash = mix_checksum(scale_bits, reduced);
+    g_checksum = mix_checksum(g_checksum, hash);
     return hash;
 }
 
 // Register unpack and scale control.  It executes the same two-byte packed
 // sign loads and LUT expansion as the stock path, loads every Q8 vector and
-// both scale streams, but replaces SDOT/FMA with integer/float checksums.
+// both scale streams, but replaces SDOT/FMA with four bounded vector consumers.
+// There is one final vector reduction and one externally observable sink.
 // PMU values are event counts; values joined by the runner remain counts,
 // never bytes.
 __attribute__((noinline, noclone, used))
 static uint64_t unpack_scale_only(const block_q1_0x4 *b,
                                   const block_q8_0 *q8, int nb) {
-    uint64_t hash = kCanarySeed;
-    float scale_sum = 0.0f;
-    int64_t sign_sum = 0;
-    int64_t q8_sum = 0;
+    int8x16_t sign_acc0 = vdupq_n_s8(1);
+    int8x16_t sign_acc1 = vdupq_n_s8(3);
+    int8x16_t q8_acc0 = vdupq_n_s8(5);
+    int8x16_t q8_acc1 = vdupq_n_s8(7);
+    float32x4_t scale_acc = vdupq_n_f32(0.0f);
+    float q8_scale_acc = 0.0f;
     for (int l = 0; l < nb; ++l) {
         const uint8_t *b_qs = reinterpret_cast<const uint8_t *>(b[l].qs);
         for (int k = 0; k < 4; ++k) {
             const block_q8_0 *a_blk = q8 + l * 4 + k;
-            const float ad = neon_fp16_to_float(a_blk->d);
-            scale_sum += ad;
+            q8_scale_acc += neon_fp16_to_float(a_blk->d);
             for (int tile = 0; tile < 8; tile += 4) {
                 const int8x16_t s0 = e039_q1_unpack_pair(
                     b_qs[k * 16 + 2 * (tile + 0) + 0],
@@ -253,22 +273,28 @@ static uint64_t unpack_scale_only(const block_q1_0x4 *b,
                     b_qs[k * 16 + 2 * (tile + 3) + 0],
                     b_qs[k * 16 + 2 * (tile + 3) + 1]);
                 const int8x16_t q = vld1q_s8(a_blk->qs + tile * 4);
-                sign_sum += static_cast<int64_t>(sum_s8(s0) + sum_s8(s1) +
-                                                 sum_s8(s2) + sum_s8(s3));
-                q8_sum += static_cast<int64_t>(sum_s8(q));
-                hash = mix_checksum(hash, static_cast<uint64_t>(sum_s8(s0)));
-                hash = mix_checksum(hash, static_cast<uint64_t>(sum_s8(q)));
+                sign_acc0 = veorq_s8(sign_acc0, veorq_s8(s0, s2));
+                sign_acc1 = vaddq_s8(sign_acc1, veorq_s8(s1, s3));
+                if (tile == 0) {
+                    q8_acc0 = veorq_s8(q8_acc0, q);
+                } else {
+                    q8_acc1 = vaddq_s8(q8_acc1, q);
+                }
             }
         }
-        const float32x4_t scales = vcvt_f32_f16(
-            vld1_f16(reinterpret_cast<const float16_t *>(b[l].d)));
-        g_float_sink += vaddvq_f32(scales);
-        hash = mix_checksum(hash, static_cast<uint64_t>(
-            static_cast<int64_t>(scale_sum * 1000.0f)));
+        scale_acc = vaddq_f32(scale_acc, vcvt_f32_f16(
+            vld1_f16(reinterpret_cast<const float16_t *>(b[l].d))));
     }
-    hash = mix_checksum(hash, static_cast<uint64_t>(sign_sum));
-    hash = mix_checksum(hash, static_cast<uint64_t>(q8_sum));
-    g_checksum ^= hash;
+    const uint8x16_t folded = veorq_u8(
+        vreinterpretq_u8_s8(veorq_s8(sign_acc0, sign_acc1)),
+        vreinterpretq_u8_s8(veorq_s8(q8_acc0, q8_acc1)));
+    const float scale_sum = vaddvq_f32(scale_acc) + q8_scale_acc;
+    uint32_t scale_bits = 0;
+    std::memcpy(&scale_bits, &scale_sum, sizeof(scale_bits));
+    const uint64_t reduced = static_cast<uint64_t>(vaddvq_u8(folded)) |
+                             (static_cast<uint64_t>(scale_bits) << 16);
+    const uint64_t hash = mix_checksum(kCanarySeed, reduced);
+    g_checksum = mix_checksum(g_checksum, hash);
     return hash;
 }
 
@@ -291,7 +317,7 @@ static uint64_t run_one(const std::string &mode,
         hash = mix_checksum(hash, bits);
     }
     g_float_sink += out[0];
-    g_checksum ^= hash;
+    g_checksum = mix_checksum(g_checksum, hash);
     return hash;
 }
 
@@ -439,7 +465,7 @@ static std::string json_result(const options &opt,
         ? 0.0 : static_cast<double>(calls) * 1.0e9 / static_cast<double>(elapsed_ns);
     const int written = std::snprintf(
         buffer, sizeof(buffer),
-        "{\"schema\":\"e055-q1-hot-cold/v1\","
+        "{\"schema\":\"e055-q1-hot-cold-harness/v1\","
         "\"mode\":\"%s\",\"cache_state\":\"%s\",\"cpu\":%d,"
         "\"q1_layout\":\"E039 stock native block_q1_0x4 4x4 DOTPROD\","
         "\"golden_pass\":true,\"golden_cases\":%u,"
@@ -457,8 +483,8 @@ static std::string json_result(const options &opt,
         "\"lines_touched\":%" PRIu64 ",\"checksum\":\"0x%" PRIx64 "\","
         "\"verified_touched\":%s},"
         "\"sync\":{\"requested\":%s,\"started\":%s,"
-        "\"acknowledged\":%s,\"ended\":%s},"
-        "\"pmu\":{\"events\":[],\"values_are_event_counts\":true}}\n",
+        "\"acknowledged\":%s,\"ended\":%s,\"sequence\":\"S/A/E\"},"
+        "\"qualification\":\"unqualified_harness_output_requires_E049c_join\"}\n",
         opt.mode.c_str(), opt.cache_state.c_str(), cpu,
         golden_cases, opt.target_bytes, actual_bytes, blocks,
         iterations, calls, elapsed_ns, first_call_ns, calls_per_second,
@@ -469,7 +495,7 @@ static std::string json_result(const options &opt,
         opt.sync ? "true" : "false", marker_started ? "true" : "false",
         marker_ack ? "true" : "false", marker_ended ? "true" : "false");
     if (written < 0 || static_cast<size_t>(written) >= sizeof(buffer)) {
-        return "{\"schema\":\"e055-q1-hot-cold/v1\",\"error\":\"json buffer overflow\"}\n";
+        return "{\"schema\":\"e055-q1-hot-cold-harness/v1\",\"error\":\"json buffer overflow\"}\n";
     }
     return std::string(buffer, static_cast<size_t>(written));
 }
@@ -488,7 +514,7 @@ int main(int argc, char **argv) {
         return 3;
     }
     if (opt.self_test) {
-        std::printf("{\"schema\":\"e055-q1-hot-cold/v1\",\"self_test\":true,"
+        std::printf("{\"schema\":\"e055-q1-hot-cold-harness/v1\",\"self_test\":true,"
                     "\"golden_pass\":true,\"golden_cases\":%u}\n", golden_cases);
         return 0;
     }
@@ -547,7 +573,8 @@ int main(int argc, char **argv) {
         const uint64_t start = monotonic_ns();
         for (uint64_t i = 0; i < opt.iterations; ++i) {
             const uint64_t call_start = monotonic_ns();
-            checksum ^= run_one(opt.mode, b0.data(), q8.data(), blocks);
+            checksum = mix_checksum(checksum,
+                                    run_one(opt.mode, b0.data(), q8.data(), blocks));
             const uint64_t call_end = monotonic_ns();
             if (calls == 0) first_call_ns = call_end - call_start;
             ++calls;
@@ -556,7 +583,8 @@ int main(int argc, char **argv) {
     } else {
         const uint64_t start = monotonic_ns();
         do {
-            checksum ^= run_one(opt.mode, b0.data(), q8.data(), blocks);
+            checksum = mix_checksum(checksum,
+                                    run_one(opt.mode, b0.data(), q8.data(), blocks));
             ++calls;
         } while (monotonic_ns() - start < opt.budget_ms * UINT64_C(1000000));
         elapsed_ns = monotonic_ns() - start;

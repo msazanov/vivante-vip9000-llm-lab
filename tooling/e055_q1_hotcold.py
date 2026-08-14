@@ -22,7 +22,8 @@ from collections import defaultdict
 from typing import Any, Iterable, Mapping, Sequence
 
 
-SCHEMA = "e055-q1-hot-cold/v1"
+SCHEMA = "e055-q1-hot-cold/v2"
+HARNESS_SCHEMA = "e055-q1-hot-cold-harness/v1"
 Q1_BLOCK_BYTES = 72
 Q8_BLOCK_BYTES = 34
 Q8_BLOCKS_PER_Q1_BLOCK = 4
@@ -43,6 +44,11 @@ WORKING_SET_BYTES = (
 )
 CPUS = (0, 6)
 MIN_PAIRED_SAMPLES = 5
+PMU_GROUP_EVENTS = {
+    "core": {"cpu_cycles", "instructions", "stall_backend"},
+    "cache": {"l1d_cache_refill", "l2d_cache_refill", "l3d_cache_refill"},
+    "memory": {"mem_access", "bus_access"},
+}
 
 
 def actual_working_set(target_bytes: int) -> dict[str, int]:
@@ -109,6 +115,22 @@ def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def ns_per_traversal(sample: Mapping[str, Any]) -> float:
+    """Normalize a sample before comparing different call counts."""
+
+    elapsed = sample.get("elapsed_ns")
+    calls = sample.get("calls")
+    if not _is_int(elapsed) or not _is_int(calls) or elapsed <= 0 or calls <= 0:
+        raise ValueError("elapsed_ns and calls must be positive integers")
+    return float(elapsed) / float(calls)
+
+
+def traversals_per_second(sample: Mapping[str, Any]) -> float:
+    """Return complete stock-order traversals per second."""
+
+    return 1.0e9 / ns_per_traversal(sample)
+
+
 def validate_sample(sample: Mapping[str, Any]) -> list[str]:
     """Return contract violations for one harness/PMU joined sample.
 
@@ -119,13 +141,34 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
 
     errors: list[str] = []
     if sample.get("schema") != SCHEMA:
-        errors.append("schema must be e055-q1-hot-cold/v1")
+        errors.append("schema must be e055-q1-hot-cold/v2")
     if sample.get("mode") not in MODES:
         errors.append(f"mode must be one of {MODES}")
     if sample.get("cache_state") not in CACHE_STATES:
         errors.append(f"cache_state must be one of {CACHE_STATES}")
     if not _is_int(sample.get("cpu")) or int(sample["cpu"]) not in CPUS:
         errors.append("cpu must be A55 CPU0 or A76 CPU6")
+    cpu = sample.get("cpu")
+    if sample.get("pinned_cpu") != cpu or sample.get("cpu_start") != cpu or sample.get("cpu_end") != cpu:
+        errors.append("sample must remain pinned to the declared CPU")
+    if sample.get("affinity_cpus") != [cpu] or sample.get("cpu_migration_count") != 0:
+        errors.append("affinity must contain exactly the declared CPU with no migration")
+    if not isinstance(sample.get("run_id"), str) or not sample["run_id"]:
+        errors.append("run_id is required")
+    if not isinstance(sample.get("pair_id"), str) or not sample["pair_id"]:
+        errors.append("pair_id is required")
+    if sample.get("pair_order") not in ("hot_then_cold", "cold_then_hot"):
+        errors.append("pair_order is invalid")
+    if sample.get("order_index") not in (1, 2):
+        errors.append("order_index must be 1 or 2")
+    expected_order = {
+        ("hot_then_cold", "hot_repeat"): 1,
+        ("hot_then_cold", "cold_conditioned"): 2,
+        ("cold_then_hot", "cold_conditioned"): 1,
+        ("cold_then_hot", "hot_repeat"): 2,
+    }.get((sample.get("pair_order"), sample.get("cache_state")))
+    if expected_order is not None and sample.get("order_index") != expected_order:
+        errors.append("order_index does not match pair_order and cache_state")
     if sample.get("golden_pass") is not True:
         errors.append("golden_pass must be true for a qualified sample")
     cold = sample.get("cold_conditioning")
@@ -140,22 +183,51 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
         errors.append("checksum is required to defeat dead-code elimination")
     elif sample["checksum"].lower() in {"0x0", "0x00"}:
         errors.append("checksum must be non-zero")
+    if sample.get("cache_state") == "cold_conditioned" and (
+        sample.get("iterations") != 1 or sample.get("calls") != 1
+    ):
+        errors.append("cold_conditioned requires exactly one iteration and one call")
+    if _is_int(sample.get("iterations")) and _is_int(sample.get("calls")) \
+            and sample["iterations"] != sample["calls"]:
+        errors.append("iterations and calls must match")
+    sync = sample.get("sync")
+    if not isinstance(sync, Mapping) or sync.get("requested") is not True or sync.get("started") is not True \
+            or sync.get("acknowledged") is not True or sync.get("ended") is not True \
+            or sync.get("sequence") != "S/A/E":
+        errors.append("qualified sample requires exact S/ACK/E synchronization")
     pmu = sample.get("pmu")
     if not isinstance(pmu, Mapping):
         errors.append("pmu metadata is required")
     else:
+        if pmu.get("schema_version") != "e049c-arm-pmu/v2" or pmu.get("sample_valid") is not True \
+                or pmu.get("status") != "ok":
+            errors.append("PMU must be a valid E049c v2 sample")
+        group = pmu.get("event_group")
+        if group not in PMU_GROUP_EVENTS:
+            errors.append("PMU event_group must be core, cache, or memory")
         if pmu.get("values_are_event_counts") is not True:
             errors.append("PMU values must be explicitly labelled event counts")
         events = pmu.get("events")
-        if not isinstance(events, list):
-            errors.append("pmu.events must be a list")
+        if not isinstance(events, list) or not events:
+            errors.append("pmu.events must be a non-empty list")
         else:
+            names = {event.get("name") for event in events if isinstance(event, Mapping)}
+            if group in PMU_GROUP_EVENTS and (
+                names != PMU_GROUP_EVENTS[group] or len(events) != len(PMU_GROUP_EVENTS[group])
+            ):
+                errors.append("PMU events must exactly match the selected group")
+            if pmu.get("event_group_size") != len(events):
+                errors.append("PMU event_group_size must match the exact event list")
             for event in events:
                 if not isinstance(event, Mapping):
                     errors.append("pmu event must be an object")
                     continue
-                if "value" in event and not _is_int(event["value"]):
+                if event.get("support") != "supported" or event.get("sample_valid") is not True:
+                    errors.append("every PMU event must be supported and sample_valid")
+                if not _is_int(event.get("value")):
                     errors.append("PMU event value must be an integer count")
+                if event.get("running_ratio") != 1.0:
+                    errors.append("every PMU event must have running_ratio exactly 1")
                 if any(key in event for key in ("bytes", "ddr_bytes", "bandwidth_bytes")):
                     errors.append("PMU event counts must never be named bytes")
     for key in ("observed_ddr_read_bytes", "observed_ddr_write_bytes"):
@@ -164,6 +236,28 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
     if _is_int(sample.get("actual_working_set_bytes")) and _is_int(sample.get("blocks")):
         if int(sample["actual_working_set_bytes"]) != int(sample["blocks"]) * NATIVE_CARRIER_BYTES:
             errors.append("actual_working_set_bytes does not match native carrier blocks")
+    thermal = sample.get("thermal")
+    if not isinstance(thermal, Mapping) or thermal.get("readable") is not True \
+            or thermal.get("tripped") is not False:
+        errors.append("thermal gate must be readable and pass")
+    elif not isinstance(thermal.get("max_temp_c"), (int, float)) \
+            or not isinstance(thermal.get("limit_c"), (int, float)) \
+            or not math.isfinite(float(thermal["max_temp_c"])) \
+            or not math.isfinite(float(thermal["limit_c"])) \
+            or thermal["max_temp_c"] > thermal["limit_c"]:
+        errors.append("thermal maximum must not exceed its limit")
+    provenance = sample.get("provenance")
+    if not isinstance(provenance, Mapping):
+        errors.append("provenance is required")
+    else:
+        for key in ("source_sha256", "binary_sha256", "compiler_sha256"):
+            value = provenance.get(key)
+            if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+                errors.append(f"{key} must be a lowercase SHA-256")
+        if not isinstance(provenance.get("compiler_id"), str) or not provenance["compiler_id"]:
+            errors.append("compiler_id is required")
+    if sample.get("exit_code") != 0:
+        errors.append("exit_code must be zero")
     return errors
 
 
@@ -187,11 +281,20 @@ def paired_speed_delta(reference: Mapping[str, Any], candidate: Mapping[str, Any
 
     if _comparison_key(reference) != _comparison_key(candidate):
         raise ValueError("cannot subtract incomparable E055 samples")
-    ref_ns = int(reference.get("elapsed_ns", 0))
-    cand_ns = int(candidate.get("elapsed_ns", 0))
-    if ref_ns <= 0 or cand_ns <= 0:
-        raise ValueError("elapsed_ns must be positive")
+    ref_ns = ns_per_traversal(reference)
+    cand_ns = ns_per_traversal(candidate)
     return (ref_ns - cand_ns) / ref_ns
+
+
+def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> float:
+    """Compare cold and hot traversals only for one identical control mode."""
+
+    if hot.get("cache_state") != "hot_repeat" or cold.get("cache_state") != "cold_conditioned":
+        raise ValueError("expected hot_repeat followed by cold_conditioned")
+    keys = ("mode", "cpu", "actual_working_set_bytes", "blocks")
+    if any(hot.get(key) != cold.get(key) for key in keys):
+        raise ValueError("cold penalty requires like-for-like samples")
+    return ns_per_traversal(cold) / ns_per_traversal(hot)
 
 
 def _group_rows(rows: Iterable[Mapping[str, Any]]) -> dict[tuple[Any, ...], list[Mapping[str, Any]]]:
@@ -203,6 +306,8 @@ def _group_rows(rows: Iterable[Mapping[str, Any]]) -> dict[tuple[Any, ...], list
                 row.get("cache_state"),
                 row.get("cpu"),
                 row.get("actual_working_set_bytes"),
+                (row.get("pmu") or {}).get("event_group") if isinstance(row.get("pmu"), Mapping)
+                else row.get("event_group"),
             )
         ].append(row)
     return grouped
@@ -222,52 +327,70 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     for key, samples in grouped.items():
         if len(samples) < MIN_PAIRED_SAMPLES:
             continue
-        elapsed_ms = [float(item["elapsed_ns"]) / 1_000_000.0 for item in samples]
-        cells[key] = summarize_samples(elapsed_ms)
+        normalized = [ns_per_traversal(item) for item in samples]
+        cells[key] = summarize_samples(normalized)
 
     records: list[dict[str, Any]] = []
     memory_ratios: list[float] = []
-    unpack_ratios: list[float] = []
-    for (mode, state, cpu, size), summary in cells.items():
-        other_state = "cold_conditioned" if state == "hot_repeat" else "hot_repeat"
-        hot_key = (mode, "hot_repeat", cpu, size)
-        cold_key = (mode, "cold_conditioned", cpu, size)
-        if hot_key in cells and cold_key in cells and state == "hot_repeat":
-            ratio = cells[cold_key]["median"] / cells[hot_key]["median"]
-            memory_ratios.append(ratio)
-            records.append({
-                "kind": "cache_sensitivity",
-                "mode": mode,
-                "cpu": cpu,
-                "actual_working_set_bytes": size,
-                "cold_over_hot_median": ratio,
-            })
-        full_hot = ("full_dotprod", "hot_repeat", cpu, size)
-        unpack_hot = ("unpack_scale", "hot_repeat", cpu, size)
-        stream_hot = ("packed_stream", "hot_repeat", cpu, size)
-        if mode == "full_dotprod" and state == "hot_repeat":
-            if unpack_hot in cells:
-                unpack_ratios.append(summary["median"] / cells[unpack_hot]["median"])
-            if stream_hot in cells:
-                records.append({
-                    "kind": "full_over_stream_work_ratio",
-                    "cpu": cpu,
-                    "actual_working_set_bytes": size,
-                    "full_over_stream_median": summary["median"] / cells[stream_hot]["median"],
-                })
+    control_tracking_ratios: list[float] = []
+    coordinates = sorted({(key[2], key[3], key[4]) for key in cells}, key=str)
+    for cpu, size, pmu_group in coordinates:
+        keys = {(mode, state): (mode, state, cpu, size, pmu_group)
+                for mode in MODES for state in CACHE_STATES}
+        if not all(key in cells for key in keys.values()):
+            continue
+        # Each mode must have at least five actual hot/cold pair identifiers.
+        # This prevents six unrelated bags of repeats from masquerading as a
+        # paired design.
+        pair_counts = {}
+        complete = True
+        for mode in MODES:
+            hot_rows = grouped[keys[(mode, "hot_repeat")]]
+            cold_rows = grouped[keys[(mode, "cold_conditioned")]]
+            hot_pairs = {row.get("pair_id") for row in hot_rows if row.get("pair_id")}
+            cold_pairs = {row.get("pair_id") for row in cold_rows if row.get("pair_id")}
+            pair_counts[mode] = len(hot_pairs & cold_pairs)
+            if pair_counts[mode] < MIN_PAIRED_SAMPLES:
+                complete = False
+        if not complete:
+            continue
+        penalties = {
+            mode: cells[keys[(mode, "cold_conditioned")]]["median"] /
+                  cells[keys[(mode, "hot_repeat")]]["median"]
+            for mode in MODES
+        }
+        full_penalty = penalties["full_dotprod"]
+        control_penalty = statistics.median(
+            [penalties["packed_stream"], penalties["unpack_scale"]]
+        )
+        tracking = full_penalty / control_penalty
+        memory_ratios.append(full_penalty)
+        control_tracking_ratios.append(tracking)
+        records.append({
+            "kind": "like_for_like_cold_penalty_tracking",
+            "cpu": cpu,
+            "actual_working_set_bytes": size,
+            "pmu_group": pmu_group,
+            "paired_samples_per_mode": pair_counts,
+            "full_cold_over_hot": full_penalty,
+            "packed_stream_cold_over_hot": penalties["packed_stream"],
+            "unpack_scale_cold_over_hot": penalties["unpack_scale"],
+            "full_over_median_control_penalty": tracking,
+        })
 
     if not cells:
         classification = "insufficient_samples"
         confidence = 0.0
-    elif memory_ratios and unpack_ratios:
-        # A materially larger cold penalty in the full kernel than in the
-        # unpack-only control points to memory/cache sensitivity.  Otherwise
-        # the hot full/unpack ratio points to arithmetic/unpack work.  This is
-        # intentionally a hypothesis, never a measured DDR bandwidth claim.
+    elif memory_ratios and control_tracking_ratios:
         median_memory = statistics.median(memory_ratios)
-        median_unpack = statistics.median(unpack_ratios)
-        classification = "memory_cache_sensitive" if median_memory >= 1.20 else "unpack_compute_sensitive"
-        confidence = min(1.0, 0.5 + 0.1 * min(len(memory_ratios), 5) + 0.1 * min(len(unpack_ratios), 5))
+        median_tracking = statistics.median(control_tracking_ratios)
+        classification = (
+            "memory_cache_sensitive"
+            if median_memory >= 1.20 and 0.80 <= median_tracking <= 1.25
+            else "unpack_compute_sensitive"
+        )
+        confidence = min(1.0, 0.5 + 0.1 * min(len(memory_ratios), 5) +
+                         0.1 * min(len(control_tracking_ratios), 5))
     else:
         classification = "insufficient_control_cells"
         confidence = 0.0
@@ -277,7 +400,7 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "confidence": confidence,
         "cell_count": len(cells),
         "memory_cache_sensitivity_ratios": memory_ratios,
-        "hot_unpack_compute_ratios": unpack_ratios,
+        "full_to_control_cold_penalty_ratio_of_ratios": control_tracking_ratios,
         "records": records,
         "interpretation": (
             "Directional microbenchmark inference only; PMU values are event counts, "
@@ -291,9 +414,13 @@ def rows_to_csv(rows: Iterable[Mapping[str, Any]]) -> str:
 
     columns = (
         "mode", "cache_state", "cpu", "actual_working_set_bytes", "blocks",
-        "elapsed_ns", "calls", "calls_per_second", "checksum", "golden_pass",
+        "elapsed_ns", "calls", "ns_per_traversal", "traversals_per_second",
+        "checksum", "golden_pass",
     )
     output = [",".join(columns)]
     for row in rows:
-        output.append(",".join(str(row.get(column, "")) for column in columns))
+        normalized = dict(row)
+        normalized["ns_per_traversal"] = ns_per_traversal(row)
+        normalized["traversals_per_second"] = traversals_per_second(row)
+        output.append(",".join(str(normalized.get(column, "")) for column in columns))
     return "\n".join(output) + "\n"

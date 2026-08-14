@@ -1,143 +1,125 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Статус: **STAGE 1 IMPLEMENTED; target ещё не запускался**.
+Status: **REVISED STAGE 1 IMPLEMENTED; NO TARGET RUN**.
 
-E055 — ограниченный эксперимент для ответа на вопрос: где теряется время
-stock Q1_0 4×4 на A733 — в чтении carrier-данных/кэшах или в распаковке
-знаков и DOTPROD. Это **не** запуск Bonsai-27B и не новый результат
-tokens/s. До прохождения этого gate запрещён полный Bonsai `n_predict=32`.
+E055 is a bounded experiment designed to distinguish cache/data-carrier cost
+from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
+Bonsai-27B run and it provides no tokens/s result. A full Bonsai `n_predict=32`
+run remains prohibited until this gate is reviewed and passes on the board.
 
-## Гипотеза и границы
+## Scope and duplicate preflight
 
-Старые ветки уже проверили на целевой плате 4×8, простые `PRFM`, повторное
-использование Q8, whole-K pair, register-LUT, scheduler и разные варианты
-repack. E055 не меняет kernel и не предлагает ещё один prefetch. Он меняет
-только контролируемые условия наблюдения и разлагает одну и ту же работу на
-три сравнимых по layout контрольных режима.
+Prior branches already tested 4×8, simple PRFM, Q8 reuse, whole-K pairing,
+register LUTs, scheduling, and several repacks. E055 does not introduce another
+prefetch or representation. It holds the stock layout and traversal constant
+while changing cache conditioning and operation controls. The all-local/all-
+remote branch audit is preserved in
+[`data/branch-preflight.json`](data/branch-preflight.json). The original Stage 1
+review rejection is preserved in
+[`data/review-rejection-stage1-51d1c1c.md`](data/review-rejection-stage1-51d1c1c.md).
 
-Перед началом выполнен read-only preflight всех локальных и
-remote-tracking refs. Полный снимок: [`data/branch-preflight.json`](data/branch-preflight.json).
-В нём зафиксированы commit SHA 17 refs и решение по дубликату
-`E055-Q1-HOT-COLD`.
+## Exact kernel and controls
 
-## Что именно измеряется
+The harness includes the E039 fixture and calls its unmodified
+`native_simd_group`: one native carrier is a 72-byte `block_q1_0x4` plus four
+34-byte `block_q8_0` blocks, or 208 input bytes and 128 Q1 values. E039's scalar
+oracle must match the DOTPROD output bit-for-bit over 18 cases. No GGUF or model
+tensor is published.
 
-В harness включён исходный E039 fixture и без изменений используется
-`native_simd_group`: native `block_q1_0x4` (72 B) + четыре
-`block_q8_0` (4×34 B) на один carrier block, то есть 208 B и 128 Q1
-значений. Scalar oracle из E039 проверяет bit-exact результат. Веса модели
-и GGUF в репозиторий не попадают.
-
-| Режим | Что делает | Что он не доказывает |
+| Mode | Retained work | Deliberately absent |
 |---|---|---|
-| `packed_stream` | читает все Q1/Q8 carrier bytes в stock traversal и считает checksum | не измеряет DDR напрямую |
-| `unpack_scale` | выполняет LUT sign-unpack в регистрах, читает Q8 и scale, считает checksum; SDOT/FMA нет | не является заменой Q1 GEMV |
-| `full_dotprod` | точный stock E039 4×4 NEON/DOTPROD + FP32 accumulation | не является полным decode графом |
+| `packed_stream` | stock-order Q1 scale/sign and Q8 scale/data loads; four bounded vector consumers; one final reduction/sink | sign unpack, SDOT, FMA |
+| `unpack_scale` | exact two-byte LUT sign expansion, all Q8/scale loads; four bounded vector consumers; one final reduction/sink | SDOT, FMA |
+| `full_dotprod` | exact stock E039 4×4 NEON/DOTPROD and FP32 accumulation | nothing from the stock kernel |
 
-Checksum ненулевой и публикуется. Все управляющие функции `noinline,
-noclone, used`; это не даёт компилятору удалить измеряемую работу.
+The controls no longer contain the rejected per-byte serial hash or per-block
+reductions/stores. Their vector XOR/add consumers, scale-bit accumulation, loop
+control, one final reduction, and one global sink are still overhead. They are
+controls, not zero-cost substitutes. Optimized AArch64 disassembly is checked
+for retained loads/vector consumes, no control-kernel calls or SDOT, and stock
+SDOT in `native_simd_group`; see
+[`data/disassembly-review.json`](data/disassembly-review.json). Static
+disassembly proves instruction shape, not board timing.
 
-## Hot/cold protocol
+## Hot/cold protocol and normalization
 
-* `hot_repeat`: fixture и golden прогреваются до PMU marker; затем один
-  процесс повторяет тот же carrier budget `250 ms` (или заданное число
-  итераций).
-* `cold_conditioned`: перед marker harness выделяет отдельный thrash buffer,
-  записывает и затем проверяет **каждое 64-byte line**. После успешной
-  проверки PMU включает counters и выполняется ровно одна target traversal.
-  Поэтому thrash не входит в PMU окно. Поле называется `cold_conditioned`, а
-  не `cache_miss_proven`: software write/read доказывает, что все строки
-  тронуты, но не может само по себе доказать состояние каждого аппаратного
-  cache set.
+- `hot_repeat` warms the fixture, then repeatedly traverses the same carrier
+  working set for a time budget or explicit iteration count.
+- `cold_conditioned` writes and verifies every 64-byte line of a separate
+  thrash buffer before the marker, then performs **exactly one** traversal.
+  Any override to more than one iteration or a nonzero time budget is rejected.
+  This is named conditioning, not proof that every architectural cache set
+  missed.
 
-Граница измерения совместима с E049c: child пишет `S` в fd 9, ждёт `A` в
-fd 8, выполняет workload и пишет `E` в fd 9. Подготовка, golden и cold
-conditioning выполняются до `S`.
+All comparisons normalize to `ns/traversal` (or its inverse,
+`traversals/s`). For example, 250 hot calls taking 250 ms and one cold call
+taking 1 ms both equal 1 ms/traversal, so the cold/hot penalty is exactly 1.0.
+Total windows with different call counts are never divided directly.
 
-## Матрица target gate
+Cold penalties are compared like-for-like only: full cold/full hot,
+packed-stream cold/packed-stream hot, and unpack-scale cold/unpack-scale hot at
+the same CPU, carrier size, and block count. Cross-mode elapsed times are not
+blindly subtracted. A ratio-of-ratios may show whether the full-kernel penalty
+tracks its load-only control, but it remains a directional inference.
 
-Рабочий набор округляется вверх до полного 208-byte carrier block:
+## Qualification contract
+
+The standalone harness emits `e055-q1-hot-cold-harness/v1`, explicitly marked
+unqualified. A target runner must join it with E049c and produce strict
+`e055-q1-hot-cold/v2`. Qualification requires:
+
+- exact fd9 `S`, fd8 `ACK`, fd9 `E` synchronization;
+- E049c v2 `sample_valid=true`, one nonempty exact `core`, `cache`, or `memory`
+  group, supported/valid events, and `running_ratio == 1.0` for every event;
+- readable thermal telemetry with no trip and maximum temperature at or below
+  its limit;
+- affinity containing only CPU0 (A55) or CPU6 (A76), identical start/end CPU,
+  and zero migrations;
+- run ID, pair ID, pair order, within-pair order, zero exit code, exact golden,
+  and source/binary/compiler SHA-256 provenance.
+
+`sync=false`, missing/empty PMU events, multiplexed counters, a thermal failure,
+CPU migration, or missing provenance fails closed. PMU values are event counts,
+not bytes. E055 has no direct DDR-byte counter and never relabels refill or
+access events as traffic.
+
+## Planned board matrix
+
+Working sets round upward to complete 208-byte carriers:
 
 `64 KiB, 128 KiB, 256 KiB, 512 KiB, 1 MiB, 4 MiB, 12.5 MiB`.
 
-Сначала запускаются CPU 0 (A55) и CPU 6 (A76), затем — только если
-модель объясняет минимум 4% ускорения Q1, один bounded all-core
-production-shape control. Для каждой ячейки нужны минимум пять чередующихся
-пар/повторов, группы E049c `core`, `cache`, `memory`, и
-`time_running/time_enabled = 1.0`. PMU event values — **счётчики событий,
-не байты**. Нельзя умножать refill/access count на размер cache line и
-называть результат DDR bandwidth.
+CPU0 and CPU6 are measured first. Every cell needs at least five alternating
+pairs/repeats in each E049c PMU group. Only if the resulting component model
+predicts at least a 4% Q1 gain may one bounded all-core production-shape gate
+and a subsequent optimization be recommended. Failures are published as raw
+evidence rather than converted to zero-valued samples.
 
-В каждом raw sample сохраняются:
+## Reproduction of revised Stage 1
 
-* exact command, CPU, compiler/build SHA и source hashes;
-* requested/actual bytes, block count, logical Q1/Q8 bytes и dot products;
-* elapsed time, calls/s, first-call time, non-zero checksum;
-* golden result и cold-conditioning proof;
-* grouped E049c PMU JSON без переименования counters в bytes.
-
-Провальные, отклонённые и blocked samples также публикуются и входят в
-manifest; они не превращаются в нули и не удаляются.
-
-## Stage 1 reproducibility
-
-Host contract и adversarial static gates:
+Run the adversarial host, cross/QEMU, and disassembly gates:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
-  tests.test_e055_q1_hotcold tests.test_e055_harness_contract -v
+  tests.test_e055_q1_hotcold tests.test_e055_harness_contract \
+  tests.test_e055_aarch64_gate -v
 ```
 
-Cross-build без SDK и модели:
+The cross command used by the test is:
 
 ```text
 aarch64-linux-gnu-g++ -std=c++17 -O3 -Wall -Wextra -Werror \
   -march=armv8.2-a+dotprod tooling/e055_q1_hotcold.cpp \
   experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S \
-  -o /tmp/e055_q1_hotcold-aarch64
+  -o /tmp/e055-q1-hotcold-aarch64
 ```
 
-QEMU smoke проверяет ровно 18 scalar-vs-stock golden cases:
+QEMU must report `golden_pass=true` and `golden_cases=18`. QEMU results are
+functional evidence only and are not used as A733 performance evidence. The
+first uninitialized-LUT failure remains at
+[`data/failure-qemu-uninitialized-lut.txt`](data/failure-qemu-uninitialized-lut.txt):
+it was a harness initialization bug, was rejected, and must not be interpreted
+as a hardware or mathematical result.
 
-```text
-qemu-aarch64 -L /usr/aarch64-linux-gnu \
-  /tmp/e055_q1_hotcold-aarch64 --self-test
-```
-
-Ожидается `golden_pass=true`, `golden_cases=18`. Это не target performance
-evidence; QEMU не используется для оценки A733 cache/PMU.
-
-### Сохранённый провал и исправление
-
-Первый QEMU smoke был **REJECTED**, а не удалён: `K=128, pattern=1,
-row=1` дал `scalar=0x1.48p+7`, `simd=0x0p+0`. Причина была в harness —
-новый `main` не скопировал E039 `make_table()` в глобальную
-`g_table_q1_signs`, поэтому register unpack использовал нулевую LUT. Это не
-было аппаратным или математическим результатом. Команда, stderr и объяснение
-сохранены в [`data/failure-qemu-uninitialized-lut.txt`](data/failure-qemu-uninitialized-lut.txt).
-После исправления и повторного cross-build self-test прошёл все 18 cases.
-
-## Анализ после target runs
-
-`tooling/e055_q1_hotcold.py` проверяет sample contract, вычисляет только
-сравнимые paired deltas и строит осторожную directional inference:
-
-* cold/hot ratio — cache sensitivity signal;
-* full/unpack и full/stream — decomposition ratios, не speedup между
-  несопоставимыми режимами;
-* `memory_cache_sensitive` допускается только если во всех участвующих
-  control cells есть минимум пять samples и cold penalty materially выше;
-* иначе verdict — `unpack_compute_sensitive` или
-  `insufficient_control_cells`.
-
-Текущая Stage 1 намеренно не содержит target raw и не делает bottleneck
-вывод. После target gate добавляются `raw/*.json`, PMU joins, CSV/PNG с
-несколькими размерами и режимами и `data/summary.json`.
-
-## Неизменённые ограничения
-
-E055 не утверждает прямой DDR traffic, не изменяет OPP/DDR/thermal policy,
-не включает NPU и не запускает модель. Если результат не предсказывает хотя
-бы 4% ускорение Q1, следующий оптимизационный код не создаётся: сначала
-публикуется отрицательный результат и возвращаемся к полной per-token
-трассе E048/E049b.
+No board workload, model run, OPP/DDR change, NPU run, or full-model bottleneck
+claim is part of this revised Stage 1.

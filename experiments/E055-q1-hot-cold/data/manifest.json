@@ -1,22 +1,22 @@
 {
   "schema": "e055-q1-hot-cold-manifest/v1",
   "experiment": "E055-Q1-HOT-COLD",
-  "status": "stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T04:55:15.065684+00:00",
-  "base_commit_at_generation": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+  "status": "revised_stage1_source_only_no_target_workload",
+  "generated_at_utc": "2026-08-14T05:21:30.321452+00:00",
+  "base_commit_at_generation": "51d1c1cfd3d2e963344e79dc11719c278b234569",
   "model_payload_included": false,
   "target_workload_executed": false,
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 8527,
-      "sha256": "e442895d1b5b85555705269a560861fd4463e6da8e532526d68deb19f9d98a42",
+      "size_bytes": 6097,
+      "sha256": "c9cb4bc696ec479ee3d6dab65b7462ddd03c60b54fac402648b83071e9a503f7",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 2158415,
-      "sha256": "fcce42751be5554657c1e8d0b67ab2b11e8436fb006a51b9b1bf99062c9a2969",
+      "size_bytes": 2406043,
+      "sha256": "623d4442d645c929bf872376ea245c66b9a961ce0ba7783aecceeea529ab0846",
       "role": "e055-stage1"
     },
     {
@@ -26,39 +26,63 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+      "size_bytes": 1030,
+      "sha256": "a404557237c806f2f277cac4a56c40a454f38ec764f0eb662d7daa7315ff2ecf",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+      "size_bytes": 1016,
+      "sha256": "8e79d4d51db50997631abc32d215c306e8f0c3793a7b7eacefc2840162dc1da0",
+      "role": "e055-stage1"
+    },
+    {
       "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-      "size_bytes": 2574,
-      "sha256": "f1b704555a482eb69379140e5128699878c3697e60483ee3f014cdfabe8813a6",
+      "size_bytes": 4286,
+      "sha256": "ad184a7c5b7f97ea2032a17e6415714f720ba1cfaf8e4f9681f2e0d0e8e9b50c",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_q1_hotcold.cpp",
-      "size_bytes": 23043,
-      "sha256": "1646a0121ea4293aa9606073914b7bb57b520acfdcbd9835d668d1ae1696f0c6",
+      "size_bytes": 24707,
+      "sha256": "06d71ef09c3918126153613ff857cc88ee80d8ef4343f5ab0f0e22ae7ded6e7a",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 12471,
-      "sha256": "16fcc1909333b3d09e018deb37184dd69c5c917294e2b28e99dc99ec0d622dd7",
+      "size_bytes": 19206,
+      "sha256": "fc8b27d16afe6c36540152974d98b2261c705ef56270f8b3ae1948cf58f98515",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/check_e055_disassembly.py",
+      "size_bytes": 3216,
+      "sha256": "5c153439cfdeb8cc19d0b6373348dc6cec371fd2ec6b70d422d9a56ab7bbbc68",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 2576,
-      "sha256": "7c8a9d0f3d7f6f2db42b71e11ecd4113d9ff9539b3299042f94a5b7814ae15e1",
+      "size_bytes": 2833,
+      "sha256": "93eecc85d6e4e23eb15667b8a267b700028f5bb87ddae869b75c5c8874a15cf3",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_harness_contract.py",
-      "size_bytes": 3248,
-      "sha256": "eb7424da193ad0c8d6cf03104db1b0d473d1c97548181e857679bf2f0dd226c5",
+      "size_bytes": 4167,
+      "sha256": "496043e2754fb18db334676a5dac3d47d48dc5b75b63a340e8bec2173707d6af",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_q1_hotcold.py",
-      "size_bytes": 4833,
-      "sha256": "291588e5e7c0d949830b7fd75dfacd642e1ef226750600cd71e989d46374b714",
+      "size_bytes": 7262,
+      "sha256": "29e3aebc8f2e2e6bba520e6df84f3aba3aa6c977f6f28fce194dd15cccb6bff3",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_aarch64_gate.py",
+      "size_bytes": 3136,
+      "sha256": "81ac90783bbe53423078f489362e9493bf8946dae1ba98f784ae0103ec3b9a81",
       "role": "e055-stage1"
     },
     {

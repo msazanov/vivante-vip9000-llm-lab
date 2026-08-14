@@ -1,0 +1,23 @@
+{
+  "schema": "e055-disassembly-review/v1",
+  "status": "PASS",
+  "build": "aarch64-linux-gnu-g++ -std=c++17 -O3 -Wall -Wextra -Werror -march=armv8.2-a+dotprod",
+  "inspection": "aarch64-linux-gnu-objdump -d -C",
+  "provenance": {
+    "source_sha256": "06d71ef09c3918126153613ff857cc88ee80d8ef4343f5ab0f0e22ae7ded6e7a",
+    "binary_sha256": "a6cda0ee49b5148dfc68fff0b6421d36d734497d20e8ba6e31ff3614725d749e",
+    "compiler_sha256": "02c0ad2419ba416252e76336155e26b6d8009224909be2669ee0fa8fe31dd4b6",
+    "compiler_id": "aarch64-linux-gnu-g++ (GCC) 16.1.0",
+    "binary_publication": "temporary build inspected locally; binary not committed"
+  },
+  "checks": {
+    "controls_retain_loads": true,
+    "controls_have_bounded_vector_consume": true,
+    "controls_have_no_sdot": true,
+    "controls_have_no_calls": true,
+    "stock_full_kernel_has_sdot": true
+  },
+  "failures": [],
+  "limitation": "Static inspection proves instruction shape, not target timing or cache behavior.",
+  "target_workload_executed": false
+}
