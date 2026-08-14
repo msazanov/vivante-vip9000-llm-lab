@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Host-side contract tests for the A733 PMU launcher.
-
-The host is not expected to expose the A733 raw events.  These tests therefore
-check the safe envelope and the explicit ``unavailable`` result rather than
-requiring a particular PMU implementation.
-"""
+"""Host-side safety and protocol tests for the A733 PMU v2 launcher."""
 
 from __future__ import annotations
 
+import errno
 import json
+import os
 import pathlib
 import subprocess
 import tempfile
+import time
 import unittest
 
 
@@ -22,9 +20,10 @@ TOOLING = ROOT / "tooling"
 class A733PmuExecContractTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.tmp = pathlib.Path(tempfile.mkdtemp(prefix="e049c-pmu-test-"))
+        cls.tmp = pathlib.Path(tempfile.mkdtemp(prefix="e049c-pmu-v2-test-"))
         cls.launcher = cls.tmp / "a733-pmu-exec"
         cls.control = cls.tmp / "a733-pmu-control"
+        cls.result_index = 0
         common = ["cc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror"]
         subprocess.run(
             [*common, str(TOOLING / "a733_pmu_exec.c"), "-o", str(cls.launcher)],
@@ -37,66 +36,74 @@ class A733PmuExecContractTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        for path in cls.tmp.glob("*"):
-            path.unlink()
+        for path in cls.tmp.iterdir():
+            if path.is_dir():
+                for child in path.iterdir():
+                    child.unlink()
+                path.rmdir()
+            else:
+                path.unlink()
         cls.tmp.rmdir()
 
-    def run_launcher(self, *args: str) -> tuple[subprocess.CompletedProcess[str], dict]:
-        output = self.tmp / "result.json"
-        command = [
-            str(self.launcher),
-            "--no-drop",
-            "--no-thermal-guard",
-            "--output",
-            str(output),
-            *args,
-        ]
+    def next_output(self) -> pathlib.Path:
+        type(self).result_index += 1
+        return self.tmp / f"result-{self.result_index}.json"
+
+    def run_launcher(
+        self, *args: str, thermal_guard: bool = False
+    ) -> tuple[subprocess.CompletedProcess[str], dict]:
+        output = self.next_output()
+        command = [str(self.launcher), "--no-drop", "--output", str(output)]
+        if not thermal_guard:
+            command.append("--no-thermal-guard")
+        command.extend(args)
         proc = subprocess.run(command, text=True, capture_output=True, timeout=15)
         self.assertTrue(output.exists(), proc.stderr)
         return proc, json.loads(output.read_text(encoding="utf-8"))
 
-    def assert_common_shape(self, result: dict) -> None:
-        self.assertEqual(result["schema_version"], "e049c-arm-pmu/v1")
-        self.assertIn(result["status"], {"ok", "partial", "counter_unavailable", "failed"})
+    def assert_common_shape(self, result: dict, group: str) -> None:
+        self.assertEqual(result["schema_version"], "e049c-arm-pmu/v2")
+        self.assertEqual(result["event_group"], group)
+        self.assertIn(result["status"], {"ok", "counter_unavailable", "failed"})
+        self.assertIsInstance(result["sample_valid"], bool)
         self.assertIsInstance(result["events"], list)
-        names = {item["name"] for item in result["events"]}
-        self.assertEqual(
-            names,
-            {
-                "cpu_cycles",
-                "instructions",
-                "l1d_cache_refill",
-                "l2d_cache_refill",
-                "l3d_cache_refill",
-                "mem_access",
-                "bus_access",
-                "stall_backend",
-            },
-        )
+        self.assertLessEqual(len(result["events"]), 4)
+        expected = {
+            "core": {"cpu_cycles", "instructions", "stall_backend"},
+            "cache": {"l1d_cache_refill", "l2d_cache_refill", "l3d_cache_refill"},
+            "memory": {"mem_access", "bus_access"},
+        }[group]
+        self.assertEqual({item["name"] for item in result["events"]}, expected)
         for event in result["events"]:
-            self.assertIn(
-                event["support"],
-                {"supported", "unavailable", "open_error", "read_error"},
-            )
+            self.assertIn(event["support"], {"supported", "unavailable", "read_error"})
+            self.assertIsInstance(event["sample_valid"], bool)
             if event["support"] != "supported":
-                self.assertIn("errno", event)
+                self.assertIsInstance(event["errno"], int)
                 self.assertIsInstance(event["error"], str)
 
-    def test_start_immediately_preserves_child_status_and_raw_schema(self) -> None:
-        proc, result = self.run_launcher(
-            "--start-immediately",
-            "--",
-            "/bin/sh",
-            "-c",
-            "exit 0",
-        )
-        self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assert_common_shape(result)
-        self.assertEqual(result["exit"]["code"], 0)
-        self.assertGreaterEqual(result["measured_elapsed_ns"], 0)
+    def test_explicit_groups_fit_declared_hardware_capacity(self) -> None:
+        for group in ("core", "cache", "memory"):
+            proc, result = self.run_launcher(
+                "--event-group",
+                group,
+                "--start-on-ready",
+                "--sync-timeout-ms",
+                "5000",
+                "--",
+                str(self.control),
+                "--mode",
+                "cpu",
+                "--iterations",
+                "10000",
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assert_common_shape(result, group)
+            self.assertEqual(result["event_group_capacity"], 4)
 
-    def test_ready_protocol_counts_only_between_markers(self) -> None:
+    def test_ready_protocol_requires_parent_ack_before_work(self) -> None:
         proc, result = self.run_launcher(
+            "--event-group",
+            "core",
             "--start-on-ready",
             "--sync-timeout-ms",
             "5000",
@@ -108,14 +115,24 @@ class A733PmuExecContractTest(unittest.TestCase):
             "1000000",
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assert_common_shape(result)
-        self.assertTrue(result["sync"]["started"])
-        self.assertTrue(result["sync"]["ended"])
+        self.assert_common_shape(result, "core")
+        self.assertEqual(
+            result["sync"],
+            {
+                "mode": "start_ack_end",
+                "started": True,
+                "acknowledged": True,
+                "ended": True,
+            },
+        )
         self.assertGreater(result["measured_elapsed_ns"], 0)
-        self.assertEqual(result["exit"]["code"], 0)
+        if result["status"] != "ok":
+            self.assertFalse(result["sample_valid"])
 
-    def test_memory_control_is_deterministic_and_records_control_metadata(self) -> None:
+    def test_memory_control_is_deterministic_and_records_group(self) -> None:
         proc, result = self.run_launcher(
+            "--event-group",
+            "memory",
             "--start-on-ready",
             "--",
             str(self.control),
@@ -124,12 +141,148 @@ class A733PmuExecContractTest(unittest.TestCase):
             "--bytes",
             "1048576",
             "--iterations",
-            "4",
+            "2",
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assert_common_shape(result)
+        self.assert_common_shape(result, "memory")
         self.assertEqual(result["exit"]["code"], 0)
         self.assertEqual(result["command"][1], "--mode")
+
+    def test_fixed_fd9_shell_shim_has_no_eval_or_proc_fd(self) -> None:
+        shim = (TOOLING / "a733_pmu_sync_exec.sh").read_text(encoding="utf-8")
+        self.assertNotIn("eval", shim)
+        self.assertNotIn("/proc/self/fd", shim)
+        self.assertIn(">&9", shim)
+        self.assertIn("<&8", shim)
+        proc, result = self.run_launcher(
+            "--event-group",
+            "core",
+            "--start-on-ready",
+            "--",
+            str(TOOLING / "a733_pmu_sync_exec.sh"),
+            "/bin/true",
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(result["sync"]["acknowledged"])
+        self.assertTrue(result["sync"]["ended"])
+
+    def test_fixed_sync_fds_survive_pipe_source_target_collision(self) -> None:
+        """Two inherited fds make marker=8 and ACK=9 before remapping."""
+
+        output = self.next_output()
+        inherited = [os.open(os.devnull, os.O_RDONLY) for _ in range(2)]
+        try:
+            proc = subprocess.run(
+                [
+                    str(self.launcher),
+                    "--no-drop",
+                    "--no-thermal-guard",
+                    "--output",
+                    str(output),
+                    "--event-group",
+                    "core",
+                    "--start-on-ready",
+                    "--sync-timeout-ms",
+                    "1000",
+                    "--",
+                    str(self.control),
+                    "--mode",
+                    "cpu",
+                    "--iterations",
+                    "10000",
+                ],
+                pass_fds=tuple(inherited),
+                text=True,
+                capture_output=True,
+                timeout=15,
+            )
+        finally:
+            for descriptor in inherited:
+                os.close(descriptor)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(
+            result["sync"],
+            {
+                "mode": "start_ack_end",
+                "started": True,
+                "acknowledged": True,
+                "ended": True,
+            },
+        )
+
+    def test_thermal_unreadable_fails_closed(self) -> None:
+        proc, result = self.run_launcher(
+            "--thermal-root",
+            str(self.tmp / "missing-thermal-root"),
+            "--event-group",
+            "core",
+            "--start-immediately",
+            "--",
+            "/bin/sleep",
+            "5",
+            thermal_guard=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["failure_reason"], "thermal_unreadable")
+        self.assertFalse(result["thermal"]["readable"])
+        self.assertFalse(result["sample_valid"])
+
+    def test_output_symlink_is_rejected_without_clobber(self) -> None:
+        sentinel = self.tmp / "sentinel"
+        sentinel.write_text("keep", encoding="utf-8")
+        output = self.tmp / "unsafe-result.json"
+        output.symlink_to(sentinel)
+        proc = subprocess.run(
+            [
+                str(self.launcher),
+                "--no-drop",
+                "--no-thermal-guard",
+                "--output",
+                str(output),
+                "--event-group",
+                "core",
+                "--start-immediately",
+                "--",
+                "/bin/true",
+            ],
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+        self.assertTrue(output.is_symlink())
+
+    def test_marker_timeout_kills_and_reaps_process_group(self) -> None:
+        pid_file = self.tmp / "grandchild.pid"
+        proc, result = self.run_launcher(
+            "--event-group",
+            "core",
+            "--start-on-ready",
+            "--sync-timeout-ms",
+            "300",
+            "--",
+            "/bin/sh",
+            "-c",
+            f"sleep 30 & printf '%s' $! > '{pid_file}'; wait",
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["failure_reason"], "start_marker_timeout")
+        self.assertFalse(result["sample_valid"])
+        self.assertTrue(pid_file.exists(), proc.stderr)
+        grandchild = int(pid_file.read_text(encoding="ascii"))
+        for _ in range(50):
+            try:
+                os.kill(grandchild, 0)
+            except OSError as exc:
+                if exc.errno == errno.ESRCH:
+                    break
+            time.sleep(0.01)
+        else:
+            self.fail(f"grandchild {grandchild} survived/remaind unreaped")
 
 
 if __name__ == "__main__":

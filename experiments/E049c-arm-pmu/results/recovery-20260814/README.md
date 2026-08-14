@@ -1,5 +1,10 @@
 # E049c recovery controls — 2026-08-14
 
+Статус: **legacy v1 / UNQUALIFIED**. Файлы сохранены без изменения. Один run
+открывал восемь multiplexed событий, schema v1 не имела `sample_valid`, а у
+memory-small `stall_backend.time_running=0`. Для итогового gate используйте
+`../v2-20260814/`. PMU counts ниже не являются DDR bytes.
+
 Это короткий bounded-gate после восстановления оборванного агента. Bonsai не
 запускался. Каждый запуск выполнялся через root-assisted launcher с drop
 ребёнка до `orangepi:orangepi` и thermal guard `85 °C`.

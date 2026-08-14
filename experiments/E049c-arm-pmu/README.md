@@ -1,13 +1,36 @@
 # E049c — ARM PMU: CPU/cache/memory control
 
-Статус: **bounded control gate PASS на Orange Pi; три Bonsai-wrapper попытки
-классифицированы как невалидные; Bonsai benchmark не засчитан**.
+Статус: **PMU envelope v2 PASS на Orange Pi; старые v1 controls не
+квалифицированы новым sample gate; валидного Bonsai benchmark нет**.
 
 Цель E049c — получить аппаратные счётчики уровня CPU для следующего
 разделения узкого места Bonsai: физические cache/memory-access события против
 распаковки и арифметики Q1. Это не прямой измеритель DDR-байтов. Значения PMU
 публикуются только как количество событий, с `time_enabled`/`time_running` для
 контроля multiplexing.
+
+## Актуальный результат v2
+
+Главный итог находится в
+[`results/v2-20260814/`](results/v2-20260814/). В v2 исправлены две причины,
+из-за которых старые значения нельзя было использовать для строгого вывода:
+
+1. восемь событий больше не multiplex-ятся одним запуском — используются
+   отдельные группы `core` (3), `cache` (3) и `memory` (2), каждая меньше
+   лимита четырёх counters;
+2. граница стала двусторонней: child `S` → parent group `RESET+ENABLE` → ACK →
+   workload → child `E` → parent group `DISABLE`.
+
+Каждый run содержит `sample_valid`; минимальный
+`time_running/time_enabled=0.95`. Все девять финальных controls имеют ratio
+`1.0`, `sample_valid=true`, полный `S/ACK/E` и поддержанные события. Это
+**квалификация измерителя**, а не Bonsai-профиль и не измерение DDR bytes.
+
+Первая v2-серия сохранена отдельно как
+[`results/v2-pre-fd-collision-fix-20260814/`](results/v2-pre-fd-collision-fix-20260814/)
+со статусом `REJECTED`: TDD обнаружил конфликт, когда исходные pipe уже
+занимали fd 8/9. После исправления отдельный target identity/collision probe
+прошёл с workload под `orangepi:orangepi`.
 
 ## Почему это новый эксперимент
 
@@ -33,10 +56,15 @@ launcher, который:
    включает его worker threads;
 3. по умолчанию оставляет parent privileged, а child до `exec` переводит в
    `orangepi:orangepi`;
-4. в exact режиме ждёт от workload маркеры `S`/`E` через
-   `A733_PMU_SYNC_FD`, включая и выключая counters только вокруг работы;
-5. проверяет thermal guard (85 °C), сохраняет exit status, errno и каждое
-   unavailable-событие в JSON.
+4. в exact режиме использует фиксированные fd 9 (marker) и 8 (ACK), без
+   `eval` и `/proc/self/fd`; обе pipe сначала копируются выше фиксированного
+   диапазона, чтобы remap 8/9 не уничтожал источник;
+5. атомарно управляет одним `perf` group через `PERF_IOC_FLAG_GROUP` и
+   отклоняет sample ниже порога `time_running/time_enabled`;
+6. проверяет thermal guard (85 °C), сохраняет exit status, errno и каждое
+   unavailable-событие в JSON; unreadable temperature означает fail closed;
+7. создаёт child session/process group; timeout/thermal failure останавливает
+   и собирает всё дерево, а output создаётся через `O_EXCL|O_NOFOLLOW`.
 
 События и raw-коды из Linux `arm_pmuv3.h`:
 
@@ -61,7 +89,7 @@ launcher, который:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_a733_pmu_exec -v
-Ran 3 tests ... OK
+Ran 8 tests ... OK
 ```
 
 На development host все ARM raw opens вернули `EPERM`; это ожидаемая и
@@ -91,11 +119,13 @@ root-assisted через `sudo`, при этом сам workload выполня�
 `scaled_value = value × time_enabled / time_running`; это коррекция
 multiplexing, а не дополнительное физическое измерение.
 
-### Recovery control: точное сравнение CPU и memory pressure
+### Legacy v1 recovery control: неквалифицированное сравнение
 
-Свежая bounded-серия использовала одинаковый launcher и thermal guard, но
-разные детерминированные workload-ы. Все 8 событий имеют
-`support=supported`, `exit.code=0`, маркеры `S/E` присутствуют.
+Эта старая bounded-серия использовала один multiplexed launcher для восьми
+событий. Значения ниже сохранены без изменения, но **не проходят v2 gate**:
+у memory-small для `stall_backend` был `time_running=0`, а schema v1 не имела
+`sample_valid`. Они полезны как историческое evidence, не как квалифицированный
+sample.
 
 | Control | Работа | Время, ms | cycles | instructions | L1D | L2D | L3D | MEM_ACCESS | BUS_ACCESS | STALL_BACKEND |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -140,9 +170,10 @@ L1/L2/L3 refill и BUS_ACCESS. Следовательно, на target счёт�
 временно вытеснен multiplexing-ом (`time_running=0`); это опубликовано как
 `scaled_value=null`, а не как ноль.
 
-Все старые target control JSON и три recovery JSON имеют `status=ok`,
-`exit.code=0`, S/E markers и `thermal.tripped=false`. Это результат
-**калибровки instrumentation**, а не результат инференса модели.
+Все старые target control JSON и три recovery JSON записаны schema v1 как
+`status=ok`, но этот label не удовлетворяет v2-условию валидности. Это
+историческая калибровка instrumentation, а не результат инференса модели и не
+DDR-byte measurement.
 
 ## Interrupted agent и провальные Bonsai-wrapper попытки
 
@@ -160,9 +191,10 @@ host-TDD и ручной safety review; настройки платы, OPP, DDR 
 
 Итоговая классификация всей тройки: **Bonsai PMU measurement failed / не
 засчитано**, а не «получена скорость» и не «успешный инференс». Попытка
-compat-002 содержит лог llama.cpp, но граница PMU не была установлена, поэтому
-её время и counters нельзя использовать для сравнения. Wrapper намеренно не
-исправляется в этом commit.
+compat-002 содержит ранний лог llama.cpp, но граница PMU не была установлена,
+поэтому её время и counters нельзя использовать для сравнения. В v2 wrapper
+исправлен и проверен только на `/usr/bin/id` и deterministic controls; Bonsai
+повторно не запускался.
 
 ## Что ещё не утверждается
 
@@ -185,9 +217,11 @@ cc -std=c11 -O2 -Wall -Wextra -Werror tooling/a733_pmu_control.c -o /tmp/a733-pm
 
 printf '<sudo-password>\n' | sudo -S -p '' /tmp/a733-pmu-exec \
   --output /tmp/e049c-control.json \
-  --start-on-ready --sync-timeout-ms 5000 \
-  -- /tmp/a733-pmu-control --mode cpu --iterations 10000000
+  --event-group core --min-running-ratio 0.95 \
+  --start-on-ready --sync-timeout-ms 5000 --max-temp-c 85 \
+  -- /tmp/a733-pmu-control --mode cpu --iterations 1000000
 ```
 
-В JSON обязательно проверять `status`, все `events[].support`,
-`time_running_ns`, `thermal.tripped`, `exit.code` и `failure_reason`.
+В JSON обязательно проверять `status=ok`, `sample_valid=true`, все
+`events[].support=supported`, ratio `time_running_ns/time_enabled_ns`, полный
+`S/ACK/E`, `thermal.tripped=false`, `exit.code=0` и `failure_reason=null`.

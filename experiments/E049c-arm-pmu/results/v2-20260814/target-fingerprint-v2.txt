@@ -1,0 +1,18 @@
+captured_at_utc=2026-08-14T02:51:13Z
+Linux orangepizero3w 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr  7 04:26:52 UTC 2026 aarch64 GNU/Linux
+uid=1000(orangepi) gid=1000(orangepi) groups=1000(orangepi),5(tty),6(disk),20(dialout),27(sudo),29(audio),44(video),46(plugdev),60(games),100(users),102(input),107(netdev),996(docker),999(systemd-journal)
+perf_event_paranoid=2
+cc (Debian 12.2.0-14+deb12u1) 12.2.0
+e865d9c05200ea7688241057e801adfc9cbd60ade5af37ac5f72882d8c9a4a46  a733_pmu_exec.c
+3923b982de69116a94ff20edb5665b4ed426616a85fbe23538b78950748804b2  a733_pmu_control.c
+71fd0c36b9f1ac9aa9bca8c967ad8812d63e474edd8f7e43eeeb817eeb4d3efa  a733_pmu_sync_exec.sh
+693f534e2f0182b0795281fb01435e750b866be7ac45b74f42ebee9759c86690  a733-pmu-exec
+0c0556897ef8ef068b8af18a667fdfc78221879b174b4036ea196ca019b70072  a733-pmu-control
+/sys/class/thermal/thermal_zone0/temp=37200
+/sys/class/thermal/thermal_zone1/temp=35278
+/sys/class/thermal/thermal_zone2/temp=33666
+/sys/class/thermal/thermal_zone3/temp=38812
+/sys/class/thermal/thermal_zone4/temp=35898
+/sys/class/thermal/thermal_zone5/temp=37200
+/sys/class/thermal/thermal_zone6/temp=38812
+/sys/class/thermal/thermal_zone7/temp=31762

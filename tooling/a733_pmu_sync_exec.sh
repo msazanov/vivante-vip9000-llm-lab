@@ -1,17 +1,25 @@
 #!/bin/sh
-# Mark the exact measured interval for a733_pmu_exec.c, then preserve the
-# workload exit status. The launcher supplies A733_PMU_SYNC_FD to the child.
+# Fixed-descriptor S -> ACK -> workload -> E adapter for a733_pmu_exec.c.
 set -u
 
-if [ -z "${A733_PMU_SYNC_FD:-}" ]; then
-    echo "A733_PMU_SYNC_FD is required" >&2
+if ! printf 'S' >&9; then
+    echo "could not write start marker on fd 9" >&2
     exit 125
 fi
 
-# The descriptor is inherited across the uid drop.  `eval` is intentional:
-# the launcher supplies only a decimal fd and dash cannot parse >&"$var".
-eval "printf 'S' >&$A733_PMU_SYNC_FD"
+if ! IFS= read -r ack <&8; then
+    echo "could not read acknowledgement on fd 8" >&2
+    exit 125
+fi
+if [ "$ack" != "A" ]; then
+    echo "unexpected acknowledgement on fd 8" >&2
+    exit 125
+fi
+
 "$@"
 status=$?
-eval "printf 'E' >&$A733_PMU_SYNC_FD"
+if ! printf 'E' >&9; then
+    echo "could not write end marker on fd 9" >&2
+    exit 125
+fi
 exit "$status"

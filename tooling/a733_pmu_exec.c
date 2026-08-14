@@ -1,19 +1,12 @@
 /*
- * A733/VIP9000 lab PMU envelope.
+ * A733 process-scoped ARM PMU launcher, evidence schema v2.
  *
- * The launcher is deliberately small and uses the Linux perf_event_open(2)
- * ABI directly.  It does not translate any event into DDR bytes: raw PMU
- * values are event counts and their availability/semantics are published in
- * the JSON result.  The process that owns the counters stays privileged while
- * the child is dropped to the requested account before exec(3).
+ * Exact mode is a bidirectional protocol:
+ *   child writes S on fd 9 -> parent RESET+ENABLEs one PMU group atomically
+ *   -> parent writes A on fd 8 -> workload runs -> child writes E on fd 9.
  *
- * Build:
- *   cc -std=c11 -O2 -Wall -Wextra -Werror tooling/a733_pmu_exec.c -o a733-pmu-exec
- *
- * In exact-boundary mode the child command must write one byte 'S' to the file
- * descriptor named by A733_PMU_SYNC_FD immediately before the measured work,
- * and one byte 'E' immediately after it.  The companion control program in
- * this directory implements that protocol.
+ * Raw PMU values are event counts, never DDR bytes.  A run is usable only
+ * when every event in its explicit group has a sufficient running ratio.
  */
 
 #define _GNU_SOURCE
@@ -34,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/prctl.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -44,30 +39,36 @@
 #define PERF_TYPE_RAW 4
 #endif
 
-#ifndef PERF_FORMAT_TOTAL_TIME_ENABLED
-#define PERF_FORMAT_TOTAL_TIME_ENABLED (1ULL << 0)
+#ifndef PERF_IOC_FLAG_GROUP
+#define PERF_IOC_FLAG_GROUP 1UL
 #endif
 
-#ifndef PERF_FORMAT_TOTAL_TIME_RUNNING
-#define PERF_FORMAT_TOTAL_TIME_RUNNING (1ULL << 1)
+#ifndef PERF_FLAG_FD_CLOEXEC
+#define PERF_FLAG_FD_CLOEXEC (1UL << 3)
 #endif
 
-/* Keep this in the shell's portable redirection range; dash rejects >&198. */
-#define SYNC_FD 9
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW 0
+#endif
+
+#define MARKER_FD 9
+#define ACK_FD 8
 #define DEFAULT_USER "orangepi"
 #define DEFAULT_GROUP "orangepi"
 #define DEFAULT_TIMEOUT_MS 30000
 #define DEFAULT_MAX_TEMP_MC 85000
-#define MAX_EVENTS 8
+#define DEFAULT_MIN_RUNNING_RATIO 0.95
+#define EVENT_GROUP_CAPACITY 4
+#define MAX_GROUP_EVENTS 3
+#define EVENT_DEFINITION_COUNT 8
 
-/* Linux arm_pmuv3.h architectural/common event encodings. */
 struct event_definition {
     const char *name;
     uint64_t config;
     const char *meaning;
 };
 
-static const struct event_definition EVENT_DEFINITIONS[MAX_EVENTS] = {
+static const struct event_definition EVENT_DEFINITIONS[EVENT_DEFINITION_COUNT] = {
     {"cpu_cycles", 0x11, "ARMv8 PMUv3 CPU_CYCLES event count"},
     {"instructions", 0x08, "ARMv8 PMUv3 INST_RETIRED event count"},
     {"l1d_cache_refill", 0x03, "ARMv8 PMUv3 L1D_CACHE_REFILL event count"},
@@ -78,44 +79,77 @@ static const struct event_definition EVENT_DEFINITIONS[MAX_EVENTS] = {
     {"stall_backend", 0x24, "ARMv8 PMUv3 STALL_BACKEND event count"},
 };
 
+struct event_group_definition {
+    const char *name;
+    size_t event_count;
+    size_t event_indices[MAX_GROUP_EVENTS];
+};
+
+static const struct event_group_definition EVENT_GROUPS[] = {
+    {"core", 3, {0, 1, 7}},
+    {"cache", 3, {2, 3, 4}},
+    {"memory", 2, {5, 6, 0}},
+};
+
+#define EVENT_GROUP_COUNT (sizeof(EVENT_GROUPS) / sizeof(EVENT_GROUPS[0]))
+
 struct event_state {
+    const struct event_definition *definition;
     int fd;
+    int opened;
     int open_errno;
     int read_errno;
     uint64_t value;
     uint64_t time_enabled;
     uint64_t time_running;
+    double running_ratio;
+    int sample_valid;
 };
 
 struct options {
     const char *output_path;
     const char *user_name;
     const char *group_name;
+    const char *thermal_root;
+    const struct event_group_definition *event_group;
     int no_drop;
     int start_on_ready;
     int sync_timeout_ms;
     int max_temp_mc;
     int thermal_guard;
+    double min_running_ratio;
     int command_index;
 };
 
 struct run_state {
     pid_t child_pid;
-    int setup_pipe[2];
-    int sync_pipe[2];
+    pid_t child_pgid;
+    int marker_read_fd;
+    int ack_write_fd;
     int sync_enabled;
     int started;
+    int acknowledged;
     int ended;
+    int sync_failed;
+    int thermal_checked;
+    int thermal_readable;
+    int thermal_unreadable;
     int thermal_tripped;
     int timed_out;
     int internal_failure;
+    int read_failed;
+    int group_open_failed;
+    int group_enabled;
     int child_status_valid;
     int child_status;
     int measured_elapsed_valid;
     uint64_t measured_elapsed_ns;
     int64_t max_temp_mc;
-    struct event_state events[MAX_EVENTS];
+    struct event_state events[MAX_GROUP_EVENTS];
+    size_t event_count;
     size_t supported_events;
+    int group_leader_fd;
+    int sample_valid;
     char failure_reason[256];
 };
 
@@ -133,10 +167,9 @@ static uint64_t monotonic_ns(void) {
 }
 
 static void set_failure(struct run_state *run, const char *reason) {
-    if (run->failure_reason[0] != '\0') {
-        return;
+    if (run->failure_reason[0] == '\0') {
+        (void)snprintf(run->failure_reason, sizeof(run->failure_reason), "%s", reason);
     }
-    snprintf(run->failure_reason, sizeof(run->failure_reason), "%s", reason);
 }
 
 static int parse_positive_int(const char *text, int *value) {
@@ -163,24 +196,49 @@ static int parse_temp_mc(const char *text, int *value) {
     return 0;
 }
 
+static int parse_ratio(const char *text, double *value) {
+    char *end = NULL;
+    double parsed;
+    errno = 0;
+    parsed = strtod(text, &end);
+    if (errno != 0 || end == text || *end != '\0' || parsed <= 0.0 || parsed > 1.0) {
+        return -1;
+    }
+    *value = parsed;
+    return 0;
+}
+
+static const struct event_group_definition *find_event_group(const char *name) {
+    size_t index;
+    for (index = 0; index < EVENT_GROUP_COUNT; ++index) {
+        if (strcmp(EVENT_GROUPS[index].name, name) == 0) {
+            return &EVENT_GROUPS[index];
+        }
+    }
+    return NULL;
+}
+
 static void usage(FILE *stream, const char *program) {
     fprintf(stream,
             "Usage: %s [options] -- command [args...]\n"
             "\n"
             "Options:\n"
-            "  -o, --output PATH          JSON result path (default pmu-result.json)\n"
+            "  -o, --output PATH          create JSON result safely (must not exist)\n"
             "  -u, --user NAME            drop child to NAME (default orangepi)\n"
             "  -g, --group NAME           drop child to GROUP (default orangepi)\n"
+            "      --event-group NAME     core, cache, or memory (default core)\n"
+            "      --min-running-ratio R  validity threshold (default 0.95)\n"
             "      --no-drop              keep current uid/gid (host tests only)\n"
-            "      --start-on-ready       exact S/E boundary protocol (default)\n"
+            "      --start-on-ready       S -> atomic enable -> ACK -> work -> E\n"
             "      --start-immediately    enable after child setup gate\n"
-            "      --sync-timeout-ms N    S/E marker timeout (default 30000)\n"
+            "      --sync-timeout-ms N    marker timeout (default 30000)\n"
             "      --max-temp-c C         stop at thermal threshold (default 85)\n"
+            "      --thermal-root PATH    thermal sysfs root (testability)\n"
             "      --no-thermal-guard     disable target thermal guard\n"
             "  -h, --help                 show this help\n"
             "\n"
-            "In --start-on-ready mode the child writes 'S' and 'E' to the fd\n"
-            "named by A733_PMU_SYNC_FD. PMU values are event counts, never bytes.\n",
+            "Exact mode uses fixed child fds: marker=9, ACK=8. PMU counts are\n"
+            "event counts, never DDR bytes. Each run contains one PMU group.\n",
             program);
 }
 
@@ -195,6 +253,9 @@ static int parse_options(int argc, char **argv, struct options *options) {
         {"sync-timeout-ms", required_argument, NULL, 1003},
         {"max-temp-c", required_argument, NULL, 1004},
         {"no-thermal-guard", no_argument, NULL, 1005},
+        {"event-group", required_argument, NULL, 1006},
+        {"min-running-ratio", required_argument, NULL, 1007},
+        {"thermal-root", required_argument, NULL, 1008},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0},
     };
@@ -204,11 +265,14 @@ static int parse_options(int argc, char **argv, struct options *options) {
     options->output_path = "pmu-result.json";
     options->user_name = DEFAULT_USER;
     options->group_name = DEFAULT_GROUP;
+    options->thermal_root = "/sys/class/thermal";
+    options->event_group = &EVENT_GROUPS[0];
     options->no_drop = 0;
     options->start_on_ready = 1;
     options->sync_timeout_ms = DEFAULT_TIMEOUT_MS;
     options->max_temp_mc = DEFAULT_MAX_TEMP_MC;
     options->thermal_guard = 1;
+    options->min_running_ratio = DEFAULT_MIN_RUNNING_RATIO;
     options->command_index = -1;
 
     while ((option = getopt_long(argc, argv, "o:u:g:h", long_options, &option_index)) != -1) {
@@ -246,6 +310,22 @@ static int parse_options(int argc, char **argv, struct options *options) {
         case 1005:
             options->thermal_guard = 0;
             break;
+        case 1006:
+            options->event_group = find_event_group(optarg);
+            if (options->event_group == NULL) {
+                fprintf(stderr, "invalid --event-group: %s\n", optarg);
+                return -1;
+            }
+            break;
+        case 1007:
+            if (parse_ratio(optarg, &options->min_running_ratio) != 0) {
+                fprintf(stderr, "invalid --min-running-ratio: %s\n", optarg);
+                return -1;
+            }
+            break;
+        case 1008:
+            options->thermal_root = optarg;
+            break;
         case 'h':
             usage(stdout, argv[0]);
             return 1;
@@ -268,31 +348,58 @@ static int set_fd_cloexec(int fd, int enabled) {
     if (flags < 0) {
         return -1;
     }
-    if (enabled) {
-        flags |= FD_CLOEXEC;
-    } else {
-        flags &= ~FD_CLOEXEC;
-    }
+    flags = enabled ? (flags | FD_CLOEXEC) : (flags & ~FD_CLOEXEC);
     return fcntl(fd, F_SETFD, flags);
+}
+
+static int install_sync_fds(int marker_write_fd, int ack_read_fd) {
+    int marker_copy = -1;
+    int ack_copy = -1;
+
+    /*
+     * Copy both pipes above the fixed range before touching fd 8 or 9.  The
+     * original pipe ends can themselves be 8/9 when the caller inherited
+     * extra descriptors, so sequential dup2 calls would destroy one source.
+     */
+    ack_copy = fcntl(ack_read_fd, F_DUPFD_CLOEXEC, 10);
+    if (ack_copy < 0) {
+        return -1;
+    }
+    marker_copy = fcntl(marker_write_fd, F_DUPFD_CLOEXEC, 10);
+    if (marker_copy < 0) {
+        close(ack_copy);
+        return -1;
+    }
+    if (ack_read_fd != ACK_FD) {
+        close(ack_read_fd);
+    }
+    if (marker_write_fd != MARKER_FD) {
+        close(marker_write_fd);
+    }
+    if (dup2(ack_copy, ACK_FD) < 0 || dup2(marker_copy, MARKER_FD) < 0) {
+        close(ack_copy);
+        close(marker_copy);
+        return -1;
+    }
+    close(ack_copy);
+    close(marker_copy);
+    return set_fd_cloexec(ACK_FD, 0) == 0 && set_fd_cloexec(MARKER_FD, 0) == 0
+               ? 0
+               : -1;
 }
 
 static int set_child_identity(const struct options *options, uid_t *uid_out, gid_t *gid_out) {
     struct passwd *passwd_entry;
     struct group *group_entry;
-
     if (options->no_drop) {
         *uid_out = getuid();
         *gid_out = getgid();
         return 0;
     }
     passwd_entry = getpwnam(options->user_name);
-    if (passwd_entry == NULL) {
-        fprintf(stderr, "getpwnam(%s): %s\n", options->user_name, strerror(errno));
-        return -1;
-    }
     group_entry = getgrnam(options->group_name);
-    if (group_entry == NULL) {
-        fprintf(stderr, "getgrnam(%s): %s\n", options->group_name, strerror(errno));
+    if (passwd_entry == NULL || group_entry == NULL) {
+        fprintf(stderr, "cannot resolve child uid/gid\n");
         return -1;
     }
     *uid_out = passwd_entry->pw_uid;
@@ -302,7 +409,6 @@ static int set_child_identity(const struct options *options, uid_t *uid_out, gid
 
 static int drop_child_identity(const struct options *options, uid_t uid, gid_t gid) {
     struct passwd *passwd_entry;
-
     if (options->no_drop) {
         return 0;
     }
@@ -323,12 +429,14 @@ static int drop_child_identity(const struct options *options, uid_t uid, gid_t g
     return 0;
 }
 
-static int64_t read_max_temp_mc(void) {
+static int64_t read_max_temp_mc(const char *thermal_root, int *readable) {
     DIR *directory;
     struct dirent *entry;
     int64_t maximum = -1;
+    int samples = 0;
 
-    directory = opendir("/sys/class/thermal");
+    *readable = 0;
+    directory = opendir(thermal_root);
     if (directory == NULL) {
         return -1;
     }
@@ -336,11 +444,10 @@ static int64_t read_max_temp_mc(void) {
         char path[PATH_MAX];
         FILE *file;
         long value;
-
         if (strncmp(entry->d_name, "thermal_zone", 12) != 0) {
             continue;
         }
-        if (snprintf(path, sizeof(path), "/sys/class/thermal/%s/temp", entry->d_name) >=
+        if (snprintf(path, sizeof(path), "%s/%s/temp", thermal_root, entry->d_name) >=
             (int)sizeof(path)) {
             continue;
         }
@@ -349,6 +456,7 @@ static int64_t read_max_temp_mc(void) {
             continue;
         }
         if (fscanf(file, "%ld", &value) == 1) {
+            samples += 1;
             if (value > maximum) {
                 maximum = value;
             }
@@ -356,144 +464,209 @@ static int64_t read_max_temp_mc(void) {
         fclose(file);
     }
     closedir(directory);
+    if (samples > 0) {
+        *readable = 1;
+    }
     return maximum;
 }
 
-static int check_thermal(struct run_state *run, const struct options *options, pid_t child_pid) {
+static void signal_process_group(const struct run_state *run, int signal_number) {
+    if (run->child_pgid > 0) {
+        if (kill(-run->child_pgid, signal_number) == 0 || errno != ESRCH) {
+            return;
+        }
+    }
+    if (run->child_pid > 0) {
+        (void)kill(run->child_pid, signal_number);
+    }
+}
+
+static int check_thermal(struct run_state *run, const struct options *options) {
+    int readable = 0;
     int64_t temperature;
     if (!options->thermal_guard) {
         return 0;
     }
-    temperature = read_max_temp_mc();
-    if (temperature < 0) {
-        return 0;
+    run->thermal_checked = 1;
+    temperature = read_max_temp_mc(options->thermal_root, &readable);
+    run->thermal_readable = readable;
+    if (!readable || temperature < 0) {
+        run->thermal_unreadable = 1;
+        run->internal_failure = 1;
+        set_failure(run, "thermal_unreadable");
+        signal_process_group(run, SIGTERM);
+        return -1;
     }
     if (temperature > run->max_temp_mc) {
         run->max_temp_mc = temperature;
     }
     if (temperature > options->max_temp_mc) {
         run->thermal_tripped = 1;
+        run->internal_failure = 1;
         set_failure(run, "thermal_guard_exceeded");
-        (void)kill(child_pid, SIGTERM);
+        signal_process_group(run, SIGTERM);
         return -1;
     }
     return 0;
 }
 
-static void init_event_states(struct run_state *run) {
+static void init_event_states(struct run_state *run,
+                              const struct event_group_definition *group) {
     size_t index;
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        run->events[index].fd = -1;
-        run->events[index].open_errno = 0;
-        run->events[index].read_errno = 0;
-        run->events[index].value = 0;
-        run->events[index].time_enabled = 0;
-        run->events[index].time_running = 0;
+    run->event_count = group->event_count;
+    run->group_leader_fd = -1;
+    run->supported_events = 0;
+    for (index = 0; index < group->event_count; ++index) {
+        struct event_state *event = &run->events[index];
+        memset(event, 0, sizeof(*event));
+        event->definition = &EVENT_DEFINITIONS[group->event_indices[index]];
+        event->fd = -1;
     }
 }
 
-static size_t open_events(struct run_state *run) {
+static void close_event_fds(struct run_state *run) {
     size_t index;
-    run->supported_events = 0;
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        struct perf_event_attr attr;
-        int fd;
+    for (index = 0; index < run->event_count; ++index) {
+        if (run->events[index].fd >= 0) {
+            close(run->events[index].fd);
+            run->events[index].fd = -1;
+        }
+    }
+    run->group_leader_fd = -1;
+}
 
+static size_t open_event_group(struct run_state *run) {
+    size_t index;
+    int leader = -1;
+    int first_errno = 0;
+
+    for (index = 0; index < run->event_count; ++index) {
+        struct perf_event_attr attr;
+        struct event_state *event = &run->events[index];
+        int fd;
         memset(&attr, 0, sizeof(attr));
         attr.type = PERF_TYPE_RAW;
         attr.size = sizeof(attr);
-        attr.config = EVENT_DEFINITIONS[index].config;
-        attr.disabled = 1;
+        attr.config = event->definition->config;
+        attr.disabled = index == 0 ? 1U : 0U;
         attr.inherit = 1;
+        attr.inherit_stat = 1;
         attr.exclude_hv = 1;
         attr.read_format = PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_TOTAL_TIME_RUNNING;
-        fd = perf_event_open_local(&attr, run->child_pid, -1, -1, 0);
+        fd = perf_event_open_local(&attr, run->child_pid, -1, leader,
+                                   PERF_FLAG_FD_CLOEXEC);
         if (fd < 0) {
-            run->events[index].open_errno = errno;
-            continue;
+            first_errno = errno;
+            event->open_errno = errno;
+            if (index > 0) {
+                run->group_open_failed = 1;
+                run->internal_failure = 1;
+                set_failure(run, "event_group_open_failed");
+            }
+            break;
         }
-        run->events[index].fd = fd;
+        event->fd = fd;
+        event->opened = 1;
         run->supported_events += 1;
+        if (index == 0) {
+            leader = fd;
+            run->group_leader_fd = fd;
+        }
+    }
+
+    if (run->supported_events != run->event_count) {
+        for (index = 0; index < run->event_count; ++index) {
+            if (!run->events[index].opened && run->events[index].open_errno == 0) {
+                run->events[index].open_errno = first_errno != 0 ? first_errno : ECANCELED;
+            }
+        }
+        if (run->supported_events > 0) {
+            close_event_fds(run);
+            for (index = 0; index < run->event_count; ++index) {
+                run->events[index].opened = 0;
+            }
+            run->supported_events = 0;
+        }
     }
     return run->supported_events;
 }
 
-static int reset_enable_events(struct run_state *run) {
-    size_t index;
-    int enabled = 0;
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        int fd = run->events[index].fd;
-        if (fd < 0) {
-            continue;
-        }
-        if (ioctl(fd, PERF_EVENT_IOC_RESET, 0) != 0 ||
-            ioctl(fd, PERF_EVENT_IOC_ENABLE, 0) != 0) {
-            run->events[index].open_errno = errno;
-            close(fd);
-            run->events[index].fd = -1;
-            if (run->supported_events > 0) {
-                run->supported_events -= 1;
-            }
-            continue;
-        }
-        enabled += 1;
+static int reset_enable_group(struct run_state *run) {
+    if (run->group_leader_fd < 0) {
+        return 0;
     }
-    return enabled;
+    if (ioctl(run->group_leader_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) != 0 ||
+        ioctl(run->group_leader_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP) != 0) {
+        run->internal_failure = 1;
+        set_failure(run, "event_group_enable_failed");
+        return -1;
+    }
+    run->group_enabled = 1;
+    return 1;
 }
 
-static void disable_events(struct run_state *run) {
-    size_t index;
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        if (run->events[index].fd >= 0) {
-            (void)ioctl(run->events[index].fd, PERF_EVENT_IOC_DISABLE, 0);
+static void disable_group(struct run_state *run) {
+    if (run->group_enabled && run->group_leader_fd >= 0) {
+        if (ioctl(run->group_leader_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP) != 0) {
+            run->internal_failure = 1;
+            set_failure(run, "event_group_disable_failed");
         }
     }
+    run->group_enabled = 0;
 }
 
-static void read_events(struct run_state *run) {
+static void read_events(struct run_state *run, const struct options *options) {
     size_t index;
-    for (index = 0; index < MAX_EVENTS; ++index) {
+    int all_valid = run->supported_events == run->event_count && run->event_count > 0;
+    for (index = 0; index < run->event_count; ++index) {
+        struct event_state *event = &run->events[index];
         struct {
             uint64_t value;
             uint64_t time_enabled;
             uint64_t time_running;
         } sample;
         ssize_t bytes;
-
-        if (run->events[index].fd < 0) {
+        if (!event->opened || event->fd < 0) {
+            all_valid = 0;
             continue;
         }
         memset(&sample, 0, sizeof(sample));
         do {
-            bytes = read(run->events[index].fd, &sample, sizeof(sample));
+            bytes = read(event->fd, &sample, sizeof(sample));
         } while (bytes < 0 && errno == EINTR);
         if (bytes != (ssize_t)sizeof(sample)) {
-            run->events[index].read_errno = bytes < 0 ? errno : EIO;
+            event->read_errno = bytes < 0 ? errno : EIO;
+            run->read_failed = 1;
+            run->internal_failure = 1;
+            set_failure(run, "event_read_failed");
+            all_valid = 0;
             continue;
         }
-        run->events[index].value = sample.value;
-        run->events[index].time_enabled = sample.time_enabled;
-        run->events[index].time_running = sample.time_running;
-    }
-}
-
-static void close_events(struct run_state *run) {
-    size_t index;
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        if (run->events[index].fd >= 0) {
-            close(run->events[index].fd);
+        event->value = sample.value;
+        event->time_enabled = sample.time_enabled;
+        event->time_running = sample.time_running;
+        event->running_ratio = sample.time_enabled == 0
+                                   ? 0.0
+                                   : (double)sample.time_running / (double)sample.time_enabled;
+        event->sample_valid = sample.time_enabled > 0 && sample.time_running > 0 &&
+                              event->running_ratio >= options->min_running_ratio;
+        if (!event->sample_valid) {
+            all_valid = 0;
+            set_failure(run, "event_sample_invalid");
         }
     }
+    run->sample_valid = all_valid;
 }
 
 static int wait_for_marker(struct run_state *run, const struct options *options,
-                           int marker_fd, char wanted) {
-    const uint64_t deadline = monotonic_ns() + (uint64_t)options->sync_timeout_ms * 1000000ULL;
+                           char wanted) {
+    const uint64_t deadline = monotonic_ns() +
+                              (uint64_t)options->sync_timeout_ms * 1000000ULL;
     struct pollfd descriptor;
     int child_exited = 0;
-
-    descriptor.fd = marker_fd;
+    descriptor.fd = run->marker_read_fd;
     descriptor.events = POLLIN | POLLHUP | POLLERR;
+
     for (;;) {
         int status;
         pid_t waited;
@@ -501,6 +674,7 @@ static int wait_for_marker(struct run_state *run, const struct options *options,
         uint64_t now = monotonic_ns();
         if (now >= deadline) {
             run->timed_out = 1;
+            run->sync_failed = 1;
             set_failure(run, wanted == 'S' ? "start_marker_timeout" : "end_marker_timeout");
             return -1;
         }
@@ -514,22 +688,20 @@ static int wait_for_marker(struct run_state *run, const struct options *options,
         if (waited == run->child_pid) {
             run->child_status_valid = 1;
             run->child_status = status;
-            /* A fast child can write E and exit before the parent observes
-             * either.  Drain the marker pipe before declaring failure. */
             child_exited = 1;
-        }
-        if (waited < 0 && errno != EINTR) {
+        } else if (waited < 0 && errno != EINTR) {
+            run->sync_failed = 1;
             set_failure(run, "waitpid_failed");
             return -1;
         }
-        (void)check_thermal(run, options, run->child_pid);
-        if (run->thermal_tripped) {
+        if (check_thermal(run, options) != 0) {
             return -1;
         }
         if (poll(&descriptor, 1, timeout) < 0) {
             if (errno == EINTR) {
                 continue;
             }
+            run->sync_failed = 1;
             set_failure(run, "sync_poll_failed");
             return -1;
         }
@@ -537,28 +709,48 @@ static int wait_for_marker(struct run_state *run, const struct options *options,
             char marker;
             ssize_t bytes;
             do {
-                bytes = read(marker_fd, &marker, 1);
+                bytes = read(run->marker_read_fd, &marker, 1);
             } while (bytes < 0 && errno == EINTR);
             if (bytes == 1 && marker == wanted) {
                 return 0;
             }
+            run->sync_failed = 1;
             if (bytes == 0) {
                 set_failure(run, "sync_pipe_closed");
-                return -1;
+            } else if (bytes == 1) {
+                set_failure(run, "unexpected_sync_marker");
+            } else {
+                set_failure(run, "sync_read_failed");
             }
-            if (bytes == 1 && marker != wanted) {
-                char message[128];
-                snprintf(message, sizeof(message), "unexpected_sync_marker_%c", marker);
-                set_failure(run, message);
-                return -1;
-            }
+            return -1;
         }
         if (child_exited) {
+            run->sync_failed = 1;
             set_failure(run, wanted == 'S' ? "child_exited_before_start_marker"
                                           : "child_exited_before_end_marker");
             return -1;
         }
     }
+}
+
+static int send_ack(struct run_state *run) {
+    static const char ack[] = "A\n";
+    size_t offset = 0;
+    while (offset < sizeof(ack) - 1U) {
+        ssize_t written = write(run->ack_write_fd, ack + offset,
+                                sizeof(ack) - 1U - offset);
+        if (written < 0 && errno == EINTR) {
+            continue;
+        }
+        if (written <= 0) {
+            run->sync_failed = 1;
+            set_failure(run, "ack_write_failed");
+            return -1;
+        }
+        offset += (size_t)written;
+    }
+    run->acknowledged = 1;
+    return 0;
 }
 
 static int wait_for_child(struct run_state *run, const struct options *options) {
@@ -578,12 +770,13 @@ static int wait_for_child(struct run_state *run, const struct options *options) 
             if (errno == EINTR) {
                 continue;
             }
+            run->internal_failure = 1;
             set_failure(run, "waitpid_failed");
             return -1;
         }
         if (monotonic_ns() - last_thermal >= 100000000ULL) {
             last_thermal = monotonic_ns();
-            if (check_thermal(run, options, run->child_pid) != 0) {
+            if (check_thermal(run, options) != 0) {
                 return -1;
             }
         }
@@ -591,67 +784,53 @@ static int wait_for_child(struct run_state *run, const struct options *options) 
     }
 }
 
-static void terminate_child(struct run_state *run) {
-    if (run->child_pid <= 0 || run->child_status_valid) {
-        return;
-    }
-    (void)kill(run->child_pid, SIGTERM);
-    for (int attempt = 0; attempt < 20; ++attempt) {
+static void reap_group_nonblocking(struct run_state *run) {
+    for (;;) {
         int status;
-        pid_t waited = waitpid(run->child_pid, &status, WNOHANG);
+        pid_t waited = waitpid(-run->child_pgid, &status, WNOHANG);
+        if (waited <= 0) {
+            break;
+        }
         if (waited == run->child_pid) {
             run->child_status_valid = 1;
             run->child_status = status;
+        }
+    }
+}
+
+static void terminate_process_group(struct run_state *run) {
+    int attempt;
+    if (run->child_pid <= 0) {
+        return;
+    }
+    signal_process_group(run, SIGTERM);
+    for (attempt = 0; attempt < 50; ++attempt) {
+        if (!run->child_status_valid) {
+            int status;
+            pid_t waited = waitpid(run->child_pid, &status, WNOHANG);
+            if (waited == run->child_pid) {
+                run->child_status_valid = 1;
+                run->child_status = status;
+            }
+        }
+        reap_group_nonblocking(run);
+        if (run->child_status_valid && kill(-run->child_pgid, 0) != 0 && errno == ESRCH) {
             return;
         }
         (void)poll(NULL, 0, 10);
     }
-    (void)kill(run->child_pid, SIGKILL);
-    if (waitpid(run->child_pid, &run->child_status, 0) == run->child_pid) {
+    signal_process_group(run, SIGKILL);
+    if (!run->child_status_valid && waitpid(run->child_pid, &run->child_status, 0) ==
+                                      run->child_pid) {
         run->child_status_valid = 1;
     }
-}
-
-static void json_string(FILE *stream, const char *value) {
-    const unsigned char *cursor = (const unsigned char *)value;
-    fputc('"', stream);
-    while (*cursor != '\0') {
-        switch (*cursor) {
-        case '\\':
-            fputs("\\\\", stream);
+    for (attempt = 0; attempt < 50; ++attempt) {
+        reap_group_nonblocking(run);
+        if (kill(-run->child_pgid, 0) != 0 && errno == ESRCH) {
             break;
-        case '"':
-            fputs("\\\"", stream);
-            break;
-        case '\n':
-            fputs("\\n", stream);
-            break;
-        case '\r':
-            fputs("\\r", stream);
-            break;
-        case '\t':
-            fputs("\\t", stream);
-            break;
-        default:
-            if (*cursor < 0x20U) {
-                fprintf(stream, "\\u%04x", *cursor);
-            } else {
-                fputc(*cursor, stream);
-            }
         }
-        cursor += 1;
+        (void)poll(NULL, 0, 10);
     }
-    fputc('"', stream);
-}
-
-static const char *event_support(const struct event_state *event) {
-    if (event->fd >= 0 && event->read_errno == 0) {
-        return "supported";
-    }
-    if (event->read_errno != 0) {
-        return "read_error";
-    }
-    return "unavailable";
 }
 
 static int command_exit_code(const struct run_state *run) {
@@ -668,43 +847,95 @@ static int command_exit_code(const struct run_state *run) {
 }
 
 static const char *result_status(const struct run_state *run) {
-    size_t index;
-    size_t readable = 0;
-    size_t failures = 0;
-    if (run->internal_failure || run->timed_out || run->thermal_tripped ||
-        command_exit_code(run) != 0) {
+    if (run->internal_failure || run->sync_failed || run->timed_out ||
+        run->thermal_unreadable || run->thermal_tripped || run->read_failed ||
+        run->group_open_failed || command_exit_code(run) != 0) {
         return "failed";
     }
-    for (index = 0; index < MAX_EVENTS; ++index) {
-        if (run->events[index].fd >= 0 && run->events[index].read_errno == 0) {
-            readable += 1;
-        } else {
-            failures += 1;
-        }
-    }
-    if (readable == 0) {
+    if (run->supported_events == 0) {
         return "counter_unavailable";
     }
-    return failures == 0 ? "ok" : "partial";
+    if (!run->sample_valid) {
+        return "failed";
+    }
+    return "ok";
+}
+
+static const char *event_support(const struct event_state *event) {
+    if (event->opened && event->read_errno == 0) {
+        return "supported";
+    }
+    if (event->read_errno != 0) {
+        return "read_error";
+    }
+    return "unavailable";
+}
+
+static void json_string(FILE *stream, const char *value) {
+    const unsigned char *cursor = (const unsigned char *)value;
+    fputc('"', stream);
+    while (*cursor != '\0') {
+        switch (*cursor) {
+        case '\\': fputs("\\\\", stream); break;
+        case '"': fputs("\\\"", stream); break;
+        case '\n': fputs("\\n", stream); break;
+        case '\r': fputs("\\r", stream); break;
+        case '\t': fputs("\\t", stream); break;
+        default:
+            if (*cursor < 0x20U) {
+                fprintf(stream, "\\u%04x", *cursor);
+            } else {
+                fputc(*cursor, stream);
+            }
+        }
+        cursor += 1;
+    }
+    fputc('"', stream);
+}
+
+static FILE *open_output_safely(const char *path) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
+    struct stat status;
+    FILE *stream;
+    if (fd < 0) {
+        fprintf(stderr, "safe open(%s): %s\n", path, strerror(errno));
+        return NULL;
+    }
+    if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) || status.st_nlink != 1) {
+        fprintf(stderr, "unsafe output target: %s\n", path);
+        close(fd);
+        (void)unlink(path);
+        return NULL;
+    }
+    stream = fdopen(fd, "w");
+    if (stream == NULL) {
+        fprintf(stderr, "fdopen(%s): %s\n", path, strerror(errno));
+        close(fd);
+        (void)unlink(path);
+    }
+    return stream;
 }
 
 static int write_result(const struct options *options, const struct run_state *run,
                         int argc, char **argv) {
-    FILE *stream = fopen(options->output_path, "w");
+    FILE *stream = open_output_safely(options->output_path);
     size_t index;
-    int command_code = command_exit_code(run);
-
     if (stream == NULL) {
-        fprintf(stderr, "fopen(%s): %s\n", options->output_path, strerror(errno));
         return -1;
     }
-    fprintf(stream, "{\n");
-    fprintf(stream, "  \"schema_version\": \"e049c-arm-pmu/v1\",\n");
+    fprintf(stream, "{\n  \"schema_version\": \"e049c-arm-pmu/v2\",\n");
     fprintf(stream, "  \"status\": ");
     json_string(stream, result_status(run));
-    fprintf(stream, ",\n  \"event_source\": \"armv8_pmuv3_raw_config\",\n");
+    fprintf(stream, ",\n  \"sample_valid\": %s,\n",
+            run->sample_valid && strcmp(result_status(run), "ok") == 0 ? "true" : "false");
+    fprintf(stream, "  \"event_source\": \"armv8_pmuv3_raw_config\",\n");
     fprintf(stream, "  \"counter_semantics\": \"event counts only; no DDR-byte conversion\",\n");
-    fprintf(stream, "  \"pid\": %ld,\n", (long)run->child_pid);
+    fprintf(stream, "  \"event_group\": ");
+    json_string(stream, options->event_group->name);
+    fprintf(stream, ",\n  \"event_group_capacity\": %d,\n", EVENT_GROUP_CAPACITY);
+    fprintf(stream, "  \"min_running_ratio\": %.6f,\n", options->min_running_ratio);
+    fprintf(stream, "  \"pid\": %ld,\n  \"process_group\": %ld,\n",
+            (long)run->child_pid, (long)run->child_pgid);
     fprintf(stream, "  \"command\": [");
     for (index = (size_t)options->command_index; index < (size_t)argc; ++index) {
         if (index != (size_t)options->command_index) {
@@ -712,15 +943,20 @@ static int write_result(const struct options *options, const struct run_state *r
         }
         json_string(stream, argv[index]);
     }
-    fprintf(stream, "],\n");
-    fprintf(stream, "  \"sync\": {\"mode\": ");
-    json_string(stream, options->start_on_ready ? "ready_markers" : "immediate_after_setup_gate");
-    fprintf(stream, ", \"started\": %s, \"ended\": %s},\n",
-            run->started ? "true" : "false", run->ended ? "true" : "false");
-    fprintf(stream, "  \"measured_elapsed_ns\": %" PRIu64 ",\n", run->measured_elapsed_ns);
-    fprintf(stream, "  \"thermal\": {\"guard_enabled\": %s, \"limit_c\": %.3f, "
-                   "\"max_observed_c\": ",
-            options->thermal_guard ? "true" : "false", (double)options->max_temp_mc / 1000.0);
+    fprintf(stream, "],\n  \"sync\": {\"mode\": ");
+    json_string(stream, options->start_on_ready ? "start_ack_end"
+                                                : "immediate_after_setup_gate");
+    fprintf(stream, ", \"started\": %s, \"acknowledged\": %s, \"ended\": %s},\n",
+            run->started ? "true" : "false", run->acknowledged ? "true" : "false",
+            run->ended ? "true" : "false");
+    fprintf(stream, "  \"measured_elapsed_ns\": %" PRIu64 ",\n",
+            run->measured_elapsed_ns);
+    fprintf(stream, "  \"thermal\": {\"guard_enabled\": %s, \"checked\": %s, "
+                    "\"readable\": %s, \"limit_c\": %.3f, \"max_observed_c\": ",
+            options->thermal_guard ? "true" : "false",
+            run->thermal_checked ? "true" : "false",
+            run->thermal_readable ? "true" : "false",
+            (double)options->max_temp_mc / 1000.0);
     if (run->max_temp_mc >= 0) {
         fprintf(stream, "%.3f", (double)run->max_temp_mc / 1000.0);
     } else {
@@ -728,7 +964,7 @@ static int write_result(const struct options *options, const struct run_state *r
     }
     fprintf(stream, ", \"tripped\": %s},\n", run->thermal_tripped ? "true" : "false");
     fprintf(stream, "  \"exit\": {\"code\": %d, \"raw_wait_status\": %d},\n",
-            command_code, run->child_status_valid ? run->child_status : -1);
+            command_exit_code(run), run->child_status_valid ? run->child_status : -1);
     fprintf(stream, "  \"failure_reason\": ");
     if (run->failure_reason[0] == '\0') {
         fputs("null", stream);
@@ -736,56 +972,38 @@ static int write_result(const struct options *options, const struct run_state *r
         json_string(stream, run->failure_reason);
     }
     fprintf(stream, ",\n  \"events\": [\n");
-    for (index = 0; index < MAX_EVENTS; ++index) {
+    for (index = 0; index < run->event_count; ++index) {
         const struct event_state *event = &run->events[index];
         const char *support = event_support(event);
+        int error_number = event->read_errno != 0 ? event->read_errno : event->open_errno;
         if (index != 0) {
             fputs(",\n", stream);
         }
         fprintf(stream, "    {\"name\": ");
-        json_string(stream, EVENT_DEFINITIONS[index].name);
+        json_string(stream, event->definition->name);
         fprintf(stream, ", \"config\": \"0x%llx\", \"meaning\": ",
-                (unsigned long long)EVENT_DEFINITIONS[index].config);
-        json_string(stream, EVENT_DEFINITIONS[index].meaning);
+                (unsigned long long)event->definition->config);
+        json_string(stream, event->definition->meaning);
         fprintf(stream, ", \"support\": ");
         json_string(stream, support);
         fprintf(stream, ", \"count_semantics\": \"event_count_not_bytes\", "
-                       "\"value\": ");
-        if (strcmp(support, "supported") == 0) {
-            fprintf(stream, "%" PRIu64, event->value);
-        } else {
-            fputs("null", stream);
-        }
+                        "\"sample_valid\": %s, \"value\": ",
+                event->sample_valid ? "true" : "false");
+        if (strcmp(support, "supported") == 0) fprintf(stream, "%" PRIu64, event->value);
+        else fputs("null", stream);
         fprintf(stream, ", \"time_enabled_ns\": ");
-        if (strcmp(support, "supported") == 0) {
-            fprintf(stream, "%" PRIu64, event->time_enabled);
-        } else {
-            fputs("null", stream);
-        }
+        if (strcmp(support, "supported") == 0) fprintf(stream, "%" PRIu64, event->time_enabled);
+        else fputs("null", stream);
         fprintf(stream, ", \"time_running_ns\": ");
-        if (strcmp(support, "supported") == 0) {
-            fprintf(stream, "%" PRIu64, event->time_running);
-        } else {
-            fputs("null", stream);
-        }
-        fprintf(stream, ", \"scaled_value\": ");
-        if (strcmp(support, "supported") == 0 && event->time_running != 0) {
-            long double scaled = (long double)event->value *
-                                 (long double)event->time_enabled /
-                                 (long double)event->time_running;
-            fprintf(stream, "%.0Lf", scaled);
-        } else {
-            fputs("null", stream);
-        }
-        fprintf(stream, ", \"errno\": %d, \"error\": ",
-                event->read_errno != 0 ? event->read_errno : event->open_errno);
-        if (event->read_errno != 0) {
-            json_string(stream, strerror(event->read_errno));
-        } else if (event->open_errno != 0) {
-            json_string(stream, strerror(event->open_errno));
-        } else {
-            fputs("null", stream);
-        }
+        if (strcmp(support, "supported") == 0) fprintf(stream, "%" PRIu64, event->time_running);
+        else fputs("null", stream);
+        fprintf(stream, ", \"running_ratio\": ");
+        if (strcmp(support, "supported") == 0 && event->time_enabled > 0)
+            fprintf(stream, "%.9f", event->running_ratio);
+        else fputs("null", stream);
+        fprintf(stream, ", \"errno\": %d, \"error\": ", error_number);
+        if (error_number != 0) json_string(stream, strerror(error_number));
+        else fputs("null", stream);
         fputs("}", stream);
     }
     fprintf(stream, "\n  ]\n}\n");
@@ -794,50 +1012,6 @@ static int write_result(const struct options *options, const struct run_state *r
         return -1;
     }
     return 0;
-}
-
-static int child_main(const struct options *options, char **command, int setup_read_fd,
-                      int sync_write_fd, uid_t uid, gid_t gid) {
-    char uid_text[32];
-    char gid_text[32];
-    char fd_text[32];
-    char gate;
-    ssize_t bytes;
-
-    if (options->start_on_ready) {
-        if (dup2(sync_write_fd, SYNC_FD) < 0 || set_fd_cloexec(SYNC_FD, 0) != 0) {
-            dprintf(STDERR_FILENO, "sync fd setup failed: %s\n", strerror(errno));
-            _exit(126);
-        }
-        close(sync_write_fd);
-        snprintf(fd_text, sizeof(fd_text), "%d", SYNC_FD);
-        if (setenv("A733_PMU_SYNC_FD", fd_text, 1) != 0) {
-            dprintf(STDERR_FILENO, "setenv sync fd failed: %s\n", strerror(errno));
-            _exit(126);
-        }
-    }
-    if (drop_child_identity(options, uid, gid) != 0) {
-        dprintf(STDERR_FILENO, "drop child identity failed: %s\n", strerror(errno));
-        _exit(126);
-    }
-    snprintf(uid_text, sizeof(uid_text), "%lu", (unsigned long)getuid());
-    snprintf(gid_text, sizeof(gid_text), "%lu", (unsigned long)getgid());
-    if (setenv("A733_PMU_CHILD_UID", uid_text, 1) != 0 ||
-        setenv("A733_PMU_CHILD_GID", gid_text, 1) != 0) {
-        dprintf(STDERR_FILENO, "setenv child identity failed: %s\n", strerror(errno));
-        _exit(126);
-    }
-    do {
-        bytes = read(setup_read_fd, &gate, 1);
-    } while (bytes < 0 && errno == EINTR);
-    close(setup_read_fd);
-    if (bytes != 1 || gate != 'G') {
-        dprintf(STDERR_FILENO, "setup gate failed\n");
-        _exit(126);
-    }
-    execvp(command[0], command);
-    dprintf(STDERR_FILENO, "execvp(%s): %s\n", command[0], strerror(errno));
-    _exit(127);
 }
 
 static int release_setup_gate(int fd) {
@@ -850,6 +1024,37 @@ static int release_setup_gate(int fd) {
     return bytes == 1 ? 0 : -1;
 }
 
+static int child_main(const struct options *options, char **command, int setup_read_fd,
+                      int marker_write_fd, int ack_read_fd, uid_t uid, gid_t gid) {
+    char gate;
+    ssize_t bytes;
+    if (setsid() < 0) {
+        dprintf(STDERR_FILENO, "setsid failed: %s\n", strerror(errno));
+        return 126;
+    }
+    if (options->start_on_ready) {
+        if (install_sync_fds(marker_write_fd, ack_read_fd) != 0) {
+            dprintf(STDERR_FILENO, "fixed sync fd setup failed: %s\n", strerror(errno));
+            return 126;
+        }
+    }
+    if (drop_child_identity(options, uid, gid) != 0) {
+        dprintf(STDERR_FILENO, "drop child identity failed: %s\n", strerror(errno));
+        return 126;
+    }
+    do {
+        bytes = read(setup_read_fd, &gate, 1);
+    } while (bytes < 0 && errno == EINTR);
+    close(setup_read_fd);
+    if (bytes != 1 || gate != 'G') {
+        dprintf(STDERR_FILENO, "setup gate failed\n");
+        return 126;
+    }
+    execvp(command[0], command);
+    dprintf(STDERR_FILENO, "execvp(%s): %s\n", command[0], strerror(errno));
+    return 127;
+}
+
 int main(int argc, char **argv) {
     struct options options;
     struct run_state run;
@@ -857,120 +1062,141 @@ int main(int argc, char **argv) {
     gid_t child_gid;
     int parse_status;
     int setup_pipe[2];
-    int sync_pipe[2] = {-1, -1};
+    int marker_pipe[2] = {-1, -1};
+    int ack_pipe[2] = {-1, -1};
     pid_t child;
     char **command;
-    int enabled;
     uint64_t measured_start = 0;
+    int failed = 0;
+    int result_write_status;
+    int final_code;
 
     memset(&run, 0, sizeof(run));
-    init_event_states(&run);
     run.max_temp_mc = -1;
-    run.failure_reason[0] = '\0';
+    run.group_leader_fd = -1;
+    run.marker_read_fd = -1;
+    run.ack_write_fd = -1;
     parse_status = parse_options(argc, argv, &options);
     if (parse_status != 0) {
         return parse_status > 0 ? 0 : 2;
     }
+    init_event_states(&run, options.event_group);
     if (set_child_identity(&options, &child_uid, &child_gid) != 0) {
         return 2;
     }
-    if (pipe(setup_pipe) != 0) {
-        fprintf(stderr, "pipe setup: %s\n", strerror(errno));
+    if (pipe(setup_pipe) != 0 ||
+        (options.start_on_ready && (pipe(marker_pipe) != 0 || pipe(ack_pipe) != 0))) {
+        fprintf(stderr, "pipe setup failed: %s\n", strerror(errno));
         return 2;
     }
-    if (options.start_on_ready && pipe(sync_pipe) != 0) {
-        fprintf(stderr, "pipe sync: %s\n", strerror(errno));
-        close(setup_pipe[0]);
-        close(setup_pipe[1]);
-        return 2;
-    }
+    (void)prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0);
     command = &argv[options.command_index];
     child = fork();
     if (child < 0) {
         fprintf(stderr, "fork: %s\n", strerror(errno));
-        close(setup_pipe[0]);
-        close(setup_pipe[1]);
-        if (sync_pipe[0] >= 0) {
-            close(sync_pipe[0]);
-            close(sync_pipe[1]);
-        }
         return 2;
     }
     run.child_pid = child;
-    run.setup_pipe[0] = setup_pipe[0];
-    run.setup_pipe[1] = setup_pipe[1];
-    run.sync_pipe[0] = sync_pipe[0];
-    run.sync_pipe[1] = sync_pipe[1];
+    run.child_pgid = child;
     run.sync_enabled = options.start_on_ready;
 
     if (child == 0) {
+        int status;
         close(setup_pipe[1]);
         if (options.start_on_ready) {
-            close(sync_pipe[0]);
-            (void)child_main(&options, command, setup_pipe[0], sync_pipe[1], child_uid, child_gid);
+            close(marker_pipe[0]);
+            close(ack_pipe[1]);
+            status = child_main(&options, command, setup_pipe[0], marker_pipe[1],
+                                ack_pipe[0], child_uid, child_gid);
         } else {
-            (void)child_main(&options, command, setup_pipe[0], -1, child_uid, child_gid);
+            status = child_main(&options, command, setup_pipe[0], -1, -1,
+                                child_uid, child_gid);
         }
-        _exit(126);
+        _exit(status);
     }
 
     close(setup_pipe[0]);
     if (options.start_on_ready) {
-        close(sync_pipe[1]);
+        close(marker_pipe[1]);
+        close(ack_pipe[0]);
+        run.marker_read_fd = marker_pipe[0];
+        run.ack_write_fd = ack_pipe[1];
     }
     (void)set_fd_cloexec(setup_pipe[1], 1);
-    (void)open_events(&run);
-    if (release_setup_gate(setup_pipe[1]) != 0) {
+    (void)open_event_group(&run);
+
+    if (check_thermal(&run, &options) != 0) {
+        failed = 1;
+    } else if (release_setup_gate(setup_pipe[1]) != 0) {
         run.internal_failure = 1;
         set_failure(&run, "parent_setup_gate_failed");
-        terminate_child(&run);
-        close_events(&run);
-        (void)write_result(&options, &run, argc, argv);
-        return 2;
+        failed = 1;
     }
-    if (options.start_on_ready) {
-        if (wait_for_marker(&run, &options, sync_pipe[0], 'S') != 0) {
-            terminate_child(&run);
-            close(sync_pipe[0]);
-            close_events(&run);
-            (void)write_result(&options, &run, argc, argv);
-            return command_exit_code(&run);
-        }
-    }
-    enabled = reset_enable_events(&run);
-    if (enabled == 0) {
-        set_failure(&run, "no_perf_events_enabled");
-    }
-    run.started = 1;
-    measured_start = monotonic_ns();
-    if (options.start_on_ready) {
-        if (wait_for_marker(&run, &options, sync_pipe[0], 'E') != 0) {
-            terminate_child(&run);
+
+    if (!failed && options.start_on_ready) {
+        if (wait_for_marker(&run, &options, 'S') != 0) {
+            failed = 1;
         } else {
-            run.ended = 1;
-            disable_events(&run);
+            run.started = 1;
+            if (reset_enable_group(&run) < 0) {
+                failed = 1;
+            } else {
+                measured_start = monotonic_ns();
+                if (send_ack(&run) != 0) {
+                    failed = 1;
+                } else if (wait_for_marker(&run, &options, 'E') != 0) {
+                    failed = 1;
+                } else {
+                    run.ended = 1;
+                    disable_group(&run);
+                    run.measured_elapsed_ns = monotonic_ns() - measured_start;
+                    run.measured_elapsed_valid = 1;
+                    if (wait_for_child(&run, &options) != 0) {
+                        failed = 1;
+                    }
+                }
+            }
+        }
+    } else if (!failed) {
+        if (reset_enable_group(&run) < 0) {
+            failed = 1;
+        } else {
+            run.started = 1;
+            measured_start = monotonic_ns();
+            if (wait_for_child(&run, &options) != 0) {
+                failed = 1;
+            } else {
+                run.ended = 1;
+            }
+            disable_group(&run);
             run.measured_elapsed_ns = monotonic_ns() - measured_start;
-            (void)wait_for_child(&run, &options);
+            run.measured_elapsed_valid = 1;
         }
-        close(sync_pipe[0]);
-    } else {
-        if (wait_for_child(&run, &options) != 0) {
-            terminate_child(&run);
+    }
+
+    if (failed) {
+        disable_group(&run);
+        if (measured_start != 0 && run.measured_elapsed_ns == 0) {
+            run.measured_elapsed_ns = monotonic_ns() - measured_start;
         }
-        run.ended = run.child_status_valid;
-        disable_events(&run);
-        run.measured_elapsed_ns = monotonic_ns() - measured_start;
+        terminate_process_group(&run);
     }
-    if (run.measured_elapsed_ns == 0 && measured_start != 0) {
-        run.measured_elapsed_ns = monotonic_ns() - measured_start;
+    if (run.marker_read_fd >= 0) close(run.marker_read_fd);
+    if (run.ack_write_fd >= 0) close(run.ack_write_fd);
+    read_events(&run, &options);
+    if (!run.started || (options.start_on_ready &&
+                         (!run.acknowledged || !run.ended || run.sync_failed)) ||
+        command_exit_code(&run) != 0 || failed) {
+        run.sample_valid = 0;
     }
-    read_events(&run);
-    close_events(&run);
-    if (run.thermal_tripped) {
-        run.internal_failure = 1;
-    }
-    if (write_result(&options, &run, argc, argv) != 0) {
+    final_code = command_exit_code(&run);
+    result_write_status = write_result(&options, &run, argc, argv);
+    close_event_fds(&run);
+    if (result_write_status != 0) {
         return 2;
     }
-    return command_exit_code(&run);
+    if (strcmp(result_status(&run), "failed") == 0) {
+        return final_code != 0 ? final_code : 2;
+    }
+    return final_code;
 }

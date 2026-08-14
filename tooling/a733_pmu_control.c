@@ -5,31 +5,41 @@
 #include <errno.h>
 #include <getopt.h>
 #include <inttypes.h>
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+enum {
+    ACK_FD = 8,
+    MARKER_FD = 9,
+};
+
 static int write_marker(char marker) {
-    const char *fd_text = getenv("A733_PMU_SYNC_FD");
-    char *end = NULL;
-    long fd_number;
     ssize_t written;
 
-    if (fd_text == NULL || *fd_text == '\0') {
-        return 0;
-    }
-    errno = 0;
-    fd_number = strtol(fd_text, &end, 10);
-    if (errno != 0 || end == fd_text || *end != '\0' || fd_number < 0 || fd_number > INT_MAX) {
-        return -1;
-    }
     do {
-        written = write((int)fd_number, &marker, 1);
+        written = write(MARKER_FD, &marker, 1);
     } while (written < 0 && errno == EINTR);
     return written == 1 ? 0 : -1;
+}
+
+static int wait_for_ack(void) {
+    char ack = '\0';
+    ssize_t bytes;
+
+    do {
+        bytes = read(ACK_FD, &ack, 1);
+    } while (bytes < 0 && errno == EINTR);
+    if (bytes != 1) {
+        return -1;
+    }
+    if (ack != 'A') {
+        errno = EPROTO;
+        return -1;
+    }
+    return 0;
 }
 
 static int parse_positive(const char *text, uint64_t *value) {
@@ -133,6 +143,10 @@ int main(int argc, char **argv) {
     }
     if (write_marker('S') != 0) {
         fprintf(stderr, "could not write start marker: %s\n", strerror(errno));
+        return 2;
+    }
+    if (wait_for_ack() != 0) {
+        fprintf(stderr, "could not read parent acknowledgement: %s\n", strerror(errno));
         return 2;
     }
     if (strcmp(mode, "cpu") == 0) {

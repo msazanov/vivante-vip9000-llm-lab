@@ -1,0 +1,1 @@
+uid=1000(orangepi) gid=1000(orangepi) groups=1000(orangepi),5(tty),6(disk),20(dialout),27(sudo),29(audio),44(video),46(plugdev),60(games),100(users),102(input),107(netdev),996(docker),999(systemd-journal)

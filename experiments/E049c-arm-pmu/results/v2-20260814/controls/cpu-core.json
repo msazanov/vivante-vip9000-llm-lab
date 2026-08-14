@@ -1,0 +1,23 @@
+{
+  "schema_version": "e049c-arm-pmu/v2",
+  "status": "ok",
+  "sample_valid": true,
+  "event_source": "armv8_pmuv3_raw_config",
+  "counter_semantics": "event counts only; no DDR-byte conversion",
+  "event_group": "core",
+  "event_group_capacity": 4,
+  "min_running_ratio": 0.950000,
+  "pid": 188418,
+  "process_group": 188418,
+  "command": ["./a733-pmu-control", "--mode", "cpu", "--iterations", "1000000"],
+  "sync": {"mode": "start_ack_end", "started": true, "acknowledged": true, "ended": true},
+  "measured_elapsed_ns": 11114999,
+  "thermal": {"guard_enabled": true, "checked": true, "readable": true, "limit_c": 85.000, "max_observed_c": 36.332, "tripped": false},
+  "exit": {"code": 0, "raw_wait_status": 0},
+  "failure_reason": null,
+  "events": [
+    {"name": "cpu_cycles", "config": "0x11", "meaning": "ARMv8 PMUv3 CPU_CYCLES event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 16347891, "time_enabled_ns": 10323333, "time_running_ns": 10323333, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "instructions", "config": "0x8", "meaning": "ARMv8 PMUv3 INST_RETIRED event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 15109612, "time_enabled_ns": 10323333, "time_running_ns": 10323333, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "stall_backend", "config": "0x24", "meaning": "ARMv8 PMUv3 STALL_BACKEND event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 6135658, "time_enabled_ns": 10323333, "time_running_ns": 10323333, "running_ratio": 1.000000000, "errno": 0, "error": null}
+  ]
+}
