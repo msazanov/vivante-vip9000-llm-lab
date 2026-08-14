@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "repository-experiment-registry/v1",
+  "type": "object",
+  "required": ["schema", "repository", "generated_from", "experiments"],
+  "properties": {
+    "schema": {
+      "const": "repository-experiment-registry/v1"
+    },
+    "repository": {
+      "const": "msazanov/vivante-vip9000-llm-lab"
+    },
+    "generated_from": {
+      "type": "string",
+      "minLength": 1
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/experiment"
+      },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "experiment": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "status",
+        "claim_class",
+        "branch",
+        "commit",
+        "evidence",
+        "metric",
+        "notes",
+        "is_current_best",
+        "end_to_end",
+        "optimization_claim"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^E[0-9]{3}[A-Za-z0-9-]*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "accepted",
+            "rejected",
+            "failed",
+            "diagnostic",
+            "unqualified",
+            "planned"
+          ]
+        },
+        "claim_class": {
+          "enum": [
+            "full_model",
+            "operator",
+            "hardware",
+            "tooling",
+            "diagnostic",
+            "screen",
+            "planned"
+          ]
+        },
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 1
+        },
+        "metric": {
+          "type": "object"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_current_best": {
+          "type": "boolean"
+        },
+        "end_to_end": {
+          "type": "boolean"
+        },
+        "optimization_claim": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "repository_path",
+            "legacy_pointer",
+            "branch_pointer",
+            "external_pointer"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@[0-9a-f]{40}$"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
