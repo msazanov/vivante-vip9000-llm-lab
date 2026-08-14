@@ -401,9 +401,9 @@ def classify_unit_hypothesis(points: Sequence[Mapping[str, float]]) -> dict[str,
     bytes_values = [float(point["bytes"]) for point in points]
     values = [float(point["value"]) for point in points]
     rate_values = [
-        float(point["bytes"]) / (float(point["window_us"]) / 1_000_000.0)
+        float(point["bytes"]) / (float(point["active_us"]) / 1_000_000.0)
         for point in points
-        if float(point["window_us"]) > 0.0
+        if float(point["active_us"]) > 0.0
     ]
     if len(rate_values) != len(points):
         return {"classification": "insufficient", "confidence": "low", "n": len(points)}
@@ -427,8 +427,57 @@ def classify_unit_hypothesis(points: Sequence[Mapping[str, float]]) -> dict[str,
         "n": len(points),
         "r2_gap": gap,
         "volume_fit": volume_fit,
+        "active_rate_fit": rate_fit,
+        # Backward-compatible alias; the independent variable is now
+        # explicitly active duration, never the programmed PMU window.
         "rate_fit": rate_fit,
     }
+
+
+def _scientific_alignment(helper: object) -> Mapping[str, Any] | None:
+    if not isinstance(helper, Mapping):
+        return None
+    planned = helper.get("planned_bytes")
+    actual = helper.get("bytes_read")
+    alignment = helper.get("window_alignment")
+    if (
+        not isinstance(planned, int)
+        or isinstance(planned, bool)
+        or planned <= 0
+        or actual != planned
+        or not isinstance(alignment, Mapping)
+    ):
+        return None
+    active = alignment.get("active_us")
+    tail = alignment.get("idle_tail_us")
+    ratio = alignment.get("elapsed_programmed_ratio")
+    if (
+        alignment.get("workload_fully_contained") is not True
+        or not _finite_positive(active)
+        or not _finite_nonnegative(tail)
+        or not _finite_positive(ratio)
+        or not 1.0 <= float(ratio) <= 1.01
+    ):
+        return None
+    return alignment
+
+
+def _finite_positive(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and float(value) > 0.0
+    )
+
+
+def _finite_nonnegative(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+        and float(value) >= 0.0
+    )
 
 
 def _read_int(path: Path) -> int | None:
@@ -703,17 +752,33 @@ def _sleep_with_thermal(
         time.sleep(min(0.050, max(0.001, deadline - time.monotonic())))
 
 
+def _monotonic_raw_ns() -> int:
+    clock_id = getattr(time, "CLOCK_MONOTONIC_RAW", time.CLOCK_MONOTONIC)
+    return time.clock_gettime_ns(clock_id)
+
+
+def _wait_briefly_until(deadline_ns: int) -> None:
+    """Wait close to an absolute RAW monotonic deadline without 1% overshoot."""
+    remaining_ns = deadline_ns - _monotonic_raw_ns()
+    if remaining_ns <= 0:
+        return
+    if remaining_ns > 2_000_000:
+        time.sleep(min(0.005, (remaining_ns - 1_000_000) / 1_000_000_000.0))
+    else:
+        time.sleep(min(0.0001, remaining_ns / 1_000_000_000.0))
+
+
 def _run_reader(
     helper: Path,
     size_mib: int,
-    duration_ms: int,
+    programmed_window_us: int,
     nsi: SysfsNSI,
     sysfs_root: Path,
     limit_c: float,
     trace: JsonlTrace,
     **fields: Any,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str, Any]]:
-    command = [str(helper), str(size_mib), str(duration_ms)]
+    command = [str(helper), str(size_mib)]
     start_read_fd, start_write_fd = os.pipe()
     environment = dict(os.environ)
     environment["E049_START_FD"] = str(start_read_fd)
@@ -733,58 +798,142 @@ def _run_reader(
     os.close(start_read_fd)
     assert process.stdout is not None
     ready = process.stdout.readline()
-    if ready != "READY\n":
+    if not ready.startswith("READY "):
         process.kill()
         stdout, stderr = process.communicate()
         os.close(start_write_fd)
         raise NSIError(f"helper не подтвердил synchronized READY: {ready!r} {stdout!r} {stderr!r}")
+    try:
+        ready_payload = json.loads(ready.removeprefix("READY "))
+    except json.JSONDecodeError as exc:
+        process.kill()
+        stdout, stderr = process.communicate()
+        os.close(start_write_fd)
+        raise NSIError(f"helper READY не JSON: {ready!r} {stdout!r} {stderr!r}") from exc
+    if not isinstance(ready_payload, dict):
+        process.kill()
+        process.communicate()
+        os.close(start_write_fd)
+        raise NSIError("helper READY должен быть JSON-объектом")
+    window_us = int(programmed_window_us)
+    if "window_us" in fields and int(fields["window_us"]) != window_us:
+        raise NSIError("window_us argument/fields не совпадают")
+    plan = plan_exact_read_bytes(ready_payload, window_us=window_us)
+    trace.record(
+        "helper_ready",
+        mode=fields.get("mode", "read"),
+        buffer_mib=size_mib,
+        window_us=window_us,
+        helper_ready=ready_payload,
+        read_plan=plan,
+    )
     original = nsi.read_timer()
     blocked = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
     old_mask = signal.pthread_sigmask(signal.SIG_BLOCK, blocked)
+    pmu_arm_before_ns = 0
+    pmu_arm_after_ns = 0
+    pmu_deadline_earliest_ns = 0
+    pmu_deadline_latest_ns = 0
     try:
         # Counter window begins before the first workload read. The helper was
-        # already allocated/touched and is blocked on this one-byte gate.
-        nsi.write_timer(int(fields["window_us"]))
-        os.write(start_write_fd, b"S")
+        # already allocated/touched/calibrated and is blocked on this gate.
+        pmu_arm_before_ns = _monotonic_raw_ns()
+        nsi.write_timer(window_us)
+        pmu_arm_after_ns = _monotonic_raw_ns()
+        pmu_deadline_earliest_ns = pmu_arm_before_ns + window_us * 1000
+        pmu_deadline_latest_ns = pmu_arm_after_ns + window_us * 1000
+        os.write(
+            start_write_fd,
+            f"{plan['planned_bytes']} {pmu_deadline_earliest_ns}\n".encode("ascii"),
+        )
     finally:
         os.close(start_write_fd)
         signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
     samples: list[dict[str, Any]] = []
     thermal_abort: ThermalAbort | None = None
     read_pmu: dict[str, Any]
+    stdout = ready
+    stderr = ""
+    result: dict[str, Any] | None = None
     try:
+        next_thermal_ns = _monotonic_raw_ns()
         while process.poll() is None:
-            try:
-                state = _check_thermal(sysfs_root, limit_c)
-            except ThermalAbort as exc:
-                thermal_abort = exc
+            now_ns = _monotonic_raw_ns()
+            if now_ns >= pmu_deadline_earliest_ns:
                 process.send_signal(signal.SIGTERM)
                 break
-            sample = trace.record(
-                "sample",
-                mode=fields.get("mode", "read"),
-                phase="read",
-                buffer_mib=size_mib,
-                window_us=fields.get("window_us"),
-                pmu=nsi.snapshot(),
-                telemetry=state,
-            )
-            samples.append(sample)
-            time.sleep(0.010)
-        read_pmu = nsi.snapshot()
-        stdout_tail, stderr = process.communicate()
+            if now_ns >= next_thermal_ns:
+                try:
+                    state = _check_thermal(sysfs_root, limit_c)
+                except ThermalAbort as exc:
+                    thermal_abort = exc
+                    process.send_signal(signal.SIGTERM)
+                    break
+                samples.append({
+                    "phase": "active",
+                    "monotonic_raw_ns": now_ns,
+                    "telemetry": state,
+                })
+                next_thermal_ns = now_ns + 50_000_000
+            _wait_briefly_until(min(pmu_deadline_earliest_ns, now_ns + 1_000_000))
+        stdout_tail, stderr = process.communicate(timeout=2)
         stdout = ready + stdout_tail
+        if process.returncode == 0:
+            result = _json_from_stdout(stdout)
+        while _monotonic_raw_ns() < pmu_deadline_latest_ns:
+            now_ns = _monotonic_raw_ns()
+            if now_ns >= next_thermal_ns:
+                state = _check_thermal(sysfs_root, limit_c)
+                samples.append({
+                    "phase": "idle_tail",
+                    "monotonic_raw_ns": now_ns,
+                    "telemetry": state,
+                })
+                next_thermal_ns = now_ns + 50_000_000
+            _wait_briefly_until(pmu_deadline_latest_ns)
+        pmu_read_start_ns = _monotonic_raw_ns()
+        read_pmu = nsi.snapshot()
+        pmu_read_end_ns = _monotonic_raw_ns()
     finally:
+        if process.poll() is None:
+            process.kill()
+            process.communicate()
         nsi.write_timer(original)
         if nsi.read_timer() != original:
             raise TimerRestoreFailure(f"read-window не восстановил pmu_timer={original}")
+    for sample in samples:
+        trace.record(
+            "sample",
+            mode=fields.get("mode", "read"),
+            phase=sample["phase"],
+            buffer_mib=size_mib,
+            window_us=window_us,
+            monotonic_raw_ns=sample["monotonic_raw_ns"],
+            telemetry=sample["telemetry"],
+        )
     if thermal_abort is not None:
         raise thermal_abort
     if process.returncode != 0:
         raise NSIError(
             f"helper завершился с кодом {process.returncode}; stdout={stdout!r}; stderr={stderr!r}"
         )
-    result = _json_from_stdout(stdout)
+    if result is None or result.get("status") != "done":
+        raise NSIError(f"helper не подтвердил DONE: {result!r}")
+    if result.get("deadline_ns") != pmu_deadline_earliest_ns:
+        raise NSIError("helper deadline не совпадает с conservative PMU deadline")
+    alignment = validate_window_alignment({
+        "programmed_window_us": window_us,
+        "pmu_arm_before_ns": pmu_arm_before_ns,
+        "pmu_arm_after_ns": pmu_arm_after_ns,
+        "pmu_deadline_earliest_ns": pmu_deadline_earliest_ns,
+        "pmu_deadline_latest_ns": pmu_deadline_latest_ns,
+        "pmu_read_start_ns": pmu_read_start_ns,
+        "pmu_read_end_ns": pmu_read_end_ns,
+        "workload_start_ns": result.get("workload_start_ns"),
+        "workload_end_ns": result.get("workload_end_ns"),
+        "planned_bytes": plan["planned_bytes"],
+        "bytes_read": result.get("bytes_read"),
+    })
     trace.record(
         "helper_result",
         mode=fields.get("mode", "read"),
@@ -794,9 +943,11 @@ def _run_reader(
         helper_result=result,
         helper_stdout=stdout,
         helper_stderr=stderr,
+        window_alignment=alignment,
     )
-    result["window_us"] = int(fields["window_us"])
-    result["window_alignment"] = "helper-ready -> arm-pmu -> release-helper -> helper-stop -> pmu-read"
+    result["window_us"] = window_us
+    result["read_plan"] = plan
+    result["window_alignment"] = alignment
     return result, samples, read_pmu
 
 
@@ -828,6 +979,11 @@ def summarize(
     """Собрать fit/R²/CV и классификацию единиц для каждого PMU-сигнала."""
     index = _master_index(master_names)
     signals = list(SysfsNSI.COUNTER_FILES)
+    read_candidates = [point for point in points if point.get("mode") == "read"]
+    accepted_read_points = [
+        point for point in read_candidates
+        if _scientific_alignment(point.get("helper_result")) is not None
+    ]
     signal_summaries: dict[str, Any] = {}
     for signal_name in signals:
         read_points = []
@@ -849,10 +1005,14 @@ def summarize(
                 cell_key = f"{point.get('buffer_mib')}MiB@{point.get('window_us')}us"
                 cell_values.setdefault(cell_key, []).append(value)
                 helper = point.get("helper_result")
-                bytes_read = float(helper.get("bytes_read", 0.0)) if isinstance(helper, Mapping) else 0.0
+                alignment = _scientific_alignment(helper)
+                if alignment is None:
+                    continue
+                assert isinstance(helper, Mapping)
+                bytes_read = float(helper["bytes_read"])
                 read_points.append({
                     "bytes": bytes_read,
-                    "window_us": float(point.get("window_us", 0.0)),
+                    "active_us": float(alignment["active_us"]),
                     "value": value,
                 })
         unit = classify_unit_hypothesis(read_points)
@@ -886,12 +1046,23 @@ def summarize(
         "selected_channel_name": master_names[index] if master_names else None,
         "selected_channel_role": "reported aggregate channel; not proven sum",
         "point_count": len(points),
+        "alignment_gate": {
+            "accepted_points": len(accepted_read_points),
+            "rejected_points": len(read_candidates) - len(accepted_read_points),
+            "requirements": [
+                "bytes_read == planned_bytes",
+                "workload_fully_contained == true",
+                "1.0 <= elapsed_programmed_ratio <= 1.01",
+                "finite active_us > 0",
+                "finite idle_tail_us >= 0",
+            ],
+        },
         "thermal_max_c": thermal_maxima,
         "signals": signal_summaries,
         "interpretation_ru": {
             "pmu_timer": "kernel computes clk_hz/1_000_000*value: sysfs value is microseconds",
             "bandwidth_data_unit": "числа уже масштабированы data-unit; деление на timer не подтверждено",
-            "classification": "rate/volume — статистическая гипотеза по двум наборам размеров и окон",
+            "classification": "volume fit uses exact contained bytes; rate fit uses exact bytes / active_us",
             "idle_ratio": "медиана idle-сигнала / медиана read-сигнала; это не физическая единица",
         },
     }
@@ -908,14 +1079,14 @@ def _summary_markdown(summary: Mapping[str, Any]) -> str:
         "Классификация `rate`/`volume` — только fit-гипотеза. Она не заменяет "
         "документирование аппаратных единиц; сырые значения сохранены в `raw.jsonl`.",
         "",
-        "| Сигнал (reported aggregate channel) | Гипотеза | Уверенность | R² volume | R² rate | idle ratio | CV read |",
+        "| Сигнал (reported aggregate channel) | Гипотеза | Уверенность | R² volume | R² active-rate | idle ratio | CV read |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for name, value in (summary.get("signals") or {}).items():
         if not isinstance(value, Mapping):
             continue
         volume = value.get("volume_fit") or {}
-        rate = value.get("rate_fit") or {}
+        rate = value.get("active_rate_fit") or {}
         lines.append(
             f"| `{name}` | {value.get('classification', 'n/a')} | "
             f"{value.get('confidence', 'n/a')} | {volume.get('r2', 'n/a')} | "
@@ -1049,12 +1220,11 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
                     trace.record("measurement", **idle_point)
 
                     # Новое окно сбрасывает counters перед известным read-stream.
-                    duration_ms = max(1, math.ceil(window_us / 1000.0))
                     thermal_before_read = _check_thermal(args.sysfs_root, thermal_limit)
                     helper_result, samples, read_pmu = _run_reader(
                         helper,
                         size_mib,
-                        duration_ms,
+                        window_us,
                         nsi,
                         args.sysfs_root,
                         thermal_limit,
@@ -1185,6 +1355,33 @@ def _emit_watchdog_failure(args: argparse.Namespace, result: Mapping[str, Any]) 
     _write_json(output_dir / "summary.partial.json", partial)
 
 
+def _emit_setup_failure(args: argparse.Namespace, exc: BaseException) -> None:
+    """Persist failures that happen before the watchdog child can start."""
+    output_dir: Path = args.output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    failure = {
+        "schema": SCHEMA,
+        "status": "setup_failure",
+        "timestamp_utc": _utc_now(),
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+        "traceback": traceback.format_exc(),
+    }
+    _write_json(output_dir / "failure.json", failure)
+    JsonlTrace(
+        output_dir / "raw.jsonl",
+        f"e049-setup-{uuid.uuid4().hex[:8]}",
+    ).record("setup_failure", **failure)
+    _write_json(output_dir / "summary.partial.json", {
+        "schema": SCHEMA,
+        "status": "setup_failure",
+        "partial": True,
+        "unit_classification": "not-computed",
+        "error_type": type(exc).__name__,
+        "error": str(exc),
+    })
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -1195,6 +1392,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         resolve_pinned_helper(Path(__file__))
         result = run_under_watchdog(nsi, lambda: _child_main(args))
     except BaseException as exc:
+        try:
+            _emit_setup_failure(args, exc)
+        except BaseException as evidence_exc:
+            print(f"setup evidence write failed: {evidence_exc}", file=sys.stderr)
         print(f"watchdog setup/restore failed: {exc}", file=sys.stderr)
         return 4
     if result["exit_code"] != 0:

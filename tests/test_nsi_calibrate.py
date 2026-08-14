@@ -12,6 +12,7 @@ import unittest
 from pathlib import Path
 
 from tooling.nsi_calibrate import (
+    JsonlTrace,
     NSIError,
     SysfsNSI,
     TimerRestoreFailure,
@@ -26,6 +27,8 @@ from tooling.nsi_calibrate import (
     validate_thermal_limit,
     validate_window_alignment,
     write_partial_failure,
+    _run_reader,
+    main,
 )
 
 
@@ -108,6 +111,40 @@ class NsiCalibrationUnitTest(unittest.TestCase):
         for mutation in mutations:
             with self.subTest(mutation=mutation), self.assertRaises(NSIError):
                 validate_window_alignment({**alignment, **mutation})
+
+    def test_reader_finishes_exact_bytes_then_holds_idle_to_pmu_deadline(self) -> None:
+        repo = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binary = root / "nsi_sequential_read"
+            compiled = subprocess.run(
+                ["cc", "-O2", "-std=c11", "-Wall", "-Wextra", "-Werror",
+                 "-pedantic", str(repo / "tooling" / "nsi_sequential_read.c"),
+                 "-o", str(binary)], text=True, capture_output=True)
+            self.assertEqual(compiled.returncode, 0, compiled.stderr)
+            nsi = SysfsNSI(
+                make_fake_sysfs(root / "nsi", timer=17),
+                allow_test_filesystem=True,
+            )
+            trace = JsonlTrace(root / "raw.jsonl", "host-integration")
+            result, samples, _snapshot = _run_reader(
+                binary,
+                1,
+                100_000,
+                nsi,
+                root / "empty-sysfs",
+                85.0,
+                trace,
+                mode="read",
+                window_us=100_000,
+            )
+            alignment = result["window_alignment"]
+            self.assertEqual(result["bytes_read"], result["planned_bytes"])
+            self.assertTrue(alignment["workload_fully_contained"])
+            self.assertGreater(alignment["idle_tail_us"], 0.0)
+            self.assertLessEqual(alignment["elapsed_programmed_ratio"], 1.01)
+            self.assertEqual(nsi.read_timer(), 17)
+            self.assertIsInstance(samples, list)
 
     def test_c_helper_reports_exact_architected_load_bytes(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -254,7 +291,7 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             for timer_ms in (100, 250, 500, 1000):
                 x = float(size * 1024 * 1024)
                 y = 7.0 * x / (timer_ms / 1000.0)
-                points.append({"bytes": x, "window_us": timer_ms * 1000, "value": y})
+                points.append({"bytes": x, "active_us": timer_ms * 1000, "value": y})
         fit = fit_line([p["bytes"] for p in points], [p["value"] for p in points])
         self.assertGreaterEqual(fit["r2"], 0.0)
         result = classify_unit_hypothesis(points)
@@ -282,6 +319,71 @@ class NsiCalibrationUnitTest(unittest.TestCase):
         self.assertAlmostEqual(cells["32MiB@100000us"], 0.081649658, places=6)
         self.assertEqual(summary["selected_channel_role"], "reported aggregate channel; not proven sum")
 
+    def test_summary_fits_exact_bytes_and_active_rate_separately(self) -> None:
+        points = []
+        for bytes_read, active_us in (
+            (8_000_000, 10_000.0),
+            (16_000_000, 40_000.0),
+            (24_000_000, 20_000.0),
+            (32_000_000, 80_000.0),
+        ):
+            points.append({
+                "mode": "read",
+                "buffer_mib": 32,
+                "window_us": 100_000,
+                "pmu": {"pmu_bandwidth_rd": [3.0 * bytes_read]},
+                "helper_result": {
+                    "planned_bytes": bytes_read,
+                    "bytes_read": bytes_read,
+                    "window_alignment": {
+                        "active_us": active_us,
+                        "idle_tail_us": 100_000.0 - active_us,
+                        "elapsed_programmed_ratio": 1.001,
+                        "workload_fully_contained": True,
+                    },
+                },
+                "telemetry": {"thermal_c": {"cpu": 40.0}},
+            })
+        summary = summarize(
+            points,
+            ["total"],
+            original_timer_raw=0,
+            thermal_limit_c=85.0,
+            status="complete",
+        )
+        signal = summary["signals"]["pmu_bandwidth_rd"]
+        self.assertEqual(signal["classification"], "volume")
+        self.assertGreater(signal["volume_fit"]["r2"], 0.999)
+        self.assertLess(signal["active_rate_fit"]["r2"], 0.9)
+        self.assertEqual(summary["alignment_gate"]["rejected_points"], 0)
+
+    def test_summary_rejects_unaligned_read_point_from_scientific_fit(self) -> None:
+        point = {
+            "mode": "read", "buffer_mib": 32, "window_us": 100_000,
+            "pmu": {"pmu_bandwidth_rd": [123]},
+            "helper_result": {
+                "planned_bytes": 4096,
+                "bytes_read": 4096,
+                "window_alignment": {
+                    "active_us": 50_000.0,
+                    "idle_tail_us": 50_000.0,
+                    "elapsed_programmed_ratio": 1.02,
+                    "workload_fully_contained": True,
+                },
+            },
+            "telemetry": {"thermal_c": {}},
+        }
+        summary = summarize(
+            [point], ["total"], original_timer_raw=0,
+            thermal_limit_c=85.0, status="complete",
+        )
+        self.assertEqual(summary["alignment_gate"]["accepted_points"], 0)
+        self.assertEqual(summary["alignment_gate"]["rejected_points"], 1)
+        self.assertEqual(
+            summary["signals"]["pmu_bandwidth_rd"]["classification"],
+            "insufficient",
+        )
+
     def test_failure_always_emits_failure_trace_and_partial_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp)
@@ -293,6 +395,25 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             events = [__import__("json").loads(line)["event"] for line in
                       (output / "raw.jsonl").read_text(encoding="utf-8").splitlines()]
             self.assertIn("failure", events)
+
+    def test_setup_nan_failure_emits_raw_and_partial_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "setup-failure"
+            exit_code = main([
+                "--output-dir", str(output),
+                "--thermal-limit-c", "nan",
+            ])
+            self.assertEqual(exit_code, 4)
+            failure = __import__("json").loads(
+                (output / "failure.json").read_text(encoding="utf-8"))
+            self.assertEqual(failure["status"], "setup_failure")
+            partial = __import__("json").loads(
+                (output / "summary.partial.json").read_text(encoding="utf-8"))
+            self.assertTrue(partial["partial"])
+            self.assertEqual(partial["status"], "setup_failure")
+            events = [__import__("json").loads(line)["event"] for line in
+                      (output / "raw.jsonl").read_text(encoding="utf-8").splitlines()]
+            self.assertIn("setup_failure", events)
 
     def test_raw_thermal_maxima_uses_all_sample_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
