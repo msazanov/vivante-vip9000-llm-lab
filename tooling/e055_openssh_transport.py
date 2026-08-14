@@ -121,6 +121,13 @@ class E055OpenSSHConfig:
     identity_file: Path | None = field(default=None, repr=False)
     agent_socket: Path | None = field(default=None, repr=False)
     connect_timeout_seconds: int = 10
+    _test_only_client_paths: bool = field(default=False, repr=False, compare=False)
+
+    @classmethod
+    def for_test(cls, **values: Any) -> "E055OpenSSHConfig":
+        """Construct an explicit non-operational fake-client test fixture."""
+
+        return cls(_test_only_client_paths=True, **values)
 
     def __post_init__(self) -> None:
         if not isinstance(self.host, str) or HOST_RE.fullmatch(self.host) is None or \
@@ -131,6 +138,8 @@ class E055OpenSSHConfig:
                 type(self.connect_timeout_seconds) is not int or \
                 not 1 <= self.connect_timeout_seconds <= 60:
             raise ValueError("endpoint numeric bounds are invalid")
+        if type(self._test_only_client_paths) is not bool:
+            raise ValueError("test-only client mode must be one strict boolean")
         if not isinstance(self.expected_host_key_fingerprint, str) or \
                 HOST_KEY_RE.fullmatch(self.expected_host_key_fingerprint) is None or \
                 not isinstance(self.expected_board_identity, str) or \
@@ -157,6 +166,11 @@ class E055OpenSSHConfig:
             _, status = _sha256_file(binary, 32 * 1024 * 1024)
             if stat.S_IMODE(status.st_mode) != 0o755:
                 raise ValueError("OpenSSH executable mode is invalid")
+        if not self._test_only_client_paths and (
+            self.ssh_path != Path("/usr/bin/ssh")
+            or self.sftp_path != Path("/usr/bin/sftp")
+        ):
+            raise ValueError("operational mode requires exact system OpenSSH clients")
         _sha256_file(self.known_hosts_file, 1024 * 1024)
         _sha256_file(self.helper_source_path, 1024 * 1024)
         if (self.identity_file is None) == (self.agent_socket is None):
@@ -188,9 +202,15 @@ class E055OpenSSHTransport:
         self._lock_path: str | None = None
         self._helper_bootstrapped = False
         self._exclusive_attempted = False
+        self._bootstrap_cleanup_attempted = False
+        self._helper_remote_identity: tuple[int, int] | None = None
         self._capture_sequence = 2
         self.retained_restore_evidence: dict[str, Any] | None = None
         self.retained_finalization_evidence: dict[str, Any] | None = None
+
+    @property
+    def bootstrap_cleanup_attempted(self) -> bool:
+        return self._bootstrap_cleanup_attempted
 
     @property
     def _actual_options(self) -> tuple[str, ...]:
@@ -355,27 +375,33 @@ class E055OpenSSHTransport:
             or not path.startswith(DEPLOYMENT_BASE) for path in safe_paths
         ):
             raise OpenSSHTransportError("helper_path_invalid")
-        create = (
+        create_parents = (
             f"-mkdir {DEPLOYMENT_BASE}\n"
             f"-mkdir {DEPLOYMENT_BASE}/helpers\n"
             f"-mkdir {DEPLOYMENT_BASE}/helpers/staging\n"
-            f"mkdir {stage_dir}\n"
         ).encode("ascii")
+        create_stage = f"mkdir {stage_dir}\n".encode("ascii")
         upload = (
             f"put {self._config.helper_source_path.as_posix()} {stage_helper}\n"
             f"chmod 700 {stage_helper}\n"
         ).encode("ascii")
         promote = f"rename {stage_dir} {target_dir}\n".encode("ascii")
         cleanup = f"-rm {stage_helper}\n-rmdir {stage_dir}\n".encode("ascii")
-        self._sftp(create, "sftp_bootstrap_failed")
+        stage_owned = False
         try:
+            self._sftp(create_parents, "sftp_bootstrap_failed")
+            self._sftp(create_stage, "sftp_bootstrap_failed")
+            stage_owned = True
             self._sftp(upload, "sftp_bootstrap_failed")
             self._sftp(promote, "sftp_bootstrap_failed")
+            stage_owned = False
         except OpenSSHTransportError:
-            try:
-                self._sftp(cleanup, "sftp_cleanup_failed")
-            except OpenSSHTransportError:
-                pass
+            self._bootstrap_cleanup_attempted = True
+            if stage_owned:
+                try:
+                    self._sftp(cleanup, "sftp_cleanup_failed")
+                except OpenSSHTransportError:
+                    pass
             raise
         self._helper_bootstrapped = True
 
@@ -443,7 +469,9 @@ class E055OpenSSHTransport:
                 runtime.request_nonce != request["request_nonce"] or \
                 runtime.helper_path != self._helper_remote or \
                 runtime.helper_sha256 != self._helper_sha256 or \
-                runtime.helper_size_bytes != len(self._helper_payload):
+                runtime.helper_size_bytes != len(self._helper_payload) or \
+                type(runtime.helper_device) is not int or runtime.helper_device < 0 or \
+                type(runtime.helper_inode) is not int or runtime.helper_inode <= 0:
             raise OpenSSHTransportError("runtime_identity_mismatch")
         return runtime
 
@@ -491,6 +519,9 @@ class E055OpenSSHTransport:
 
     def implementation_evidence(self) -> TransportImplementationEvidence:
         ssh_hash, ssh_status = _sha256_file(self._config.ssh_path, 32 * 1024 * 1024)
+        sftp_hash, sftp_status = _sha256_file(
+            self._config.sftp_path, 32 * 1024 * 1024,
+        )
         known_hosts_hash, _ = _sha256_file(
             self._config.known_hosts_file, 1024 * 1024,
         )
@@ -527,10 +558,14 @@ class E055OpenSSHTransport:
         digest = hashlib.sha256(("\n".join(options) + "\n").encode("ascii")).hexdigest()
         return TransportImplementationEvidence(
             "e055-openssh-implementation/v1", "openssh_fixed_helper",
+            "test_fixture_clients" if self._config._test_only_client_paths
+            else "operational_system_clients",
             "tooling/e055_remote_helper.py", self._helper_sha256,
             len(self._helper_payload), helper_blob,
             self._config.ssh_path.as_posix(), ssh_hash,
             ssh_status.st_size, stat.S_IMODE(ssh_status.st_mode), version,
+            self._config.sftp_path.as_posix(), sftp_hash,
+            sftp_status.st_size, stat.S_IMODE(sftp_status.st_mode),
             "/dev/null", options, digest, known_hosts_hash,
             target_endpoint_sha256, "external_agent_or_identity",
         )
@@ -572,11 +607,15 @@ class E055OpenSSHTransport:
                 exact["lock_acquired_exclusively"] is not True or \
                 exact["deployment_created_exclusively"] is not True:
             raise OpenSSHTransportError("exclusive_receipt_mismatch")
+        runtime = self._runtime(exact["runtime"], request)
+        self._helper_remote_identity = (
+            runtime.helper_device, runtime.helper_inode,
+        )
         return ExclusiveDeploymentReceipt(
             exact["schema"], 1, request_id, request_nonce, deployment_root, lock_path,
             True, True, self._identity(exact["endpoint_identity"]),
             self._observations(exact["artifacts"], request, artifacts),
-            self._runtime(exact["runtime"], request),
+            runtime,
         )
 
     def readback(
@@ -598,11 +637,16 @@ class E055OpenSSHTransport:
                 exact["request_nonce"] != request_nonce or \
                 exact["deployment_root"] != deployment_root:
             raise OpenSSHTransportError("readback_mismatch")
+        runtime = self._runtime(exact["runtime"], request)
+        identity = (runtime.helper_device, runtime.helper_inode)
+        if self._helper_remote_identity is None or \
+                identity != self._helper_remote_identity:
+            raise OpenSSHTransportError("runtime_identity_mismatch")
         return FreshReadbackProof(
             exact["schema"], 2, request_id, request_nonce, deployment_root,
             self._identity(exact["endpoint_identity"]),
             self._observations(exact["artifacts"], request, artifacts),
-            self._runtime(exact["runtime"], request),
+            runtime,
         )
 
     def capture(
@@ -696,7 +740,12 @@ class E055OpenSSHTransport:
                 exact_final["request_id"] != final_id or \
                 exact_final["request_nonce"] != final_nonce or \
                 exact_final["helper_removed"] is not True or \
-                exact_final["helper_sha256"] != self._helper_sha256:
+                exact_final["helper_sha256"] != self._helper_sha256 or \
+                type(exact_final["helper_device"]) is not int or \
+                type(exact_final["helper_inode"]) is not int or \
+                self._helper_remote_identity is None or \
+                (exact_final["helper_device"], exact_final["helper_inode"]) != \
+                self._helper_remote_identity:
             raise OpenSSHTransportError("finalization_response_mismatch")
         self.retained_finalization_evidence = dict(exact_final)
         self._helper_bootstrapped = False

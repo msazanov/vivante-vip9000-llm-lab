@@ -37,12 +37,15 @@ HELPER_PATH = ROOT / "tooling/e055_remote_helper.py"
 HELPER_PAYLOAD = HELPER_PATH.read_bytes()
 HELPER_SHA256 = hashlib.sha256(HELPER_PAYLOAD).hexdigest()
 HELPER_BLOB = subprocess.run(
-    ["git", "rev-parse", "HEAD:tooling/e055_remote_helper.py"], cwd=ROOT,
+    ["git", "hash-object", "tooling/e055_remote_helper.py"], cwd=ROOT,
     check=True, text=True, stdout=subprocess.PIPE,
 ).stdout.strip()
 OPENSSH_PATH = Path("/usr/bin/ssh")
 OPENSSH_PAYLOAD = OPENSSH_PATH.read_bytes()
 OPENSSH_SHA256 = hashlib.sha256(OPENSSH_PAYLOAD).hexdigest()
+SFTP_PATH = Path("/usr/bin/sftp")
+SFTP_PAYLOAD = SFTP_PATH.read_bytes()
+SFTP_SHA256 = hashlib.sha256(SFTP_PAYLOAD).hexdigest()
 KNOWN_HOSTS_SHA256 = "1" * 64
 TARGET_ENDPOINT_SHA256 = "2" * 64
 FAKE_BOARD = "sha256:" + "3" * 64
@@ -65,7 +68,8 @@ def fixture_expected_pins() -> ExpectedTransportPins:
         "e055-expected-transport-pins/v1", "pinned_host_key", "fake-transport",
         FAKE_BOARD, FAKE_FINGERPRINT, KNOWN_HOSTS_SHA256,
         TARGET_ENDPOINT_SHA256, HELPER_SHA256, len(HELPER_PAYLOAD), HELPER_BLOB,
-        OPENSSH_SHA256, len(OPENSSH_PAYLOAD),
+        OPENSSH_PATH.as_posix(), OPENSSH_SHA256, len(OPENSSH_PAYLOAD), 0o755,
+        SFTP_PATH.as_posix(), SFTP_SHA256, len(SFTP_PAYLOAD), 0o755,
     )
 
 
@@ -83,10 +87,12 @@ class FakeTransport:
     def implementation_evidence(self) -> TransportImplementationEvidence:
         return TransportImplementationEvidence(
             "e055-openssh-implementation/v1", "openssh_fixed_helper",
+            "operational_system_clients",
             "tooling/e055_remote_helper.py", self.helper_sha256,
             len(HELPER_PAYLOAD), HELPER_BLOB, "/usr/bin/ssh", OPENSSH_SHA256,
-            len(OPENSSH_PAYLOAD), 0o755, "OpenSSH_9.9p2", "/dev/null",
-            CLIENT_CONFIG,
+            len(OPENSSH_PAYLOAD), 0o755, "OpenSSH_9.9p2",
+            SFTP_PATH.as_posix(), SFTP_SHA256, len(SFTP_PAYLOAD), 0o755,
+            "/dev/null", CLIENT_CONFIG,
             hashlib.sha256(("\n".join(CLIENT_CONFIG) + "\n").encode("ascii")).hexdigest(),
             KNOWN_HOSTS_SHA256, TARGET_ENDPOINT_SHA256,
             "external_agent_or_identity",
@@ -475,6 +481,26 @@ class E055TargetExecutorTest(unittest.TestCase):
             self.executor(transport).execute("phase-no-proof")
         self.assertEqual(transport.captures, [])
         self.assertEqual(transport.restored, 1)
+
+    def test_local_pin_mismatch_refuses_before_any_prepare_activity(self) -> None:
+        mutations = (
+            {"known_hosts_sha256": "f" * 64},
+            {"openssh_sha256": "e" * 64},
+            {"sftp_sha256": "d" * 64},
+            {"helper_source_sha256": "c" * 64},
+            {"helper_git_blob_oid": "b" * 40},
+        )
+        for index, changes in enumerate(mutations):
+            with self.subTest(changes=changes):
+                transport = FakeTransport()
+                forged = replace(self.expected_pins, **changes)
+                executor = E055TargetExecutor(
+                    self.root, transport=transport,
+                    expected_transport_pins=forged,
+                )
+                with self.assertRaises(ValueError):
+                    executor.execute(f"phase-local-pin-mismatch-{index}")
+                self.assertNotIn("prepare", transport.actions)
 
     def test_forged_or_nonindependent_transport_proof_refuses_before_capture(self) -> None:
         mutations = (

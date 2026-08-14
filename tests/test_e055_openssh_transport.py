@@ -46,6 +46,10 @@ def record(kind, stdin):
 if pathlib.Path(sys.argv[0]).name == "sftp":
     payload = sys.stdin.buffer.read()
     record("sftp", payload)
+    calls = [json.loads(line) for line in log.read_text(encoding="ascii").splitlines()]
+    sftp_index = sum(item["kind"] == "sftp" for item in calls)
+    if state.get("sftp_exit_on_call") == sftp_index:
+        raise SystemExit(1)
     raise SystemExit(state.get("sftp_exit", 0))
 if sys.argv[1:] == ["-V"]:
     sys.stderr.write("OpenSSH_9.9p2, OpenSSL test\n")
@@ -123,7 +127,8 @@ elif operation == "finalize_helper":
                 "operation_sequence": sequence, "request_id": request_id,
                 "request_nonce": nonce, "helper_removed": True,
                 "helper_sha256": state["helper_sha256"],
-                "helper_device": 7, "helper_inode": 9001}
+                "helper_device": 8 if state.get("wrong_helper_identity") else 7,
+                "helper_inode": 9002 if state.get("wrong_helper_identity") else 9001}
 else:
     raise SystemExit(64)
 sys.stdout.write(json.dumps(response, sort_keys=True, separators=(",", ":")) + "\n")
@@ -180,7 +185,7 @@ class FakeOpenSSHBoundary:
         state.update(changes)
         state_path.write_text(json.dumps(state, sort_keys=True), encoding="ascii")
 
-    def config(self, **changes) -> E055OpenSSHConfig:
+    def config_values(self, **changes) -> dict:
         values = dict(
             host="board.test", port=2222, username="fixture-user",
             endpoint_label="fixture-a733", known_hosts_file=self.known_hosts,
@@ -190,7 +195,10 @@ class FakeOpenSSHBoundary:
             identity_file=self.identity, connect_timeout_seconds=3,
         )
         values.update(changes)
-        return E055OpenSSHConfig(**values)
+        return values
+
+    def config(self, **changes) -> E055OpenSSHConfig:
+        return E055OpenSSHConfig.for_test(**self.config_values(**changes))
 
     def expected_pins(self) -> ExpectedTransportPins:
         helper_blob = subprocess.run(
@@ -201,12 +209,16 @@ class FakeOpenSSHBoundary:
             b"e055-target-endpoint/v1\0board.test\0" + b"2222"
         ).hexdigest()
         ssh_payload = self.ssh.read_bytes()
+        sftp_payload = self.sftp.read_bytes()
         return ExpectedTransportPins(
             "e055-expected-transport-pins/v1", "pinned_host_key",
             "fixture-a733", self.board, self.fingerprint,
             hashlib.sha256(self.known_hosts.read_bytes()).hexdigest(), target,
             self.helper_hash, len(self.helper_payload), helper_blob,
-            hashlib.sha256(ssh_payload).hexdigest(), len(ssh_payload),
+            self.ssh.as_posix(), hashlib.sha256(ssh_payload).hexdigest(),
+            len(ssh_payload), 0o755,
+            self.sftp.as_posix(), hashlib.sha256(sftp_payload).hexdigest(),
+            len(sftp_payload), 0o755,
         )
 
     def calls(self) -> list[dict]:
@@ -246,6 +258,10 @@ class E055OpenSSHTransportTest(unittest.TestCase):
         E055OpenSSHTransport(self.boundary.config())
         self.assertEqual([], self.boundary.calls())
 
+    def test_operational_config_rejects_injected_ssh_and_sftp_executables(self) -> None:
+        with self.assertRaises(ValueError):
+            E055OpenSSHConfig(**self.boundary.config_values())
+
     def test_prepare_and_readback_use_fixed_argv_json_and_pinned_identity(self) -> None:
         receipt = self.prepare()
         proof = self.transport.readback(
@@ -255,22 +271,22 @@ class E055OpenSSHTransportTest(unittest.TestCase):
         self.assertEqual(self.boundary.fingerprint,
                          receipt.endpoint_identity.host_key_fingerprint)
         self.assertEqual(self.boundary.board, proof.endpoint_identity.board_identity)
-        qualified = validate_transport_evidence(
-            receipt, proof, self.layout,
-            tuple({
-                "role": artifact.role, "target_path": artifact.target_path,
-                "sha256": artifact.sha256, "size_bytes": len(artifact.payload),
-                "mode": artifact.mode,
-            } for artifact in self.artifacts),
-            implementation_evidence=self.transport.implementation_evidence(),
-            expected_pins=self.boundary.expected_pins(), repository_root=ROOT,
-            exclusive_request_id="1" * 64, exclusive_request_nonce="2" * 64,
-            readback_request_id="3" * 64, readback_request_nonce="4" * 64,
-        )
-        self.assertEqual("e055-transport-evidence/v2", qualified["schema"])
+        with self.assertRaisesRegex(ValueError, "implementation|system"):
+            validate_transport_evidence(
+                receipt, proof, self.layout,
+                tuple({
+                    "role": artifact.role, "target_path": artifact.target_path,
+                    "sha256": artifact.sha256, "size_bytes": len(artifact.payload),
+                    "mode": artifact.mode,
+                } for artifact in self.artifacts),
+                implementation_evidence=self.transport.implementation_evidence(),
+                expected_pins=self.boundary.expected_pins(), repository_root=ROOT,
+                exclusive_request_id="1" * 64, exclusive_request_nonce="2" * 64,
+                readback_request_id="3" * 64, readback_request_nonce="4" * 64,
+            )
         calls = self.boundary.calls()
         self.assertEqual(
-            ["sftp", "sftp", "sftp", "ssh", "ssh"],
+            ["sftp", "sftp", "sftp", "sftp", "ssh", "ssh"],
             [item["kind"] for item in calls],
         )
         batch = b"".join(
@@ -335,8 +351,45 @@ class E055OpenSSHTransportTest(unittest.TestCase):
                 request_id="3" * 64, request_nonce="4" * 64,
             )
 
+    def test_bootstrap_has_separate_owned_stage_and_cleanup_path(self) -> None:
+        self.boundary.update_state(sftp_exit_on_call=3)
+        with self.assertRaises(OpenSSHTransportError):
+            self.prepare()
+        batches = [
+            base64.b64decode(item["stdin_base64"])
+            for item in self.boundary.calls() if item["kind"] == "sftp"
+        ]
+        stage_mkdirs = [
+            batch for batch in batches
+            if batch.startswith(b"mkdir ") and batch.count(b"\n") == 1
+        ]
+        self.assertEqual(1, len(stage_mkdirs))
+        self.assertIn(b"rmdir ", batches[-1])
+
+    def test_initial_bootstrap_failure_enters_bounded_cleanup(self) -> None:
+        self.boundary.update_state(sftp_exit_on_call=1)
+        with self.assertRaises(OpenSSHTransportError):
+            self.prepare()
+        self.assertTrue(self.transport.bootstrap_cleanup_attempted)
+
+    def test_stage_collision_never_removes_unowned_path(self) -> None:
+        self.boundary.update_state(sftp_exit_on_call=2)
+        with self.assertRaises(OpenSSHTransportError):
+            self.prepare()
+        batches = [
+            base64.b64decode(item["stdin_base64"])
+            for item in self.boundary.calls() if item["kind"] == "sftp"
+        ]
+        self.assertEqual(2, len(batches))
+        self.assertFalse(any(b"-rm " in batch or b"-rmdir " in batch
+                             for batch in batches))
+
     def test_restore_response_is_retained_before_separate_finalization(self) -> None:
         self.prepare()
+        self.transport.readback(
+            self.artifacts, deployment_root=self.layout.deployment_root,
+            request_id="3" * 64, request_nonce="4" * 64,
+        )
         self.transport.restore()
         self.assertEqual("e055-restore-result/v1",
                          self.transport.retained_restore_evidence["schema"])
@@ -344,7 +397,20 @@ class E055OpenSSHTransportTest(unittest.TestCase):
         for call in self.boundary.calls():
             if call["kind"] == "ssh":
                 operations.append(json.loads(base64.b64decode(call["stdin_base64"]))["operation"])
-        self.assertEqual(["exclusive_deploy", "restore", "finalize_helper"], operations)
+        self.assertEqual(
+            ["exclusive_deploy", "fresh_readback", "restore", "finalize_helper"],
+            operations,
+        )
+
+    def test_finalization_rejects_wrong_helper_device_and_inode(self) -> None:
+        self.prepare()
+        self.transport.readback(
+            self.artifacts, deployment_root=self.layout.deployment_root,
+            request_id="3" * 64, request_nonce="4" * 64,
+        )
+        self.boundary.update_state(wrong_helper_identity=True)
+        with self.assertRaisesRegex(OpenSSHTransportError, "finalization"):
+            self.transport.restore()
 
     def test_implementation_evidence_is_exact_and_contains_no_login_or_key_path(self) -> None:
         evidence = self.transport.implementation_evidence()
@@ -352,6 +418,11 @@ class E055OpenSSHTransportTest(unittest.TestCase):
         self.assertEqual("openssh_fixed_helper", evidence.implementation)
         self.assertEqual(self.boundary.helper_hash, evidence.helper_source_sha256)
         self.assertEqual("OpenSSH_9.9p2", evidence.openssh_version)
+        self.assertEqual(self.boundary.sftp.as_posix(), evidence.sftp_path)
+        self.assertEqual(
+            hashlib.sha256(self.boundary.sftp.read_bytes()).hexdigest(),
+            evidence.sftp_sha256,
+        )
         self.assertNotIn("fixture-user", serialized)
         self.assertNotIn(self.boundary.identity.as_posix(), serialized)
         self.assertNotIn("fixture-user", repr(self.boundary.config()))

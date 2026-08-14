@@ -1,6 +1,6 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Status: **ACCEPTED SOURCE CONTRACT WITH PRE-TARGET EXECUTOR HARDENING; NO TARGET RUN**.
+Status: **REVISED PRE-TARGET EXECUTOR HARDENING AWAITING REVIEW; NO TARGET RUN**.
 
 E055 is a bounded experiment designed to distinguish cache/data-carrier cost
 from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
@@ -25,6 +25,11 @@ The rejected `7679828` caller-created-row qualifier is preserved in
 [`data/review-rejection-stage4-7679828.md`](data/review-rejection-stage4-7679828.md).
 The rejected `f8acab9` noncanonical protocol/timing qualifier is preserved in
 [`data/review-rejection-stage5-f8acab9.md`](data/review-rejection-stage5-f8acab9.md).
+The rejected `eca4b03` transport-provenance revision is preserved in
+[`data/review-rejection-stage6-eca4b03.md`](data/review-rejection-stage6-eca4b03.md).
+The rejected `6f7a6cb` process-ownership and SFTP-provenance revision is
+preserved in
+[`data/review-rejection-stage7-6f7a6cb.md`](data/review-rejection-stage7-6f7a6cb.md).
 Rejected revisions remain evidence of failed approaches; none is target data.
 
 ## Exact kernel and controls
@@ -119,7 +124,7 @@ The target transport is a narrow adapter around the system `/usr/bin/ssh` and
 caller's external key or agent configuration and are never copied into Git or
 raw evidence. A run requires separately supplied immutable pins for the host
 key fingerprint, board identity digest, known-hosts file digest, sanitized
-host/port digest, committed helper blob, and local OpenSSH executable. The
+host/port digest, committed helper blob, and both local OpenSSH executables. The
 adapter executes with `-F /dev/null`, strict known-host checking, no password
 or interactive prompts, no forwarding, proxy, TTY, or local commands, and
 bounded connect/alive timeouts. Outer raw/runner v1 is rejected for this target
@@ -284,8 +289,13 @@ harness, or board execution path.
 
 `tooling/e055_target_executor.py` composes those primitives but remains
 disabled unless a reviewed transport object and independent expected pins are
-explicitly injected. The narrow transport adapter invokes the system OpenSSH
-executables; it does not implement SSH. Its only plan is 20 O3 runs: CPU0 then CPU6,
+explicitly injected. The narrow transport adapter invokes exactly
+`/usr/bin/ssh` and `/usr/bin/sftp`; it does not implement SSH. Fake executable
+paths exist only through an explicit test-only constructor and cannot qualify
+operational evidence. Before any transport preparation, the executor checks
+the actual known-hosts, SSH, SFTP, and helper bytes against independent pins
+and verifies the helper's clean HEAD/index blob. Its only plan is 20 O3 runs:
+CPU0 then CPU6,
 pair indexes 1–5, odd pairs hot→cold, even pairs cold→hot, 64 KiB,
 `full_dotprod`, and the `core` PMU group. It reserves the complete local phase
 before transport preparation, deploys only the publication-bound harness and
@@ -313,8 +323,24 @@ mode, device and inode for both executables, and both observations must agree
 exactly. A future real transport must perform a new remote stat/read/hash for
 every readback request and must never return a cached observation. The endpoint
 identity must also agree. The adapter requires exact caller-provided board,
-host-key, known-hosts, endpoint, helper, and OpenSSH pins; unpinned
+host-key, known-hosts, endpoint, helper, SSH, and SFTP pins; unpinned
 `operationally_trusted` evidence is rejected.
+
+Before executing E049c, the fixed helper starts a fixed Python gate in a new
+session. The gate writes and synchronizes an exclusive `owned-process.json`
+record containing the owner, deployment device/inode, run ID, PID, PGID,
+session ID, and `/proc` start time before it calls `execve` on the exact argv.
+If the request helper is killed, a later restore accepts only that exact record,
+rechecks the deployment and process identities, signals matching session
+members through pidfds, and requires quiescence before deleting deployment
+state. A missing, replaced, reused, malformed, or non-quiescent identity fails
+closed without signaling an unproven process.
+
+Helper bootstrap creates the random staging directory in a separate strict
+SFTP operation. Cleanup removes it only after that operation succeeded and
+therefore proved ownership; a collision is never removed. Final helper removal
+rechecks the file device and inode after hashing, and the adapter requires the
+returned identity to match the deploy/readback runtime identity.
 
 These records are replay-resistant transport evidence, not cryptographic device
 attestation. An injected transport and its remote endpoint can lie consistently,

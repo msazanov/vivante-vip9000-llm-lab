@@ -59,16 +59,19 @@ The helper supports exactly five stateful operations:
 2. `fresh_readback` opens those two files without following symlinks and returns
    a second independently generated observation bound to a distinct request ID
    and nonce.
-3. `capture` creates one canonical run output directory exclusively, executes
-   the exact E049c argv as an argv array with `shell=False`, limits streams and
-   time, observes the pinned child affinity, and returns all available raw
-   streams and exit information.
+3. `capture` creates one canonical run output directory exclusively and starts
+   a fixed gate in a new session. The gate synchronously persists the exact
+   owner/deployment/PID/PGID/session/start-time identity before `execve` of the
+   E049c argv. The helper limits streams and time, observes the pinned child
+   affinity, and returns all available raw streams and exit information.
 4. `restore` removes only the deployment and lock whose inode and owner record
    match this transport instance. It terminates any surviving owned process
    group before removal.
 5. `finalize_helper` is a separate, final request issued only after the caller
    has parsed and durably retained the complete restore response. It removes
-   only the still-exact content-addressed helper inode and its empty directory.
+   only the still-exact content-addressed helper inode and its empty directory;
+   it rechecks device/inode immediately before unlink and the adapter compares
+   the returned identity with the deploy/readback runtime identity.
 
 Signals, timeout, stdin disconnect, and SSH channel failure trigger bounded
 TERM/KILL cleanup of the helper-owned process group. Ambiguous ownership,
@@ -91,6 +94,13 @@ TTY, no local command, bounded connect/alive timeouts, and non-interactive
 authentication. Endpoint, port, helper path, fingerprints, identity digest,
 binary paths, and external known-hosts file are validated before any subprocess
 starts.
+
+Operational mode permits exactly `/usr/bin/ssh` and `/usr/bin/sftp`. Both files'
+path, mode, size, and SHA-256 are independently pinned and sealed. Fake client
+paths require an explicit test-only constructor and are rejected by operational
+transport-evidence validation. Helper staging uses a separate exclusive
+`mkdir` step; rollback deletes only a staging directory whose successful
+creation proved ownership.
 
 The transport verifies the expected fingerprint against the external
 known-hosts material before helper upload, records the local OpenSSH executable

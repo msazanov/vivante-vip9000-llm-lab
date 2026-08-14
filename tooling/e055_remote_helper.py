@@ -40,6 +40,41 @@ ROLE_NAMES = {
 }
 RUN_ID_RE = re.compile(r"^cpu([06])-pair([1-5])-(hot|cold)$")
 MAX_CAPTURE_BYTES = 16 * 1024 * 1024
+OWNED_PROCESS_NAME = "owned-process.json"
+OWNED_PROCESS_SCHEMA = "e055-owned-process/v1"
+
+
+_CAPTURE_GATE = r"""
+import base64, json, os, sys
+path = sys.argv[1]
+document = json.loads(base64.b64decode(sys.argv[2], validate=True).decode("ascii"))
+payload = open("/proc/self/stat", "r", encoding="ascii").read()
+boundary = payload.rfind(") ")
+fields = payload[boundary + 2:].split()
+pid = os.getpid()
+pgid = int(fields[2])
+session = int(fields[3])
+start_time = int(fields[19])
+if boundary < 0 or pid <= 1 or pgid != pid or session != pid or start_time <= 0:
+    raise SystemExit(125)
+document.update({"pid": pid, "pgid": pgid, "session": session,
+                 "start_time": start_time})
+encoded = (json.dumps(document, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=True, allow_nan=False) + "\n").encode("ascii")
+flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+descriptor = os.open(path, flags, 0o600)
+try:
+    offset = 0
+    while offset < len(encoded):
+        written = os.write(descriptor, encoded[offset:])
+        if written <= 0:
+            raise OSError("short owned-process write")
+        offset += written
+    os.fsync(descriptor)
+finally:
+    os.close(descriptor)
+os.execve(sys.argv[3], sys.argv[3:], dict(os.environ))
+""".strip()
 
 
 class ProtocolError(ValueError):
@@ -547,6 +582,169 @@ def _processor(pid: int) -> int | None:
     return int(fields[36])
 
 
+def _process_identity(pid: int) -> dict[str, int] | None:
+    if type(pid) is not int or pid <= 1:
+        raise ProtocolError("process PID is invalid")
+    try:
+        payload = Path(f"/proc/{pid}/stat").read_text(encoding="ascii")
+    except (FileNotFoundError, ProcessLookupError):
+        return None
+    except OSError as exc:
+        raise ProtocolError("cannot inspect owned process identity") from exc
+    boundary = payload.rfind(") ")
+    if boundary < 0:
+        raise ProtocolError("owned process stat record is malformed")
+    fields = payload[boundary + 2:].split()
+    indexes = (1, 2, 3, 19)
+    if len(fields) <= max(indexes) or any(
+        not fields[index].isascii() or not fields[index].lstrip("-").isdigit()
+        for index in indexes
+    ):
+        raise ProtocolError("owned process stat fields are malformed")
+    identity = {
+        "pid": pid,
+        "ppid": int(fields[1]),
+        "pgid": int(fields[2]),
+        "session": int(fields[3]),
+        "start_time": int(fields[19]),
+    }
+    if identity["pgid"] < 0 or identity["session"] < 0 or \
+            identity["start_time"] <= 0:
+        raise ProtocolError("owned process identity is outside strict bounds")
+    return identity
+
+
+def _owned_process_document(
+    path: Path, request: Mapping[str, Any], deployment_identity: tuple[int, int],
+) -> tuple[dict[str, Any], os.stat_result]:
+    payload, status = _read_bounded_with_status(path, 4096)
+    try:
+        document = json.loads(payload.decode("ascii"))
+    except (UnicodeDecodeError, ValueError) as exc:
+        raise ProtocolError("owned process record is malformed") from exc
+    exact = _exact_mapping(document, {
+        "schema", "owner_id", "deployment_root", "deployment_device",
+        "deployment_inode", "run_id", "pid", "pgid", "session",
+        "start_time",
+    }, "owned process record")
+    if exact["schema"] != OWNED_PROCESS_SCHEMA or \
+            exact["owner_id"] != request["owner_id"] or \
+            exact["deployment_root"] != request["deployment_root"] or \
+            (exact["deployment_device"], exact["deployment_inode"]) != deployment_identity or \
+            not isinstance(exact["run_id"], str) or \
+            RUN_ID_RE.fullmatch(exact["run_id"]) is None or \
+            exact["run_id"] != path.parent.name or \
+            any(not _strict_int(exact[key], 1) for key in (
+                "pid", "pgid", "session", "start_time",
+            )) or exact["pid"] != exact["pgid"] or \
+            exact["pid"] != exact["session"]:
+        raise ProtocolError("owned process record does not match deployment ownership")
+    return dict(exact), status
+
+
+def _session_members(session_id: int) -> list[dict[str, int]]:
+    try:
+        entries = list(Path("/proc").iterdir())
+    except OSError as exc:
+        raise ProtocolError("cannot enumerate owned process session") from exc
+    members: list[dict[str, int]] = []
+    for entry in entries:
+        if not entry.name.isascii() or not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        if pid <= 1:
+            continue
+        identity = _process_identity(pid)
+        if identity is not None and identity["session"] == session_id:
+            members.append(identity)
+    return members
+
+
+def _signal_verified_process(identity: Mapping[str, int], selected_signal: int) -> None:
+    if not hasattr(os, "pidfd_open") or not hasattr(signal, "pidfd_send_signal"):
+        raise ProtocolError("pidfd signaling is required for owned process cleanup")
+    try:
+        descriptor = os.pidfd_open(identity["pid"], 0)
+    except ProcessLookupError:
+        return
+    try:
+        current = _process_identity(identity["pid"])
+        if current is None:
+            return
+        if any(current[key] != identity[key] for key in (
+            "pid", "pgid", "session", "start_time",
+        )):
+            raise ProtocolError("owned process identity changed before signaling")
+        try:
+            signal.pidfd_send_signal(descriptor, selected_signal)
+        except ProcessLookupError:
+            pass
+    finally:
+        os.close(descriptor)
+
+
+def _quiesce_owned_process(
+    path: Path, request: Mapping[str, Any], deployment_identity: tuple[int, int],
+) -> None:
+    record, record_status = _owned_process_document(
+        path, request, deployment_identity,
+    )
+    leader = _process_identity(record["pid"])
+    if leader is not None and any(
+        leader[key] != record[key] for key in (
+            "pid", "pgid", "session", "start_time",
+        )
+    ):
+        raise ProtocolError("owned process leader identity changed")
+    for selected_signal, timeout in ((signal.SIGTERM, 1.0), (signal.SIGKILL, 1.0)):
+        deadline = time.monotonic() + timeout
+        while True:
+            members = _session_members(record["session"])
+            if not members:
+                current = path.lstat()
+                if (current.st_dev, current.st_ino) != (
+                    record_status.st_dev, record_status.st_ino,
+                ):
+                    raise ProtocolError("owned process record identity changed")
+                os.unlink(path)
+                return
+            reused_leader = next(
+                (item for item in members if item["pid"] == record["pid"]), None
+            )
+            if reused_leader is not None and reused_leader["start_time"] != record["start_time"]:
+                raise ProtocolError("owned process leader PID was reused")
+            for member in members:
+                _signal_verified_process(member, selected_signal)
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(0.01)
+    raise ProtocolError("owned process tree did not become quiescent")
+
+
+def _restore_owned_capture_trees(
+    deployment: Path, request: Mapping[str, Any],
+    deployment_identity: tuple[int, int],
+) -> None:
+    captures = deployment / "captures"
+    try:
+        capture_status = captures.lstat()
+    except FileNotFoundError:
+        return
+    if not stat.S_ISDIR(capture_status.st_mode) or stat.S_ISLNK(capture_status.st_mode):
+        raise ProtocolError("capture root identity is invalid during restore")
+    for run_path in captures.iterdir():
+        status = run_path.lstat()
+        if RUN_ID_RE.fullmatch(run_path.name) is None or \
+                not stat.S_ISDIR(status.st_mode) or stat.S_ISLNK(status.st_mode):
+            raise ProtocolError("capture run identity is invalid during restore")
+        owner = run_path / OWNED_PROCESS_NAME
+        try:
+            owner.lstat()
+        except FileNotFoundError:
+            continue
+        _quiesce_owned_process(owner, request, deployment_identity)
+
+
 def _terminate_group(process: subprocess.Popen[Any]) -> None:
     if process.poll() is None:
         try:
@@ -563,7 +761,9 @@ def _terminate_group(process: subprocess.Popen[Any]) -> None:
             process.wait(timeout=1.0)
 
 
-def _read_bounded(path: Path, maximum: int = MAX_CAPTURE_BYTES) -> bytes:
+def _read_bounded_with_status(
+    path: Path, maximum: int = MAX_CAPTURE_BYTES,
+) -> tuple[bytes, os.stat_result]:
     flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
     descriptor = os.open(path, flags)
     try:
@@ -586,9 +786,13 @@ def _read_bounded(path: Path, maximum: int = MAX_CAPTURE_BYTES) -> bytes:
             after.st_dev, after.st_ino, after.st_size
         ):
             raise ProtocolError("capture identity changed during read")
-        return b"".join(chunks)
+        return b"".join(chunks), before
     finally:
         os.close(descriptor)
+
+
+def _read_bounded(path: Path, maximum: int = MAX_CAPTURE_BYTES) -> bytes:
+    return _read_bounded_with_status(path, maximum)[0]
 
 
 def _capture(request: Any, context: HelperContext) -> dict[str, Any]:
@@ -609,7 +813,9 @@ def _capture(request: Any, context: HelperContext) -> dict[str, Any]:
         raise ProtocolError("capture environment is not the non-secret allowlist")
     local_argv = _capture_argv(exact, context)
     lock, _ = _read_lock(context.local_path(LOCK_PATH), exact)
-    del lock
+    deployment_identity = (
+        lock["deployment_device"], lock["deployment_inode"],
+    )
     run_remote = f"{exact['deployment_root']}/captures/{exact['run_id']}"
     run_path = context.local_path(run_remote)
     _ensure_safe_directory(run_path.parent)
@@ -629,14 +835,38 @@ def _capture(request: Any, context: HelperContext) -> dict[str, Any]:
         os.close(stdout_fd)
         raise
     process: subprocess.Popen[Any] | None = None
+    owner_record = run_path / OWNED_PROCESS_NAME
     affinity_seen: set[int] = set()
     processor_samples: list[int] = []
     timed_out = False
     try:
+        owner_template = _canonical_json({
+            "schema": OWNED_PROCESS_SCHEMA,
+            "owner_id": exact["owner_id"],
+            "deployment_root": exact["deployment_root"],
+            "deployment_device": deployment_identity[0],
+            "deployment_inode": deployment_identity[1],
+            "run_id": exact["run_id"],
+        })
+        gate_argv = (
+            context.python_requested_path, "-c", _CAPTURE_GATE,
+            owner_record.as_posix(), base64.b64encode(owner_template).decode("ascii"),
+            *local_argv,
+        )
         process = subprocess.Popen(
-            local_argv, stdin=subprocess.DEVNULL, stdout=stdout_fd, stderr=stderr_fd,
+            gate_argv, stdin=subprocess.DEVNULL, stdout=stdout_fd, stderr=stderr_fd,
             env=dict(environment), close_fds=True, start_new_session=True, shell=False,
         )
+        owner_deadline = time.monotonic() + 1.0
+        while not owner_record.exists():
+            if process.poll() is not None or time.monotonic() >= owner_deadline:
+                raise ProtocolError("capture ownership was not persisted before execution")
+            time.sleep(0.005)
+        owned, _ = _owned_process_document(
+            owner_record, exact, deployment_identity,
+        )
+        if owned["pid"] != process.pid:
+            raise ProtocolError("capture ownership PID does not match child identity")
         deadline = time.monotonic() + exact["timeout_ms"] / 1000.0
         while process.poll() is None:
             for pid in _descendants(process.pid):
@@ -662,6 +892,8 @@ def _capture(request: Any, context: HelperContext) -> dict[str, Any]:
         os.close(stderr_fd)
         if process is not None and process.poll() is None:
             _terminate_group(process)
+    if owner_record.exists():
+        _quiesce_owned_process(owner_record, exact, deployment_identity)
     if timed_out:
         raise TimeoutError("bounded target capture timed out")
     output = run_path / "e049c.json"
@@ -707,6 +939,7 @@ def _restore(request: Any, context: HelperContext) -> dict[str, Any]:
     identity = (lock["deployment_device"], lock["deployment_inode"])
     if (status.st_dev, status.st_ino) != identity:
         raise ProtocolError("deployment identity changed before restore")
+    _restore_owned_capture_trees(deployment, exact, identity)
     _remove_created_deployment(deployment, identity)
     current = lock_path.lstat()
     if (current.st_dev, current.st_ino) != (lock_status.st_dev, lock_status.st_ino):
@@ -732,6 +965,12 @@ def _finalize_helper(request: Any, context: HelperContext) -> dict[str, Any]:
     digest, before = _sha256_file(helper, 1024 * 1024)
     if digest != PurePosixPath(context.helper_remote_path).parent.name:
         raise ProtocolError("helper bytes changed before finalization")
+    current = helper.lstat()
+    if (current.st_dev, current.st_ino, current.st_size, current.st_mode) != (
+        before.st_dev, before.st_ino, before.st_size, before.st_mode,
+    ) or not stat.S_ISREG(current.st_mode) or stat.S_ISLNK(current.st_mode) or \
+            current.st_nlink != 1:
+        raise ProtocolError("helper identity changed before finalization unlink")
     os.unlink(helper)
     try:
         helper.parent.rmdir()

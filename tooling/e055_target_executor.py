@@ -45,6 +45,7 @@ from tooling.e055_transport_evidence import (
     canonical_deployment_layout,
     canonical_remote_output_path,
     validate_transport_evidence,
+    validate_local_transport_preflight,
 )
 
 
@@ -356,6 +357,11 @@ class E055TargetExecutor:
         if not isinstance(phase_id, str) or PHASE_ID_RE.fullmatch(phase_id) is None:
             raise ValueError("phase_id must be canonical and bounded")
         plan = limited_o3_microgate_plan()
+        implementation_evidence = self.transport.implementation_evidence()
+        validate_local_transport_preflight(
+            implementation_evidence, self.expected_transport_pins,
+            self.repository_root,
+        )
         raw_parent = _ensure_raw_parent(self.repository_root)
         phase_dir = raw_parent / phase_id
         reservations = reserve_phase(
@@ -428,7 +434,7 @@ class E055TargetExecutor:
                     "size_bytes": len(artifact.payload),
                     "mode": artifact.mode,
                 } for artifact in prepared),
-                implementation_evidence=self.transport.implementation_evidence(),
+                implementation_evidence=implementation_evidence,
                 expected_pins=self.expected_transport_pins,
                 repository_root=self.repository_root,
                 exclusive_request_id=exclusive_request[0],

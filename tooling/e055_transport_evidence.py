@@ -88,7 +88,7 @@ def _expected_pins_document(value: Any) -> dict[str, Any]:
         raise ValueError("expected endpoint pins are invalid")
     for digest in (
         value.known_hosts_sha256, value.target_endpoint_sha256,
-        value.helper_source_sha256, value.openssh_sha256,
+        value.helper_source_sha256, value.openssh_sha256, value.sftp_sha256,
     ):
         if not isinstance(digest, str) or SHA256_RE.fullmatch(digest) is None or \
                 digest == "0" * 64:
@@ -97,8 +97,14 @@ def _expected_pins_document(value: Any) -> dict[str, Any]:
             value.helper_source_size_bytes > 1024 * 1024 or \
             not isinstance(value.helper_git_blob_oid, str) or \
             GIT_OID_RE.fullmatch(value.helper_git_blob_oid) is None or \
+            value.openssh_path != "/usr/bin/ssh" or \
+            type(value.openssh_mode) is not int or value.openssh_mode != 0o755 or \
             not _strict_int(value.openssh_size_bytes, minimum=1) or \
-            value.openssh_size_bytes > 32 * 1024 * 1024:
+            value.openssh_size_bytes > 32 * 1024 * 1024 or \
+            value.sftp_path != "/usr/bin/sftp" or \
+            type(value.sftp_mode) is not int or value.sftp_mode != 0o755 or \
+            not _strict_int(value.sftp_size_bytes, minimum=1) or \
+            value.sftp_size_bytes > 32 * 1024 * 1024:
         raise ValueError("expected local implementation pins are invalid")
     return {
         "schema": value.schema, "trust_mode": value.trust_mode,
@@ -110,8 +116,14 @@ def _expected_pins_document(value: Any) -> dict[str, Any]:
         "helper_source_sha256": value.helper_source_sha256,
         "helper_source_size_bytes": value.helper_source_size_bytes,
         "helper_git_blob_oid": value.helper_git_blob_oid,
+        "openssh_path": value.openssh_path,
         "openssh_sha256": value.openssh_sha256,
         "openssh_size_bytes": value.openssh_size_bytes,
+        "openssh_mode": value.openssh_mode,
+        "sftp_path": value.sftp_path,
+        "sftp_sha256": value.sftp_sha256,
+        "sftp_size_bytes": value.sftp_size_bytes,
+        "sftp_mode": value.sftp_mode,
     }
 
 
@@ -131,11 +143,20 @@ def _verify_local_implementation(
     openssh_payload, openssh_status = _read_regular_file(
         Path(value.openssh_path), 32 * 1024 * 1024,
     )
+    sftp_payload, sftp_status = _read_regular_file(
+        Path(value.sftp_path), 32 * 1024 * 1024,
+    )
     if hashlib.sha256(helper_payload).hexdigest() != pins.helper_source_sha256 or \
             helper_status.st_size != pins.helper_source_size_bytes or \
+            value.openssh_path != pins.openssh_path or \
             hashlib.sha256(openssh_payload).hexdigest() != pins.openssh_sha256 or \
-            openssh_status.st_size != pins.openssh_size_bytes:
-        raise ValueError("actual local helper/OpenSSH bytes do not match expected pins")
+            openssh_status.st_size != pins.openssh_size_bytes or \
+            stat.S_IMODE(openssh_status.st_mode) != pins.openssh_mode or \
+            value.sftp_path != pins.sftp_path or \
+            hashlib.sha256(sftp_payload).hexdigest() != pins.sftp_sha256 or \
+            sftp_status.st_size != pins.sftp_size_bytes or \
+            stat.S_IMODE(sftp_status.st_mode) != pins.sftp_mode:
+        raise ValueError("actual local helper/OpenSSH/SFTP bytes do not match expected pins")
     if _git(repository_root, "status", "--porcelain=v2", "--", value.helper_source_path):
         raise ValueError("helper source is dirty, staged, deleted, or untracked")
     head = _git(repository_root, "ls-tree", "HEAD", "--", value.helper_source_path)
@@ -187,6 +208,7 @@ class TransportImplementationEvidence:
 
     schema: str
     implementation: str
+    client_execution_mode: str
     helper_source_path: str
     helper_source_sha256: str
     helper_source_size_bytes: int
@@ -196,6 +218,10 @@ class TransportImplementationEvidence:
     openssh_size_bytes: int
     openssh_mode: int
     openssh_version: str
+    sftp_path: str
+    sftp_sha256: str
+    sftp_size_bytes: int
+    sftp_mode: int
     config_file: str
     client_config: tuple[str, ...]
     client_config_sha256: str
@@ -218,8 +244,14 @@ class ExpectedTransportPins:
     helper_source_sha256: str
     helper_source_size_bytes: int
     helper_git_blob_oid: str
+    openssh_path: str
     openssh_sha256: str
     openssh_size_bytes: int
+    openssh_mode: int
+    sftp_path: str
+    sftp_sha256: str
+    sftp_size_bytes: int
+    sftp_mode: int
 
 
 @dataclass(frozen=True)
@@ -392,6 +424,7 @@ def _implementation_document(value: Any) -> dict[str, Any]:
         raise ValueError("transport implementation evidence has a noncanonical type")
     if value.schema != "e055-openssh-implementation/v1" or \
             value.implementation != "openssh_fixed_helper" or \
+            value.client_execution_mode != "operational_system_clients" or \
             value.credential_mode != "external_agent_or_identity":
         raise ValueError("transport implementation identity is invalid")
     if value.helper_source_path != "tooling/e055_remote_helper.py" or \
@@ -403,10 +436,7 @@ def _implementation_document(value: Any) -> dict[str, Any]:
             not isinstance(value.helper_git_blob_oid, str) or \
             GIT_OID_RE.fullmatch(value.helper_git_blob_oid) is None:
         raise ValueError("transport helper source identity is invalid")
-    if not isinstance(value.openssh_path, str) or \
-            not value.openssh_path.startswith("/") or \
-            ".." in value.openssh_path.split("/") or \
-            not value.openssh_path.endswith("/ssh") or \
+    if value.openssh_path != "/usr/bin/ssh" or \
             not isinstance(value.openssh_sha256, str) or \
             SHA256_RE.fullmatch(value.openssh_sha256) is None or \
             value.openssh_sha256 == "0" * 64 or \
@@ -416,6 +446,14 @@ def _implementation_document(value: Any) -> dict[str, Any]:
             not isinstance(value.openssh_version, str) or \
             OPENSSH_VERSION_RE.fullmatch(value.openssh_version) is None:
         raise ValueError("local OpenSSH executable identity is invalid")
+    if value.sftp_path != "/usr/bin/sftp" or \
+            not isinstance(value.sftp_sha256, str) or \
+            SHA256_RE.fullmatch(value.sftp_sha256) is None or \
+            value.sftp_sha256 == "0" * 64 or \
+            not _strict_int(value.sftp_size_bytes, minimum=1) or \
+            value.sftp_size_bytes > 32 * 1024 * 1024 or \
+            value.sftp_mode != 0o755 or isinstance(value.sftp_mode, bool):
+        raise ValueError("local SFTP executable identity is invalid")
     if value.config_file != "/dev/null" or \
             not isinstance(value.known_hosts_sha256, str) or \
             SHA256_RE.fullmatch(value.known_hosts_sha256) is None or \
@@ -478,6 +516,7 @@ def _implementation_document(value: Any) -> dict[str, Any]:
     return {
         "schema": value.schema,
         "implementation": value.implementation,
+        "client_execution_mode": value.client_execution_mode,
         "helper_source_path": value.helper_source_path,
         "helper_source_sha256": value.helper_source_sha256,
         "helper_source_size_bytes": value.helper_source_size_bytes,
@@ -487,12 +526,51 @@ def _implementation_document(value: Any) -> dict[str, Any]:
         "openssh_size_bytes": value.openssh_size_bytes,
         "openssh_mode": value.openssh_mode,
         "openssh_version": value.openssh_version,
+        "sftp_path": value.sftp_path,
+        "sftp_sha256": value.sftp_sha256,
+        "sftp_size_bytes": value.sftp_size_bytes,
+        "sftp_mode": value.sftp_mode,
         "config_file": value.config_file,
         "client_config": list(value.client_config),
         "client_config_sha256": value.client_config_sha256,
         "known_hosts_sha256": value.known_hosts_sha256,
         "target_endpoint_sha256": value.target_endpoint_sha256,
         "credential_mode": value.credential_mode,
+    }
+
+
+def validate_local_transport_preflight(
+    implementation_evidence: TransportImplementationEvidence,
+    expected_pins: ExpectedTransportPins,
+    repository_root: Path,
+) -> dict[str, Any]:
+    """Validate immutable local policy and bytes before any remote activity."""
+
+    pins_document = _expected_pins_document(expected_pins)
+    implementation_document = _implementation_document(implementation_evidence)
+    compared = (
+        (implementation_evidence.known_hosts_sha256, expected_pins.known_hosts_sha256),
+        (implementation_evidence.target_endpoint_sha256, expected_pins.target_endpoint_sha256),
+        (implementation_evidence.helper_source_sha256, expected_pins.helper_source_sha256),
+        (implementation_evidence.helper_source_size_bytes, expected_pins.helper_source_size_bytes),
+        (implementation_evidence.helper_git_blob_oid, expected_pins.helper_git_blob_oid),
+        (implementation_evidence.openssh_path, expected_pins.openssh_path),
+        (implementation_evidence.openssh_sha256, expected_pins.openssh_sha256),
+        (implementation_evidence.openssh_size_bytes, expected_pins.openssh_size_bytes),
+        (implementation_evidence.openssh_mode, expected_pins.openssh_mode),
+        (implementation_evidence.sftp_path, expected_pins.sftp_path),
+        (implementation_evidence.sftp_sha256, expected_pins.sftp_sha256),
+        (implementation_evidence.sftp_size_bytes, expected_pins.sftp_size_bytes),
+        (implementation_evidence.sftp_mode, expected_pins.sftp_mode),
+    )
+    if any(observed != expected for observed, expected in compared):
+        raise ValueError("implementation evidence does not match independent expected pins")
+    _verify_local_implementation(
+        implementation_evidence, expected_pins, repository_root,
+    )
+    return {
+        "expected_pins": pins_document,
+        "implementation_evidence": implementation_document,
     }
 
 
@@ -610,7 +688,10 @@ def validate_transport_evidence(
             readback.request_nonce != readback_request_nonce or \
             readback.deployment_root != layout.deployment_root:
         raise ValueError("fresh readback proof is invalid")
-    pins_document = _expected_pins_document(expected_pins)
+    local_preflight = validate_local_transport_preflight(
+        implementation_evidence, expected_pins, repository_root,
+    )
+    pins_document = local_preflight["expected_pins"]
     receipt_identity = _validate_identity(receipt.endpoint_identity)
     readback_identity = _validate_identity(readback.endpoint_identity)
     if receipt_identity != readback_identity:
@@ -620,18 +701,7 @@ def validate_transport_evidence(
             receipt_identity.board_identity != expected_pins.board_identity or \
             receipt_identity.host_key_fingerprint != expected_pins.host_key_fingerprint:
         raise ValueError("transport endpoint does not match independent expected pins")
-    implementation_document = _implementation_document(implementation_evidence)
-    if implementation_evidence.known_hosts_sha256 != expected_pins.known_hosts_sha256 or \
-            implementation_evidence.target_endpoint_sha256 != expected_pins.target_endpoint_sha256 or \
-            implementation_evidence.helper_source_sha256 != expected_pins.helper_source_sha256 or \
-            implementation_evidence.helper_source_size_bytes != expected_pins.helper_source_size_bytes or \
-            implementation_evidence.helper_git_blob_oid != expected_pins.helper_git_blob_oid or \
-            implementation_evidence.openssh_sha256 != expected_pins.openssh_sha256 or \
-            implementation_evidence.openssh_size_bytes != expected_pins.openssh_size_bytes:
-        raise ValueError("implementation evidence does not match independent expected pins")
-    _verify_local_implementation(
-        implementation_evidence, expected_pins, repository_root,
-    )
+    implementation_document = local_preflight["implementation_evidence"]
     receipt_runtime = _runtime_document(
         receipt.runtime, implementation_evidence, operation_sequence=1,
         request_id=exclusive_request_id, request_nonce=exclusive_request_nonce,
@@ -798,8 +868,9 @@ def validate_serialized_transport_evidence(
             "schema", "trust_mode", "endpoint_label", "board_identity",
             "host_key_fingerprint", "known_hosts_sha256",
             "target_endpoint_sha256", "helper_source_sha256",
-            "helper_source_size_bytes", "helper_git_blob_oid", "openssh_sha256",
-            "openssh_size_bytes",
+            "helper_source_size_bytes", "helper_git_blob_oid", "openssh_path",
+            "openssh_sha256", "openssh_size_bytes", "openssh_mode",
+            "sftp_path", "sftp_sha256", "sftp_size_bytes", "sftp_mode",
         },
         "expected transport pins",
     )
@@ -810,7 +881,10 @@ def validate_serialized_transport_evidence(
         pins_raw.get("target_endpoint_sha256"),
         pins_raw.get("helper_source_sha256"),
         pins_raw.get("helper_source_size_bytes"), pins_raw.get("helper_git_blob_oid"),
-        pins_raw.get("openssh_sha256"), pins_raw.get("openssh_size_bytes"),
+        pins_raw.get("openssh_path"), pins_raw.get("openssh_sha256"),
+        pins_raw.get("openssh_size_bytes"), pins_raw.get("openssh_mode"),
+        pins_raw.get("sftp_path"), pins_raw.get("sftp_sha256"),
+        pins_raw.get("sftp_size_bytes"), pins_raw.get("sftp_mode"),
     )
     if serialized_pins != expected_pins:
         raise ValueError("serialized expected pins differ from caller policy")
@@ -818,11 +892,12 @@ def validate_serialized_transport_evidence(
     implementation_raw = _exact_mapping(
         exact.get("implementation_evidence"),
         {
-            "schema", "implementation", "helper_source_path",
+            "schema", "implementation", "client_execution_mode", "helper_source_path",
             "helper_source_sha256", "helper_source_size_bytes", "helper_git_blob_oid",
             "openssh_path",
             "openssh_sha256", "openssh_size_bytes", "openssh_mode",
-            "openssh_version", "config_file", "client_config",
+            "openssh_version", "sftp_path", "sftp_sha256", "sftp_size_bytes",
+            "sftp_mode", "config_file", "client_config",
             "client_config_sha256", "known_hosts_sha256",
             "target_endpoint_sha256", "credential_mode",
         },
@@ -833,6 +908,7 @@ def validate_serialized_transport_evidence(
         raise ValueError("serialized OpenSSH client config must be one list")
     implementation = TransportImplementationEvidence(
         implementation_raw.get("schema"), implementation_raw.get("implementation"),
+        implementation_raw.get("client_execution_mode"),
         implementation_raw.get("helper_source_path"),
         implementation_raw.get("helper_source_sha256"),
         implementation_raw.get("helper_source_size_bytes"),
@@ -842,6 +918,10 @@ def validate_serialized_transport_evidence(
         implementation_raw.get("openssh_size_bytes"),
         implementation_raw.get("openssh_mode"),
         implementation_raw.get("openssh_version"),
+        implementation_raw.get("sftp_path"),
+        implementation_raw.get("sftp_sha256"),
+        implementation_raw.get("sftp_size_bytes"),
+        implementation_raw.get("sftp_mode"),
         implementation_raw.get("config_file"), tuple(client_config),
         implementation_raw.get("client_config_sha256"),
         implementation_raw.get("known_hosts_sha256"),

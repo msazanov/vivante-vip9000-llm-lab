@@ -74,24 +74,30 @@
     "transportImplementation": {
       "type": "object",
       "required": [
-        "schema", "implementation", "helper_source_path", "helper_source_sha256",
+        "schema", "implementation", "client_execution_mode", "helper_source_path", "helper_source_sha256",
         "helper_source_size_bytes", "helper_git_blob_oid", "openssh_path",
         "openssh_sha256", "openssh_size_bytes", "openssh_mode", "openssh_version",
+        "sftp_path", "sftp_sha256", "sftp_size_bytes", "sftp_mode",
         "config_file", "client_config", "client_config_sha256",
         "known_hosts_sha256", "target_endpoint_sha256", "credential_mode"
       ],
       "properties": {
         "schema": {"const": "e055-openssh-implementation/v1"},
         "implementation": {"const": "openssh_fixed_helper"},
+        "client_execution_mode": {"const": "operational_system_clients"},
         "helper_source_path": {"const": "tooling/e055_remote_helper.py"},
         "helper_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "helper_source_size_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
         "helper_git_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"},
-        "openssh_path": {"type": "string", "pattern": "^/[A-Za-z0-9._/-]+/ssh$", "maxLength": 4096},
+        "openssh_path": {"const": "/usr/bin/ssh"},
         "openssh_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "openssh_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
         "openssh_mode": {"const": 493},
         "openssh_version": {"type": "string", "pattern": "^OpenSSH_[A-Za-z0-9._,+-]{1,96}$"},
+        "sftp_path": {"const": "/usr/bin/sftp"},
+        "sftp_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sftp_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "sftp_mode": {"const": 493},
         "config_file": {"const": "/dev/null"},
         "client_config": {"type": "array", "minItems": 21, "maxItems": 21, "uniqueItems": true, "items": {"type": "string", "minLength": 3, "maxLength": 128}},
         "client_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -107,7 +113,8 @@
         "schema", "trust_mode", "endpoint_label", "board_identity",
         "host_key_fingerprint", "known_hosts_sha256", "target_endpoint_sha256",
         "helper_source_sha256", "helper_source_size_bytes", "helper_git_blob_oid",
-        "openssh_sha256", "openssh_size_bytes"
+        "openssh_path", "openssh_sha256", "openssh_size_bytes", "openssh_mode",
+        "sftp_path", "sftp_sha256", "sftp_size_bytes", "sftp_mode"
       ],
       "properties": {
         "schema": {"const": "e055-expected-transport-pins/v1"},
@@ -120,8 +127,14 @@
         "helper_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "helper_source_size_bytes": {"type": "integer", "minimum": 1, "maximum": 1048576},
         "helper_git_blob_oid": {"type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"},
+        "openssh_path": {"const": "/usr/bin/ssh"},
         "openssh_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "openssh_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432}
+        "openssh_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "openssh_mode": {"const": 493},
+        "sftp_path": {"const": "/usr/bin/sftp"},
+        "sftp_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "sftp_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "sftp_mode": {"const": 493}
       },
       "additionalProperties": false
     },

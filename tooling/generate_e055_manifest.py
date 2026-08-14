@@ -43,6 +43,7 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
+    ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage7-6f7a6cb.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",

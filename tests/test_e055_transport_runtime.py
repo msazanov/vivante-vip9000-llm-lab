@@ -6,7 +6,9 @@ from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import subprocess
+import tempfile
 import unittest
 
 from tooling.e055_transport_evidence import (
@@ -24,7 +26,22 @@ from tooling.e055_transport_evidence import (
 
 class E055TransportRuntimeEvidenceTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.repository_root = Path(__file__).resolve().parents[1]
+        source_root = Path(__file__).resolve().parents[1]
+        temporary = tempfile.TemporaryDirectory(prefix="e055-runtime-")
+        self.addCleanup(temporary.cleanup)
+        self.repository_root = Path(temporary.name)
+        subprocess.run(["git", "init", "-q"], cwd=self.repository_root, check=True)
+        subprocess.run(["git", "config", "user.name", "E055 Runtime Test"],
+                       cwd=self.repository_root, check=True)
+        subprocess.run(["git", "config", "user.email", "e055@example.invalid"],
+                       cwd=self.repository_root, check=True)
+        helper = self.repository_root / "tooling/e055_remote_helper.py"
+        helper.parent.mkdir()
+        shutil.copyfile(source_root / "tooling/e055_remote_helper.py", helper)
+        subprocess.run(["git", "add", "tooling/e055_remote_helper.py"],
+                       cwd=self.repository_root, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "pin helper fixture"],
+                       cwd=self.repository_root, check=True)
         self.exclusive_id = "1" * 64
         self.exclusive_nonce = "2" * 64
         self.readback_id = "3" * 64
@@ -63,6 +80,8 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
         ).stdout.strip()
         openssh = Path("/usr/bin/ssh")
         openssh_payload = openssh.read_bytes()
+        sftp = Path("/usr/bin/sftp")
+        sftp_payload = sftp.read_bytes()
         self.client_config = (
             "BatchMode=yes", "StrictHostKeyChecking=yes",
             "UserKnownHostsFile=external-pinned-file",
@@ -79,6 +98,7 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
         self.implementation = TransportImplementationEvidence(
             schema="e055-openssh-implementation/v1",
             implementation="openssh_fixed_helper",
+            client_execution_mode="operational_system_clients",
             helper_source_path="tooling/e055_remote_helper.py",
             helper_source_sha256=hashlib.sha256(helper_payload).hexdigest(),
             helper_source_size_bytes=len(helper_payload),
@@ -88,6 +108,10 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             openssh_size_bytes=len(openssh_payload),
             openssh_mode=0o755,
             openssh_version="OpenSSH_9.9p2",
+            sftp_path="/usr/bin/sftp",
+            sftp_sha256=hashlib.sha256(sftp_payload).hexdigest(),
+            sftp_size_bytes=len(sftp_payload),
+            sftp_mode=0o755,
             config_file="/dev/null",
             client_config=self.client_config,
             client_config_sha256=hashlib.sha256(
@@ -103,8 +127,10 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             self.identity.host_key_fingerprint, self.known_hosts_sha256,
             self.target_endpoint_sha256, self.implementation.helper_source_sha256,
             self.implementation.helper_source_size_bytes, helper_blob,
-            self.implementation.openssh_sha256,
-            self.implementation.openssh_size_bytes,
+            self.implementation.openssh_path, self.implementation.openssh_sha256,
+            self.implementation.openssh_size_bytes, self.implementation.openssh_mode,
+            self.implementation.sftp_path, self.implementation.sftp_sha256,
+            self.implementation.sftp_size_bytes, self.implementation.sftp_mode,
         )
 
     def runtime(
@@ -188,6 +214,10 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             self.implementation.helper_source_sha256,
         )
         self.assertEqual(
+            document["implementation_evidence"]["sftp_sha256"],
+            self.implementation.sftp_sha256,
+        )
+        self.assertEqual(
             document["fresh_readback"]["runtime"]["python_realpath"],
             "/usr/bin/python3.13",
         )
@@ -214,6 +244,9 @@ class E055TransportRuntimeEvidenceTest(unittest.TestCase):
             ),
             replace(self.implementation, credential_mode="embedded_password"),
             replace(self.implementation, openssh_sha256="0" * 64),
+            replace(self.implementation, sftp_path="/tmp/fake-sftp"),
+            replace(self.implementation, sftp_sha256="0" * 64),
+            replace(self.implementation, sftp_mode=True),
         )
         for implementation in mutations:
             with self.subTest(implementation=implementation):

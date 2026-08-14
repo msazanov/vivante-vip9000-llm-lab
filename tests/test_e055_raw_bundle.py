@@ -127,14 +127,19 @@ class BundleFixture:
         helper_blob = self.git("rev-parse", "HEAD:tooling/e055_remote_helper.py")
         openssh = Path("/usr/bin/ssh")
         openssh_payload = openssh.read_bytes()
+        sftp = Path("/usr/bin/sftp")
+        sftp_payload = sftp.read_bytes()
         known_hosts_sha256 = "1" * 64
         target_endpoint_sha256 = "2" * 64
         implementation = TransportImplementationEvidence(
             "e055-openssh-implementation/v1", "openssh_fixed_helper",
+            "operational_system_clients",
             "tooling/e055_remote_helper.py", helper_hash, len(helper_payload),
             helper_blob, "/usr/bin/ssh",
             hashlib.sha256(openssh_payload).hexdigest(), len(openssh_payload), 0o755,
-            "OpenSSH_9.9p2", "/dev/null", client_config,
+            "OpenSSH_9.9p2", "/usr/bin/sftp",
+            hashlib.sha256(sftp_payload).hexdigest(), len(sftp_payload), 0o755,
+            "/dev/null", client_config,
             hashlib.sha256(("\n".join(client_config) + "\n").encode("ascii"))
             .hexdigest(),
             known_hosts_sha256, target_endpoint_sha256,
@@ -145,7 +150,10 @@ class BundleFixture:
             endpoint.endpoint_label, endpoint.board_identity,
             endpoint.host_key_fingerprint, known_hosts_sha256,
             target_endpoint_sha256, helper_hash, len(helper_payload), helper_blob,
-            implementation.openssh_sha256, implementation.openssh_size_bytes,
+            implementation.openssh_path, implementation.openssh_sha256,
+            implementation.openssh_size_bytes, implementation.openssh_mode,
+            implementation.sftp_path, implementation.sftp_sha256,
+            implementation.sftp_size_bytes, implementation.sftp_mode,
         )
         def runtime(sequence: int, request_id: str, nonce: str):
             return RemoteRuntimeObservation(

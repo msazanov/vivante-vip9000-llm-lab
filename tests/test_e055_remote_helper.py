@@ -7,9 +7,11 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import signal
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 from tooling.e055_remote_helper import HelperContext, ProtocolError, handle_request
 
@@ -231,6 +233,102 @@ raise SystemExit(status)
         self.assertEqual("e055-helper-finalization/v1", finalized["schema"])
         self.assertTrue(finalized["helper_removed"])
         self.assertFalse(helper_local.exists())
+
+    def test_finalization_rejects_helper_path_replacement_after_hash(self) -> None:
+        handle_request(self.request("exclusive_deploy", 1, "3"), self.context)
+        handle_request(self.request("restore", 3, "7"), self.context)
+        helper_local = self.context.local_path(self.helper_remote)
+        moved = helper_local.with_name("moved-original.py")
+        original_hash = __import__(
+            "tooling.e055_remote_helper", fromlist=["_sha256_file"]
+        )._sha256_file
+        replaced = False
+
+        def replace_after_hash(path: Path, maximum: int):
+            nonlocal replaced
+            result = original_hash(path, maximum)
+            if path == helper_local and not replaced:
+                replaced = True
+                os.rename(helper_local, moved)
+                helper_local.write_bytes(self.helper_payload)
+                os.chmod(helper_local, 0o700)
+            return result
+
+        with mock.patch(
+            "tooling.e055_remote_helper._sha256_file",
+            side_effect=replace_after_hash,
+        ):
+            with self.assertRaises(ProtocolError):
+                handle_request(
+                    self.request("finalize_helper", 4, "a"), self.context
+                )
+        self.assertTrue(moved.exists())
+        self.assertTrue(helper_local.exists())
+
+    def test_restore_kills_capture_tree_after_helper_sigkill(self) -> None:
+        self.deploy_fake_capture_programs("time.sleep(60)")
+        request = self.capture_request()
+        run_path = self.context.local_path(
+            f"{self.deployment_root}/captures/{request['run_id']}"
+        )
+        owner_record = run_path / "owned-process.json"
+        helper_pid = os.fork()
+        if helper_pid == 0:
+            try:
+                handle_request(request, self.context)
+            except BaseException:
+                os._exit(71)
+            os._exit(0)
+
+        capture_pid: int | None = None
+        helper_reaped = False
+        try:
+            deadline = time.monotonic() + 5.0
+            children_path = Path(
+                f"/proc/{helper_pid}/task/{helper_pid}/children"
+            )
+            while time.monotonic() < deadline:
+                try:
+                    children = children_path.read_text(encoding="ascii").split()
+                except FileNotFoundError:
+                    children = []
+                if children:
+                    capture_pid = int(children[0])
+                if capture_pid is not None and owner_record.exists():
+                    break
+                time.sleep(0.01)
+            self.assertIsNotNone(capture_pid)
+            self.assertTrue(owner_record.exists())
+
+            os.kill(helper_pid, signal.SIGKILL)
+            os.waitpid(helper_pid, 0)
+            helper_reaped = True
+            self.assertTrue(Path(f"/proc/{capture_pid}").exists())
+
+            restored = handle_request(
+                self.request("restore", 5, "b"), self.context
+            )
+            self.assertTrue(restored["restored"])
+            deadline = time.monotonic() + 5.0
+            while Path(f"/proc/{capture_pid}").exists() and \
+                    time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertFalse(Path(f"/proc/{capture_pid}").exists())
+        finally:
+            if not helper_reaped:
+                try:
+                    os.kill(helper_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                try:
+                    os.waitpid(helper_pid, 0)
+                except ChildProcessError:
+                    pass
+            if capture_pid is not None:
+                try:
+                    os.killpg(capture_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
     def test_capture_executes_only_exact_argv_and_observes_affinity(self) -> None:
         self.deploy_fake_capture_programs(
