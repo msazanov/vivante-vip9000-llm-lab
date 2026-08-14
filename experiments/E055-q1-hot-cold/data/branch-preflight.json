@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vip9000-e055-q1-hot-cold",
-  "generated_at_utc": "2026-08-14T09:58:27.737528+00:00",
+  "generated_at_utc": "2026-08-14T10:47:18.831102+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E055-Q1-HOT-COLD",
   "hypothesis_query": "separate stock Q1 4x4 packed-carrier loading, register unpack plus scale, and full DOTPROD under cache-hot/cold conditions on A733; do not repeat E004 E008 E009 E023 E030-E040; qualify only Git-sealed raw E055 and E049c captures",
@@ -30846,7 +30846,7 @@
     },
     {
       "ref": "refs/heads/codex/e055-q1-hot-cold",
-      "match_count": 114634,
+      "match_count": 114988,
       "matches": [
         {
           "term": "DOTPROD",
@@ -31260,13 +31260,13 @@
         {
           "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 5,
+          "occurrences": 6,
           "first_lines": [
             35,
             48,
-            271,
-            272,
-            293
+            269,
+            299,
+            300
           ]
         },
         {
@@ -31313,9 +31313,9 @@
           "path": "tests/test_e055_aarch64_gate.py",
           "occurrences": 3,
           "first_lines": [
-            38,
-            42,
-            140
+            43,
+            47,
+            145
           ]
         },
         {
@@ -31342,9 +31342,9 @@
           "first_lines": [
             64,
             161,
-            512,
-            547,
-            604
+            527,
+            564,
+            621
           ]
         },
         {
@@ -31355,6 +31355,16 @@
             39,
             108,
             112
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 3,
+          "first_lines": [
+            68,
+            191,
+            244
           ]
         },
         {
@@ -31384,8 +31394,8 @@
           "first_lines": [
             9,
             38,
-            332,
-            532
+            354,
+            554
           ]
         },
         {
@@ -31393,8 +31403,16 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 2,
           "first_lines": [
-            630,
-            682
+            640,
+            692
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 1,
+          "first_lines": [
+            146
           ]
         },
         {
@@ -31620,7 +31638,7 @@
         {
           "term": "E009",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 196,
+          "occurrences": 198,
           "first_lines": [
             7,
             27,
@@ -32676,9 +32694,9 @@
           "first_lines": [
             35,
             32673,
-            41537,
-            86973,
-            95837
+            41632,
+            87070,
+            95976
           ]
         },
         {
@@ -32687,10 +32705,10 @@
           "occurrences": 5,
           "first_lines": [
             36,
-            32681,
-            41538,
-            86981,
-            95838
+            32685,
+            41633,
+            87082,
+            95977
           ]
         },
         {
@@ -32866,7 +32884,7 @@
             32,
             34,
             48,
-            273
+            301
           ]
         },
         {
@@ -32903,8 +32921,8 @@
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
           "occurrences": 2,
           "first_lines": [
-            249,
-            255
+            283,
+            289
           ]
         },
         {
@@ -32920,7 +32938,7 @@
           "path": "tests/test_e055_aarch64_gate.py",
           "occurrences": 1,
           "first_lines": [
-            43
+            48
           ]
         },
         {
@@ -32942,6 +32960,14 @@
         },
         {
           "term": "E039",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 1,
+          "first_lines": [
+            68
+          ]
+        },
+        {
+          "term": "E039",
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 8,
           "first_lines": [
@@ -32957,7 +32983,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            682
+            692
           ]
         },
         {
@@ -32965,9 +32991,9 @@
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 3,
           "first_lines": [
-            68,
-            69,
-            120
+            73,
+            74,
+            137
           ]
         },
         {
@@ -33091,7 +33117,7 @@
         {
           "term": "E040",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 644,
+          "occurrences": 646,
           "first_lines": [
             7,
             39,
@@ -33137,7 +33163,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 19,
+          "occurrences": 21,
           "first_lines": [
             1,
             5,
@@ -33149,7 +33175,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 691,
+          "occurrences": 704,
           "first_lines": [
             3,
             6,
@@ -33182,13 +33208,21 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 74,
+          "occurrences": 85,
           "first_lines": [
             2,
             3,
             10,
             11,
             13
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
+          "occurrences": 1,
+          "first_lines": [
+            24
           ]
         },
         {
@@ -33264,14 +33298,22 @@
         },
         {
           "term": "E055",
+          "path": "tests/test_a733_pmu_exec.py",
+          "occurrences": 1,
+          "first_lines": [
+            445
+          ]
+        },
+        {
+          "term": "E055",
           "path": "tests/test_e055_aarch64_gate.py",
-          "occurrences": 12,
+          "occurrences": 15,
           "first_lines": [
             1,
             13,
-            18,
-            32,
-            33
+            14,
+            19,
+            22
           ]
         },
         {
@@ -33301,7 +33343,7 @@
         {
           "term": "E055",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 59,
+          "occurrences": 60,
           "first_lines": [
             1,
             13,
@@ -33348,6 +33390,28 @@
         },
         {
           "term": "E055",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 17,
+          "first_lines": [
+            1,
+            13,
+            19,
+            64,
+            173
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "tooling/build_e055_pmu_artifact.py",
+          "occurrences": 3,
+          "first_lines": [
+            96,
+            97,
+            106
+          ]
+        },
+        {
+          "term": "E055",
           "path": "tooling/check_e055_disassembly.py",
           "occurrences": 2,
           "first_lines": [
@@ -33382,7 +33446,7 @@
         {
           "term": "E055",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 19,
+          "occurrences": 21,
           "first_lines": [
             1,
             3,
@@ -33405,8 +33469,20 @@
         },
         {
           "term": "E055",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 19,
+          "first_lines": [
+            1,
+            22,
+            29,
+            35,
+            42
+          ]
+        },
+        {
+          "term": "E055",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 41,
+          "occurrences": 48,
           "first_lines": [
             2,
             12,
@@ -34745,19 +34821,19 @@
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 9,
+          "occurrences": 12,
           "first_lines": [
             85,
             120,
             122,
-            152,
-            156
+            158,
+            162
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2030,
+          "occurrences": 2032,
           "first_lines": [
             21,
             1249,
@@ -34769,23 +34845,35 @@
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 4,
+          "occurrences": 11,
           "first_lines": [
             40,
             56,
+            57,
             58,
-            183
+            59
+          ]
+        },
+        {
+          "term": "PMU",
+          "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
+          "occurrences": 3,
+          "first_lines": [
+            16,
+            24,
+            25
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
-          "occurrences": 4,
+          "occurrences": 8,
           "first_lines": [
             28,
             37,
             53,
-            61
+            54,
+            62
           ]
         },
         {
@@ -34824,10 +34912,13 @@
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
-          "occurrences": 2,
+          "occurrences": 6,
           "first_lines": [
             59,
-            67
+            60,
+            68,
+            69,
+            70
           ]
         },
         {
@@ -34915,6 +35006,18 @@
         },
         {
           "term": "PMU",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 15,
+          "first_lines": [
+            14,
+            21,
+            22,
+            160,
+            161
+          ]
+        },
+        {
+          "term": "PMU",
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 2,
           "first_lines": [
@@ -34925,13 +35028,13 @@
         {
           "term": "PMU",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 5,
+          "occurrences": 18,
           "first_lines": [
             236,
             237,
-            294,
-            296,
-            297
+            241,
+            242,
+            243
           ]
         },
         {
@@ -34949,7 +35052,7 @@
         {
           "term": "PMU",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 22,
+          "occurrences": 37,
           "first_lines": [
             66,
             201,
@@ -34972,6 +35075,17 @@
         },
         {
           "term": "PMU",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 4,
+          "first_lines": [
+            98,
+            107,
+            192,
+            218
+          ]
+        },
+        {
+          "term": "PMU",
           "path": "tooling/a733_pmu_control.c",
           "occurrences": 1,
           "first_lines": [
@@ -34986,8 +35100,8 @@
             2,
             5,
             8,
-            243,
-            244
+            247,
+            248
           ]
         },
         {
@@ -34996,6 +35110,18 @@
           "occurrences": 1,
           "first_lines": [
             2
+          ]
+        },
+        {
+          "term": "PMU",
+          "path": "tooling/build_e055_pmu_artifact.py",
+          "occurrences": 13,
+          "first_lines": [
+            17,
+            18,
+            29,
+            41,
+            57
           ]
         },
         {
@@ -35029,25 +35155,37 @@
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 34,
+          "occurrences": 53,
           "first_lines": [
             12,
             61,
             70,
             77,
-            181
+            78
           ]
         },
         {
           "term": "PMU",
           "path": "tooling/e055_raw_bundle.py",
-          "occurrences": 22,
+          "occurrences": 25,
           "first_lines": [
             49,
             129,
             133,
-            572,
-            588
+            579,
+            595
+          ]
+        },
+        {
+          "term": "PMU",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 12,
+          "first_lines": [
+            30,
+            44,
+            61,
+            72,
+            152
           ]
         },
         {
@@ -35061,13 +35199,13 @@
         {
           "term": "PMU",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 6,
+          "occurrences": 23,
           "first_lines": [
             14,
             24,
-            57,
-            155,
-            156
+            46,
+            54,
+            60
           ]
         },
         {
@@ -36455,7 +36593,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 11936,
+          "occurrences": 11945,
           "first_lines": [
             3,
             6,
@@ -36490,7 +36628,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 28,
+          "occurrences": 31,
           "first_lines": [
             2,
             3,
@@ -36644,13 +36782,13 @@
         {
           "term": "Q1",
           "path": "tests/test_e055_aarch64_gate.py",
-          "occurrences": 5,
+          "occurrences": 7,
           "first_lines": [
-            18,
-            39,
-            43,
-            72,
-            141
+            19,
+            22,
+            24,
+            44,
+            48
           ]
         },
         {
@@ -36711,6 +36849,18 @@
             119,
             130,
             136
+          ]
+        },
+        {
+          "term": "Q1",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 11,
+          "first_lines": [
+            64,
+            68,
+            80,
+            180,
+            210
           ]
         },
         {
@@ -36870,7 +37020,7 @@
         {
           "term": "Q1",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 20,
+          "occurrences": 21,
           "first_lines": [
             1,
             4,
@@ -36887,8 +37037,20 @@
             25,
             530,
             532,
-            610,
-            656
+            620,
+            666
+          ]
+        },
+        {
+          "term": "Q1",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 5,
+          "first_lines": [
+            29,
+            42,
+            43,
+            294,
+            497
           ]
         },
         {
@@ -36950,7 +37112,7 @@
         {
           "term": "Q1",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 26,
+          "occurrences": 29,
           "first_lines": [
             12,
             22,
@@ -37177,7 +37339,7 @@
           "path": "tooling/e055_q1_hotcold.py",
           "occurrences": 1,
           "first_lines": [
-            123
+            125
           ]
         },
         {
@@ -37784,7 +37946,7 @@
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 668,
+          "occurrences": 670,
           "first_lines": [
             7,
             17,
@@ -37863,11 +38025,11 @@
           "path": "tests/test_e055_aarch64_gate.py",
           "occurrences": 5,
           "first_lines": [
-            68,
-            81,
-            97,
-            101,
-            102
+            73,
+            86,
+            102,
+            106,
+            107
           ]
         },
         {
@@ -37904,6 +38066,16 @@
         },
         {
           "term": "cache",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 3,
+          "first_lines": [
+            41,
+            66,
+            203
+          ]
+        },
+        {
+          "term": "cache",
           "path": "tooling/a733_pmu_exec.c",
           "occurrences": 5,
           "first_lines": [
@@ -37911,7 +38083,7 @@
             76,
             77,
             91,
-            232
+            236
           ]
         },
         {
@@ -37956,6 +38128,18 @@
             120,
             549,
             554
+          ]
+        },
+        {
+          "term": "cache",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 6,
+          "first_lines": [
+            56,
+            67,
+            137,
+            138,
+            147
           ]
         },
         {
@@ -38032,7 +38216,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 16,
+          "occurrences": 17,
           "first_lines": [
             1,
             59,
@@ -38044,7 +38228,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 451,
+          "occurrences": 460,
           "first_lines": [
             3,
             6,
@@ -38066,7 +38250,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 23,
+          "occurrences": 26,
           "first_lines": [
             2,
             3,
@@ -38082,7 +38266,7 @@
           "first_lines": [
             32,
             48,
-            93
+            97
           ]
         },
         {
@@ -38116,11 +38300,11 @@
         {
           "term": "cold",
           "path": "tests/test_e055_aarch64_gate.py",
-          "occurrences": 9,
+          "occurrences": 11,
           "first_lines": [
-            18,
-            67,
-            69,
+            19,
+            22,
+            24,
             72,
             74
           ]
@@ -38187,6 +38371,18 @@
         },
         {
           "term": "cold",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 15,
+          "first_lines": [
+            41,
+            64,
+            87,
+            180,
+            200
+          ]
+        },
+        {
+          "term": "cold",
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 31,
           "first_lines": [
@@ -38200,7 +38396,7 @@
         {
           "term": "cold",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 37,
+          "occurrences": 38,
           "first_lines": [
             1,
             13,
@@ -38223,8 +38419,20 @@
         },
         {
           "term": "cold",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 8,
+          "first_lines": [
+            42,
+            43,
+            132,
+            134,
+            135
+          ]
+        },
+        {
+          "term": "cold",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 19,
+          "occurrences": 22,
           "first_lines": [
             32,
             37,
@@ -38294,7 +38502,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 16,
+          "occurrences": 17,
           "first_lines": [
             1,
             59,
@@ -38306,7 +38514,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 400,
+          "occurrences": 409,
           "first_lines": [
             3,
             6,
@@ -38328,7 +38536,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 23,
+          "occurrences": 26,
           "first_lines": [
             2,
             3,
@@ -38344,7 +38552,7 @@
           "first_lines": [
             32,
             48,
-            93
+            97
           ]
         },
         {
@@ -38394,12 +38602,13 @@
         {
           "term": "hot",
           "path": "tests/test_e055_aarch64_gate.py",
-          "occurrences": 4,
+          "occurrences": 6,
           "first_lines": [
-            18,
-            72,
-            80,
-            82
+            19,
+            22,
+            24,
+            77,
+            85
           ]
         },
         {
@@ -38464,6 +38673,18 @@
         },
         {
           "term": "hot",
+          "path": "tests/test_e055_target_executor.py",
+          "occurrences": 13,
+          "first_lines": [
+            64,
+            180,
+            200,
+            201,
+            210
+          ]
+        },
+        {
+          "term": "hot",
           "path": "tooling/e048_trace.py",
           "occurrences": 1,
           "first_lines": [
@@ -38493,7 +38714,7 @@
         {
           "term": "hot",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 36,
+          "occurrences": 37,
           "first_lines": [
             1,
             29,
@@ -38510,14 +38731,26 @@
             25,
             48,
             557,
-            610,
-            631
+            620,
+            641
+          ]
+        },
+        {
+          "term": "hot",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 9,
+          "first_lines": [
+            42,
+            43,
+            132,
+            134,
+            135
           ]
         },
         {
           "term": "hot",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 19,
+          "occurrences": 22,
           "first_lines": [
             32,
             37,
@@ -39573,7 +39806,7 @@
           "occurrences": 2,
           "first_lines": [
             119,
-            150
+            156
           ]
         },
         {
@@ -39694,7 +39927,7 @@
           "occurrences": 2,
           "first_lines": [
             92,
-            232
+            236
           ]
         },
         {
@@ -39711,10 +39944,10 @@
           "occurrences": 13,
           "first_lines": [
             68,
-            520,
-            537,
-            565,
-            566
+            542,
+            559,
+            587,
+            588
           ]
         },
         {
@@ -39722,7 +39955,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            633
+            643
           ]
         },
         {
@@ -39886,13 +40119,13 @@
         {
           "term": "raw-bundle",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 54,
+          "occurrences": 55,
           "first_lines": [
             24,
             31297,
-            33178,
-            34753,
-            36458
+            33196,
+            34782,
+            36504
           ]
         },
         {
@@ -39900,8 +40133,8 @@
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
           "occurrences": 2,
           "first_lines": [
-            58,
-            129
+            62,
+            139
           ]
         },
         {
@@ -39954,8 +40187,8 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 2,
           "first_lines": [
-            348,
-            494
+            360,
+            506
           ]
         },
         {
@@ -39963,9 +40196,9 @@
           "path": "tooling/e055_q1_hotcold.py",
           "occurrences": 3,
           "first_lines": [
-            306,
-            314,
-            361
+            328,
+            336,
+            383
           ]
         },
         {
@@ -39980,11 +40213,19 @@
         },
         {
           "term": "raw-bundle",
+          "path": "tooling/e055_target_executor.py",
+          "occurrences": 1,
+          "first_lines": [
+            496
+          ]
+        },
+        {
+          "term": "raw-bundle",
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 2,
           "first_lines": [
-            48,
-            159
+            49,
+            180
           ]
         },
         {
@@ -40494,8 +40735,8 @@
           "first_lines": [
             7,
             38,
-            534,
-            551
+            556,
+            573
           ]
         },
         {
@@ -40503,7 +40744,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            630
+            640
           ]
         },
         {
@@ -40567,10 +40808,10 @@
           "occurrences": 17,
           "first_lines": [
             18,
-            40466,
-            40475,
-            40487,
-            40495
+            40556,
+            40565,
+            40577,
+            40585
           ]
         },
         {
@@ -40586,8 +40827,8 @@
           "path": "tests/test_e055_aarch64_gate.py",
           "occurrences": 2,
           "first_lines": [
-            101,
-            103
+            106,
+            108
           ]
         },
         {
@@ -40627,7 +40868,7 @@
             46,
             47,
             558,
-            746
+            756
           ]
         },
         {
@@ -41439,9 +41680,9 @@
           "first_lines": [
             7,
             38,
-            534,
-            551,
-            571
+            556,
+            573,
+            593
           ]
         },
         {
@@ -41449,7 +41690,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            630
+            640
           ]
         },
         {
@@ -41691,8 +41932,10 @@
         "E055-BINDING-",
         "E055-CAPTURE-",
         "E055-CAPTURE-RESERVATION",
+        "E055-CHILD",
         "E055-DERIVED-SAMPLE",
         "E055-DISASSEMBLY-REVIEW",
+        "E055-EXECUTOR-",
         "E055-GATE-",
         "E055-GIT-SEALED-RAW-BUNDLES",
         "E055-GIT-SEALED-RAW-BUNDLES-DESIGN",
@@ -41700,6 +41943,9 @@
         "E055-MANIFEST-",
         "E055-O3-AARCH64",
         "E055-O3-FLTO-AARCH64",
+        "E055-PMU-BUILD-A-",
+        "E055-PMU-BUILD-B-",
+        "E055-PMU-BUILD-REVIEW",
         "E055-PUBLICATION-VERIFICATION",
         "E055-Q1-HOT-COLD",
         "E055-Q1-HOT-COLD-HARNESS",
@@ -41709,6 +41955,7 @@
         "E055-RAW-BUNDLE",
         "E055-RAW-PUBLICATION-",
         "E055-RUNNER-CAPTURE",
+        "E055-RUNNER-FAILURE",
         "E055-RUNTIME-QUALIFICATION",
         "E055-SEALED-",
         "E055-STAGE1",
@@ -42320,10 +42567,12 @@
           ],
           "paths": [
             "experiments/E055-q1-hot-cold/README.md",
+            "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
             "experiments/E055-q1-hot-cold/data/branch-preflight.json",
             "experiments/E055-q1-hot-cold/data/disassembly-review.json",
             "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
             "experiments/E055-q1-hot-cold/data/manifest.json",
+            "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
             "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage2-bba62cb.md",
@@ -42337,7 +42586,7 @@
           ]
         }
       ],
-      "commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c"
+      "commit": "8f6a0178520cb2e72f5fb7a9828d3dc656418855"
     },
     {
       "ref": "refs/heads/main",
@@ -85243,7 +85492,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-      "match_count": 114525,
+      "match_count": 114683,
       "matches": [
         {
           "term": "DOTPROD",
@@ -85258,7 +85507,7 @@
           "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
           "occurrences": 1,
           "first_lines": [
-            138
+            159
           ]
         },
         {
@@ -85661,9 +85910,9 @@
           "first_lines": [
             35,
             48,
-            249,
-            250,
-            271
+            271,
+            272,
+            293
           ]
         },
         {
@@ -85737,11 +85986,11 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 9,
           "first_lines": [
-            63,
-            160,
-            471,
-            506,
-            563
+            64,
+            161,
+            512,
+            547,
+            604
           ]
         },
         {
@@ -85781,8 +86030,8 @@
           "first_lines": [
             9,
             38,
-            309,
-            509
+            332,
+            532
           ]
         },
         {
@@ -85790,8 +86039,8 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 2,
           "first_lines": [
-            627,
-            679
+            630,
+            682
           ]
         },
         {
@@ -86017,7 +86266,7 @@
         {
           "term": "E009",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 196,
+          "occurrences": 198,
           "first_lines": [
             7,
             27,
@@ -87073,9 +87322,9 @@
           "first_lines": [
             35,
             32673,
-            41537,
-            86973,
-            95837
+            41632,
+            87070,
+            95976
           ]
         },
         {
@@ -87084,10 +87333,10 @@
           "occurrences": 5,
           "first_lines": [
             36,
-            32681,
-            41538,
-            86981,
-            95838
+            32685,
+            41633,
+            87082,
+            95977
           ]
         },
         {
@@ -87263,7 +87512,7 @@
             32,
             34,
             48,
-            251
+            273
           ]
         },
         {
@@ -87334,7 +87583,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            160
+            161
           ]
         },
         {
@@ -87354,7 +87603,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            679
+            682
           ]
         },
         {
@@ -87488,13 +87737,23 @@
         {
           "term": "E040",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 644,
+          "occurrences": 646,
           "first_lines": [
             7,
             39,
             168,
             177,
             913
+          ]
+        },
+        {
+          "term": "E055",
+          "path": ".gitignore",
+          "occurrences": 3,
+          "first_lines": [
+            13,
+            15,
+            16
           ]
         },
         {
@@ -87512,19 +87771,19 @@
         {
           "term": "E055",
           "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
-          "occurrences": 8,
+          "occurrences": 9,
           "first_lines": [
             1,
             24,
             36,
-            43,
-            51
+            44,
+            52
           ]
         },
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 18,
+          "occurrences": 19,
           "first_lines": [
             1,
             5,
@@ -87536,7 +87795,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 691,
+          "occurrences": 704,
           "first_lines": [
             3,
             6,
@@ -87664,13 +87923,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_capture_scaffold.py",
-          "occurrences": 6,
+          "occurrences": 8,
           "first_lines": [
             1,
             11,
-            16,
-            81,
-            91
+            12,
+            17,
+            82
           ]
         },
         {
@@ -87688,13 +87947,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 59,
           "first_lines": [
             1,
             13,
             14,
-            29,
-            30
+            25,
+            32
           ]
         },
         {
@@ -87712,13 +87971,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 28,
+          "occurrences": 34,
           "first_lines": [
             1,
             17,
             18,
-            27,
-            29
+            19,
+            28
           ]
         },
         {
@@ -87745,12 +88004,13 @@
         {
           "term": "E055",
           "path": "tooling/e055_capture_scaffold.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
             1,
-            37,
-            41,
-            121
+            76,
+            80,
+            125,
+            218
           ]
         },
         {
@@ -87804,13 +88064,13 @@
         {
           "term": "E055",
           "path": "tooling/verify_e055_publication.py",
-          "occurrences": 5,
+          "occurrences": 8,
           "first_lines": [
             2,
-            71,
-            72,
-            157,
-            161
+            22,
+            23,
+            77,
+            78
           ]
         },
         {
@@ -88237,13 +88497,13 @@
         {
           "term": "PMU",
           "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
-          "occurrences": 5,
+          "occurrences": 6,
           "first_lines": [
-            105,
-            112,
-            128,
-            134,
-            138
+            106,
+            114,
+            127,
+            149,
+            155
           ]
         },
         {
@@ -89136,14 +89396,14 @@
             85,
             120,
             122,
-            149,
-            153
+            152,
+            156
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2030,
+          "occurrences": 2032,
           "first_lines": [
             21,
             1249,
@@ -89313,11 +89573,11 @@
           "path": "tests/test_e055_publication.py",
           "occurrences": 5,
           "first_lines": [
-            82,
-            83,
-            140,
-            142,
-            143
+            236,
+            237,
+            294,
+            296,
+            297
           ]
         },
         {
@@ -89337,11 +89597,11 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 22,
           "first_lines": [
-            65,
-            200,
-            202,
-            207,
-            211
+            66,
+            201,
+            203,
+            208,
+            212
           ]
         },
         {
@@ -89415,13 +89675,13 @@
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 33,
+          "occurrences": 34,
           "first_lines": [
             12,
             61,
             70,
             77,
-            236
+            181
           ]
         },
         {
@@ -89432,8 +89692,8 @@
             49,
             129,
             133,
-            569,
-            585
+            572,
+            588
           ]
         },
         {
@@ -89454,6 +89714,15 @@
             57,
             155,
             156
+          ]
+        },
+        {
+          "term": "Q1",
+          "path": ".gitignore",
+          "occurrences": 2,
+          "first_lines": [
+            15,
+            16
           ]
         },
         {
@@ -89561,7 +89830,7 @@
           "occurrences": 2,
           "first_lines": [
             24,
-            133
+            154
           ]
         },
         {
@@ -90820,7 +91089,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 10,
+          "occurrences": 11,
           "first_lines": [
             1,
             6,
@@ -90832,7 +91101,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 11936,
+          "occurrences": 11945,
           "first_lines": [
             3,
             6,
@@ -91045,13 +91314,13 @@
         {
           "term": "Q1",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 24,
+          "occurrences": 39,
           "first_lines": [
-            29,
-            30,
-            31,
             32,
-            33
+            39,
+            42,
+            43,
+            53
           ]
         },
         {
@@ -91069,13 +91338,13 @@
         {
           "term": "Q1",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 12,
+          "occurrences": 17,
           "first_lines": [
             17,
-            27,
-            29,
-            52,
-            68
+            18,
+            28,
+            30,
+            53
           ]
         },
         {
@@ -91264,8 +91533,8 @@
             25,
             530,
             532,
-            607,
-            653
+            610,
+            656
           ]
         },
         {
@@ -91472,11 +91741,13 @@
         {
           "term": "Q1",
           "path": "tooling/verify_e055_publication.py",
-          "occurrences": 3,
+          "occurrences": 5,
           "first_lines": [
-            71,
-            72,
-            157
+            22,
+            23,
+            77,
+            78,
+            169
           ]
         },
         {
@@ -91603,7 +91874,7 @@
           "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
           "occurrences": 1,
           "first_lines": [
-            93
+            94
           ]
         },
         {
@@ -92159,7 +92430,7 @@
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 668,
+          "occurrences": 670,
           "first_lines": [
             7,
             17,
@@ -92262,11 +92533,11 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 14,
           "first_lines": [
-            64,
-            131,
-            133,
-            158,
-            191
+            65,
+            132,
+            134,
+            159,
+            192
           ]
         },
         {
@@ -92329,8 +92600,17 @@
             45,
             46,
             120,
-            546,
-            551
+            549,
+            554
+          ]
+        },
+        {
+          "term": "cold",
+          "path": ".gitignore",
+          "occurrences": 2,
+          "first_lines": [
+            15,
+            16
           ]
         },
         {
@@ -92376,7 +92656,7 @@
           "occurrences": 2,
           "first_lines": [
             24,
-            139
+            160
           ]
         },
         {
@@ -92398,7 +92678,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 15,
+          "occurrences": 16,
           "first_lines": [
             1,
             59,
@@ -92410,7 +92690,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 451,
+          "occurrences": 460,
           "first_lines": [
             3,
             6,
@@ -92506,13 +92786,13 @@
         {
           "term": "cold",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 24,
+          "occurrences": 39,
           "first_lines": [
-            29,
-            30,
-            31,
             32,
-            33
+            39,
+            42,
+            43,
+            53
           ]
         },
         {
@@ -92530,13 +92810,13 @@
         {
           "term": "cold",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 36,
+          "occurrences": 38,
           "first_lines": [
-            27,
-            29,
-            52,
-            62,
-            68
+            28,
+            30,
+            63,
+            69,
+            132
           ]
         },
         {
@@ -92584,7 +92864,7 @@
             44,
             46,
             47,
-            551
+            554
           ]
         },
         {
@@ -92602,11 +92882,22 @@
         {
           "term": "cold",
           "path": "tooling/verify_e055_publication.py",
-          "occurrences": 3,
+          "occurrences": 5,
           "first_lines": [
-            71,
-            72,
-            157
+            22,
+            23,
+            77,
+            78,
+            169
+          ]
+        },
+        {
+          "term": "hot",
+          "path": ".gitignore",
+          "occurrences": 2,
+          "first_lines": [
+            15,
+            16
           ]
         },
         {
@@ -92627,7 +92918,7 @@
           "occurrences": 2,
           "first_lines": [
             24,
-            139
+            160
           ]
         },
         {
@@ -92649,7 +92940,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 15,
+          "occurrences": 16,
           "first_lines": [
             1,
             59,
@@ -92661,7 +92952,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 400,
+          "occurrences": 409,
           "first_lines": [
             3,
             6,
@@ -92772,13 +93063,13 @@
         {
           "term": "hot",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 24,
+          "occurrences": 39,
           "first_lines": [
-            29,
-            30,
-            31,
             32,
-            33
+            39,
+            42,
+            43,
+            53
           ]
         },
         {
@@ -92796,13 +93087,13 @@
         {
           "term": "hot",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 31,
+          "occurrences": 33,
           "first_lines": [
-            27,
-            29,
-            52,
-            62,
-            64
+            28,
+            30,
+            63,
+            65,
+            69
           ]
         },
         {
@@ -92864,9 +93155,9 @@
           "first_lines": [
             25,
             48,
-            554,
-            607,
-            628
+            557,
+            610,
+            631
           ]
         },
         {
@@ -92884,11 +93175,13 @@
         {
           "term": "hot",
           "path": "tooling/verify_e055_publication.py",
-          "occurrences": 3,
+          "occurrences": 5,
           "first_lines": [
-            71,
-            72,
-            157
+            22,
+            23,
+            77,
+            78,
+            169
           ]
         },
         {
@@ -93926,7 +94219,7 @@
           "occurrences": 2,
           "first_lines": [
             119,
-            147
+            150
           ]
         },
         {
@@ -94064,10 +94357,10 @@
           "occurrences": 13,
           "first_lines": [
             68,
-            497,
-            514,
-            542,
-            543
+            520,
+            537,
+            565,
+            566
           ]
         },
         {
@@ -94075,7 +94368,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            630
+            633
           ]
         },
         {
@@ -94239,13 +94532,13 @@
         {
           "term": "raw-bundle",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 54,
+          "occurrences": 55,
           "first_lines": [
             24,
             31297,
-            33178,
-            34753,
-            36458
+            33196,
+            34782,
+            36504
           ]
         },
         {
@@ -94268,6 +94561,14 @@
         },
         {
           "term": "raw-bundle",
+          "path": "tests/test_e055_capture_scaffold.py",
+          "occurrences": 1,
+          "first_lines": [
+            111
+          ]
+        },
+        {
+          "term": "raw-bundle",
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 2,
           "first_lines": [
@@ -94280,7 +94581,7 @@
           "path": "tests/test_e055_publication.py",
           "occurrences": 1,
           "first_lines": [
-            31
+            185
           ]
         },
         {
@@ -94297,9 +94598,10 @@
         {
           "term": "raw-bundle",
           "path": "tests/test_e055_raw_bundle.py",
-          "occurrences": 1,
+          "occurrences": 2,
           "first_lines": [
-            347
+            348,
+            494
           ]
         },
         {
@@ -94307,9 +94609,9 @@
           "path": "tooling/e055_q1_hotcold.py",
           "occurrences": 3,
           "first_lines": [
-            283,
-            291,
-            338
+            306,
+            314,
+            361
           ]
         },
         {
@@ -94838,8 +95140,8 @@
           "first_lines": [
             7,
             38,
-            511,
-            528
+            534,
+            551
           ]
         },
         {
@@ -94847,7 +95149,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            627
+            630
           ]
         },
         {
@@ -94911,10 +95213,10 @@
           "occurrences": 17,
           "first_lines": [
             18,
-            40466,
-            40475,
-            40487,
-            40495
+            40556,
+            40565,
+            40577,
+            40585
           ]
         },
         {
@@ -94939,7 +95241,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            199
+            200
           ]
         },
         {
@@ -94970,8 +95272,8 @@
             44,
             46,
             47,
-            555,
-            743
+            558,
+            746
           ]
         },
         {
@@ -95783,9 +96085,9 @@
           "first_lines": [
             7,
             38,
-            511,
-            528,
-            548
+            534,
+            551,
+            571
           ]
         },
         {
@@ -95793,7 +96095,7 @@
           "path": "tooling/e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            627
+            630
           ]
         },
         {
@@ -96051,6 +96353,7 @@
         "E055-Q1-HOTCOLD-AARCH64",
         "E055-Q1-INFERENCE",
         "E055-RAW-BUNDLE",
+        "E055-RAW-PUBLICATION-",
         "E055-RUNNER-CAPTURE",
         "E055-RUNTIME-QUALIFICATION",
         "E055-SEALED-",
@@ -96680,7 +96983,7 @@
           ]
         }
       ],
-      "commit": "f14b9d8e377f712ef769ff8141d77e808addcef6"
+      "commit": "e33d59f982b2233b408327f4f8aa9be076c4e332"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -112464,11 +112767,11 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e055-q1-hot-cold",
-    "base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
+    "base_commit": "8f6a0178520cb2e72f5fb7a9828d3dc656418855",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-    "upstream_base_commit": "f14b9d8e377f712ef769ff8141d77e808addcef6",
+    "upstream_base_commit": "e33d59f982b2233b408327f4f8aa9be076c4e332",
     "tree_binding_source": "git-index-stage0",
-    "tree_binding_sha256": "bb675e5e7abc8a39ae28676e5e31382abf091868f144913919450889769e609b",
+    "tree_binding_sha256": "cff522ec3b187729a832371f193b8189070c002a09e31f2a83d4be77695ba6ec",
     "binding_excludes": [
       "experiments/E055-q1-hot-cold/data/branch-preflight.json",
       "experiments/E055-q1-hot-cold/data/manifest.json"
@@ -114475,7 +114778,12 @@
           {
             "path": "experiments/E055-q1-hot-cold/README.md",
             "mode": "100644",
-            "blob_oid": "64e7ce0611ce9ea6c0a25de56ad9b00d94de930f"
+            "blob_oid": "43e1e09df438bf68c2263fb9646d24ada23a4567"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
+            "mode": "100755",
+            "blob_oid": "c25646dd34bd58fff87b2ae5ad5468b0a8683f7e"
           },
           {
             "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
@@ -114498,9 +114806,14 @@
             "blob_oid": "9a0bfb244613479789c91ec86781590381f6930a"
           },
           {
+            "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
+            "mode": "100644",
+            "blob_oid": "99d7ce2fc786d6ab457814d0ed28b9d41fcef30f"
+          },
+          {
             "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
             "mode": "100644",
-            "blob_oid": "9be9a85917930b0865cdaa657d863d58348f289f"
+            "blob_oid": "f10cd9adc951d6a69523359de941242c7d6b500f"
           },
           {
             "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
@@ -114530,7 +114843,7 @@
           {
             "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
             "mode": "100644",
-            "blob_oid": "251b4604797672d523cbf8822329b3883eab6db0"
+            "blob_oid": "b0f4a07dc0693617e7a78ec66a8f90814e10306a"
           },
           {
             "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
@@ -114566,7 +114879,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 19,
-  "match_count": 704826,
+  "match_count": 705338,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -114579,14 +114892,14 @@
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
         "ref": "refs/heads/codex/e055-q1-hot-cold",
-        "commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c"
+        "commit": "8f6a0178520cb2e72f5fb7a9828d3dc656418855"
       },
       {
         "experiment_id": "E055-Q1-HOT-COLD",
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
         "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-        "commit": "f14b9d8e377f712ef769ff8141d77e808addcef6"
+        "commit": "e33d59f982b2233b408327f4f8aa9be076c4e332"
       }
     ]
   },

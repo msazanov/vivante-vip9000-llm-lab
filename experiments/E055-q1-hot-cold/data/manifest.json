@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T10:40:14.294474+00:00",
+  "generated_at_utc": "2026-08-14T10:47:41.236877+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
-    "staged_tree_binding_sha256": "bb675e5e7abc8a39ae28676e5e31382abf091868f144913919450889769e609b",
+    "preflight_base_commit": "8f6a0178520cb2e72f5fb7a9828d3dc656418855",
+    "staged_tree_binding_sha256": "cff522ec3b187729a832371f193b8189070c002a09e31f2a83d4be77695ba6ec",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -71,8 +71,8 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3056301,
-      "sha256": "bb44f16585458fdbb2c496fb44a968293b1f834145033318fc85f0b74e408137",
+      "size_bytes": 3063265,
+      "sha256": "080e013942b3184ac4b74857da2cf10c8ae0c009a62ab146cdb7cb4eeb361659",
       "role": "e055-stage1"
     },
     {
