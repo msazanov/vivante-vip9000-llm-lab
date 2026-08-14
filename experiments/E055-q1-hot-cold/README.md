@@ -313,14 +313,23 @@ attested device truth.
 
 The E049c wrapper itself ignores parent `SIGPIPE`, converts a closed ACK channel
 to a recorded failure, and handles `TERM`, `HUP`, and `INT` by terminating and
-reaping the complete child process group before returning the signal-derived
-status. The child sets a Linux parent-death signal as defense in depth. A
-nonzero or signaled child after `E` also fails the sample and terminates any
-remaining descendants. The wrapper performs the same session-bound group
-quiescence after an exit-zero leader in both immediate and S/A/E modes, and it
-cannot report success until adopted descendants are terminated and reaped. The
-cleanup verifies the child-established session identity before group signaling,
-so a recycled numeric process-group ID from another session is not targeted.
+reaping the complete child tree before returning the signal-derived status. The
+child sets a Linux parent-death signal as defense in depth. Before forking, the
+parent records the existing Linux child-subreaper state and enables subreaping;
+it restores the prior state after cleanup. Descendants that escape the original
+session or process group with `setsid` or `setpgid` are therefore reparented to
+the wrapper when their intermediate parent exits.
+
+Cleanup repeatedly enumerates only tasks whose `/proc` PPID is the wrapper,
+opens a pidfd, re-reads the strict `/proc/<pid>/stat` identity through field 22
+(`start_time`), and signals only an unchanged pidfd-bound identity. It sends
+`TERM`, then bounded `KILL`, reaps with `waitpid`, and requires two empty scans
+before reporting quiescence. A malformed record, unsupported pidfd operation,
+enumeration error, or timeout fails the sample closed. This avoids signaling an
+unrelated process after numeric PID reuse. A nonzero or signaled child after
+`E` also fails the sample, and both immediate and S/A/E exit-zero paths use the
+same tree-quiescence gate before success. The launcher is a dedicated process;
+the PPID scope assumes it has no unrelated pre-existing children.
 
 ## Reproduction of revised Stage 1
 

@@ -62,6 +62,11 @@
 #define SOFTWARE_GROUP_SIZE_LIMIT 4
 #define MAX_GROUP_EVENTS SOFTWARE_GROUP_SIZE_LIMIT
 #define EVENT_DEFINITION_COUNT 8
+#define MAX_ADOPTED_CHILDREN 4096U
+#define CLEANUP_TERM_ATTEMPTS 50
+#define CLEANUP_KILL_ATTEMPTS 100
+#define CLEANUP_POLL_MS 10
+#define CLEANUP_EMPTY_CONFIRMATIONS 2
 
 static volatile sig_atomic_t parent_cancel_signal = 0;
 
@@ -160,6 +165,15 @@ struct run_state {
     char failure_reason[256];
 };
 
+struct proc_identity {
+    pid_t pid;
+    pid_t parent_pid;
+    pid_t process_group;
+    pid_t session;
+    uint64_t start_time;
+    int pidfd;
+};
+
 static int perf_event_open_local(struct perf_event_attr *attr, pid_t pid, int cpu,
                                  int group_fd, unsigned long flags) {
     return (int)syscall(SYS_perf_event_open, attr, pid, cpu, group_fd, flags);
@@ -218,6 +232,31 @@ static int reset_child_signal_handlers(void) {
         }
     }
     return 0;
+}
+
+static int enable_child_subreaper(int *previous_state) {
+    int current = 0;
+    if (previous_state == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (prctl(PR_GET_CHILD_SUBREAPER, &current, 0, 0, 0) != 0 ||
+        (current != 0 && current != 1)) {
+        return -1;
+    }
+    *previous_state = current;
+    if (current == 0 && prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) != 0) {
+        return -1;
+    }
+    return 0;
+}
+
+static int restore_child_subreaper(int previous_state) {
+    if (previous_state != 0 && previous_state != 1) {
+        errno = EINVAL;
+        return -1;
+    }
+    return prctl(PR_SET_CHILD_SUBREAPER, previous_state, 0, 0, 0);
 }
 
 static int observe_parent_cancellation(struct run_state *run) {
@@ -547,82 +586,6 @@ static int64_t read_max_temp_mc(const char *thermal_root, int *readable) {
     return maximum;
 }
 
-static int process_group_has_child_session_member(const struct run_state *run) {
-    DIR *directory;
-    struct dirent *entry;
-    int found = 0;
-    if (!run->child_session_established || run->child_pgid <= 0 || run->child_sid <= 0) {
-        return 0;
-    }
-    directory = opendir("/proc");
-    if (directory == NULL) {
-        return -1;
-    }
-    while ((entry = readdir(directory)) != NULL) {
-        char path[64];
-        char line[4096];
-        char state;
-        char *end = NULL;
-        char *closing;
-        FILE *file;
-        long pid;
-        long parent;
-        long process_group;
-        long session;
-        errno = 0;
-        pid = strtol(entry->d_name, &end, 10);
-        if (errno != 0 || end == entry->d_name || *end != '\0' || pid <= 0) {
-            continue;
-        }
-        if (snprintf(path, sizeof(path), "/proc/%ld/stat", pid) >= (int)sizeof(path)) {
-            continue;
-        }
-        file = fopen(path, "r");
-        if (file == NULL) {
-            continue;
-        }
-        if (fgets(line, sizeof(line), file) == NULL) {
-            fclose(file);
-            continue;
-        }
-        fclose(file);
-        closing = strrchr(line, ')');
-        if (closing == NULL || sscanf(closing + 1, " %c %ld %ld %ld", &state,
-                                      &parent, &process_group, &session) != 4) {
-            continue;
-        }
-        (void)state;
-        (void)parent;
-        if (process_group == (long)run->child_pgid &&
-            session == (long)run->child_sid) {
-            found = 1;
-            break;
-        }
-    }
-    closedir(directory);
-    return found;
-}
-
-static int signal_process_group(const struct run_state *run, int signal_number) {
-    int membership = process_group_has_child_session_member(run);
-    if (membership > 0) {
-        if (kill(-run->child_pgid, signal_number) == 0 || errno == ESRCH) {
-            return 0;
-        }
-        return -1;
-    }
-    if (membership < 0) {
-        return -1;
-    }
-    if (!run->child_status_valid && run->child_pid > 0) {
-        if (kill(run->child_pid, signal_number) == 0 || errno == ESRCH) {
-            return 0;
-        }
-        return -1;
-    }
-    return 0;
-}
-
 static int check_thermal(struct run_state *run, const struct options *options) {
     int readable = 0;
     int64_t temperature;
@@ -636,7 +599,6 @@ static int check_thermal(struct run_state *run, const struct options *options) {
         run->thermal_unreadable = 1;
         run->internal_failure = 1;
         set_failure(run, "thermal_unreadable");
-        signal_process_group(run, SIGTERM);
         return -1;
     }
     if (temperature > run->max_temp_mc) {
@@ -646,7 +608,6 @@ static int check_thermal(struct run_state *run, const struct options *options) {
         run->thermal_tripped = 1;
         run->internal_failure = 1;
         set_failure(run, "thermal_guard_exceeded");
-        signal_process_group(run, SIGTERM);
         return -1;
     }
     return 0;
@@ -941,79 +902,322 @@ static int wait_for_child(struct run_state *run, const struct options *options) 
     }
 }
 
-static void reap_group_nonblocking(struct run_state *run) {
+static int parse_proc_directory_pid(const char *name, pid_t *pid) {
+    char *end = NULL;
+    long parsed;
+    if (name == NULL || name[0] < '1' || name[0] > '9') {
+        return 0;
+    }
+    errno = 0;
+    parsed = strtol(name, &end, 10);
+    if (errno != 0 || end == name || *end != '\0' || parsed <= 0 ||
+        parsed > INT_MAX) {
+        return 0;
+    }
+    *pid = (pid_t)parsed;
+    return 1;
+}
+
+/*
+ * Return 1 for a stable parse, 0 when the task raced away, and -1 for an
+ * unreadable or malformed proc record.  Field 22 (start_time) is the PID-reuse
+ * identity paired with a pidfd before any signal is sent.
+ */
+static int read_proc_identity(pid_t pid, struct proc_identity *identity) {
+    char path[64];
+    char line[4096];
+    char *cursor;
+    char *end;
+    char *closing;
+    long parsed_pid;
+    long long value = 0;
+    size_t used = 0;
+    int fd;
+    int field;
+
+    if (pid <= 0 || identity == NULL ||
+        snprintf(path, sizeof(path), "/proc/%ld/stat", (long)pid) >=
+            (int)sizeof(path)) {
+        errno = EINVAL;
+        return -1;
+    }
+    fd = open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0) {
+        return errno == ENOENT || errno == ESRCH ? 0 : -1;
+    }
     for (;;) {
-        int status;
-        pid_t waited = waitpid(-run->child_pgid, &status, WNOHANG);
-        if (waited <= 0) {
+        ssize_t bytes = read(fd, line + used, sizeof(line) - 1U - used);
+        if (bytes < 0 && errno == EINTR) {
+            continue;
+        }
+        if (bytes < 0) {
+            int saved_errno = errno;
+            close(fd);
+            errno = saved_errno;
+            return saved_errno == ENOENT || saved_errno == ESRCH ? 0 : -1;
+        }
+        if (bytes == 0) {
             break;
         }
-        if (waited == run->child_pid) {
-            run->child_status_valid = 1;
-            run->child_status = status;
+        used += (size_t)bytes;
+        if (used == sizeof(line) - 1U) {
+            close(fd);
+            errno = EOVERFLOW;
+            return -1;
+        }
+    }
+    if (close(fd) != 0) {
+        return -1;
+    }
+    if (used == 0) {
+        return 0;
+    }
+    line[used] = '\0';
+
+    errno = 0;
+    parsed_pid = strtol(line, &end, 10);
+    if (errno != 0 || end == line || *end != ' ' || end[1] != '(' ||
+        parsed_pid != (long)pid) {
+        errno = EPROTO;
+        return -1;
+    }
+    closing = strrchr(end + 2, ')');
+    if (closing == NULL || closing[1] != ' ' || closing[2] == '\0' ||
+        closing[2] == ' ' || closing[3] != ' ') {
+        errno = EPROTO;
+        return -1;
+    }
+    cursor = closing + 4;
+    memset(identity, 0, sizeof(*identity));
+    identity->pid = pid;
+    identity->pidfd = -1;
+    for (field = 4; field <= 22; ++field) {
+        errno = 0;
+        value = strtoll(cursor, &end, 10);
+        if (errno != 0 || end == cursor ||
+            (field < 22 && *end != ' ') ||
+            (field == 22 && *end != ' ' && *end != '\n' && *end != '\0')) {
+            errno = EPROTO;
+            return -1;
+        }
+        if (field >= 4 && field <= 6 && (value < 0 || value > INT_MAX)) {
+            errno = EPROTO;
+            return -1;
+        }
+        if (field == 4) identity->parent_pid = (pid_t)value;
+        if (field == 5) identity->process_group = (pid_t)value;
+        if (field == 6) identity->session = (pid_t)value;
+        if (field == 22) identity->start_time = (uint64_t)value;
+        cursor = end;
+        while (*cursor == ' ') {
+            ++cursor;
+        }
+    }
+    if (value <= 0) {
+        errno = EPROTO;
+        return -1;
+    }
+    return 1;
+}
+
+static int pidfd_open_local(pid_t pid) {
+#ifdef SYS_pidfd_open
+    return (int)syscall(SYS_pidfd_open, pid, 0U);
+#else
+    (void)pid;
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+static int pidfd_send_signal_local(int pidfd, int signal_number) {
+#ifdef SYS_pidfd_send_signal
+    return (int)syscall(SYS_pidfd_send_signal, pidfd, signal_number, NULL, 0U);
+#else
+    (void)pidfd;
+    (void)signal_number;
+    errno = ENOSYS;
+    return -1;
+#endif
+}
+
+static void close_identity_list(struct proc_identity *children, size_t count) {
+    size_t index;
+    for (index = 0; index < count; ++index) {
+        if (children[index].pidfd >= 0) {
+            close(children[index].pidfd);
+            children[index].pidfd = -1;
         }
     }
 }
 
-static int terminate_process_group(struct run_state *run) {
-    int attempt;
-    if (run->child_pid <= 0) {
-        return 0;
-    }
-    reap_group_nonblocking(run);
-    if (signal_process_group(run, SIGTERM) != 0) {
-        run->internal_failure = 1;
-        set_failure(run, "process_group_cleanup_failed");
+static int enumerate_adopted_children(struct proc_identity *children,
+                                      size_t capacity, size_t *count) {
+    DIR *directory;
+    struct dirent *entry;
+    const pid_t wrapper_pid = getpid();
+    size_t found = 0;
+    int scan_errno = 0;
+
+    *count = 0;
+    directory = opendir("/proc");
+    if (directory == NULL) {
         return -1;
     }
-    for (attempt = 0; attempt < 50; ++attempt) {
-        if (!run->child_status_valid) {
-            int status;
-            pid_t waited = waitpid(run->child_pid, &status, WNOHANG);
+    errno = 0;
+    while ((entry = readdir(directory)) != NULL) {
+        struct proc_identity first;
+        struct proc_identity confirmed;
+        pid_t pid;
+        int read_status;
+        int pidfd;
+        if (!parse_proc_directory_pid(entry->d_name, &pid)) {
+            errno = 0;
+            continue;
+        }
+        read_status = read_proc_identity(pid, &first);
+        if (read_status == 0) {
+            errno = 0;
+            continue;
+        }
+        if (read_status < 0) {
+            scan_errno = errno != 0 ? errno : EPROTO;
+            break;
+        }
+        if (first.parent_pid != wrapper_pid) {
+            errno = 0;
+            continue;
+        }
+        if (found == capacity) {
+            scan_errno = EOVERFLOW;
+            break;
+        }
+        pidfd = pidfd_open_local(pid);
+        if (pidfd < 0) {
+            if (errno == ESRCH || errno == ENOENT) {
+                errno = 0;
+                continue;
+            }
+            scan_errno = errno != 0 ? errno : ENOSYS;
+            break;
+        }
+        read_status = read_proc_identity(pid, &confirmed);
+        if (read_status == 0) {
+            close(pidfd);
+            errno = 0;
+            continue;
+        }
+        if (read_status < 0) {
+            scan_errno = errno != 0 ? errno : EPROTO;
+            close(pidfd);
+            break;
+        }
+        if (confirmed.parent_pid != wrapper_pid ||
+            confirmed.start_time != first.start_time) {
+            close(pidfd);
+            errno = 0;
+            continue;
+        }
+        confirmed.pidfd = pidfd;
+        children[found++] = confirmed;
+        errno = 0;
+    }
+    if (entry == NULL && errno != 0 && scan_errno == 0) {
+        scan_errno = errno;
+    }
+    if (closedir(directory) != 0 && scan_errno == 0) {
+        scan_errno = errno != 0 ? errno : EIO;
+    }
+    if (scan_errno != 0) {
+        close_identity_list(children, found);
+        errno = scan_errno;
+        return -1;
+    }
+    *count = found;
+    return 0;
+}
+
+static int reap_adopted_children_nonblocking(struct run_state *run) {
+    for (;;) {
+        int status;
+        pid_t waited = waitpid(-1, &status, WNOHANG);
+        if (waited > 0) {
             if (waited == run->child_pid) {
                 run->child_status_valid = 1;
                 run->child_status = status;
             }
+            continue;
         }
-        reap_group_nonblocking(run);
-        {
-            int membership = process_group_has_child_session_member(run);
-            if (run->child_status_valid && membership == 0) {
-                return 0;
-            }
-            if (membership < 0) {
-                run->internal_failure = 1;
-                set_failure(run, "process_group_cleanup_failed");
-                return -1;
-            }
+        if (waited == 0 || errno == ECHILD) {
+            return 0;
         }
-        (void)poll(NULL, 0, 10);
-    }
-    if (signal_process_group(run, SIGKILL) != 0) {
-        run->internal_failure = 1;
-        set_failure(run, "process_group_cleanup_failed");
+        if (errno == EINTR) {
+            continue;
+        }
         return -1;
     }
-    if (!run->child_status_valid && waitpid(run->child_pid, &run->child_status, 0) ==
-                                      run->child_pid) {
-        run->child_status_valid = 1;
+}
+
+/* Return 0 when quiescent, 1 when the bounded phase expires, and -1 on error. */
+static int cleanup_adopted_children_phase(struct run_state *run,
+                                          int signal_number, int attempts) {
+    struct proc_identity *children;
+    int empty_scans = 0;
+    int attempt;
+    children = calloc(MAX_ADOPTED_CHILDREN, sizeof(*children));
+    if (children == NULL) {
+        return -1;
     }
-    for (attempt = 0; attempt < 50; ++attempt) {
-        reap_group_nonblocking(run);
-        {
-            int membership = process_group_has_child_session_member(run);
-            if (run->child_status_valid && membership == 0) {
+    for (attempt = 0; attempt < attempts; ++attempt) {
+        size_t count = 0;
+        size_t index;
+        if (reap_adopted_children_nonblocking(run) != 0 ||
+            enumerate_adopted_children(children, MAX_ADOPTED_CHILDREN, &count) != 0) {
+            free(children);
+            return -1;
+        }
+        if (count == 0) {
+            ++empty_scans;
+            if (empty_scans >= CLEANUP_EMPTY_CONFIRMATIONS) {
+                free(children);
                 return 0;
             }
-            if (membership < 0) {
-                break;
+        } else {
+            empty_scans = 0;
+            for (index = 0; index < count; ++index) {
+                if (pidfd_send_signal_local(children[index].pidfd,
+                                            signal_number) != 0 &&
+                    errno != ESRCH) {
+                    close_identity_list(children, count);
+                    free(children);
+                    return -1;
+                }
             }
         }
-        (void)poll(NULL, 0, 10);
+        close_identity_list(children, count);
+        (void)poll(NULL, 0, CLEANUP_POLL_MS);
     }
-    run->internal_failure = 1;
-    set_failure(run, "process_group_cleanup_failed");
-    return -1;
+    free(children);
+    return 1;
+}
+
+static int terminate_process_tree(struct run_state *run) {
+    int phase_status;
+    if (run->child_pid <= 0) {
+        return 0;
+    }
+    phase_status = cleanup_adopted_children_phase(run, SIGTERM,
+                                                   CLEANUP_TERM_ATTEMPTS);
+    if (phase_status > 0) {
+        phase_status = cleanup_adopted_children_phase(run, SIGKILL,
+                                                       CLEANUP_KILL_ATTEMPTS);
+    }
+    if (phase_status != 0 || !run->child_status_valid) {
+        run->internal_failure = 1;
+        set_failure(run, "process_tree_cleanup_failed");
+        return -1;
+    }
+    return 0;
 }
 
 static int command_exit_code(const struct run_state *run) {
@@ -1360,6 +1564,7 @@ int main(int argc, char **argv) {
     int output_fd;
     int child_stdout_fd = -1;
     int child_stderr_fd = -1;
+    int subreaper_previous = -1;
     pid_t parent_pid;
 
     memset(&run, 0, sizeof(run));
@@ -1426,11 +1631,22 @@ int main(int argc, char **argv) {
         discard_new_output(options.output_path, &output_fd);
         return 2;
     }
-    (void)prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0);
+    if (enable_child_subreaper(&subreaper_previous) != 0) {
+        fprintf(stderr, "cannot enable child subreaper: %s\n", strerror(errno));
+        if (options.child_stderr_path != NULL) {
+            discard_new_output(options.child_stderr_path, &child_stderr_fd);
+            discard_new_output(options.child_stdout_path, &child_stdout_fd);
+        }
+        discard_new_output(options.output_path, &output_fd);
+        return 2;
+    }
     command = &argv[options.command_index];
     child = fork();
     if (child < 0) {
         fprintf(stderr, "fork: %s\n", strerror(errno));
+        if (restore_child_subreaper(subreaper_previous) != 0) {
+            fprintf(stderr, "cannot restore child subreaper: %s\n", strerror(errno));
+        }
         if (options.child_stderr_path != NULL) {
             discard_new_output(options.child_stderr_path, &child_stderr_fd);
             discard_new_output(options.child_stdout_path, &child_stdout_fd);
@@ -1547,7 +1763,12 @@ int main(int argc, char **argv) {
             run.measured_elapsed_ns = monotonic_ns() - measured_start;
         }
     }
-    if (terminate_process_group(&run) != 0) {
+    if (terminate_process_tree(&run) != 0) {
+        failed = 1;
+    }
+    if (restore_child_subreaper(subreaper_previous) != 0) {
+        run.internal_failure = 1;
+        set_failure(&run, "subreaper_restore_failed");
         failed = 1;
     }
     if (run.marker_read_fd >= 0) close(run.marker_read_fd);

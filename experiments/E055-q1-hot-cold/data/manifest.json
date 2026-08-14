@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T12:30:11.224355+00:00",
+  "generated_at_utc": "2026-08-14T13:08:20.012666+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "b39e0bde579b8846449adc85f6157adf950f33e1",
-    "staged_tree_binding_sha256": "374af38c76d93cbee5e4a2b1798e136ea43b22a33b132f794386663c520004ed",
+    "preflight_base_commit": "ea432ee3916cd9db1dbe781819ce9a1d0868281d",
+    "staged_tree_binding_sha256": "ea571b6192d16fd493a1134eb141b0c29ca348602ebd9daedef89a74a40f0c57",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -53,10 +53,10 @@
         "bus_access": "0x19"
       }
     },
-    "pmu_source_sha256": "981e9b4860218b155088fa4a38fe616ce4aa617a99e4130258506dc01ebdc2e9",
+    "pmu_source_sha256": "7f7851024d47a88ec42fd75293c5fdc6166674bf0179110b75d4026f3a8d7846",
     "pmu_artifact_path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-    "pmu_binary_sha256": "0e4568bbb33f22474bb1377b5cc2a17ad84532e5f0d77f8e72350df811a23dea",
-    "pmu_binary_size_bytes": 74720,
+    "pmu_binary_sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
+    "pmu_binary_size_bytes": 74752,
     "pmu_compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
     "pmu_compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0"
   },
@@ -66,14 +66,14 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 22059,
-      "sha256": "480904b54613735be12e14c30932b31371d9ff839a03095dade9a26e9e154e9d",
+      "size_bytes": 22667,
+      "sha256": "e0efa96e9d9596f5ae08b70d42199f99b59018a6341c04d5f3c65a8cc464b041",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3072194,
-      "sha256": "df66ddcf7a1c3aaa680b5aa6800f8980f25519d13917d509fa5028b0fedef0bb",
+      "size_bytes": 3072209,
+      "sha256": "cfad5b747592f394705a90a4b7e65d994d360f087c0f70c131db9228ad2ad726",
       "role": "e055-stage1"
     },
     {
@@ -121,7 +121,7 @@
     {
       "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
       "size_bytes": 902,
-      "sha256": "9be200cd4615f0022c9b57099b38635fb8bf52d95a7342d4e46c4fa205f61870",
+      "sha256": "baae5ad6638606e4c014b8221a52cdfc22cf23d8bcccda224bdd5ab49bcc7438",
       "role": "e055-stage1"
     },
     {
@@ -168,8 +168,8 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-      "size_bytes": 74720,
-      "sha256": "0e4568bbb33f22474bb1377b5cc2a17ad84532e5f0d77f8e72350df811a23dea",
+      "size_bytes": 74752,
+      "sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
       "role": "e055-stage1"
     },
     {
@@ -216,8 +216,8 @@
     },
     {
       "path": "tooling/a733_pmu_exec.c",
-      "size_bytes": 52398,
-      "sha256": "981e9b4860218b155088fa4a38fe616ce4aa617a99e4130258506dc01ebdc2e9",
+      "size_bytes": 58659,
+      "sha256": "7f7851024d47a88ec42fd75293c5fdc6166674bf0179110b75d4026f3a8d7846",
       "role": "e055-stage1"
     },
     {

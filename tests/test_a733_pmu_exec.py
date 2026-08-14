@@ -10,6 +10,7 @@ import os
 import pathlib
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -89,6 +90,17 @@ class A733PmuExecContractTest(unittest.TestCase):
                     continue
             time.sleep(0.01)
         self.fail(f"process {pid} survived launcher cleanup")
+
+    def write_helper(self, name: str, source: str) -> pathlib.Path:
+        path = self.tmp / name
+        path.write_text(source, encoding="utf-8")
+        return path
+
+    def isolated_child_stream_args(self, label: str) -> tuple[str, ...]:
+        return (
+            "--child-stdout", str(self.tmp / f"{label}.stdout"),
+            "--child-stderr", str(self.tmp / f"{label}.stderr"),
+        )
 
     def run_launcher(
         self, *args: str, thermal_guard: bool = False
@@ -547,6 +559,45 @@ class A733PmuExecContractTest(unittest.TestCase):
                 except ProcessLookupError:
                     pass
 
+    def test_external_sigterm_reaps_descendant_that_escaped_with_setsid(self) -> None:
+        output = self.next_output()
+        pid_file = self.tmp / "signal-setsid-descendant.pid"
+        leader = self.write_helper(
+            "signal-setsid-leader.py",
+            "import pathlib, subprocess, sys, time\n"
+            "child = subprocess.Popen(['/bin/sleep', '30'], start_new_session=True)\n"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid), encoding='ascii')\n"
+            "time.sleep(30)\n",
+        )
+        command = [
+            str(self.launcher), "--no-drop", "--no-thermal-guard",
+            "--output", str(output),
+            *self.isolated_child_stream_args("signal-setsid"),
+            "--event-group", "core", "--start-immediately", "--",
+            sys.executable, str(leader), str(pid_file),
+        ]
+        launcher = subprocess.Popen(
+            command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        descendant_pid = 0
+        try:
+            descendant_pid = self.wait_for_pid_file(pid_file)
+            launcher.send_signal(signal.SIGTERM)
+            _, wrapper_stderr = launcher.communicate(timeout=10)
+            self.assertEqual(launcher.returncode, 128 + signal.SIGTERM, wrapper_stderr)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["failure_reason"], "parent_cancelled")
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if launcher.poll() is None:
+                launcher.kill()
+                launcher.wait(timeout=5)
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
     def test_post_end_nonzero_exit_kills_remaining_descendant(self) -> None:
         pid_file = self.tmp / "post-end-nonzero.pids"
         child_stdout = self.tmp / "post-end-nonzero.stdout"
@@ -620,6 +671,208 @@ class A733PmuExecContractTest(unittest.TestCase):
             if child_pid > 0:
                 try:
                     os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_immediate_exit_zero_cleans_descendant_that_calls_setsid(self) -> None:
+        pid_file = self.tmp / "immediate-setsid.pid"
+        leader = self.write_helper(
+            "immediate-setsid-leader.py",
+            "import pathlib, subprocess, sys\n"
+            "child = subprocess.Popen(['/bin/sleep', '30'], start_new_session=True)\n"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid), encoding='ascii')\n",
+        )
+        descendant_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                *self.isolated_child_stream_args("immediate-setsid"),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(pid_file),
+            )
+            descendant_pid = self.wait_for_pid_file(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(result["exit"]["code"], 0)
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_start_ack_end_exit_zero_cleans_descendant_in_new_process_group(self) -> None:
+        pid_file = self.tmp / "sae-new-pgid.pid"
+        leader = self.write_helper(
+            "sae-new-pgid-leader.py",
+            "import os, pathlib, subprocess, sys\n"
+            "os.write(9, b'S')\n"
+            "os.read(8, 2)\n"
+            "child = subprocess.Popen(\n"
+            "    ['/bin/sleep', '30'], preexec_fn=lambda: os.setpgid(0, 0)\n"
+            ")\n"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid), encoding='ascii')\n"
+            "os.write(9, b'E')\n",
+        )
+        descendant_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                *self.isolated_child_stream_args("sae-new-pgid"),
+                "--event-group", "core", "--start-on-ready", "--sync-timeout-ms",
+                "1000", "--", sys.executable, str(leader), str(pid_file),
+            )
+            descendant_pid = self.wait_for_pid_file(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertTrue(result["sync"]["ended"])
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_nested_escaped_descendants_are_adopted_and_reaped(self) -> None:
+        pid_file = self.tmp / "nested-escaped.pids"
+        nested = self.write_helper(
+            "nested-escaped-child.py",
+            "import os, pathlib, subprocess, sys, time\n"
+            "grandchild = subprocess.Popen(['/bin/sleep', '30'], start_new_session=True)\n"
+            "pathlib.Path(sys.argv[1]).write_text(\n"
+            "    f'{os.getpid()} {grandchild.pid}', encoding='ascii'\n"
+            ")\n"
+            "time.sleep(30)\n",
+        )
+        leader = self.write_helper(
+            "nested-escaped-leader.py",
+            "import pathlib, subprocess, sys, time\n"
+            "subprocess.Popen(\n"
+            "    [sys.executable, sys.argv[1], sys.argv[2]], start_new_session=True\n"
+            ")\n"
+            "path = pathlib.Path(sys.argv[2])\n"
+            "deadline = time.monotonic() + 2\n"
+            "while not path.exists() and time.monotonic() < deadline:\n"
+            "    time.sleep(0.005)\n"
+            "if not path.exists():\n"
+            "    raise RuntimeError('nested helper did not publish PIDs')\n",
+        )
+        nested_pid = grandchild_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                *self.isolated_child_stream_args("nested-escaped"),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(nested), str(pid_file),
+            )
+            nested_pid, grandchild_pid = self.wait_for_pid_pair(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(result["exit"]["code"], 0)
+            self.assert_process_gone(nested_pid)
+            self.assert_process_gone(grandchild_pid)
+        finally:
+            for pid in (nested_pid, grandchild_pid):
+                if pid > 0:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
+    def test_cleanup_does_not_signal_unrelated_control_process(self) -> None:
+        pid_file = self.tmp / "unrelated-control-descendant.pid"
+        leader = self.write_helper(
+            "unrelated-control-leader.py",
+            "import pathlib, subprocess, sys\n"
+            "child = subprocess.Popen(['/bin/sleep', '30'], start_new_session=True)\n"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid), encoding='ascii')\n",
+        )
+        control = subprocess.Popen(["/bin/sleep", "30"], start_new_session=True)
+        descendant_pid = 0
+        try:
+            proc, _ = self.run_launcher(
+                *self.isolated_child_stream_args("unrelated-control"),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(pid_file),
+            )
+            descendant_pid = self.wait_for_pid_file(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assert_process_gone(descendant_pid)
+            self.assertIsNone(control.poll(), "wrapper signaled an unrelated sibling")
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            if control.poll() is None:
+                os.killpg(control.pid, signal.SIGKILL)
+            control.wait(timeout=5)
+
+    def test_proc_exit_races_do_not_create_false_cleanup_failure(self) -> None:
+        pid_file = self.tmp / "proc-race.pids"
+        leader = self.write_helper(
+            "proc-race-leader.py",
+            "import pathlib, subprocess, sys\n"
+            "children = [subprocess.Popen(\n"
+            "    ['/bin/sleep', '0.005' if index % 2 == 0 else '30'],\n"
+            "    start_new_session=True\n"
+            ") for index in range(32)]\n"
+            "pathlib.Path(sys.argv[1]).write_text(\n"
+            "    ' '.join(str(child.pid) for child in children), encoding='ascii'\n"
+            ")\n",
+        )
+        child_pids: list[int] = []
+        try:
+            proc, result = self.run_launcher(
+                *self.isolated_child_stream_args("proc-race"),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(pid_file),
+            )
+            child_pids = [
+                int(value) for value in pid_file.read_text(encoding="ascii").split()
+            ]
+            self.assertEqual(len(child_pids), 32)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertNotEqual(result["failure_reason"], "process_tree_cleanup_failed")
+            for pid in child_pids:
+                self.assert_process_gone(pid)
+        finally:
+            for pid in child_pids:
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_term_resistant_escaped_descendant_is_killed_and_reaped(self) -> None:
+        pid_file = self.tmp / "term-resistant.pid"
+        resistant = self.write_helper(
+            "term-resistant-child.py",
+            "import signal, time\n"
+            "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+            "time.sleep(30)\n",
+        )
+        leader = self.write_helper(
+            "term-resistant-leader.py",
+            "import pathlib, subprocess, sys\n"
+            "child = subprocess.Popen(\n"
+            "    [sys.executable, sys.argv[1]], start_new_session=True\n"
+            ")\n"
+            "pathlib.Path(sys.argv[2]).write_text(str(child.pid), encoding='ascii')\n",
+        )
+        descendant_pid = 0
+        started = time.monotonic()
+        try:
+            proc, result = self.run_launcher(
+                *self.isolated_child_stream_args("term-resistant"),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(resistant), str(pid_file),
+            )
+            descendant_pid = self.wait_for_pid_file(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(result["exit"]["code"], 0)
+            self.assertLess(time.monotonic() - started, 5.0)
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
 
