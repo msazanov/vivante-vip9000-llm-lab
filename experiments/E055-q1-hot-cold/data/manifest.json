@@ -1,0 +1,77 @@
+{
+  "schema": "e055-q1-hot-cold-manifest/v1",
+  "experiment": "E055-Q1-HOT-COLD",
+  "status": "stage1_source_only_no_target_workload",
+  "generated_at_utc": "2026-08-14T04:55:15.065684+00:00",
+  "base_commit_at_generation": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+  "model_payload_included": false,
+  "target_workload_executed": false,
+  "files": [
+    {
+      "path": "experiments/E055-q1-hot-cold/README.md",
+      "size_bytes": 8527,
+      "sha256": "e442895d1b5b85555705269a560861fd4463e6da8e532526d68deb19f9d98a42",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
+      "size_bytes": 2158415,
+      "sha256": "fcce42751be5554657c1e8d0b67ab2b11e8436fb006a51b9b1bf99062c9a2969",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
+      "size_bytes": 794,
+      "sha256": "9bd71617c7de058a83b5950ec4380f0c4f1e70074e9cbb0bf9412d7d175c5af8",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+      "size_bytes": 2574,
+      "sha256": "f1b704555a482eb69379140e5128699878c3697e60483ee3f014cdfabe8813a6",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_q1_hotcold.cpp",
+      "size_bytes": 23043,
+      "sha256": "1646a0121ea4293aa9606073914b7bb57b520acfdcbd9835d668d1ae1696f0c6",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_q1_hotcold.py",
+      "size_bytes": 12471,
+      "sha256": "16fcc1909333b3d09e018deb37184dd69c5c917294e2b28e99dc99ec0d622dd7",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/generate_e055_manifest.py",
+      "size_bytes": 2576,
+      "sha256": "7c8a9d0f3d7f6f2db42b71e11ecd4113d9ff9539b3299042f94a5b7814ae15e1",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_harness_contract.py",
+      "size_bytes": 3248,
+      "sha256": "eb7424da193ad0c8d6cf03104db1b0d473d1c97548181e857679bf2f0dd226c5",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_q1_hotcold.py",
+      "size_bytes": 4833,
+      "sha256": "291588e5e7c0d949830b7fd75dfacd642e1ef226750600cd71e989d46374b714",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
+      "size_bytes": 19657,
+      "sha256": "4bbd8841069bef4b6e29f99b1b31dc7e4d1e67a15e0ec644282ef9ca7e5b567e",
+      "role": "stock-reference"
+    },
+    {
+      "path": "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+      "size_bytes": 7044,
+      "sha256": "3338df3dfedf683247ef0da3975db371667add1c2552f77219718a444687143f",
+      "role": "stock-reference"
+    }
+  ]
+}

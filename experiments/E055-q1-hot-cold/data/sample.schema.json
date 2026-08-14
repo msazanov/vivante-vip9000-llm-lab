@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-q1-hot-cold/v1/sample.schema.json",
+  "title": "E055 Q1 hot/cold sample",
+  "type": "object",
+  "required": [
+    "schema", "mode", "cache_state", "cpu", "golden_pass",
+    "golden_cases", "target_working_set_bytes", "actual_working_set_bytes",
+    "blocks", "iterations", "calls", "elapsed_ns", "checksum",
+    "cold_conditioning", "sync", "pmu"
+  ],
+  "properties": {
+    "schema": {"const": "e055-q1-hot-cold/v1"},
+    "mode": {"enum": ["packed_stream", "unpack_scale", "full_dotprod"]},
+    "cache_state": {"enum": ["hot_repeat", "cold_conditioned"]},
+    "cpu": {"enum": [0, 6]},
+    "golden_pass": {"const": true},
+    "golden_cases": {"type": "integer", "minimum": 18},
+    "target_working_set_bytes": {"type": "integer", "minimum": 1},
+    "actual_working_set_bytes": {"type": "integer", "minimum": 208},
+    "blocks": {"type": "integer", "minimum": 1},
+    "iterations": {"type": "integer", "minimum": 1},
+    "calls": {"type": "integer", "minimum": 1},
+    "elapsed_ns": {"type": "integer", "minimum": 1},
+    "first_call_ns": {"type": "integer", "minimum": 1},
+    "calls_per_second": {"type": "number", "exclusiveMinimum": 0},
+    "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-fA-F]+$"},
+    "observed_ddr_read_bytes": {"type": "null"},
+    "observed_ddr_write_bytes": {"type": "null"},
+    "cold_conditioning": {
+      "type": "object",
+      "required": ["strategy", "thrash_bytes", "line_bytes", "lines_touched", "verified_touched"],
+      "properties": {
+        "strategy": {"const": "verified_write_read_each_64B_line"},
+        "thrash_bytes": {"type": "integer", "minimum": 0},
+        "line_bytes": {"const": 64},
+        "lines_touched": {"type": "integer", "minimum": 0},
+        "verified_touched": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "sync": {
+      "type": "object",
+      "required": ["requested", "started", "acknowledged", "ended"],
+      "properties": {
+        "requested": {"type": "boolean"},
+        "started": {"type": "boolean"},
+        "acknowledged": {"type": "boolean"},
+        "ended": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "pmu": {
+      "type": "object",
+      "required": ["events", "values_are_event_counts"],
+      "properties": {
+        "events": {"type": "array"},
+        "values_are_event_counts": {"const": true}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

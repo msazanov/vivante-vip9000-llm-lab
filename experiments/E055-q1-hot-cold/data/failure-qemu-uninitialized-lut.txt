@@ -1,0 +1,15 @@
+E055 Stage 1 failure evidence — QEMU golden before LUT initialization
+
+status=REJECTED
+phase=QEMU self-test
+command=qemu-aarch64 -L /usr/aarch64-linux-gnu /tmp/e055_q1_hotcold-aarch64 --self-test
+observed=golden mismatch K=128 pattern=1 row=1 scalar=0x1.48p+7 simd=0x0p+0
+
+Cause: the first harness main did not copy make_table() into the E039 global
+g_table_q1_signs before calling native_simd_group(). The stock SIMD path then
+expanded every sign through an all-zero table. This was a harness initialization
+failure, not evidence against the Q1 kernel or against A733.
+
+Fix: initialize g_table_q1_signs from make_table() before run_golden(). The
+repeated self-test then passed golden_pass=true, golden_cases=18. This failed
+artifact is retained so the first red gate is not silently erased.
