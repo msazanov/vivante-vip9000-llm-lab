@@ -323,6 +323,10 @@ def _is_new_since_baseline(root: Path, relative: str) -> bool:
 
 def _artifact_class(relative: str) -> str | None:
     lowered = relative.lower()
+    if lowered.startswith("tooling/") and any(
+        marker in Path(lowered).name for marker in ("npu", "vip", "viplite")
+    ):
+        return "NPU tools"
     for suffix, artifact_class in PUBLIC_ARTIFACT_SUFFIXES:
         if lowered.endswith(suffix):
             return artifact_class

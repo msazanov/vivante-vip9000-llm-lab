@@ -243,7 +243,9 @@ def test_privacy_scans_untracked_tooling_and_encoded_credentials(tmp_path: Path)
 def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
+    (fixture / "tooling").mkdir()
     (fixture / "new-model.bin").write_bytes(b"public payload")
+    (fixture / "tooling/npu_tool.py").write_text("print('public tool')\n")
     (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
         json.dumps(
             {
@@ -259,6 +261,7 @@ def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -
     )
     errors = check_manifest_coverage(fixture)
     assert any("new-model.bin" in error for error in errors)
+    assert any("npu_tool.py" in error for error in errors)
 
 
 def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
