@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import re
 import sys
@@ -405,10 +406,10 @@ def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
                 "destination": "release-assets",
                 "class": "binaries",
                 "status": "published",
-                "scientific_use": False,
+                "scientific_use_allowed": False,
                 "release_asset_locator": "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/missing.bin",
                 "checksum_provenance": "signed release SHA-256 attestation",
-                "verification_state": "verified-attestation",
+                "verification_state": "external_reference",
             }
         ],
     }
@@ -598,7 +599,7 @@ def test_release_manifest_requires_immutable_locator_attestation_and_state(
                         "destination": "release-assets",
                         "class": "binaries",
                         "status": "planned",
-                        "scientific_use": True,
+                        "scientific_use_allowed": True,
                         "verification_state": "verified-attestation",
                     }
                 ],
@@ -611,7 +612,7 @@ def test_release_manifest_requires_immutable_locator_attestation_and_state(
     assert any("unverified" in error or "scientific" in error for error in errors)
 
 
-def test_external_scientific_use_requires_exact_asset_attestation(
+def test_external_scientific_use_requires_independently_verified_local_payload(
     tmp_path: Path,
 ) -> None:
     fixture = tmp_path / "repo"
@@ -629,6 +630,7 @@ def test_external_scientific_use_requires_exact_asset_attestation(
         "class": "binaries",
         "status": "published",
         "scientific_use": True,
+        "scientific_use_allowed": True,
         "verification_state": "verified-attestation",
         "release_asset_locator": locator,
         "checksum_provenance": "release metadata",
@@ -653,13 +655,19 @@ def test_external_scientific_use_requires_exact_asset_attestation(
     assert any("scientific" in error or "attestation" in error for error in errors)
 
 
-def test_external_scientific_use_accepts_trusted_attestation_bound_to_asset(
-    tmp_path: Path,
+@pytest.mark.parametrize(
+    "locator",
+    (
+        "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/external.bin",
+        "https://example.invalid/assets/0123456789abcdef0123456789abcdef01234567/external.bin",
+    ),
+)
+def test_external_scientific_use_rejects_caller_controlled_fake_attestation(
+    tmp_path: Path, locator: str,
 ) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
     manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
-    locator = "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/external.bin"
     digest = "0123456789abcdef" * 4
     artifact = {
         "path": "release/external.bin",
@@ -672,6 +680,7 @@ def test_external_scientific_use_accepts_trusted_attestation_bound_to_asset(
         "class": "binaries",
         "status": "published",
         "scientific_use": True,
+        "scientific_use_allowed": True,
         "verification_state": "verified-attestation",
         "release_asset_locator": locator,
         "checksum_provenance": "release metadata",
@@ -697,7 +706,101 @@ def test_external_scientific_use_accepts_trusted_attestation_bound_to_asset(
         )
     )
 
+    errors = check_public_artifact_manifest(fixture)
+
+    assert any("scientific" in error or "locally verified" in error for error in errors)
+
+
+def test_published_external_reference_without_local_payload_is_provenance_only(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "public-only-and-manifest-backed",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [
+                    {
+                        "path": "release/external.bin",
+                        "sha256": "0123456789abcdef" * 4,
+                        "byte_size": 42,
+                        "origin": "external provenance pointer",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "unknown external build",
+                        "destination": "external",
+                        "class": "binaries",
+                        "status": "published",
+                        "scientific_use_allowed": False,
+                        "verification_state": "external_reference",
+                        "source_url": "https://example.invalid/assets/0123456789abcdef0123456789abcdef01234567/external.bin",
+                        "checksum_provenance": "unverified external metadata",
+                    }
+                ],
+            }
+        )
+    )
+
     assert check_public_artifact_manifest(fixture) == []
+
+
+def test_registry_claim_cannot_reference_unverified_external_artifact(
+    tmp_path: Path,
+) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    e035 = next(row for row in registry["experiments"] if row["id"] == "E035")
+    e035["evidence"] = [
+        {
+            "kind": "external_pointer",
+            "path": "release/external.bin",
+            "ref": e035["evidence"][0]["ref"],
+        }
+    ]
+    registry_path.write_text(json.dumps(registry))
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "public-only-and-manifest-backed",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [
+                    {
+                        "path": "release/external.bin",
+                        "sha256": "0123456789abcdef" * 4,
+                        "byte_size": 42,
+                        "origin": "external provenance pointer",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "unknown external build",
+                        "destination": "external",
+                        "class": "binaries",
+                        "status": "published",
+                        "scientific_use_allowed": False,
+                        "verification_state": "external_reference",
+                        "source_url": "https://example.invalid/assets/0123456789abcdef0123456789abcdef01234567/external.bin",
+                        "checksum_provenance": "unverified external metadata",
+                    }
+                ],
+            }
+        )
+    )
+
+    errors = repository_index.check_registry_artifact_references(fixture)
+
+    assert any("E035" in error and "external" in error for error in errors)
 
 
 def test_manifest_rejects_unknown_policy_and_destination_enums(
@@ -727,7 +830,7 @@ def test_manifest_rejects_unknown_policy_and_destination_enums(
                         "destination": "somewhere",
                         "class": "binaries",
                         "status": "published",
-                        "scientific_use": False,
+                        "scientific_use_allowed": False,
                         "verification_state": "unverified",
                     }
                 ],
@@ -765,7 +868,7 @@ def test_manifest_rejects_unknown_policy_and_artifact_classes(tmp_path: Path) ->
                         "destination": "release-assets",
                         "class": "invented",
                         "status": "planned",
-                        "scientific_use": False,
+                        "scientific_use_allowed": False,
                         "verification_state": "unverified",
                         "release_asset_locator": "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/missing.bin",
                         "checksum_provenance": "planned checksum",
@@ -795,6 +898,45 @@ def test_candidate_scope_requires_explicit_safe_source_policy(tmp_path: Path) ->
     assert not any("docs/new-canonical.md" in error for error in errors)
 
 
+def test_scientific_use_accepts_only_independently_matched_local_payload(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    payload = b"locally verified public payload"
+    (fixture / "payload.bin").write_bytes(payload)
+    (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "public-only-and-manifest-backed",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [
+                    {
+                        "path": "payload.bin",
+                        "sha256": hashlib.sha256(payload).hexdigest(),
+                        "byte_size": len(payload),
+                        "origin": "local test payload",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "test fixture",
+                        "destination": "git",
+                        "class": "binaries",
+                        "status": "published",
+                        "scientific_use_allowed": True,
+                        "verification_state": "verified-local",
+                    }
+                ],
+            }
+        )
+    )
+
+    assert check_public_artifact_manifest(fixture) == []
+
+
 def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
@@ -819,7 +961,7 @@ def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) ->
                         "destination": "git",
                         "class": "binaries",
                         "status": "published",
-                        "scientific_use": False,
+                        "scientific_use_allowed": False,
                         "verification_state": "verified-local",
                     }
                 ],
@@ -829,6 +971,7 @@ def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) ->
     errors = check_public_artifact_manifest(fixture)
     assert any("sha256" in error for error in errors)
     assert any("byte_size" in error for error in errors)
+    assert any("external_reference" in error or "absent" in error for error in errors)
 
 
 def test_canonical_layer_contains_pointers_not_raw_payload_copies() -> None:

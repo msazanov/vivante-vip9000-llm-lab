@@ -87,9 +87,13 @@ Personal/sensitive data is prohibited, including tokens, passwords, logins,
 private keys, identifiers, and credentials. Existing payloads and raw evidence
 are not automatically tracked or copied; use Git LFS or release assets for a
 large public payload only after the manifest and privacy gate pass. External
-and release entries require an immutable HTTPS locator, checksum attestation,
-and explicit verification state; planned unverified entries cannot support a
-scientific claim.
+and release entries require an immutable HTTPS locator, checksum provenance,
+`scientific_use_allowed=false`, and an explicit `external_reference` or
+`unverified` state. They may be retained as provenance pointers but cannot
+support a registry metric, accepted claim, or current-best result. Only exact
+local payload bytes independently matched by SHA-256 and size may be used
+scientifically; caller-supplied trust or attestation metadata does not change
+that gate.
 
 ## Review checklist
 

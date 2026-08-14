@@ -126,7 +126,7 @@ PROHIBITED_DATA_CLASSES = frozenset(
     {"tokens", "passwords", "logins", "private keys", "identifiers", "credentials"}
 )
 VERIFICATION_STATES = frozenset(
-    {"verified-local", "verified-attestation", "unverified"}
+    {"verified-local", "external_reference", "unverified"}
 )
 ARTIFACT_STATUSES = frozenset({"published", "planned"})
 POLICY_STATUSES = frozenset({"public-only-and-manifest-backed"})
@@ -995,42 +995,6 @@ def check_hardware_facts(root: Path) -> list[str]:
     return errors
 
 
-def _attestation_error(artifact: dict[str, Any], locator: str | None) -> str | None:
-    """Return a safe diagnostic if a release attestation is not asset-bound."""
-
-    attestation = artifact.get("trusted_attestation")
-    if attestation is None and isinstance(artifact.get("attestation"), dict):
-        attestation = artifact["attestation"]
-    if not isinstance(attestation, dict):
-        return "trusted exact-asset attestation is missing"
-    if attestation.get("trusted") is not True:
-        return "trusted exact-asset attestation must set trusted=true"
-    bound_locator = attestation.get("asset_locator") or attestation.get("locator")
-    if not isinstance(locator, str) or bound_locator != locator:
-        return "trusted attestation is not bound to the immutable asset locator"
-    asset_digest = (
-        attestation.get("asset_sha256")
-        or attestation.get("artifact_sha256")
-        or attestation.get("sha256")
-    )
-    if asset_digest != artifact.get("sha256"):
-        return "trusted attestation does not bind the manifest SHA-256"
-    attestation_digest = (
-        attestation.get("attestation_sha256")
-        or attestation.get("proof_sha256")
-        or attestation.get("digest")
-    )
-    if (
-        not isinstance(attestation_digest, str)
-        or not SHA256_RE.fullmatch(attestation_digest)
-        or attestation_digest in PLACEHOLDER_DIGESTS
-        or len(set(attestation_digest)) == 1
-        or attestation_digest == artifact.get("sha256")
-    ):
-        return "trusted attestation requires a separate non-placeholder SHA-256"
-    return None
-
-
 def check_branch_inventory(root: Path) -> list[str]:
     inventory, errors = _load_json(root, "docs/experiments/branch-inventory.json")
     if inventory is None:
@@ -1140,6 +1104,51 @@ def check_privacy(root: Path) -> list[str]:
     return errors
 
 
+def _local_payload_fingerprint(
+    root: Path, path_value: Any
+) -> tuple[str, int] | None:
+    """Independently hash a regular payload contained by the repository root."""
+
+    if not isinstance(path_value, str) or not path_value:
+        return None
+    relative = Path(path_value)
+    if relative.is_absolute() or ".." in relative.parts:
+        return None
+    resolved_root = root.resolve()
+    resolved = (root / relative).resolve()
+    try:
+        resolved.relative_to(resolved_root)
+    except ValueError:
+        return None
+    if not resolved.is_file():
+        return None
+    digest = hashlib.sha256()
+    try:
+        with resolved.open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                digest.update(chunk)
+        size = resolved.stat().st_size
+    except OSError:
+        return None
+    return digest.hexdigest(), size
+
+
+def _artifact_is_locally_verified(root: Path, artifact: Any) -> bool:
+    """Return true only after independently matching local bytes and metadata."""
+
+    if not isinstance(artifact, dict):
+        return False
+    if artifact.get("destination") != "git":
+        return False
+    if artifact.get("verification_state") != "verified-local":
+        return False
+    fingerprint = _local_payload_fingerprint(root, artifact.get("path"))
+    if fingerprint is None:
+        return False
+    digest, size = fingerprint
+    return digest == artifact.get("sha256") and size == artifact.get("byte_size")
+
+
 def check_public_artifact_manifest(root: Path) -> list[str]:
     manifest, errors = _load_json(root, "docs/experiments/public-artifact-manifest.json")
     if manifest is None:
@@ -1190,7 +1199,7 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
         required = {
             "path", "sha256", "byte_size", "origin", "source_commit",
             "build_runtime_toolchain", "destination", "class", "status",
-            "scientific_use", "verification_state",
+            "scientific_use_allowed", "verification_state",
         }
         missing = sorted(required - artifact.keys())
         if missing:
@@ -1198,7 +1207,12 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
             continue
         path_value = artifact["path"]
         source_commit = artifact["source_commit"]
-        if not isinstance(path_value, str) or not path_value or ".." in Path(path_value).parts:
+        if (
+            not isinstance(path_value, str)
+            or not path_value
+            or Path(path_value).is_absolute()
+            or ".." in Path(path_value).parts
+        ):
             errors.append(f"{prefix} has unsafe path")
             continue
         digest = artifact["sha256"]
@@ -1224,8 +1238,9 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
         status = artifact["status"]
         if not isinstance(status, str) or status not in ARTIFACT_STATUSES:
             errors.append(f"{prefix} status must be published or planned")
-        if not isinstance(artifact["scientific_use"], bool):
-            errors.append(f"{prefix} scientific_use must be boolean")
+        scientific_use_allowed = artifact["scientific_use_allowed"]
+        if not isinstance(scientific_use_allowed, bool):
+            errors.append(f"{prefix} scientific_use_allowed must be boolean")
         verification_state = artifact["verification_state"]
         if not isinstance(verification_state, str) or verification_state not in VERIFICATION_STATES:
             errors.append(f"{prefix} verification_state is invalid")
@@ -1235,64 +1250,88 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
         if status == "planned":
             if verification_state != "unverified":
                 errors.append(f"{prefix} planned entries must have verification_state=unverified")
-            if artifact["scientific_use"] is not False:
+            if scientific_use_allowed is not False:
                 errors.append(f"{prefix} planned entries cannot be used scientifically")
         elif verification_state == "unverified":
             errors.append(f"{prefix} published entries cannot be unverified")
         if destination == "git" and verification_state != "verified-local":
             errors.append(f"{prefix} Git destinations require verification_state=verified-local")
         if isinstance(destination, str) and destination in {"release-assets", "external"}:
+            if verification_state not in {"unverified", "external_reference"}:
+                errors.append(
+                    f"{prefix} external/release entries require verification_state=unverified or external_reference"
+                )
+            if scientific_use_allowed is not False:
+                errors.append(
+                    f"{prefix} external/release payload is absent locally and scientific_use_allowed must be false"
+                )
+            if any(
+                key in artifact
+                for key in (
+                    "trusted_attestation", "attestation", "attestation_sha256",
+                    "attestation_url", "trusted",
+                )
+            ):
+                errors.append(
+                    f"{prefix} caller-controlled attestation fields cannot establish local verification"
+                )
             locator = artifact.get("release_asset_locator") or artifact.get("source_url")
             if not isinstance(locator, str) or not locator.strip():
                 errors.append(f"{prefix} external/release entries require an immutable source URL or release asset locator")
             else:
-                parsed = urlsplit(locator)
-                immutable = (
-                    parsed.scheme == "https"
-                    and bool(parsed.netloc)
-                    and not parsed.username
-                    and not parsed.password
-                    and bool(parsed.path)
-                    and ("/releases/download/" in parsed.path or bool(re.search(r"[0-9a-f]{40}", locator, re.IGNORECASE)))
-                )
+                try:
+                    parsed = urlsplit(locator)
+                    immutable = (
+                        parsed.scheme == "https"
+                        and bool(parsed.netloc)
+                        and not parsed.username
+                        and not parsed.password
+                        and bool(parsed.path)
+                        and (
+                            "/releases/download/" in parsed.path
+                            or bool(re.search(r"[0-9a-f]{40}", locator, re.IGNORECASE))
+                        )
+                    )
+                except ValueError:
+                    immutable = False
                 if not immutable:
                     errors.append(f"{prefix} locator must be an immutable HTTPS source or release asset URL")
             checksum_provenance = artifact.get("checksum_provenance")
             if not isinstance(checksum_provenance, str) or not checksum_provenance.strip():
-                errors.append(f"{prefix} external/release entries require checksum provenance or attestation")
+                errors.append(f"{prefix} external/release entries require checksum provenance")
             if verification_state == "unverified" and status != "planned":
                 errors.append(f"{prefix} unverified external/release entries must be planned")
-            if verification_state == "verified-attestation" and not isinstance(artifact.get("checksum_provenance"), str):
-                errors.append(f"{prefix} verified-attestation entries require checksum provenance")
         local_payload_verified = False
         if destination == "git":
-            path = root / path_value
-            if not path.is_file():
+            fingerprint = _local_payload_fingerprint(root, path_value)
+            if fingerprint is None:
                 errors.append(f"{prefix} Git destination does not exist: {path_value}")
             else:
-                digest = hashlib.sha256(path.read_bytes()).hexdigest()
-                size = path.stat().st_size
-                if digest != artifact["sha256"]:
+                actual_digest, actual_size = fingerprint
+                if actual_digest != artifact["sha256"]:
                     errors.append(f"{prefix} sha256 does not match {path_value}")
-                if size != byte_size:
+                if actual_size != byte_size:
                     errors.append(f"{prefix} byte_size does not match {path_value}")
-                local_payload_verified = digest == artifact["sha256"] and size == byte_size
-        if artifact.get("scientific_use") is True:
-            if local_payload_verified and destination == "git" and verification_state == "verified-local":
-                pass
-            elif (
-                isinstance(destination, str)
-                and destination in {"release-assets", "external"}
-                and verification_state == "verified-attestation"
-            ):
-                locator = artifact.get("release_asset_locator") or artifact.get("source_url")
-                attestation_error = _attestation_error(artifact, locator)
-                if attestation_error:
-                    errors.append(f"{prefix} scientific use is not permitted: {attestation_error}")
-            else:
-                errors.append(
-                    f"{prefix} scientific use requires a locally verified payload or trusted exact-asset attestation"
+                local_payload_verified = (
+                    actual_digest == artifact["sha256"] and actual_size == byte_size
                 )
+        if not local_payload_verified:
+            if scientific_use_allowed is not False:
+                errors.append(
+                    f"{prefix} absent or mismatched local payload requires scientific_use_allowed=false"
+                )
+            if verification_state not in {"unverified", "external_reference"}:
+                errors.append(
+                    f"{prefix} absent or mismatched local payload requires verification_state=unverified or external_reference"
+                )
+        if scientific_use_allowed is True and not (
+            local_payload_verified
+            and destination == "git"
+            and verification_state == "verified-local"
+        ):
+            errors.append(
+                f"{prefix} scientific use requires exact local payload bytes independently matched by SHA-256 and size"
+            )
         if git_root and isinstance(source_commit, str) and SHA_RE.fullmatch(source_commit):
             result = _git(git_root, "cat-file", "-e", f"{source_commit}^{{commit}}")
             if result is None or result.returncode != 0:
@@ -1301,6 +1340,56 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
                 source_path = _git(git_root, "cat-file", "-e", f"{source_commit}:{path_value}")
                 if source_path is None or source_path.returncode != 0:
                     errors.append(f"{prefix} path is absent at source_commit: {path_value}")
+    return errors
+
+
+def _row_uses_scientific_artifact(row: dict[str, Any]) -> bool:
+    metric = row.get("metric")
+    return bool(
+        row.get("is_current_best") is True
+        or row.get("status") == "accepted"
+        or row.get("qualified") is True
+        or row.get("optimization_claim") is True
+        or (isinstance(metric, dict) and metric)
+    )
+
+
+def check_registry_artifact_references(root: Path) -> list[str]:
+    """Keep unverified external payloads out of scientific registry claims."""
+
+    registry, errors = _load_json(root, "docs/experiments/registry.json")
+    manifest, manifest_errors = _load_json(
+        root, "docs/experiments/public-artifact-manifest.json"
+    )
+    errors.extend(manifest_errors)
+    if not isinstance(registry, dict) or not isinstance(manifest, dict):
+        return errors
+    artifacts = {
+        artifact.get("path"): artifact
+        for artifact in manifest.get("artifacts", [])
+        if isinstance(artifact, dict) and isinstance(artifact.get("path"), str)
+    }
+    for row in registry.get("experiments", []):
+        if not isinstance(row, dict) or not _row_uses_scientific_artifact(row):
+            continue
+        row_id = str(row.get("id", "<unknown>"))
+        for evidence in row.get("evidence", []):
+            if not isinstance(evidence, dict):
+                continue
+            path = evidence.get("artifact_path") or evidence.get("path")
+            artifact = artifacts.get(path) if isinstance(path, str) else None
+            external_pointer = evidence.get("kind") == "external_pointer"
+            if artifact is None and not external_pointer:
+                continue
+            locally_verified = (
+                artifact is not None
+                and artifact.get("scientific_use_allowed") is True
+                and _artifact_is_locally_verified(root, artifact)
+            )
+            if not locally_verified:
+                errors.append(
+                    f"{row_id} scientific claim/metric/current-best references unverified external artifact: {path}"
+                )
     return errors
 
 
@@ -1371,6 +1460,7 @@ def run_checks(root: Path) -> list[str]:
         check_artifact_class_policy,
         check_artifact_policy,
         check_public_artifact_manifest,
+        check_registry_artifact_references,
         check_manifest_coverage,
         check_privacy,
     )
