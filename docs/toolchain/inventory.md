@@ -1,7 +1,13 @@
 # Supplied toolchain inventory
 
 **Date:** 2026-08-07  
-**Scope:** sanitized host/backup inventory only; vendor binaries, SDK archives, NBG files, weights, credentials, and private documents stay outside Git.
+**Scope:** sanitized host/backup inventory only. Public weights, binaries, NBGs,
+custom kernels/source, SDK or kernel patches, and NPU tools may be published
+when redistributable and manifest-backed; credentials and other
+personal/sensitive data, including private keys, are prohibited. The
+historical host/backup payloads
+remain external because their license and provenance are not publication
+authorization.
 
 ## Question
 
@@ -11,7 +17,9 @@ Which compiler-side and backup runtime materials can be identified without claim
 
 **Verified in supplied tooling —** the host has AcuityLite Docker images and an embedded VeriSilicon SDK archive with identifiable versions, marker strings, library families, and headers.  
 **Unknown/contradictory —** the embedded marker `GCNANOULTRA31_VIP2_PID0X15` is not proof of compatibility with A733 VIP9000.  
-**Verified in supplied tooling —** a sanitized backup contains AArch64 `vpm_run`, one NBG, input data, and a runtime-library archive; these are provenance evidence, not a benchmark or a license claim.
+**Verified in supplied tooling —** a sanitized backup contains AArch64
+`vpm_run`, one NBG, input data, and a runtime-library archive; these are
+provenance evidence, not a benchmark, license claim, or publication manifest.
 
 ## Evidence
 

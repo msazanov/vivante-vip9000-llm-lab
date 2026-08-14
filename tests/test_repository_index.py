@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 import sys
@@ -17,13 +18,15 @@ sys.path.insert(0, str(ROOT / "tooling"))
 from check_repository_index import (  # noqa: E402
     CANONICAL_MARKDOWN,
     REQUIRED_STATUSES,
-    check_experiment_coverage,
+    check_artifact_policy,
     check_branch_inventory,
+    check_experiment_coverage,
     check_english_only,
     check_hardware_facts,
     check_links,
     check_privacy,
     check_public_artifact_manifest,
+    check_manifest_coverage,
     check_provenance,
     check_registry,
     discover_canonical_markdown,
@@ -46,6 +49,15 @@ def test_canonical_markdown_set_is_present_and_english_only() -> None:
 
 def test_relative_links_in_canonical_markdown_resolve() -> None:
     assert check_links(ROOT) == []
+
+
+def test_link_checker_rejects_missing_heading_fragment(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    (fixture / "README.md").write_text("[target](target.md#missing-heading)\n")
+    (fixture / "target.md").write_text("# Present heading\n")
+    errors = check_links(fixture)
+    assert any("broken fragment" in error for error in errors)
 
 
 def test_registry_covers_status_taxonomy_and_key_result_boundaries() -> None:
@@ -205,8 +217,140 @@ def test_hardware_checker_rejects_unclassified_garbage(tmp_path: Path) -> None:
 def test_privacy_gate_rejects_secret_pattern(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     fixture.mkdir()
-    (fixture / "README.md").write_text("public note token=ghp_123456789012345678901234567890\n")
+    fake_prefix = "gh" + "p_"
+    (fixture / "README.md").write_text(
+        f"public note token={fake_prefix}123456789012345678901234567890\n"
+    )
     assert check_privacy(fixture)
+
+
+def test_privacy_scans_untracked_tooling_and_encoded_credentials(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "tooling").mkdir(parents=True)
+    secret = "pass" + "word=encoded-secret-value"
+    encoded = base64.b64encode(secret.encode()).decode()
+    hex_encoded = secret.encode().hex()
+    (fixture / "tooling/unknown.py").write_text(f"blob = '{encoded}'\n")
+    (fixture / "notes.txt").write_text(f"hex={hex_encoded}\n")
+    (fixture / "payload.bin").write_bytes(b"\x00" + b"pass" + b"word=binary-secret-value")
+    errors = check_privacy(fixture)
+    assert any("unknown.py" in error for error in errors)
+    assert any("notes.txt" in error for error in errors)
+    assert any("payload.bin" in error for error in errors)
+    assert all(secret not in error for error in errors)
+
+
+def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    (fixture / "new-model.bin").write_bytes(b"public payload")
+    (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [],
+            }
+        )
+    )
+    errors = check_manifest_coverage(fixture)
+    assert any("new-model.bin" in error for error in errors)
+
+
+def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    manifest = {
+        "schema": "repository-public-artifact-manifest/v1",
+        "repository": "msazanov/vivante-vip9000-llm-lab",
+        "policy": {
+            "allowed_public_artifacts": ["binaries"],
+            "prohibited_data": ["credentials"],
+        },
+        "artifacts": [
+            {
+                "path": "release/missing.bin",
+                "sha256": "0123456789abcdef" * 4,
+                "byte_size": 42,
+                "origin": "release source",
+                "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                "build_runtime_toolchain": "compiler 1",
+                "destination": "release-assets",
+            }
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest))
+    assert check_public_artifact_manifest(fixture) == []
+    manifest["artifacts"][0]["sha256"] = "0" * 64
+    manifest["artifacts"][0]["byte_size"] = 0
+    manifest_path.write_text(json.dumps(manifest))
+    errors = check_public_artifact_manifest(fixture)
+    assert any("nonzero" in error or "placeholder" in error for error in errors)
+    assert any("byte_size" in error for error in errors)
+
+
+def test_policy_checker_rejects_blanket_artifact_ban(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    for relative in (
+        "README.md",
+        "AGENTS.md",
+        "docs/profiling/provenance-and-gates.md",
+        "docs/npu/vip9000-capabilities.md",
+        "docs/experiments/migration-map.md",
+        "tooling/README.md",
+        ".gitignore",
+        "docs/toolchain/inventory.md",
+        ".gitattributes",
+        "docs/experiments/public-artifacts.md",
+    ):
+        destination = fixture / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        copy2(ROOT / relative, destination)
+    (fixture / "README.md").write_text(
+        (fixture / "README.md").read_text() + "\nPublic weights must never be published.\n"
+    )
+    errors = check_artifact_policy(fixture)
+    assert any("blanket" in error or "publish" in error for error in errors)
+
+
+def test_markdown_discovery_ignores_untracked_test_cache(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    (fixture / "README.md").write_text("# English\n")
+    (fixture / ".pytest_cache").mkdir()
+    (fixture / ".pytest_cache/bad.md").write_text("Greek α\n")
+    assert discover_canonical_markdown(fixture) == (Path("README.md"),)
+    assert check_english_only(fixture) == []
+
+
+def test_hardware_checker_rejects_theoretical_ceiling_as_measurement(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    destination = fixture / "docs/hardware/a733.md"
+    destination.parent.mkdir(parents=True)
+    copy2(ROOT / "docs/hardware/a733.md", destination)
+    destination.write_text(destination.read_text() + "\n19.2 GB/s measured sustained bandwidth.\n")
+    errors = check_hardware_facts(fixture)
+    assert any("theoretical" in error or "measured" in error for error in errors)
+
+
+def test_registry_rejects_metric_claim_semantic_mismatch(tmp_path: Path) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    e049d = next(row for row in registry["experiments"] if row["id"] == "E049d-v2")
+    e049d["claim_class"] = "full_model"
+    e049d["metric"]["steady_marker_tok_s"] = -1
+    registry_path.write_text(json.dumps(registry))
+    errors = check_registry(fixture)
+    assert any("claim_class" in error or "full_model" in error for error in errors)
+    assert any("metric" in error or "positive" in error for error in errors)
 
 
 def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) -> None:
