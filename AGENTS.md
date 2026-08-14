@@ -16,9 +16,13 @@ safe, reproducible operation. Begin with [README.md](README.md), then read the
 2. Prefer primary target files, exact SDK documentation, official vendor or
    upstream sources, and reproducible measurements. Do not turn a marketing
    TOPS number or a similar board's specification into a target fact.
-3. Preserve raw evidence and exact provenance. Do not overwrite failed runs,
-   rewrite legacy reports, or copy proprietary binaries, model weights,
-   firmware, NBGs, credentials, or private SDK material into Git.
+3. Preserve raw evidence and exact provenance. Do not overwrite failed runs or
+   rewrite legacy reports. Public weights, binaries, NBGs, custom
+   kernels/source, SDK or kernel patches, and NPU tools may be published when
+   redistributable and recorded in the public artifact manifest with SHA-256,
+   byte size, origin, source commit, build/runtime/toolchain provenance, and
+   destination. Personal/sensitive data is prohibited, including tokens,
+   passwords, logins, private keys, identifiers, and credentials.
 4. Measure end to end. Include setup, graph load, allocation/import, packing,
    cache maintenance, copies, synchronization, execution, memory, clocks,
    thermals, failure state, and quality. Device time alone is never a model

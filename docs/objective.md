@@ -40,6 +40,14 @@ E044's short `1.018629 tok/s` PRFM screen is a ranking observation only. All
 sustained attempts reset the board before a throughput and quality gate, so it
 is not accepted and is not the current best.
 
+## Base verification caveat
+
+The foundation anchor has three pre-existing failures in
+`tests/test_fused_q1_fc_source.py`: the expected
+`experiments/E009-fused-q1-native-fc/q1_unpack_u8_evis.vx` source is absent on
+that base. The canonical-layer verification records these failures separately;
+they are not hidden or attributed to the registry/checker changes.
+
 ## Target constraints
 
 The SoC family has 6x Cortex-A55 plus 2x Cortex-A76 cores and a 32-bit memory

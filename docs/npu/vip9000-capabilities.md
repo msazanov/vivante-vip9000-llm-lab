@@ -34,8 +34,13 @@ target ABI compatibility or code-generation success.
 Compile and load graphs outside the token loop. Keep networks and buffers
 resident when comparing steady state. Record host run and device profiler time
 separately, and include map/cache/synchronization overhead in end-to-end claims.
-Never ship or commit proprietary runtime libraries, firmware, generated NBGs, or
-SDK archives; retain only hashes and sanitized version markers.
+Public weights, binaries, NBGs, custom kernels/source, SDK or kernel patches,
+and NPU tools may be published when redistributable and listed in the public
+artifact manifest with SHA-256, byte size, origin, source commit,
+build/runtime/toolchain provenance, and destination. Personal/sensitive data is
+prohibited, including tokens, passwords, logins, private keys, identifiers, and
+credentials. Existing payloads are not automatically tracked; use the manifest
+and the Git LFS/release-assets guidance for an intentional large-file release.
 
 ## Required next proof
 

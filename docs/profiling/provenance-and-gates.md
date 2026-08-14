@@ -71,12 +71,17 @@ Only a row with `claim_class=full_model`, complete quality evidence, and
 `is_current_best=true` may define the current best. This repository marks E035
 as the only current best. E044 and E049d-v2 remain explicitly bounded.
 
-## Immutable and restricted artifacts
+## Public artifact and privacy policy
 
-Raw target bundles, model weights, NBGs, SDK archives, runtime libraries,
-firmware, credentials, and private reports remain external or on their original
-experiment branch. Canonical docs may retain hashes, sanitized metadata, and
-exact paths. They must not duplicate payloads to make a link convenient.
+Public weights, binaries, NBGs, custom kernels/source, SDK or kernel patches,
+and NPU tools may be published when redistributable. Each public artifact must
+be listed in [`public-artifact-manifest.json`](../experiments/public-artifact-manifest.json)
+with SHA-256, byte size, origin, source commit, build/runtime/toolchain
+provenance, and destination (`git`, `release-assets`, or `external`).
+Personal/sensitive data is prohibited, including tokens, passwords, logins,
+private keys, identifiers, and credentials. Existing payloads and raw evidence
+are not automatically tracked or copied; use Git LFS or release assets for a
+large public payload only after the manifest and privacy gate pass.
 
 ## Review checklist
 

@@ -58,9 +58,13 @@ its sustained attempts reset the board before throughput and quality output.
 
 Canonical documents summarize facts and point to immutable evidence. Historical
 Russian-language reports and raw external traces remain legacy evidence and are
-not rewritten by this branch. Proprietary SDK archives, runtime libraries,
-firmware, NBGs, model weights, credentials, and raw target bundles stay
-outside Git; only hashes, sanitized metadata, and exact references are kept.
+not rewritten by this branch. Public weights, binaries, NBGs, custom
+kernels/source, SDK or kernel patches, and NPU tools may be published when
+redistributable and recorded in the [public artifact manifest](docs/experiments/public-artifact-manifest.json)
+with SHA-256, byte size, origin, source commit, build/runtime/toolchain
+provenance, and destination. Personal/sensitive data is prohibited, including
+tokens, passwords, logins, private keys, identifiers, and credentials. This
+policy does not automatically track existing payloads or copy raw evidence.
 
 Use the [profiling contract](docs/profiling/profiling-contract.md) for every
 new run and the [registry](docs/experiments/registry.json) for status and

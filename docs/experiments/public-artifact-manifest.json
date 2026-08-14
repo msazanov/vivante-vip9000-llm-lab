@@ -1,0 +1,34 @@
+{
+  "schema": "repository-public-artifact-manifest/v1",
+  "repository": "msazanov/vivante-vip9000-llm-lab",
+  "policy": {
+    "status": "public-only-and-manifest-backed",
+    "allowed_public_artifacts": [
+      "weights",
+      "binaries",
+      "NBGs",
+      "custom kernels/source",
+      "SDK or kernel patches",
+      "NPU tools"
+    ],
+    "prohibited_data": [
+      "tokens",
+      "passwords",
+      "logins",
+      "private keys",
+      "identifiers",
+      "credentials"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "tooling/profile_command.py",
+      "sha256": "4d71cc6c36582624c30fa6740997a7fde4ce377490fe6e9aa01a725509ba12d1",
+      "byte_size": 13427,
+      "origin": "public profiling source retained from the profiling-foundation branch",
+      "source_commit": "082a96afb1ba147cac1f5e5b9811e9eb43b960ff",
+      "build_runtime_toolchain": "Python 3 standard library; no generated binary",
+      "destination": "git"
+    }
+  ]
+}

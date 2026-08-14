@@ -1,7 +1,7 @@
 {
   "schema": "repository-branch-inventory/v1",
   "repository": "msazanov/vivante-vip9000-llm-lab",
-  "source": "origin ls-remote snapshot captured 2026-08-14",
+  "source": "origin ls-remote point-in-time snapshot captured 2026-08-14; live branches may advance",
   "branches": [
     {
       "branch": "main",

@@ -1,24 +1,20 @@
-# Proprietary/vendor assets
-vendor/
-sdk/
-models/
-artifacts/private/
+# Public artifact policy
+# Public weights, binaries, NBGs, custom kernels/source, SDK or kernel
+# patches, and NPU tools may be published when redistributable and listed in
+# docs/experiments/public-artifact-manifest.json. Personal/sensitive data,
+# including tokens, passwords, logins, private keys, identifiers, and
+# credentials, is prohibited. These rules do not automatically track existing
+# payloads or alter raw historical evidence.
 
-# Generated accelerator artifacts
-*.nb
-*.nbg
-*.bin
-*.blob
-
-# Native binaries and libraries
-*.so
-*.so.*
-*.a
-*.ko
-*.o
-*.out
-
-# Build outputs
+# Local/private material and secret-bearing files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+# Build outputs (public source and explicitly manifested build products are
+# not ignored by artifact type; only local build directories are ignored).
 build/
 cmake-build-*/
 CMakeFiles/
@@ -29,24 +25,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-
-# Local environment and secrets
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.token
-
-# Models and large tensor files
-*.gguf
-*.safetensors
-*.onnx
-*.tflite
-*.npy
-*.npz
-*.pt
-*.pth
 
 # Benchmark scratch data
 benchmarks/results/local/
@@ -61,4 +39,3 @@ benchmarks/models/.*.tmp
 .idea/
 .DS_Store
 Thumbs.db
-

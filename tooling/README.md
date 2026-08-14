@@ -4,9 +4,15 @@ The tools in this directory are small entrypoints around the profiling and
 board-policy contracts. Profiling and inventory tools are read-only or
 append-only. The explicitly documented A733 fan-policy helper is the sole
 privileged exception and changes only its validated runtime thermal trips.
-Vendor SDKs, proprietary compiler files, credentials, model weights, NBG
-files, and runtime binaries remain external; the profiling tools record only
-paths, versions, hashes, and sanitized observations.
+
+Public weights, binaries, NBGs, custom kernels and source, SDK or kernel
+patches, and NPU tools may be published when they are redistributable and
+listed in `docs/experiments/public-artifact-manifest.json`. The manifest must
+record SHA-256, byte size, origin, source commit, build/runtime/toolchain
+provenance, and destination. Personal/sensitive data is prohibited, including
+tokens, passwords, logins, private keys, identifiers, and credentials. Existing
+payloads and raw evidence are not automatically tracked or copied merely
+because a public artifact policy permits publication.
 
 ## Generate the public Q1 C0 fixture
 
@@ -17,8 +23,9 @@ python3 tooling/generate_q1_vip_fixture.py \
   --output-dir /tmp/q1-vip-c0-fixture
 ```
 
-The generated fixture files are public synthetic data. Generated NBG files
-remain outside Git and must not be added to the repository.
+The generated fixture files are public synthetic data. A generated NBG is a
+publishable artifact only when it is redistributable and first added to the
+public-artifact manifest; this command does not automatically track it.
 
 ## Pin a real Bonsai Q1 workload manifest
 
@@ -41,8 +48,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 tooling/q1_memory_accounting.py \
 ```
 
 The command prints `PASS q1-memory-accounting/v1` only after the exact model
-size/SHA-256, Q1 payload offsets, and pinned Bonsai totals validate. GGUF
-weights and a future sidecar payload remain external to Git.
+size/SHA-256, Q1 payload offsets, and pinned Bonsai totals validate. The source
+GGUF and a future sidecar payload remain external until an intentional
+redistributable manifest entry authorizes a public destination.
 `sidecar.total_payload_bytes` is the binary sidecar span through the final
 tensor end, including any alignment padding, rather than the sum of payload
 bytes alone.
@@ -112,16 +120,16 @@ contain the two lifecycle events unless phase recording itself failed. Inputs
 are validated fail-closed and never modified; `--output` refuses to overwrite
 an existing file.
 
-## Измерить фазы VIPLite
+## Profile VIPLite phases
 
-`profiled_viplite_runner.c` держит NBG и buffers resident и для каждой
-итерации отдельно печатает H2D, wall-clock `vip_run_network`, внутренний
-`VIP_NETWORK_PROP_PROFILING`, D2H и byte-equality с первым output. Runner не
-умеет GGUF и не содержит host CPU implementation операции: он вызывает только
-скомпилированный NBG. Device profiler/cycles доказывают device execution, но
-закрытый runtime не даёт счётчика своего возможного внутреннего fallback.
+`profiled_viplite_runner.c` keeps the NBG and buffers resident and prints H2D,
+wall-clock `vip_run_network`, internal `VIP_NETWORK_PROP_PROFILING`, D2H, and
+byte equality with the first output for each iteration. The runner accepts a
+compiled NBG only; it does not parse GGUF or provide a host CPU implementation.
+Device profiler cycles establish device execution, but a closed runtime may
+still hide an internal fallback.
 
-На плате runner собирается против установленного VIPLite:
+Build the runner on the target against the installed VIPLite:
 
 ```bash
 gcc -O2 -std=c11 -Wall -Wextra -Werror \
@@ -131,16 +139,16 @@ gcc -O2 -std=c11 -Wall -Wextra -Werror \
 /tmp/profiled_viplite_runner --iterations 1000 \
   network_binary.nb input_0.dat output.bin
 
-# Два input tensors и один output, как в packed Q1×Q8 E003:
+# Two input tensors and one output, as in packed Q1×Q8 E003:
 /tmp/profiled_viplite_runner --iterations 100 \
   q1_q8.nb packed_weights.q1_0.bin activation.q8_0.bin output.f32.bin
 ```
 
-Input должен иметь ровно размер, сообщённый `vip_get_buffer_size`; лишние или
-недостающие bytes приводят к ошибке. Output записывается один раз после цикла и
-не входит в D2H timing.
+Each input must have exactly the size reported by `vip_get_buffer_size`;
+extra or missing bytes are an error. The output is written once after the loop
+and is excluded from D2H timing.
 
-Строгая компактная сводка и график строятся так:
+Build the strict compact summary and chart as follows:
 
 ```bash
 python3 tooling/summarize_viplite_profile.py <raw-run>/stdout.log \
@@ -154,25 +162,25 @@ python3 tooling/generate_viplite_phase_chart.py \
   --output benchmarks/charts/<run_id>.svg
 ```
 
-Parser требует непрерывные iteration indices, `first` только для index 0,
-успешный device profiler и полные tensor/quantization metadata. Output equality
-с первым запуском остаётся repeatability-check и никогда не переименовывается
-в golden. `--output` у обоих инструментов не перезаписывает существующий файл.
+The parser requires contiguous iteration indices, `first` only for index 0, a
+successful device profiler, and complete tensor/quantization metadata. Output
+equality with the first run remains a repeatability check and is never renamed
+as a golden. Neither command overwrites an existing output file.
 
-Общая XY-карта строится только из сохранённых JSON evidence:
+Build the overall XY map only from saved JSON evidence:
 
 ```bash
 python3 tooling/generate_experiment_xy_chart.py \
   --output benchmarks/charts/experiment-xy-overview.svg
 ```
 
-Генератор намеренно использует три панели. Bonsai показывает milliseconds per
-token и decode tokens/s; ShuffleNet показывает milliseconds per inference и
-inferences/s; CPU golden показывает PASS/нет проверки. Эти единицы нельзя
-объединять на одной оси. Failed/no-metric run IDs выводятся отдельно и не
-получают искусственное значение `0`.
+The generator intentionally uses three panels. Bonsai shows milliseconds per
+token and decode tokens/s; ShuffleNet shows milliseconds per inference and
+inferences/s; the CPU golden shows PASS or no check. These units must not share
+one axis. Failed or no-metric run IDs are listed separately and never receive a
+synthetic `0`.
 
-График packed Q1×Q8 EVIS строится из отдельной машинной сводки:
+Build the packed Q1×Q8 EVIS chart from its machine summary:
 
 ```bash
 python3 tooling/generate_q1_evis_chart.py \
@@ -180,10 +188,10 @@ python3 tooling/generate_q1_evis_chart.py \
   --output benchmarks/charts/q1-vip9000-evis-bonsai-20260811.svg
 ```
 
-Верхняя панель сравнивает только одинаковую форму `16×128`. Нижняя использует
-логарифмические XY-оси для реальных Bonsai tiles. Генератор fail-closed
-отклоняет попытку пометить линейную full-layer проекцию как измерение и не
-перезаписывает существующий SVG.
+The upper panel compares only the identical `16×128` shape. The lower panel
+uses logarithmic XY axes for real Bonsai tiles. The generator fails closed if a
+linear full-layer projection is presented as a measurement and never
+overwrites an existing SVG.
 
 ## Fail closed on unsafe target state
 
@@ -258,7 +266,9 @@ It writes temporary `system.txt` and `runtime-files.sha256` first, covering
 OS/CPU/memory, device-tree compatibility, VIP devices, NPU devfreq, CPU
 frequency policies, thermals, and hashes of readable runtime files. It publishes
 the output directory only after mandatory sections succeed; a failure leaves no
-partial inventory. It does not copy proprietary files into Git.
+partial inventory. It records metadata and hashes, not an automatic artifact
+publication. Redistributable files follow the public-artifact manifest and
+privacy gate.
 
 ## Inspect the AcuityLite container
 
@@ -277,7 +287,8 @@ The container is run with no network, read-only root, dropped capabilities,
 is temporary until Docker exits successfully. It records package/version
 markers, SDK archive hash, a hash and sanitized marker for the license target,
 prebuilt SDK version, library names, relevant headers, and selected strings.
-The archive and extracted proprietary SDK remain external.
+An archive whose license does not permit redistribution remains external;
+redistributable SDK or kernel patches may be published through the manifest.
 
 ## Persist the approved A733 PWM-fan trip
 
@@ -335,11 +346,10 @@ them in sequence; this is not a cross-file transaction. The row reports prompt
 tok/s, decode tok/s, TTFT, peak RSS, quality, status, and a relative raw-result
 link. Do not hand-edit rows or replace the model-card header.
 
-## Текущие графики бенчмарков
+## Current benchmark charts
 
-График строится только из сохранённого канонического журнала и сводок запусков;
-значения вручную не переносятся в SVG. Для принудительной детерминированной
-регенерации используйте:
+The chart is built only from the saved canonical ledger and run summaries;
+values are never copied manually into the SVG. For deterministic regeneration:
 
 ```bash
 python3 tooling/generate_benchmark_chart.py \
@@ -349,8 +359,8 @@ python3 tooling/generate_benchmark_chart.py \
   --force
 ```
 
-Флаг `--force` публикует SVG атомарно после проверки входов. Чтобы проверить
-свежесть без изменения файлов, выполните:
+The `--force` flag publishes the SVG atomically after validating its inputs. To
+check freshness without changing files:
 
 ```bash
 python3 tooling/generate_benchmark_chart.py \
@@ -360,9 +370,9 @@ python3 tooling/generate_benchmark_chart.py \
   --check
 ```
 
-Код выхода `0` означает, что SVG актуален, `1` — что выход отсутствует или
-устарел, `2` — что обязательный вход отсутствует или некорректен. `--check` и
-`--force` нельзя указывать вместе. Источники истины — JSONL-журнал
-`benchmarks/results/model-runs.jsonl` и сводки
-`benchmarks/results/*/summary.json`; карточка модели и SVG являются
-производными представлениями этих сохранённых свидетельств.
+Exit code `0` means that the SVG is current, `1` means that it is absent or
+stale, and `2` means that a required input is absent or invalid. `--check` and
+`--force` are mutually exclusive. The sources of truth are the JSONL ledger
+`benchmarks/results/model-runs.jsonl` and
+`benchmarks/results/*/summary.json`; the model card and SVG are derived views
+of those saved records.

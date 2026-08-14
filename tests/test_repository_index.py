@@ -6,6 +6,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from shutil import copy2
 
 import pytest
 
@@ -16,13 +17,18 @@ sys.path.insert(0, str(ROOT / "tooling"))
 from check_repository_index import (  # noqa: E402
     CANONICAL_MARKDOWN,
     REQUIRED_STATUSES,
+    check_experiment_coverage,
     check_branch_inventory,
     check_english_only,
     check_hardware_facts,
     check_links,
+    check_privacy,
+    check_public_artifact_manifest,
     check_provenance,
     check_registry,
+    discover_canonical_markdown,
     run_checks,
+    _check_commit_path,
 )
 
 
@@ -31,7 +37,9 @@ def test_canonical_repository_index_passes_all_checks() -> None:
 
 
 def test_canonical_markdown_set_is_present_and_english_only() -> None:
-    missing = [path for path in CANONICAL_MARKDOWN if not (ROOT / path).is_file()]
+    discovered = discover_canonical_markdown(ROOT)
+    assert discovered == tuple(sorted(discovered))
+    missing = [path for path in discovered if not (ROOT / path).is_file()]
     assert missing == []
     assert check_english_only(ROOT) == []
 
@@ -62,6 +70,17 @@ def test_registry_covers_status_taxonomy_and_key_result_boundaries() -> None:
     assert e049d["end_to_end"] is False
     assert e049d["optimization_claim"] is False
 
+    e049_nsi = next(row for row in rows if row["id"] == "E049-nsi")
+    assert e049_nsi["branch"] == "codex/e049-nsi-calibration"
+    assert e049_nsi["commit"] == "c8b7e2696c8f5df89d752dd41e55a5855354cca0"
+    assert e049_nsi["status"] == "diagnostic"
+    assert e049_nsi["evidence"][0]["path"].startswith(
+        "experiments/E049-nsi-calibration/"
+    )
+    assert "inconclusive" in e049_nsi["notes"]
+    assert "MB/s" in e049_nsi["notes"]
+    assert "saturation" in e049_nsi["notes"]
+
 
 def test_registry_rows_have_exact_provenance() -> None:
     errors = check_registry(ROOT) + check_provenance(ROOT)
@@ -72,6 +91,10 @@ def test_registry_rows_have_exact_provenance() -> None:
         assert sha.fullmatch(row["commit"]), row["id"]
         assert row["branch"], row["id"]
         assert row["evidence"], row["id"]
+
+
+def test_every_inventoried_experiment_directory_is_indexed() -> None:
+    assert check_experiment_coverage(ROOT) == []
 
 
 def test_hardware_facts_are_explicitly_classified() -> None:
@@ -95,6 +118,124 @@ def test_branch_inventory_is_complete_and_does_not_touch_e055() -> None:
     assert "codex/e055-q1-hot-cold" in names
     assert "codex/repository-index" not in names
     assert all(row["commit"] != "51d1c1cfd3d2e963344e79dc11719c278b234569" for row in inventory["branches"] if row["branch"] != "codex/e055-q1-hot-cold")
+
+
+def test_public_artifact_manifest_and_privacy_gate_pass() -> None:
+    assert check_public_artifact_manifest(ROOT) == []
+    assert check_privacy(ROOT) == []
+
+
+def _copy_registry_fixture(tmp_path: Path) -> Path:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    for name in ("registry.json", "schema.json", "branch-inventory.json"):
+        copy2(ROOT / "docs/experiments" / name, fixture / "docs/experiments" / name)
+    return fixture
+
+
+def test_schema_rejects_bogus_claim_class_and_malformed_id(tmp_path: Path) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    registry["experiments"][0]["claim_class"] = "invented"
+    registry["experiments"][1]["id"] = "not-an-experiment"
+    registry_path.write_text(json.dumps(registry))
+    errors = check_registry(fixture)
+    assert any("claim_class" in error for error in errors)
+    assert any("id" in error for error in errors)
+
+
+def test_schema_rejects_wrong_repository_and_missing_reference(tmp_path: Path) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    registry["repository"] = "other/project"
+    del registry["experiments"][0]["evidence"][0]["ref"]
+    registry_path.write_text(json.dumps(registry))
+    errors = check_registry(fixture) + check_provenance(fixture)
+    assert any("repository" in error for error in errors)
+    assert any("ref" in error for error in errors)
+
+
+def test_provenance_rejects_mismatched_ref_and_nonexistent_commit(tmp_path: Path) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    evidence = registry["experiments"][0]["evidence"][0]
+    evidence["ref"] = "main@0000000000000000000000000000000000000000"
+    registry_path.write_text(json.dumps(registry))
+    errors = check_provenance(fixture)
+    assert any("does not match row" in error for error in errors)
+    assert any("all-zero" in error or "does not exist" in error for error in errors)
+
+
+def test_git_provenance_rejects_missing_path_at_exact_commit() -> None:
+    errors = _check_commit_path(
+        ROOT,
+        "main",
+        "426d1467563da211f9621cc2692ec25cf065880d",
+        "experiments/does-not-exist/README.md",
+        "adversarial",
+    )
+    assert any("path does not exist" in error for error in errors)
+
+
+def test_english_checker_rejects_non_latin_scripts_but_allows_technical_symbols(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    (fixture / "README.md").write_text("# English\n\nASCII code `x -> y` and × ° →.\n")
+    (fixture / "bad.md").write_text("# English\n\nGreek α and CJK 中 are not canonical English.\n")
+    errors = check_english_only(fixture)
+    assert any("bad.md" in error for error in errors)
+    assert not any("README.md" in error for error in errors)
+
+
+def test_hardware_checker_rejects_unclassified_garbage(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/hardware").mkdir(parents=True)
+    (fixture / "docs/hardware/a733.md").write_text(
+        "Verified upstream, Verified on target, Unknown, 32-bit, LPDDR5-4800, "
+        "19.2 GB/s, 510 MHz, secure firmware\n"
+    )
+    assert check_hardware_facts(fixture)
+
+
+def test_privacy_gate_rejects_secret_pattern(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    (fixture / "README.md").write_text("public note token=ghp_123456789012345678901234567890\n")
+    assert check_privacy(fixture)
+
+
+def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    (fixture / "public.txt").write_text("public\n")
+    (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {"status": "no-private-data"},
+                "artifacts": [
+                    {
+                        "path": "public.txt",
+                        "sha256": "0" * 64,
+                        "byte_size": 99,
+                        "origin": "test",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "none",
+                        "destination": "git",
+                    }
+                ],
+            }
+        )
+    )
+    errors = check_public_artifact_manifest(fixture)
+    assert any("sha256" in error for error in errors)
+    assert any("byte_size" in error for error in errors)
 
 
 def test_canonical_layer_contains_pointers_not_raw_payload_copies() -> None:

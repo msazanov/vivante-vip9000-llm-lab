@@ -1,0 +1,9 @@
+# Large public artifacts may use Git LFS after manifest and privacy review.
+# These attributes do not automatically start tracking existing payloads.
+*.gguf filter=lfs diff=lfs merge=lfs -text
+*.safetensors filter=lfs diff=lfs merge=lfs -text
+*.nb filter=lfs diff=lfs merge=lfs -text
+*.nbg filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+*.tar.gz filter=lfs diff=lfs merge=lfs -text

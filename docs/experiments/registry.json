@@ -480,6 +480,20 @@
       "optimization_claim": false
     },
     {
+      "id": "E049-nsi",
+      "title": "A733 NSI system-identity calibration",
+      "status": "diagnostic",
+      "claim_class": "hardware",
+      "branch": "codex/e049-nsi-calibration",
+      "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0",
+      "evidence": [{"kind": "branch_pointer", "path": "experiments/E049-nsi-calibration/README.md", "ref": "codex/e049-nsi-calibration@c8b7e2696c8f5df89d752dd41e55a5855354cca0", "note": "V4 calibration evidence; authoritative raw payload remains on the calibration branch."}],
+      "metric": {"v4_fit_class": "inconclusive/low", "mb_per_second_established": false, "saturation_established": false},
+      "notes": "V4 end-synchronized fits were inconclusive/low. This bounded diagnostic does not establish MB/s, a data-unit conversion, or memory saturation.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
       "id": "E049b",
       "title": "Analysis of complete E048 traces",
       "status": "diagnostic",
@@ -558,7 +572,7 @@
       "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
       "evidence": [{"kind": "branch_pointer", "path": "experiments/E055-q1-hot-cold/README.md", "ref": "codex/e055-q1-hot-cold@51d1c1cfd3d2e963344e79dc11719c278b234569", "note": "Ongoing work; this canonical branch does not modify its files or worktree."}],
       "metric": {},
-      "notes": "Ongoing E055 work remains on its own branch and must be completed there before any registry promotion.",
+      "notes": "Point-in-time snapshot of ongoing E055 work on its own branch; the live branch may advance and must be re-inventoried before any registry promotion.",
       "is_current_best": false,
       "end_to_end": false,
       "optimization_claim": false
