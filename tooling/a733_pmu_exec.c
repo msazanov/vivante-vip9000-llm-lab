@@ -129,6 +129,8 @@ struct options {
 struct run_state {
     pid_t child_pid;
     pid_t child_pgid;
+    pid_t child_sid;
+    int child_session_established;
     int marker_read_fd;
     int ack_write_fd;
     int sync_enabled;
@@ -545,15 +547,80 @@ static int64_t read_max_temp_mc(const char *thermal_root, int *readable) {
     return maximum;
 }
 
-static void signal_process_group(const struct run_state *run, int signal_number) {
-    if (run->child_pgid > 0) {
-        if (kill(-run->child_pgid, signal_number) == 0 || errno != ESRCH) {
-            return;
+static int process_group_has_child_session_member(const struct run_state *run) {
+    DIR *directory;
+    struct dirent *entry;
+    int found = 0;
+    if (!run->child_session_established || run->child_pgid <= 0 || run->child_sid <= 0) {
+        return 0;
+    }
+    directory = opendir("/proc");
+    if (directory == NULL) {
+        return -1;
+    }
+    while ((entry = readdir(directory)) != NULL) {
+        char path[64];
+        char line[4096];
+        char state;
+        char *end = NULL;
+        char *closing;
+        FILE *file;
+        long pid;
+        long parent;
+        long process_group;
+        long session;
+        errno = 0;
+        pid = strtol(entry->d_name, &end, 10);
+        if (errno != 0 || end == entry->d_name || *end != '\0' || pid <= 0) {
+            continue;
+        }
+        if (snprintf(path, sizeof(path), "/proc/%ld/stat", pid) >= (int)sizeof(path)) {
+            continue;
+        }
+        file = fopen(path, "r");
+        if (file == NULL) {
+            continue;
+        }
+        if (fgets(line, sizeof(line), file) == NULL) {
+            fclose(file);
+            continue;
+        }
+        fclose(file);
+        closing = strrchr(line, ')');
+        if (closing == NULL || sscanf(closing + 1, " %c %ld %ld %ld", &state,
+                                      &parent, &process_group, &session) != 4) {
+            continue;
+        }
+        (void)state;
+        (void)parent;
+        if (process_group == (long)run->child_pgid &&
+            session == (long)run->child_sid) {
+            found = 1;
+            break;
         }
     }
-    if (run->child_pid > 0) {
-        (void)kill(run->child_pid, signal_number);
+    closedir(directory);
+    return found;
+}
+
+static int signal_process_group(const struct run_state *run, int signal_number) {
+    int membership = process_group_has_child_session_member(run);
+    if (membership > 0) {
+        if (kill(-run->child_pgid, signal_number) == 0 || errno == ESRCH) {
+            return 0;
+        }
+        return -1;
     }
+    if (membership < 0) {
+        return -1;
+    }
+    if (!run->child_status_valid && run->child_pid > 0) {
+        if (kill(run->child_pid, signal_number) == 0 || errno == ESRCH) {
+            return 0;
+        }
+        return -1;
+    }
+    return 0;
 }
 
 static int check_thermal(struct run_state *run, const struct options *options) {
@@ -888,12 +955,17 @@ static void reap_group_nonblocking(struct run_state *run) {
     }
 }
 
-static void terminate_process_group(struct run_state *run) {
+static int terminate_process_group(struct run_state *run) {
     int attempt;
     if (run->child_pid <= 0) {
-        return;
+        return 0;
     }
-    signal_process_group(run, SIGTERM);
+    reap_group_nonblocking(run);
+    if (signal_process_group(run, SIGTERM) != 0) {
+        run->internal_failure = 1;
+        set_failure(run, "process_group_cleanup_failed");
+        return -1;
+    }
     for (attempt = 0; attempt < 50; ++attempt) {
         if (!run->child_status_valid) {
             int status;
@@ -904,23 +976,44 @@ static void terminate_process_group(struct run_state *run) {
             }
         }
         reap_group_nonblocking(run);
-        if (run->child_status_valid && kill(-run->child_pgid, 0) != 0 && errno == ESRCH) {
-            return;
+        {
+            int membership = process_group_has_child_session_member(run);
+            if (run->child_status_valid && membership == 0) {
+                return 0;
+            }
+            if (membership < 0) {
+                run->internal_failure = 1;
+                set_failure(run, "process_group_cleanup_failed");
+                return -1;
+            }
         }
         (void)poll(NULL, 0, 10);
     }
-    signal_process_group(run, SIGKILL);
+    if (signal_process_group(run, SIGKILL) != 0) {
+        run->internal_failure = 1;
+        set_failure(run, "process_group_cleanup_failed");
+        return -1;
+    }
     if (!run->child_status_valid && waitpid(run->child_pid, &run->child_status, 0) ==
                                       run->child_pid) {
         run->child_status_valid = 1;
     }
     for (attempt = 0; attempt < 50; ++attempt) {
         reap_group_nonblocking(run);
-        if (kill(-run->child_pgid, 0) != 0 && errno == ESRCH) {
-            break;
+        {
+            int membership = process_group_has_child_session_member(run);
+            if (run->child_status_valid && membership == 0) {
+                return 0;
+            }
+            if (membership < 0) {
+                break;
+            }
         }
         (void)poll(NULL, 0, 10);
     }
+    run->internal_failure = 1;
+    set_failure(run, "process_group_cleanup_failed");
+    return -1;
 }
 
 static int command_exit_code(const struct run_state *run) {
@@ -1173,10 +1266,30 @@ static int release_setup_gate(int fd) {
     return bytes == 1 ? 0 : -1;
 }
 
+static int confirm_child_session(int fd, struct run_state *run) {
+    char marker;
+    ssize_t bytes;
+    do {
+        bytes = read(fd, &marker, 1);
+    } while (bytes < 0 && errno == EINTR && parent_cancel_signal == 0);
+    close(fd);
+    if (bytes != 1 || marker != 'I' || parent_cancel_signal != 0) {
+        run->internal_failure = 1;
+        set_failure(run, parent_cancel_signal != 0 ? "parent_cancelled"
+                                                   : "child_session_unconfirmed");
+        return -1;
+    }
+    run->child_sid = run->child_pid;
+    run->child_session_established = 1;
+    return 0;
+}
+
 static int child_main(const struct options *options, char **command, int setup_read_fd,
-                      int marker_write_fd, int ack_read_fd, int child_stdout_fd,
+                      int identity_write_fd, int marker_write_fd, int ack_read_fd,
+                      int child_stdout_fd,
                       int child_stderr_fd, uid_t uid, gid_t gid,
                       pid_t expected_parent_pid) {
+    const char identity_marker = 'I';
     char gate;
     ssize_t bytes;
     if (reset_child_signal_handlers() != 0 ||
@@ -1190,6 +1303,15 @@ static int child_main(const struct options *options, char **command, int setup_r
     }
     if (setsid() < 0) {
         dprintf(STDERR_FILENO, "setsid failed: %s\n", strerror(errno));
+        return 126;
+    }
+    do {
+        bytes = write(identity_write_fd, &identity_marker, 1);
+    } while (bytes < 0 && errno == EINTR);
+    close(identity_write_fd);
+    if (bytes != 1) {
+        dprintf(STDERR_FILENO, "child identity confirmation failed: %s\n",
+                strerror(errno));
         return 126;
     }
     if (redirect_child_streams(child_stdout_fd, child_stderr_fd) != 0) {
@@ -1226,6 +1348,7 @@ int main(int argc, char **argv) {
     gid_t child_gid;
     int parse_status;
     int setup_pipe[2];
+    int identity_pipe[2] = {-1, -1};
     int marker_pipe[2] = {-1, -1};
     int ack_pipe[2] = {-1, -1};
     pid_t child;
@@ -1293,7 +1416,7 @@ int main(int argc, char **argv) {
             child_stderr_fd = moved;
         }
     }
-    if (pipe(setup_pipe) != 0 ||
+    if (pipe(setup_pipe) != 0 || pipe(identity_pipe) != 0 ||
         (options.start_on_ready && (pipe(marker_pipe) != 0 || pipe(ack_pipe) != 0))) {
         fprintf(stderr, "pipe setup failed: %s\n", strerror(errno));
         if (options.child_stderr_path != NULL) {
@@ -1323,14 +1446,15 @@ int main(int argc, char **argv) {
         int status;
         close(output_fd);
         close(setup_pipe[1]);
+        close(identity_pipe[0]);
         if (options.start_on_ready) {
             close(marker_pipe[0]);
             close(ack_pipe[1]);
-            status = child_main(&options, command, setup_pipe[0], marker_pipe[1],
-                                ack_pipe[0], child_stdout_fd, child_stderr_fd,
+            status = child_main(&options, command, setup_pipe[0], identity_pipe[1],
+                                marker_pipe[1], ack_pipe[0], child_stdout_fd, child_stderr_fd,
                                 child_uid, child_gid, parent_pid);
         } else {
-            status = child_main(&options, command, setup_pipe[0], -1, -1,
+            status = child_main(&options, command, setup_pipe[0], identity_pipe[1], -1, -1,
                                 child_stdout_fd, child_stderr_fd, child_uid, child_gid,
                                 parent_pid);
         }
@@ -1340,6 +1464,7 @@ int main(int argc, char **argv) {
     if (child_stdout_fd >= 0) close(child_stdout_fd);
     if (child_stderr_fd >= 0) close(child_stderr_fd);
     close(setup_pipe[0]);
+    close(identity_pipe[1]);
     if (options.start_on_ready) {
         close(marker_pipe[1]);
         close(ack_pipe[0]);
@@ -1347,14 +1472,19 @@ int main(int argc, char **argv) {
         run.ack_write_fd = ack_pipe[1];
     }
     (void)set_fd_cloexec(setup_pipe[1], 1);
+    if (confirm_child_session(identity_pipe[0], &run) != 0) {
+        failed = 1;
+    }
     (void)open_event_group(&run);
 
-    if (check_thermal(&run, &options) != 0) {
+    if (!failed && check_thermal(&run, &options) != 0) {
         failed = 1;
-    } else if (release_setup_gate(setup_pipe[1]) != 0) {
+    } else if (!failed && release_setup_gate(setup_pipe[1]) != 0) {
         run.internal_failure = 1;
         set_failure(&run, "parent_setup_gate_failed");
         failed = 1;
+    } else if (failed) {
+        close(setup_pipe[1]);
     }
 
     if (!failed && options.start_on_ready) {
@@ -1416,7 +1546,9 @@ int main(int argc, char **argv) {
         if (measured_start != 0 && run.measured_elapsed_ns == 0) {
             run.measured_elapsed_ns = monotonic_ns() - measured_start;
         }
-        terminate_process_group(&run);
+    }
+    if (terminate_process_group(&run) != 0) {
+        failed = 1;
     }
     if (run.marker_read_fd >= 0) close(run.marker_read_fd);
     if (run.ack_write_fd >= 0) close(run.ack_write_fd);

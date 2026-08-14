@@ -573,6 +573,56 @@ class A733PmuExecContractTest(unittest.TestCase):
                 except ProcessLookupError:
                     pass
 
+    def test_immediate_exit_zero_cleans_remaining_descendant_before_success(self) -> None:
+        pid_file = self.tmp / "immediate-exit-zero.pids"
+        child_stdout = self.tmp / "immediate-exit-zero.stdout"
+        child_stderr = self.tmp / "immediate-exit-zero.stderr"
+        child_pid = descendant_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                "--child-stdout", str(child_stdout), "--child-stderr",
+                str(child_stderr), "--event-group", "core", "--start-immediately",
+                "--", "/bin/sh", "-c",
+                f"sleep 30 & printf '%s %s' $$ $! > '{pid_file}'; exit 0",
+            )
+            child_pid, descendant_pid = self.wait_for_pid_pair(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(result["exit"]["code"], 0)
+            self.assert_process_gone(descendant_pid)
+            self.assert_process_gone(child_pid)
+        finally:
+            if child_pid > 0:
+                try:
+                    os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_start_ack_end_exit_zero_cleans_descendant_before_success(self) -> None:
+        pid_file = self.tmp / "sae-exit-zero.pids"
+        child_stdout = self.tmp / "sae-exit-zero.stdout"
+        child_stderr = self.tmp / "sae-exit-zero.stderr"
+        child_pid = descendant_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                "--child-stdout", str(child_stdout), "--child-stderr",
+                str(child_stderr), "--event-group", "core", "--start-on-ready",
+                "--sync-timeout-ms", "1000", "--", "/bin/sh", "-c",
+                f"printf S >&9; read ack <&8; sleep 30 & "
+                f"printf '%s %s' $$ $! > '{pid_file}'; printf E >&9; exit 0",
+            )
+            child_pid, descendant_pid = self.wait_for_pid_pair(pid_file)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(result["exit"]["code"], 0)
+            self.assertTrue(result["sync"]["ended"])
+            self.assert_process_gone(descendant_pid)
+            self.assert_process_gone(child_pid)
+        finally:
+            if child_pid > 0:
+                try:
+                    os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
     def test_closed_ack_pipe_is_failure_not_sigpipe_and_cleans_descendants(self) -> None:
         output = self.next_output()
         child_stdout = self.tmp / "closed-ack.stdout"
