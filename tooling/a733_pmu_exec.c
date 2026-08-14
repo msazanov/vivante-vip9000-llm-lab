@@ -993,7 +993,14 @@ static int read_proc_identity(pid_t pid, struct proc_identity *identity) {
     identity->pidfd = -1;
     for (field = 4; field <= 22; ++field) {
         errno = 0;
-        value = strtoll(cursor, &end, 10);
+        if (field == 22) {
+            unsigned long long start_time = strtoull(cursor, &end, 10);
+            if (errno == 0) {
+                identity->start_time = (uint64_t)start_time;
+            }
+        } else {
+            value = strtoll(cursor, &end, 10);
+        }
         if (errno != 0 || end == cursor ||
             (field < 22 && *end != ' ') ||
             (field == 22 && *end != ' ' && *end != '\n' && *end != '\0')) {
@@ -1007,15 +1014,10 @@ static int read_proc_identity(pid_t pid, struct proc_identity *identity) {
         if (field == 4) identity->parent_pid = (pid_t)value;
         if (field == 5) identity->process_group = (pid_t)value;
         if (field == 6) identity->session = (pid_t)value;
-        if (field == 22) identity->start_time = (uint64_t)value;
         cursor = end;
         while (*cursor == ' ') {
             ++cursor;
         }
-    }
-    if (value <= 0) {
-        errno = EPROTO;
-        return -1;
     }
     return 1;
 }
@@ -1088,6 +1090,10 @@ static int enumerate_adopted_children(struct proc_identity *children,
             errno = 0;
             continue;
         }
+        if (first.start_time == 0) {
+            scan_errno = EPROTO;
+            break;
+        }
         if (found == capacity) {
             scan_errno = EOVERFLOW;
             break;
@@ -1112,7 +1118,7 @@ static int enumerate_adopted_children(struct proc_identity *children,
             close(pidfd);
             break;
         }
-        if (confirmed.parent_pid != wrapper_pid ||
+        if (confirmed.parent_pid != wrapper_pid || confirmed.start_time == 0 ||
             confirmed.start_time != first.start_time) {
             close(pidfd);
             errno = 0;

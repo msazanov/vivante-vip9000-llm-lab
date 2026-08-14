@@ -26,6 +26,7 @@ class A733PmuExecContractTest(unittest.TestCase):
         cls.tmp = pathlib.Path(tempfile.mkdtemp(prefix="e049c-pmu-v2-test-"))
         cls.launcher = cls.tmp / "a733-pmu-exec"
         cls.control = cls.tmp / "a733-pmu-control"
+        cls.proc_stat_override = cls.tmp / "e049c-proc-stat-override.so"
         cls.result_index = 0
         common = [
             "cc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
@@ -37,6 +38,15 @@ class A733PmuExecContractTest(unittest.TestCase):
         )
         subprocess.run(
             [*common, str(TOOLING / "a733_pmu_control.c"), "-o", str(cls.control)],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "cc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
+                "-shared", "-fPIC",
+                str(ROOT / "tests" / "e049c_proc_stat_override.c"),
+                "-o", str(cls.proc_stat_override),
+            ],
             check=True,
         )
 
@@ -804,6 +814,104 @@ class A733PmuExecContractTest(unittest.TestCase):
             if control.poll() is None:
                 os.killpg(control.pid, signal.SIGKILL)
             control.wait(timeout=5)
+
+    def test_unrelated_proc_record_with_zero_start_time_is_not_malformed(self) -> None:
+        original = pathlib.Path("/proc/1/stat").read_text(encoding="ascii")
+        closing = original.rfind(")")
+        self.assertGreater(closing, 0)
+        fields = original[closing + 2 :].split()
+        self.assertGreaterEqual(len(fields), 20)
+        fields[19] = "0"  # /proc stat field 22: unsigned process start time.
+        fixture = self.tmp / "unrelated-proc1-zero-start-time.stat"
+        fixture.write_text(
+            original[: closing + 1] + " " + " ".join(fields) + "\n",
+            encoding="ascii",
+        )
+        output = self.next_output()
+        environment = os.environ.copy()
+        environment["LD_PRELOAD"] = str(self.proc_stat_override)
+        environment["E049C_TEST_PROC1_STAT"] = str(fixture)
+        proc = subprocess.run(
+            [
+                str(self.launcher), "--no-drop", "--no-thermal-guard",
+                "--output", str(output),
+                *self.isolated_child_stream_args("zero-start-time"),
+                "--event-group", "core", "--start-immediately", "--",
+                "/bin/true",
+            ],
+            env=environment,
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+        result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertNotEqual(result["failure_reason"], "process_tree_cleanup_failed")
+
+    def run_owned_identity_adversary(
+        self, mode: str, label: str, *, expect_cleanup_failure: bool
+    ) -> tuple[dict, int]:
+        pid_file = self.tmp / f"{label}.pid"
+        leader = self.write_helper(
+            f"{label}-leader.py",
+            "import pathlib, subprocess, sys\n"
+            "child = subprocess.Popen(['/bin/sleep', '30'], start_new_session=True)\n"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid), encoding='ascii')\n",
+        )
+        output = self.next_output()
+        environment = os.environ.copy()
+        environment["LD_PRELOAD"] = str(self.proc_stat_override)
+        environment[mode] = "1"
+        proc = subprocess.run(
+            [
+                str(self.launcher), "--no-drop", "--no-thermal-guard",
+                "--output", str(output),
+                *self.isolated_child_stream_args(label),
+                "--event-group", "core", "--start-immediately", "--",
+                sys.executable, str(leader), str(pid_file),
+            ],
+            env=environment,
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+        descendant_pid = self.wait_for_pid_file(pid_file)
+        result = json.loads(output.read_text(encoding="utf-8"))
+        if expect_cleanup_failure:
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertEqual(result["failure_reason"], "process_tree_cleanup_failed")
+        else:
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+        os.kill(descendant_pid, 0)
+        return result, descendant_pid
+
+    def test_owned_process_requires_nonzero_recorded_start_time(self) -> None:
+        descendant_pid = 0
+        try:
+            _, descendant_pid = self.run_owned_identity_adversary(
+                "E049C_TEST_ZERO_OWNED_START", "zero-owned-start-time",
+                expect_cleanup_failure=True,
+            )
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_replaced_owned_identity_is_never_signaled(self) -> None:
+        descendant_pid = 0
+        try:
+            _, descendant_pid = self.run_owned_identity_adversary(
+                "E049C_TEST_REPLACE_OWNED_START", "replaced-owned-start-time",
+                expect_cleanup_failure=False,
+            )
+        finally:
+            if descendant_pid > 0:
+                try:
+                    os.kill(descendant_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
     def test_proc_exit_races_do_not_create_false_cleanup_failure(self) -> None:
         pid_file = self.tmp / "proc-race.pids"
