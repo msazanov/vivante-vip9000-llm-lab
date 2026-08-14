@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T09:12:39.866350+00:00",
+  "generated_at_utc": "2026-08-14T09:58:44.322318+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "f8acab9433e4c5549da7caa02a95d93196aa0bd9",
-    "staged_tree_binding_sha256": "34c8a3feab06b92049475d67ca4e371c816372fa06b28a11c017486854661c9d",
+    "preflight_base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
+    "staged_tree_binding_sha256": "bb675e5e7abc8a39ae28676e5e31382abf091868f144913919450889769e609b",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -61,14 +61,14 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 15281,
-      "sha256": "343125d2cfd28a4d51d559e901e3eee89b4f53fb96f3ae91429da668941259c0",
+      "size_bytes": 16882,
+      "sha256": "4d6a243c6d4e3efdfaac806cd6b2f2c9d6a12b0c84fa600c4267bad8ed0512ea",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3053096,
-      "sha256": "5e668ae4a63483454af00d230532ccd5351c5664a6a8ad967e0e00131e9d15cb",
+      "size_bytes": 3056301,
+      "sha256": "bb44f16585458fdbb2c496fb44a968293b1f834145033318fc85f0b74e408137",
       "role": "e055-stage1"
     },
     {
@@ -127,14 +127,14 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
-      "size_bytes": 4804,
-      "sha256": "aa59460b48b82d9b40f3a0418e9eb4a887ee8776a4c5cae8d8f89ef269161e8a",
+      "size_bytes": 4806,
+      "sha256": "921de52dcfccca0efbf336db7c82d6d3a3bfda7657d7d13f05c60cdbdf5a4290",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
-      "size_bytes": 3852,
-      "sha256": "f2a93c2d607553a1bfac70f64bc73796ff66e4434d1c1531473977ece1995e19",
+      "size_bytes": 3854,
+      "sha256": "2d7dcbf586921e8b3a8755fef5ac4c07938046bbb7487e1e31f1e7ce45f6e8eb",
       "role": "e055-stage1"
     },
     {
@@ -163,20 +163,20 @@
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 25952,
-      "sha256": "3dee6dd555d809bd7740d18001fa26a2adfd8880f2fcfb89d866af8d735baf22",
+      "size_bytes": 27040,
+      "sha256": "f3ae8516c2c6d0e379352276ac1229ad46863991ddbf88f5c1a3f631dfafc9f9",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_raw_bundle.py",
-      "size_bytes": 50163,
-      "sha256": "7f3da6bd890ea94a3cf81dd47097035ec111ebbc6b785093f92b37d46be17600",
+      "size_bytes": 50201,
+      "sha256": "c7e099c8bc08054ed4ad7b30ecf416adbbf89e1dd804f97ae11f1060d3c5956f",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_capture_scaffold.py",
-      "size_bytes": 4196,
-      "sha256": "a3913b26927a1aaf54782eabdbaa201a44ffb4d9e5fd2f3a3abc59f833671e17",
+      "size_bytes": 8005,
+      "sha256": "0f4145cf1b4d53dae707c6f7e089f86e69c93f8ef79ab3952c0a6d9a8d6da102",
       "role": "e055-stage1"
     },
     {
@@ -193,8 +193,8 @@
     },
     {
       "path": "tooling/verify_e055_publication.py",
-      "size_bytes": 7306,
-      "sha256": "ffab495e6f07c5aafa783b566e7e1702f1a011b2295369681965d57288cfd75a",
+      "size_bytes": 7626,
+      "sha256": "04de880e09c69145f1e62e0ddd47f08efb3d5213e9356dcf36d7454e2a50c87d",
       "role": "e055-stage1"
     },
     {
@@ -217,8 +217,8 @@
     },
     {
       "path": "tests/test_e055_raw_bundle.py",
-      "size_bytes": 40600,
-      "sha256": "6e37369efea653469dc66aa944defd06480894e2aa4e3dd43f9628843c231c2a",
+      "size_bytes": 42440,
+      "sha256": "c6935d1563576606af2a5d8f273690a1155b6c8879f827c11125c853057227ba",
       "role": "e055-stage1"
     },
     {
@@ -229,8 +229,8 @@
     },
     {
       "path": "tests/test_e055_capture_scaffold.py",
-      "size_bytes": 4024,
-      "sha256": "565ffb9b839fdbdcf01a64d799407b4ac95d6c31ddbbcfeea2889951c803fce5",
+      "size_bytes": 5568,
+      "sha256": "12df6612f8f35c550ccfc260ace7387cb1a03ee11b4fbe23f65edbef5178b1c0",
       "role": "e055-stage1"
     },
     {
@@ -241,8 +241,8 @@
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 11057,
-      "sha256": "5343a8cb6a9097e1d94259b28eee6a295888cde02518f5a310600fb0e719dc1b",
+      "size_bytes": 18223,
+      "sha256": "72f3916e936f94d26c1253af254de89dc1d9e1ff07d44feca1d5a3b47bd9d89f",
       "role": "e055-stage1"
     },
     {
@@ -259,8 +259,8 @@
     },
     {
       "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
-      "size_bytes": 7221,
-      "sha256": "8c6323c8e84952619feac701ca6c5abe0494244486d044694bbdcbddd18a1a4a",
+      "size_bytes": 8732,
+      "sha256": "0d7faa0c033915f74245b742d3813649d165896826df77d38330c99deda5cb33",
       "role": "e055-stage1"
     },
     {
