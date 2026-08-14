@@ -24,6 +24,7 @@ from tooling.nsi_calibrate import (
     summarize,
     timer_window,
     validate_thermal_limit,
+    validate_window_alignment,
     write_partial_failure,
 )
 
@@ -76,6 +77,37 @@ class NsiCalibrationUnitTest(unittest.TestCase):
         invalid = dict(ready, calibration_elapsed_ns=math.nan)
         with self.assertRaises(NSIError):
             plan_exact_read_bytes(invalid, window_us=100_000)
+
+    def test_window_alignment_gate_rejects_overrun_outside_workload_and_bad_bytes(self) -> None:
+        alignment = {
+            "programmed_window_us": 100_000,
+            "pmu_arm_before_ns": 1_000,
+            "pmu_arm_after_ns": 2_000,
+            "pmu_deadline_earliest_ns": 100_001_000,
+            "pmu_deadline_latest_ns": 100_002_000,
+            "pmu_read_start_ns": 100_002_500,
+            "pmu_read_end_ns": 100_012_500,
+            "workload_start_ns": 3_000,
+            "workload_end_ns": 50_003_000,
+            "planned_bytes": 4096,
+            "bytes_read": 4096,
+        }
+        checked = validate_window_alignment(alignment)
+        self.assertTrue(checked["workload_fully_contained"])
+        self.assertLessEqual(checked["elapsed_programmed_ratio"], 1.01)
+        self.assertEqual(checked["active_us"], 50_000.0)
+        self.assertEqual(checked["idle_tail_us"], 49_998.0)
+
+        mutations = (
+            {"pmu_read_start_ns": 101_100_000},
+            {"workload_start_ns": 1_500},
+            {"workload_end_ns": 100_001_001},
+            {"bytes_read": 4088},
+            {"pmu_read_start_ns": math.nan},
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), self.assertRaises(NSIError):
+                validate_window_alignment({**alignment, **mutation})
 
     def test_c_helper_reports_exact_architected_load_bytes(self) -> None:
         root = Path(__file__).resolve().parents[1]

@@ -599,6 +599,84 @@ def plan_exact_read_bytes(
     }
 
 
+def validate_window_alignment(alignment: Mapping[str, Any]) -> dict[str, Any]:
+    """Fail closed unless exact bytes and workload lie inside one PMU window."""
+
+    required = (
+        "programmed_window_us",
+        "pmu_arm_before_ns",
+        "pmu_arm_after_ns",
+        "pmu_deadline_earliest_ns",
+        "pmu_deadline_latest_ns",
+        "pmu_read_start_ns",
+        "pmu_read_end_ns",
+        "workload_start_ns",
+        "workload_end_ns",
+        "planned_bytes",
+        "bytes_read",
+    )
+    values: dict[str, int] = {}
+    for name in required:
+        value = alignment.get(name)
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or not float(value).is_integer()
+            or int(value) < 0
+        ):
+            raise NSIError(f"window alignment: {name} должен быть конечным integer >= 0")
+        values[name] = int(value)
+    window_us = values["programmed_window_us"]
+    if window_us <= 0 or values["planned_bytes"] <= 0:
+        raise NSIError("window alignment: окно и planned_bytes должны быть положительными")
+    if values["bytes_read"] != values["planned_bytes"]:
+        raise NSIError("window alignment: helper bytes не совпадают с exact plan")
+    window_ns = window_us * 1000
+    if values["pmu_deadline_earliest_ns"] != values["pmu_arm_before_ns"] + window_ns:
+        raise NSIError("window alignment: неверный earliest PMU deadline")
+    if values["pmu_deadline_latest_ns"] != values["pmu_arm_after_ns"] + window_ns:
+        raise NSIError("window alignment: неверный latest PMU deadline")
+    ordered = (
+        values["pmu_arm_before_ns"],
+        values["pmu_arm_after_ns"],
+        values["workload_start_ns"],
+        values["workload_end_ns"],
+        values["pmu_deadline_earliest_ns"],
+        values["pmu_deadline_latest_ns"],
+        values["pmu_read_start_ns"],
+        values["pmu_read_end_ns"],
+    )
+    if any(right < left for left, right in zip(ordered, ordered[1:])):
+        raise NSIError("window alignment: workload/PMU timestamps не вложены")
+    elapsed_ratio = (
+        values["pmu_read_start_ns"] - values["pmu_arm_after_ns"]
+    ) / window_ns
+    if elapsed_ratio < 1.0 or elapsed_ratio > 1.01:
+        raise NSIError(
+            f"window alignment: elapsed/programmed={elapsed_ratio:.9f} вне [1.0, 1.01]"
+        )
+    active_us = (
+        values["workload_end_ns"] - values["workload_start_ns"]
+    ) / 1000.0
+    if active_us <= 0.0:
+        raise NSIError("window alignment: active_us должен быть > 0")
+    idle_tail_us = (
+        values["pmu_deadline_earliest_ns"] - values["workload_end_ns"]
+    ) / 1000.0
+    checked = dict(alignment)
+    checked.update({
+        "workload_fully_contained": True,
+        "elapsed_programmed_ratio": elapsed_ratio,
+        "active_us": active_us,
+        "idle_tail_us": idle_tail_us,
+        "pmu_arm_latency_us": (
+            values["pmu_arm_after_ns"] - values["pmu_arm_before_ns"]
+        ) / 1000.0,
+    })
+    return checked
+
+
 def _sleep_with_thermal(
     seconds: float,
     nsi: SysfsNSI,
