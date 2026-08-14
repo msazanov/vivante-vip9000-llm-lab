@@ -5,8 +5,10 @@
 
 ## Измерительный протокол
 
-Один запуск содержит только одну PMU-группу, не превышающую объявленную ёмкость
-четырёх hardware counters:
+Один запуск содержит только одну PMU-группу. Значение `4` в launcher-е —
+консервативный software-лимит, а не измеренная аппаратная ёмкость. Target
+подтвердил только группы размера **3/3/2** с
+`time_running/time_enabled=1.0`; это не доказывает аппаратную ёмкость PMU:
 
 - `core`: `cpu_cycles`, `instructions`, `stall_backend`;
 - `cache`: `l1d_cache_refill`, `l2d_cache_refill`, `l3d_cache_refill`;

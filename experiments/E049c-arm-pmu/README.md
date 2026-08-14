@@ -16,8 +16,9 @@
 из-за которых старые значения нельзя было использовать для строгого вывода:
 
 1. восемь событий больше не multiplex-ятся одним запуском — используются
-   отдельные группы `core` (3), `cache` (3) и `memory` (2), каждая меньше
-   лимита четырёх counters;
+   отдельные группы `core` (3), `cache` (3) и `memory` (2). Значение `4` —
+   консервативный software-лимит launcher-а, а не заявленная аппаратная
+   ёмкость PMU;
 2. граница стала двусторонней: child `S` → parent group `RESET+ENABLE` → ACK →
    workload → child `E` → parent group `DISABLE`.
 
@@ -25,6 +26,9 @@
 `time_running/time_enabled=0.95`. Все девять финальных controls имеют ratio
 `1.0`, `sample_valid=true`, полный `S/ACK/E` и поддержанные события. Это
 **квалификация измерителя**, а не Bonsai-профиль и не измерение DDR bytes.
+Target evidence доказывает только успешные группы размера **3/3/2** без
+multiplexing (`time_running/time_enabled=1.0`); это не доказывает аппаратную
+ёмкость PMU и не означает, что четыре произвольных события запустятся вместе.
 
 Первая v2-серия сохранена отдельно как
 [`results/v2-pre-fd-collision-fix-20260814/`](results/v2-pre-fd-collision-fix-20260814/)
@@ -64,7 +68,17 @@ launcher, который:
 6. проверяет thermal guard (85 °C), сохраняет exit status, errno и каждое
    unavailable-событие в JSON; unreadable temperature означает fail closed;
 7. создаёт child session/process group; timeout/thermal failure останавливает
-   и собирает всё дерево, а output создаётся через `O_EXCL|O_NOFOLLOW`.
+   и собирает всё дерево;
+8. ещё до pipe, `fork` и `perf_event_open` резервирует output через
+   `O_EXCL|O_NOFOLLOW`; существующий файл или symlink отклоняется до запуска
+   child/workload/PMU.
+
+Review-fix с adversarial host-тестами и двумя короткими target controls
+опубликован в
+[`results/v2-review-fix-20260814/`](results/v2-review-fix-20260814/).
+Он также отклоняет все варианты NaN/Inf для обоих double-параметров и не
+допускает не-конечные числа в JSON. Старые raw не изменялись; Bonsai в этой
+серии не запускался.
 
 События и raw-коды из Linux `arm_pmuv3.h`:
 

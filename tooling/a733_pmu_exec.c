@@ -19,6 +19,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <linux/perf_event.h>
+#include <math.h>
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
@@ -58,8 +59,8 @@
 #define DEFAULT_TIMEOUT_MS 30000
 #define DEFAULT_MAX_TEMP_MC 85000
 #define DEFAULT_MIN_RUNNING_RATIO 0.95
-#define EVENT_GROUP_CAPACITY 4
-#define MAX_GROUP_EVENTS 3
+#define SOFTWARE_GROUP_SIZE_LIMIT 4
+#define MAX_GROUP_EVENTS SOFTWARE_GROUP_SIZE_LIMIT
 #define EVENT_DEFINITION_COUNT 8
 
 struct event_definition {
@@ -189,7 +190,8 @@ static int parse_temp_mc(const char *text, int *value) {
     double celsius;
     errno = 0;
     celsius = strtod(text, &end);
-    if (errno != 0 || end == text || *end != '\0' || celsius < 1.0 || celsius > 200.0) {
+    if (errno != 0 || end == text || *end != '\0' || !isfinite(celsius) ||
+        celsius < 1.0 || celsius > 200.0) {
         return -1;
     }
     *value = (int)(celsius * 1000.0 + 0.5);
@@ -201,7 +203,8 @@ static int parse_ratio(const char *text, double *value) {
     double parsed;
     errno = 0;
     parsed = strtod(text, &end);
-    if (errno != 0 || end == text || *end != '\0' || parsed <= 0.0 || parsed > 1.0) {
+    if (errno != 0 || end == text || *end != '\0' || !isfinite(parsed) ||
+        parsed <= 0.0 || parsed > 1.0) {
         return -1;
     }
     *value = parsed;
@@ -238,7 +241,8 @@ static void usage(FILE *stream, const char *program) {
             "  -h, --help                 show this help\n"
             "\n"
             "Exact mode uses fixed child fds: marker=9, ACK=8. PMU counts are\n"
-            "event counts, never DDR bytes. Each run contains one PMU group.\n",
+            "event counts, never DDR bytes. Each run contains one PMU group\n"
+            "bounded by a conservative software limit, not hardware capacity.\n",
             program);
 }
 
@@ -893,34 +897,28 @@ static void json_string(FILE *stream, const char *value) {
     fputc('"', stream);
 }
 
-static FILE *open_output_safely(const char *path) {
+static int reserve_output_safely(const char *path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
     struct stat status;
-    FILE *stream;
     if (fd < 0) {
         fprintf(stderr, "safe open(%s): %s\n", path, strerror(errno));
-        return NULL;
+        return -1;
     }
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) || status.st_nlink != 1) {
         fprintf(stderr, "unsafe output target: %s\n", path);
         close(fd);
-        (void)unlink(path);
-        return NULL;
+        return -1;
     }
-    stream = fdopen(fd, "w");
-    if (stream == NULL) {
-        fprintf(stderr, "fdopen(%s): %s\n", path, strerror(errno));
-        close(fd);
-        (void)unlink(path);
-    }
-    return stream;
+    return fd;
 }
 
 static int write_result(const struct options *options, const struct run_state *run,
-                        int argc, char **argv) {
-    FILE *stream = open_output_safely(options->output_path);
+                        int argc, char **argv, int output_fd) {
+    FILE *stream = fdopen(output_fd, "w");
     size_t index;
     if (stream == NULL) {
+        fprintf(stderr, "fdopen(%s): %s\n", options->output_path, strerror(errno));
+        close(output_fd);
         return -1;
     }
     fprintf(stream, "{\n  \"schema_version\": \"e049c-arm-pmu/v2\",\n");
@@ -932,7 +930,13 @@ static int write_result(const struct options *options, const struct run_state *r
     fprintf(stream, "  \"counter_semantics\": \"event counts only; no DDR-byte conversion\",\n");
     fprintf(stream, "  \"event_group\": ");
     json_string(stream, options->event_group->name);
-    fprintf(stream, ",\n  \"event_group_capacity\": %d,\n", EVENT_GROUP_CAPACITY);
+    fprintf(stream, ",\n  \"software_group_size_limit\": %d,\n",
+            SOFTWARE_GROUP_SIZE_LIMIT);
+    fprintf(stream, "  \"event_group_size\": %zu,\n", run->event_count);
+    fprintf(stream, "  \"software_group_size_limit_semantics\": ");
+    json_string(stream,
+                "conservative launcher policy; not measured hardware PMU capacity");
+    fprintf(stream, ",\n");
     fprintf(stream, "  \"min_running_ratio\": %.6f,\n", options->min_running_ratio);
     fprintf(stream, "  \"pid\": %ld,\n  \"process_group\": %ld,\n",
             (long)run->child_pid, (long)run->child_pgid);
@@ -1070,6 +1074,7 @@ int main(int argc, char **argv) {
     int failed = 0;
     int result_write_status;
     int final_code;
+    int output_fd;
 
     memset(&run, 0, sizeof(run));
     run.max_temp_mc = -1;
@@ -1084,9 +1089,14 @@ int main(int argc, char **argv) {
     if (set_child_identity(&options, &child_uid, &child_gid) != 0) {
         return 2;
     }
+    output_fd = reserve_output_safely(options.output_path);
+    if (output_fd < 0) {
+        return 2;
+    }
     if (pipe(setup_pipe) != 0 ||
         (options.start_on_ready && (pipe(marker_pipe) != 0 || pipe(ack_pipe) != 0))) {
         fprintf(stderr, "pipe setup failed: %s\n", strerror(errno));
+        close(output_fd);
         return 2;
     }
     (void)prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0);
@@ -1094,6 +1104,7 @@ int main(int argc, char **argv) {
     child = fork();
     if (child < 0) {
         fprintf(stderr, "fork: %s\n", strerror(errno));
+        close(output_fd);
         return 2;
     }
     run.child_pid = child;
@@ -1102,6 +1113,7 @@ int main(int argc, char **argv) {
 
     if (child == 0) {
         int status;
+        close(output_fd);
         close(setup_pipe[1]);
         if (options.start_on_ready) {
             close(marker_pipe[0]);
@@ -1190,7 +1202,7 @@ int main(int argc, char **argv) {
         run.sample_valid = 0;
     }
     final_code = command_exit_code(&run);
-    result_write_status = write_result(&options, &run, argc, argv);
+    result_write_status = write_result(&options, &run, argc, argv, output_fd);
     close_event_fds(&run);
     if (result_write_status != 0) {
         return 2;

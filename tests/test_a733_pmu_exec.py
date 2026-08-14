@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import errno
 import json
+import math
 import os
 import pathlib
 import subprocess
@@ -81,8 +82,9 @@ class A733PmuExecContractTest(unittest.TestCase):
                 self.assertIsInstance(event["errno"], int)
                 self.assertIsInstance(event["error"], str)
 
-    def test_explicit_groups_fit_declared_hardware_capacity(self) -> None:
-        for group in ("core", "cache", "memory"):
+    def test_explicit_groups_fit_conservative_software_limit(self) -> None:
+        expected_sizes = {"core": 3, "cache": 3, "memory": 2}
+        for group, expected_size in expected_sizes.items():
             proc, result = self.run_launcher(
                 "--event-group",
                 group,
@@ -98,7 +100,71 @@ class A733PmuExecContractTest(unittest.TestCase):
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self.assert_common_shape(result, group)
-            self.assertEqual(result["event_group_capacity"], 4)
+            self.assertNotIn("event_group_capacity", result)
+            self.assertEqual(result["software_group_size_limit"], 4)
+            self.assertEqual(result["event_group_size"], expected_size)
+            self.assertEqual(
+                result["software_group_size_limit_semantics"],
+                "conservative launcher policy; not measured hardware PMU capacity",
+            )
+
+    def test_nonfinite_double_options_are_rejected_before_workload(self) -> None:
+        for option in ("--min-running-ratio", "--max-temp-c"):
+            for spelling in ("nan", "NaN", "inf", "-inf"):
+                with self.subTest(option=option, spelling=spelling):
+                    output = self.next_output()
+                    marker = output.with_suffix(".ran")
+                    proc = subprocess.run(
+                        [
+                            str(self.launcher),
+                            "--no-drop",
+                            "--no-thermal-guard",
+                            "--output",
+                            str(output),
+                            option,
+                            spelling,
+                            "--event-group",
+                            "core",
+                            "--start-immediately",
+                            "--",
+                            "/bin/sh",
+                            "-c",
+                            f"printf ran > '{marker}'",
+                        ],
+                        text=True,
+                        capture_output=True,
+                        timeout=15,
+                    )
+                    self.assertNotEqual(proc.returncode, 0)
+                    self.assertFalse(output.exists())
+                    self.assertFalse(marker.exists())
+                    self.assertIn(f"invalid {option}", proc.stderr)
+
+    def test_json_contains_only_finite_numbers(self) -> None:
+        proc, result = self.run_launcher(
+            "--event-group",
+            "core",
+            "--start-on-ready",
+            "--",
+            str(self.control),
+            "--mode",
+            "cpu",
+            "--iterations",
+            "10000",
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+        def assert_finite(value: object) -> None:
+            if isinstance(value, float):
+                self.assertTrue(math.isfinite(value), value)
+            elif isinstance(value, list):
+                for item in value:
+                    assert_finite(item)
+            elif isinstance(value, dict):
+                for item in value.values():
+                    assert_finite(item)
+
+        assert_finite(result)
 
     def test_ready_protocol_requires_parent_ack_before_work(self) -> None:
         proc, result = self.run_launcher(
@@ -233,6 +299,7 @@ class A733PmuExecContractTest(unittest.TestCase):
         sentinel = self.tmp / "sentinel"
         sentinel.write_text("keep", encoding="utf-8")
         output = self.tmp / "unsafe-result.json"
+        marker = self.tmp / "unsafe-result.ran"
         output.symlink_to(sentinel)
         proc = subprocess.run(
             [
@@ -245,7 +312,9 @@ class A733PmuExecContractTest(unittest.TestCase):
                 "core",
                 "--start-immediately",
                 "--",
-                "/bin/true",
+                "/bin/sh",
+                "-c",
+                f"printf ran > '{marker}'",
             ],
             text=True,
             capture_output=True,
@@ -254,6 +323,52 @@ class A733PmuExecContractTest(unittest.TestCase):
         self.assertNotEqual(proc.returncode, 0)
         self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
         self.assertTrue(output.is_symlink())
+        self.assertFalse(marker.exists())
+
+    def test_existing_output_is_rejected_before_workload(self) -> None:
+        output = self.tmp / "existing-result.json"
+        marker = self.tmp / "existing-result.ran"
+        output.write_text("keep", encoding="utf-8")
+        proc = subprocess.run(
+            [
+                str(self.launcher),
+                "--no-drop",
+                "--no-thermal-guard",
+                "--output",
+                str(output),
+                "--event-group",
+                "core",
+                "--start-immediately",
+                "--",
+                "/bin/sh",
+                "-c",
+                f"printf ran > '{marker}'",
+            ],
+            text=True,
+            capture_output=True,
+            timeout=15,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(output.read_text(encoding="utf-8"), "keep")
+        self.assertFalse(marker.exists())
+
+    def test_capacity_provenance_does_not_claim_hardware_capacity(self) -> None:
+        main_readme = (
+            ROOT / "experiments" / "E049c-arm-pmu" / "README.md"
+        ).read_text(encoding="utf-8")
+        v2_readme = (
+            ROOT
+            / "experiments"
+            / "E049c-arm-pmu"
+            / "results"
+            / "v2-20260814"
+            / "README.md"
+        ).read_text(encoding="utf-8")
+        for document in (main_readme, v2_readme):
+            normalized = " ".join(document.split())
+            self.assertIn("software", normalized.lower())
+            self.assertIn("3/3/2", normalized)
+            self.assertIn("не доказывает аппаратную ёмкость", normalized)
 
     def test_marker_timeout_kills_and_reaps_process_group(self) -> None:
         pid_file = self.tmp / "grandchild.pid"

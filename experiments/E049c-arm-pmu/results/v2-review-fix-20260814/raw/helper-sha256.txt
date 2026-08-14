@@ -1,0 +1,6 @@
+# SHA-256 captured on target after transfer and after target-native build
+f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0  a733_pmu_exec.c
+3923b982de69116a94ff20edb5665b4ed426616a85fbe23538b78950748804b2  a733_pmu_control.c
+71fd0c36b9f1ac9aa9bca8c967ad8812d63e474edd8f7e43eeeb817eeb4d3efa  a733_pmu_sync_exec.sh
+a4c1be74a10fc213d0bec5f68b199a8e7b57d28da9952ecb36af3d2efeb7b534  a733-pmu-exec
+0c0556897ef8ef068b8af18a667fdfc78221879b174b4036ea196ca019b70072  a733-pmu-control

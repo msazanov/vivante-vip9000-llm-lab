@@ -1,0 +1,12 @@
+captured_utc_date=2026-08-14
+hostname=orangepizero3w
+kernel=Linux 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr 7 04:26:52 UTC 2026
+arch=aarch64
+remote_identity=uid=1000(orangepi) gid=1000(orangepi)
+perf_event_paranoid=2
+launcher_parent=root-assisted
+launcher_child_default=orangepi:orangepi
+thermal_limit_c=85
+system_install=none
+opp_ddr_thermal_policy_changes=none
+model_workload=none
