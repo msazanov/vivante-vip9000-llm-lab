@@ -64,6 +64,16 @@ class ReservedOutput:
 
 
 @dataclass(frozen=True)
+class ReservedDirectory:
+    """One invocation-created directory bound to its original owner and inode."""
+
+    path: Path
+    device: int
+    inode: int
+    owner_uid: int
+
+
+@dataclass(frozen=True)
 class PopulationResult:
     """Observable result of one completed placeholder population."""
 
@@ -138,7 +148,7 @@ def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
 
 
 def _rollback_reservations(
-    reservations: Sequence[ReservedOutput], directories: Sequence[Path],
+    reservations: Sequence[ReservedOutput], directories: Sequence[ReservedDirectory],
 ) -> None:
     """Remove only inodes and empty directories created by this invocation."""
 
@@ -154,12 +164,35 @@ def _rollback_reservations(
             pass
     for directory in reversed(tuple(directories)):
         try:
-            directory.rmdir()
+            current = directory.path.lstat()
+            if stat.S_ISDIR(current.st_mode) and current.st_uid == os.geteuid() and \
+                    current.st_uid == directory.owner_uid and \
+                    (current.st_dev, current.st_ino) == (
+                        directory.device, directory.inode
+                    ):
+                # rmdir is the final emptiness check. A nonempty original is
+                # preserved, as is any path whose identity or owner changed.
+                directory.path.rmdir()
         except FileNotFoundError:
             pass
         except OSError:
-            # A replaced or concurrently populated path is not ours to remove.
+            # A concurrently populated original is not ours to empty.
             pass
+
+
+def _record_created_directory(path: Path) -> ReservedDirectory:
+    """Record exact identity immediately after this invocation's mkdir."""
+
+    current = path.lstat()
+    owner_uid = os.geteuid()
+    if not stat.S_ISDIR(current.st_mode) or current.st_uid != owner_uid:
+        raise OSError(f"created directory identity or owner is invalid: {path}")
+    return ReservedDirectory(
+        path=path,
+        device=current.st_dev,
+        inode=current.st_ino,
+        owner_uid=owner_uid,
+    )
 
 
 def populate_reserved(reservation: ReservedOutput, payload: bytes) -> PopulationResult:
@@ -224,18 +257,18 @@ def reserve_phase(
             phase.parent.resolve(strict=True) != phase.parent.absolute():
         raise ValueError("phase parent must be one existing non-symlink directory")
 
-    directories: list[Path] = []
+    directories: list[ReservedDirectory] = []
     descriptors: list[int] = []
     reservations: list[ReservedOutput] = []
     try:
         os.mkdir(phase, 0o700)
-        directories.append(phase)
+        directories.append(_record_created_directory(phase))
         artifact_dir = phase / "artifacts"
         runs_dir = phase / "runs"
         os.mkdir(artifact_dir, 0o700)
-        directories.append(artifact_dir)
+        directories.append(_record_created_directory(artifact_dir))
         os.mkdir(runs_dir, 0o700)
-        directories.append(runs_dir)
+        directories.append(_record_created_directory(runs_dir))
 
         outputs: list[tuple[Path, int]] = [(phase / "bundle.json", MAX_BUNDLE_BYTES)]
         for build_name in sorted({plan.build_name for plan in plans}):
@@ -245,7 +278,7 @@ def reserve_phase(
         for plan in plans:
             run_dir = runs_dir / plan.run_id
             os.mkdir(run_dir, 0o700)
-            directories.append(run_dir)
+            directories.append(_record_created_directory(run_dir))
             outputs.extend(
                 (run_dir / name, RUN_FILE_LIMITS[name]) for name in RUN_FILENAMES
             )

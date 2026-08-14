@@ -147,6 +147,58 @@ class E055CaptureScaffoldTest(unittest.TestCase):
         self.assertFalse(self.phase.exists())
         self.assertTrue(external_link.is_file())
 
+    def test_rollback_preserves_replacement_phase_and_moved_original(self) -> None:
+        moved_original = self.root / "moved-original-phase"
+        real_open = os.open
+        injected = False
+
+        def replace_phase_before_failure(
+            path: os.PathLike[str] | str, flags: int, mode: int = 0o777,
+        ) -> int:
+            nonlocal injected
+            if not injected:
+                injected = True
+                self.phase.rename(moved_original)
+                self.phase.mkdir(mode=0o700)
+                raise OSError("injected after phase replacement")
+            return real_open(path, flags, mode)
+
+        with mock.patch(
+            "tooling.e055_capture_scaffold.os.open",
+            side_effect=replace_phase_before_failure,
+        ):
+            with self.assertRaisesRegex(OSError, "phase replacement"):
+                reserve_phase(self.phase, self.plans)
+        self.assertTrue(self.phase.is_dir(), "replacement phase is not invocation-owned")
+        self.assertTrue(moved_original.is_dir(), "moved original must not be path-deleted")
+        self.assertTrue((moved_original / "runs/run-a").is_dir())
+
+    def test_rollback_preserves_replacement_run_directory_and_moved_original(self) -> None:
+        original_run = self.phase / "runs/run-a"
+        moved_original = self.root / "moved-original-run-a"
+        real_open = os.open
+        injected = False
+
+        def replace_run_before_failure(
+            path: os.PathLike[str] | str, flags: int, mode: int = 0o777,
+        ) -> int:
+            nonlocal injected
+            if not injected:
+                injected = True
+                original_run.rename(moved_original)
+                original_run.mkdir(mode=0o700)
+                raise OSError("injected after run replacement")
+            return real_open(path, flags, mode)
+
+        with mock.patch(
+            "tooling.e055_capture_scaffold.os.open",
+            side_effect=replace_run_before_failure,
+        ):
+            with self.assertRaisesRegex(OSError, "run replacement"):
+                reserve_phase(self.phase, self.plans)
+        self.assertTrue(original_run.is_dir(), "replacement run is not invocation-owned")
+        self.assertTrue(moved_original.is_dir(), "moved original must remain intact")
+
     def test_environment_is_exact_and_non_secret(self) -> None:
         self.assertEqual(
             safe_environment("O3"),
