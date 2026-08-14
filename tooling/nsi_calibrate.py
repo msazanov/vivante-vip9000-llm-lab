@@ -768,6 +768,121 @@ def _wait_briefly_until(deadline_ns: int) -> None:
         time.sleep(min(0.0001, remaining_ns / 1_000_000_000.0))
 
 
+def _validate_elapsed_window(alignment: Mapping[str, Any]) -> dict[str, Any]:
+    required = (
+        "programmed_window_us",
+        "pmu_arm_before_ns",
+        "pmu_arm_after_ns",
+        "pmu_deadline_earliest_ns",
+        "pmu_deadline_latest_ns",
+        "pmu_read_start_ns",
+        "pmu_read_end_ns",
+    )
+    values: dict[str, int] = {}
+    for name in required:
+        value = alignment.get(name)
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or not float(value).is_integer()
+            or int(value) < 0
+        ):
+            raise NSIError(f"PMU elapsed gate: {name} должен быть конечным integer >= 0")
+        values[name] = int(value)
+    window_us = values["programmed_window_us"]
+    if window_us <= 0:
+        raise NSIError("PMU elapsed gate: programmed window должен быть > 0")
+    window_ns = window_us * 1000
+    if (
+        values["pmu_deadline_earliest_ns"] != values["pmu_arm_before_ns"] + window_ns
+        or values["pmu_deadline_latest_ns"] != values["pmu_arm_after_ns"] + window_ns
+    ):
+        raise NSIError("PMU elapsed gate: deadlines не соответствуют arm bounds")
+    ordered = (
+        values["pmu_arm_before_ns"],
+        values["pmu_arm_after_ns"],
+        values["pmu_deadline_earliest_ns"],
+        values["pmu_deadline_latest_ns"],
+        values["pmu_read_start_ns"],
+        values["pmu_read_end_ns"],
+    )
+    if any(right < left for left, right in zip(ordered, ordered[1:])):
+        raise NSIError("PMU elapsed gate: timestamps не упорядочены")
+    ratio = (values["pmu_read_start_ns"] - values["pmu_arm_after_ns"]) / window_ns
+    if ratio < 1.0 or ratio > 1.01:
+        raise NSIError(f"PMU elapsed gate: elapsed/programmed={ratio:.9f} вне [1.0, 1.01]")
+    checked = dict(alignment)
+    checked["elapsed_programmed_ratio"] = ratio
+    checked["pmu_arm_latency_us"] = (
+        values["pmu_arm_after_ns"] - values["pmu_arm_before_ns"]
+    ) / 1000.0
+    return checked
+
+
+def _run_idle_window(
+    nsi: SysfsNSI,
+    programmed_window_us: int,
+    sysfs_root: Path,
+    limit_c: float,
+    trace: JsonlTrace,
+    **fields: Any,
+) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Measure an idle PMU window with the same <=1.01 elapsed gate."""
+    window_us = int(programmed_window_us)
+    if "window_us" in fields and int(fields["window_us"]) != window_us:
+        raise NSIError("idle window_us argument/fields не совпадают")
+    samples: list[dict[str, Any]] = []
+    pmu_arm_before_ns = _monotonic_raw_ns()
+    with timer_window(nsi, window_us):
+        pmu_arm_after_ns = _monotonic_raw_ns()
+        earliest_ns = pmu_arm_before_ns + window_us * 1000
+        latest_ns = pmu_arm_after_ns + window_us * 1000
+        next_thermal_ns = pmu_arm_after_ns
+        while _monotonic_raw_ns() < latest_ns:
+            now_ns = _monotonic_raw_ns()
+            if now_ns >= next_thermal_ns:
+                samples.append({
+                    "phase": "idle",
+                    "monotonic_raw_ns": now_ns,
+                    "telemetry": _check_thermal(sysfs_root, limit_c),
+                })
+                next_thermal_ns = now_ns + 50_000_000
+            _wait_briefly_until(latest_ns)
+        pmu_read_start_ns = _monotonic_raw_ns()
+        snapshot = nsi.snapshot()
+        pmu_read_end_ns = _monotonic_raw_ns()
+        final_telemetry = telemetry(sysfs_root)
+    alignment = _validate_elapsed_window({
+        "programmed_window_us": window_us,
+        "pmu_arm_before_ns": pmu_arm_before_ns,
+        "pmu_arm_after_ns": pmu_arm_after_ns,
+        "pmu_deadline_earliest_ns": earliest_ns,
+        "pmu_deadline_latest_ns": latest_ns,
+        "pmu_read_start_ns": pmu_read_start_ns,
+        "pmu_read_end_ns": pmu_read_end_ns,
+    })
+    for sample in samples:
+        trace.record(
+            "sample",
+            mode="idle",
+            phase="idle",
+            buffer_mib=fields.get("buffer_mib"),
+            window_us=window_us,
+            monotonic_raw_ns=sample["monotonic_raw_ns"],
+            telemetry=sample["telemetry"],
+        )
+    trace.record(
+        "idle_result",
+        mode="idle",
+        buffer_mib=fields.get("buffer_mib"),
+        window_us=window_us,
+        window_alignment=alignment,
+        telemetry=final_telemetry,
+    )
+    return samples, snapshot, alignment, final_telemetry
+
+
 def _run_reader(
     helper: Path,
     size_mib: int,
@@ -1001,14 +1116,14 @@ def summarize(
             if mode == "idle":
                 idle_values.append(value)
             elif mode == "read":
-                read_values.append(value)
-                cell_key = f"{point.get('buffer_mib')}MiB@{point.get('window_us')}us"
-                cell_values.setdefault(cell_key, []).append(value)
                 helper = point.get("helper_result")
                 alignment = _scientific_alignment(helper)
                 if alignment is None:
                     continue
                 assert isinstance(helper, Mapping)
+                read_values.append(value)
+                cell_key = f"{point.get('buffer_mib')}MiB@{point.get('window_us')}us"
+                cell_values.setdefault(cell_key, []).append(value)
                 bytes_read = float(helper["bytes_read"])
                 read_points.append({
                     "bytes": bytes_read,
@@ -1195,24 +1310,24 @@ def run_calibration(args: argparse.Namespace) -> dict[str, Any]:
                     }
                     _check_thermal(args.sysfs_root, thermal_limit)
                     trace.record("measurement_start", **fields)
-                    with timer_window(nsi, window_us):
-                        thermal_before = _check_thermal(args.sysfs_root, thermal_limit)
-                        _sleep_with_thermal(
-                            window_us / 1_000_000.0 + 0.005,
-                            nsi,
-                            args.sysfs_root,
-                            thermal_limit,
-                            trace,
-                            mode="idle",
-                            **fields,
-                        )
-                        idle_pmu = nsi.snapshot()
-                        idle_telemetry = telemetry(args.sysfs_root)
+                    thermal_before = _check_thermal(args.sysfs_root, thermal_limit)
+                    idle_samples, idle_pmu, idle_alignment, idle_telemetry = _run_idle_window(
+                        nsi,
+                        window_us,
+                        args.sysfs_root,
+                        thermal_limit,
+                        trace,
+                        mode="idle",
+                        **fields,
+                    )
                     idle_point = {
                         **fields,
                         "mode": "idle",
                         "pmu": idle_pmu,
                         "telemetry": idle_telemetry,
+                        "thermal_before": thermal_before,
+                        "window_alignment": idle_alignment,
+                        "sample_count": len(idle_samples),
                         "helper_result": None,
                         "bytes_read": 0,
                     }
@@ -1355,9 +1470,19 @@ def _emit_watchdog_failure(args: argparse.Namespace, result: Mapping[str, Any]) 
     _write_json(output_dir / "summary.partial.json", partial)
 
 
-def _emit_setup_failure(args: argparse.Namespace, exc: BaseException) -> None:
+def _emit_setup_failure(args: argparse.Namespace, exc: BaseException) -> Path:
     """Persist failures that happen before the watchdog child can start."""
-    output_dir: Path = args.output_dir
+    requested: Path = args.output_dir
+    output_dir = requested
+    if requested.exists() and any(requested.iterdir()):
+        # Existing results are immutable evidence. Never append or overwrite
+        # them even when the user's setup arguments are invalid.
+        while True:
+            output_dir = requested.with_name(
+                f"{requested.name}.setup-failure-{uuid.uuid4().hex[:8]}"
+            )
+            if not output_dir.exists():
+                break
     output_dir.mkdir(parents=True, exist_ok=True)
     failure = {
         "schema": SCHEMA,
@@ -1380,6 +1505,7 @@ def _emit_setup_failure(args: argparse.Namespace, exc: BaseException) -> None:
         "error_type": type(exc).__name__,
         "error": str(exc),
     })
+    return output_dir
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1393,7 +1519,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = run_under_watchdog(nsi, lambda: _child_main(args))
     except BaseException as exc:
         try:
-            _emit_setup_failure(args, exc)
+            evidence_dir = _emit_setup_failure(args, exc)
+            print(f"setup evidence: {evidence_dir}", file=sys.stderr)
         except BaseException as evidence_exc:
             print(f"setup evidence write failed: {evidence_exc}", file=sys.stderr)
         print(f"watchdog setup/restore failed: {exc}", file=sys.stderr)

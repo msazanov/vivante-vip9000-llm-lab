@@ -28,6 +28,7 @@ from tooling.nsi_calibrate import (
     validate_window_alignment,
     write_partial_failure,
     _run_reader,
+    _run_idle_window,
     main,
 )
 
@@ -144,6 +145,30 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             self.assertGreater(alignment["idle_tail_us"], 0.0)
             self.assertLessEqual(alignment["elapsed_programmed_ratio"], 1.01)
             self.assertEqual(nsi.read_timer(), 17)
+            self.assertIsInstance(samples, list)
+
+    def test_idle_window_uses_same_elapsed_ratio_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            nsi = SysfsNSI(
+                make_fake_sysfs(root / "nsi", timer=29),
+                allow_test_filesystem=True,
+            )
+            trace = JsonlTrace(root / "raw.jsonl", "idle-integration")
+            samples, _snapshot, alignment, _telemetry = _run_idle_window(
+                nsi,
+                100_000,
+                root / "empty-sysfs",
+                85.0,
+                trace,
+                mode="idle",
+                buffer_mib=1,
+                window_us=100_000,
+            )
+            self.assertEqual(alignment["programmed_window_us"], 100_000)
+            self.assertGreaterEqual(alignment["elapsed_programmed_ratio"], 1.0)
+            self.assertLessEqual(alignment["elapsed_programmed_ratio"], 1.01)
+            self.assertEqual(nsi.read_timer(), 29)
             self.assertIsInstance(samples, list)
 
     def test_c_helper_reports_exact_architected_load_bytes(self) -> None:
@@ -308,7 +333,16 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             points.append({
                 "mode": "read", "buffer_mib": 32, "window_us": 100_000,
                 "pmu": {"pmu_bandwidth_rd": [value]},
-                "helper_result": {"bytes_read": 32 * 1024 * 1024},
+                "helper_result": {
+                    "planned_bytes": 32 * 1024 * 1024,
+                    "bytes_read": 32 * 1024 * 1024,
+                    "window_alignment": {
+                        "active_us": 50_000.0,
+                        "idle_tail_us": 50_000.0,
+                        "elapsed_programmed_ratio": 1.0,
+                        "workload_fully_contained": True,
+                    },
+                },
                 "telemetry": {"thermal_c": {"cpu": 40.0}},
             })
         summary = summarize(points, ["reported_total_channel"],
@@ -383,6 +417,7 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             summary["signals"]["pmu_bandwidth_rd"]["classification"],
             "insufficient",
         )
+        self.assertIsNone(summary["signals"]["pmu_bandwidth_rd"]["read_cv"])
 
     def test_failure_always_emits_failure_trace_and_partial_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -414,6 +449,23 @@ class NsiCalibrationUnitTest(unittest.TestCase):
             events = [__import__("json").loads(line)["event"] for line in
                       (output / "raw.jsonl").read_text(encoding="utf-8").splitlines()]
             self.assertIn("setup_failure", events)
+
+    def test_setup_failure_never_appends_to_existing_raw_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp)
+            output = parent / "existing-v3"
+            output.mkdir()
+            old_raw = b'{"old":true}\n'
+            (output / "raw.jsonl").write_bytes(old_raw)
+            exit_code = main([
+                "--output-dir", str(output),
+                "--thermal-limit-c", "nan",
+            ])
+            self.assertEqual(exit_code, 4)
+            self.assertEqual((output / "raw.jsonl").read_bytes(), old_raw)
+            failure_dirs = list(parent.glob("existing-v3.setup-failure-*"))
+            self.assertEqual(len(failure_dirs), 1)
+            self.assertTrue((failure_dirs[0] / "summary.partial.json").is_file())
 
     def test_raw_thermal_maxima_uses_all_sample_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
