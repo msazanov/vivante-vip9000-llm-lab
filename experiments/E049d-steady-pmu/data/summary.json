@@ -1,0 +1,44 @@
+{
+  "schema_version": "e049d-steady-pmu/v1",
+  "status": "rejected",
+  "reason": "n4_marker_window_missing_end_marker",
+  "optimization_claim": false,
+  "bottleneck_interpretation": null,
+  "normalization": {
+    "requested_steady_tokens": 3,
+    "applied": false,
+    "reason": "sample_valid=false and sync.ended=false"
+  },
+  "stock_reference": {
+    "exit_code": 0,
+    "generated_token_ids": [271, 248068, 198, 8160],
+    "token_capture_sha256": "12aa19bdb7d3920cc33ffc097ea685539ca85aff060ecdb2f3b2c1cf0af718b5",
+    "thermal_max_c": 65.162,
+    "thermal_abort": false
+  },
+  "marker_gate": {
+    "event_group": "core",
+    "launcher_exit_code": 2,
+    "workload_exit_code": 0,
+    "sample_valid": false,
+    "sync": {"started": true, "acknowledged": true, "ended": false},
+    "failure_reason": "sync_pipe_closed",
+    "generated_token_ids": [271, 248068, 198, 8160],
+    "token_capture_sha256": "12aa19bdb7d3920cc33ffc097ea685539ca85aff060ecdb2f3b2c1cf0af718b5",
+    "thermal_max_c": 65.1,
+    "thermal_tripped": false,
+    "invalid_raw_counts": {
+      "cpu_cycles": 35619769852,
+      "instructions": 45853853531,
+      "stall_backend": 10162132275
+    },
+    "running_ratios": {
+      "cpu_cycles": 1.0,
+      "instructions": 1.0,
+      "stall_backend": 1.0
+    }
+  },
+  "planned_group_repeats": {"core": 5, "cache": 5, "memory": 5},
+  "executed_group_repeats": {"core": 0, "cache": 0, "memory": 0},
+  "counter_semantics": "event counts only; never DDR bytes"
+}

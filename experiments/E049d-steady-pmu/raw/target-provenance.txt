@@ -1,0 +1,45 @@
+captured_utc=2026-08-14T03:57:17Z
+Linux orangepizero3w 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr  7 04:26:52 UTC 2026 aarch64 GNU/Linux
+uid=1000(orangepi) gid=1000(orangepi) groups=1000(orangepi),5(tty),6(disk),20(dialout),27(sudo),29(audio),44(video),46(plugdev),60(games),100(users),102(input),107(netdev),996(docker),999(systemd-journal)
+perf_event_paranoid=2
+17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0  /home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf
+7e40075c79990c2ba58bf4f4e5f692efdcd283504e3ea83a653324ddf4eea2b2  /home/orangepi/vip9000-lab/e048-token-capture.so
+891eb1b5d34797774762e3b5198b58322c92ee59203412ec5e7667c4cc2acb18  /home/orangepi/vip9000-lab/build/cpu-38c66-native-git/bin/llama-completion
+4515143ac8d5e9fdc762f938c2ead493cbe1d2377f1f5cf82ac37eaf56b8fbf8  /home/orangepi/vip9000-lab/build/e049d-steady-pmu-a733/bin/llama-completion
+b22f36ff46b15504ddbedd1ae593060aa67560bb343ea6b2447a1ba75e728548  /home/orangepi/vip9000-lab/build/e049d-steady-pmu-a733/bin/libllama.so
+f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0  /tmp/e049d-steady-pmu-20260814/a733_pmu_exec.c
+a4c1be74a10fc213d0bec5f68b199a8e7b57d28da9952ecb36af3d2efeb7b534  /tmp/e049d-steady-pmu-20260814/a733-pmu-exec
+4bafdf54e0ea1e373f5b835e9006c4b85ec7089feb552bf4b5ddfaf01d0a5e3e  /tmp/e049d-steady-pmu-20260814/e049d-steady-pmu.h
+bfb5a50470cede0610c4867063a93b0515f54d693ba921a1093461072e643208  /tmp/e049d-steady-pmu-20260814/e049d-steady-pmu.patch
+stock_commit=38c66ad0241da4f9fcce541cda8edc219086cec5
+stock_status_begin
+ M ggml/src/ggml-vulkan/ggml-vulkan.cpp
+stock_status_end
+8e5886d13e4cb664503f9c235ab2733b31f847cd82d2d018b8072b5e6871f0f6  /home/orangepi/vip9000-lab/src/llama-prismml-shallow-38c66/src/llama-context.cpp
+4ea8444e8aeb471ea8310be74a95f0ea72bb29af0985ba3db5bd5bc5393f60d4  /home/orangepi/vip9000-lab/src/llama-prismml-shallow-38c66/src/llama-context.h
+8e5886d13e4cb664503f9c235ab2733b31f847cd82d2d018b8072b5e6871f0f6  /home/orangepi/vip9000-lab/src/llama-prismml-38c66/src/llama-context.cpp
+4ea8444e8aeb471ea8310be74a95f0ea72bb29af0985ba3db5bd5bc5393f60d4  /home/orangepi/vip9000-lab/src/llama-prismml-38c66/src/llama-context.h
+90e42eb941b4a995e71a948f4f075347e66defe240cf76d557f239cb49a4b07d  /home/orangepi/vip9000-lab/src/e049d-steady-pmu-38c66/src/llama-context.cpp
+ab1977be5d8bf5a2011ead01e79405c70fc664ee83bbc947a08b870ab8703919  /home/orangepi/vip9000-lab/src/e049d-steady-pmu-38c66/src/llama-context.h
+CMAKE_BUILD_TYPE:STRING=Release
+GGML_CPU_ARM_ARCH:STRING=armv8.2-a+dotprod
+GGML_CPU_REPACK:BOOL=ON
+GGML_NATIVE:BOOL=OFF
+GGML_OPENMP:BOOL=ON
+LLAMA_BUILD_EXAMPLES:BOOL=ON
+LLAMA_BUILD_SERVER:BOOL=OFF
+LLAMA_BUILD_TESTS:BOOL=OFF
+/sys/devices/system/cpu/cpufreq/policy0 governor=ondemand
+/sys/devices/system/cpu/cpufreq/policy0 current_khz=1404000
+/sys/devices/system/cpu/cpufreq/policy0 max_khz=1794000
+/sys/devices/system/cpu/cpufreq/policy6 governor=ondemand
+/sys/devices/system/cpu/cpufreq/policy6 current_khz=780000
+/sys/devices/system/cpu/cpufreq/policy6 max_khz=2002000
+/sys/class/thermal/thermal_zone0 cpub_thermal_zone 38564 
+/sys/class/thermal/thermal_zone1 ddr_thermal_zone 39060 
+/sys/class/thermal/thermal_zone2 npu_thermal_zone 38750 
+/sys/class/thermal/thermal_zone3 cpul_thermal_zone 38564 
+/sys/class/thermal/thermal_zone4 gpu_thermal_zone 38316 
+/sys/class/thermal/thermal_zone5 cpul_idle_zone 38564 
+/sys/class/thermal/thermal_zone6 cpub_idle_zone 38564 
+/sys/class/thermal/thermal_zone7 skin_zone 31712 

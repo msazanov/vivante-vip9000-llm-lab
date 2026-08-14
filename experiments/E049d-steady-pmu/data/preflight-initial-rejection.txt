@@ -1,0 +1,6 @@
+command_experiment_id=E049d
+status=rejected_before_scan
+error=ValueError: invalid experiment_id: 'E049d'
+root_cause=branch_preflight EXPERIMENT_RE requires any suffix after E<digits> to start with '-'
+retry_experiment_id=E049-STEADY-PMU
+retry_status=no_duplicate
