@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vivante-vip9000-llm-lab",
-  "generated_at_utc": "2026-08-14T00:47:41.204602+00:00",
+  "generated_at_utc": "2026-08-14T00:48:56.476166+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E047-COMMON-BENCHMARK",
   "hypothesis_query": "единый детерминированный протокол Bonsai и LFM2.5 с жёстким послойным профайлингом",
@@ -14,7 +14,7 @@
   "refs": [
     {
       "ref": "refs/heads/codex/e047-hard-profiling",
-      "match_count": 559,
+      "match_count": 563,
       "matches": [
         {
           "term": "E047",
@@ -80,7 +80,7 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 264,
+          "occurrences": 268,
           "first_lines": [
             6,
             11,
@@ -307,7 +307,7 @@
             302,
             314,
             322,
-            1081
+            1085
           ]
         },
         {
@@ -858,7 +858,7 @@
           ]
         }
       ],
-      "commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7"
+      "commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe"
     },
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
@@ -4811,7 +4811,7 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e047-hard-profiling",
-    "base_commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7",
+    "base_commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe",
     "upstream_ref": "refs/remotes/origin/codex/e047-hard-profiling",
     "upstream_base_commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3",
     "tree_binding_source": "git-index-stage0",
@@ -6149,7 +6149,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 10,
-  "match_count": 1278,
+  "match_count": 1282,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -6162,7 +6162,7 @@
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e047-hard-profiling",
-        "commit": "7c56001a3b334f0beceafde5bf7448dfba1ceca7"
+        "commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
