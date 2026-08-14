@@ -13,6 +13,11 @@ provenance, and destination. Personal/sensitive data is prohibited, including
 tokens, passwords, logins, private keys, identifiers, and credentials. Existing
 payloads and raw evidence are not automatically tracked or copied merely
 because a public artifact policy permits publication.
+The authoritative artifact classes and explicitly safe canonical-source paths
+are defined in `docs/experiments/public-artifact-classes.json`; its LFS globs
+are checked against `.gitattributes`. A new non-canonical file, including an
+arbitrarily named tooling script or SDK archive, requires a manifest entry or
+an explicit safe-source policy row with provenance.
 
 ## Generate the public Q1 C0 fixture
 

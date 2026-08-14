@@ -69,7 +69,10 @@ Use these statuses in the machine registry:
 
 Only a row with `claim_class=full_model`, complete quality evidence, and
 `is_current_best=true` may define the current best. This repository marks E035
-as the only current best. E044 and E049d-v2 remain explicitly bounded.
+as the only current best. Any accepted or otherwise qualified full-model row
+with a performance metric must also carry `exact_quality=true`, a complete
+hardware/runtime/toolchain provenance object, and repeatability with at least
+two declared runs and a method. E044 and E049d-v2 remain explicitly bounded.
 
 ## Public artifact and privacy policy
 
@@ -81,7 +84,10 @@ provenance, and destination (`git`, `release-assets`, or `external`).
 Personal/sensitive data is prohibited, including tokens, passwords, logins,
 private keys, identifiers, and credentials. Existing payloads and raw evidence
 are not automatically tracked or copied; use Git LFS or release assets for a
-large public payload only after the manifest and privacy gate pass.
+large public payload only after the manifest and privacy gate pass. External
+and release entries require an immutable HTTPS locator, checksum attestation,
+and explicit verification state; planned unverified entries cannot support a
+scientific claim.
 
 ## Review checklist
 

@@ -101,27 +101,29 @@ SECRET_PATTERNS = (
 
 ENCODED_BASE64_RE = re.compile(r"(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{24,}={0,2}(?![A-Za-z0-9+/=])")
 ENCODED_HEX_RE = re.compile(r"\b[0-9a-fA-F]{32,}\b")
-PUBLIC_ARTIFACT_SUFFIXES = (
-    (".gguf", "weights"),
-    (".safetensors", "weights"),
-    (".onnx", "weights"),
-    (".tflite", "weights"),
-    (".nb", "NBGs"),
-    (".nbg", "NBGs"),
-    (".bin", "binaries"),
-    (".blob", "binaries"),
-    (".so", "binaries"),
-    (".a", "binaries"),
-    (".ko", "binaries"),
-    (".vx", "custom kernels/source"),
-    (".cl", "custom kernels/source"),
-    (".patch", "SDK or kernel patches"),
-    (".c", "custom kernels/source"),
-    (".cc", "custom kernels/source"),
-    (".cpp", "custom kernels/source"),
-    (".h", "custom kernels/source"),
-    (".hpp", "custom kernels/source"),
+PERCENT_ESCAPE_RE = re.compile(r"%(?:[0-9a-fA-F]{2})")
+C_ESCAPE_RE = re.compile(r"\\x[0-9a-fA-F]{2}")
+ARTIFACT_CLASSES_RELATIVE = "docs/experiments/public-artifact-classes.json"
+ARTIFACT_CLASS_NAMES = frozenset(
+    {
+        "weights",
+        "NBGs",
+        "binaries",
+        "custom kernels/source",
+        "SDK or kernel patches",
+        "NPU tools",
+    }
 )
+ARTIFACT_CLASS_POLICY_SCHEMA = "repository-public-artifact-classes/v1"
+PROHIBITED_DATA_CLASSES = frozenset(
+    {"tokens", "passwords", "logins", "private keys", "identifiers", "credentials"}
+)
+VERIFICATION_STATES = frozenset(
+    {"verified-local", "verified-attestation", "unverified"}
+)
+ARTIFACT_STATUSES = frozenset({"published", "planned"})
+ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tgz", ".tar.xz", ".zip")
+SCOPE_PREFIXES = ("tooling/", "patches/", "kernels/", "sdk/", "models/", "artifacts/")
 PRIVACY_SCAN_ALLOWLIST: dict[str, str] = {
     "docs/evidence/*": "immutable raw historical evidence",
     "experiments/*/results/*": "immutable raw experiment payloads",
@@ -302,12 +304,66 @@ def _candidate_file_paths(root: Path) -> tuple[Path, ...]:
     return tuple(root / name for name in names if (root / name).is_file() and not (root / name).is_symlink())
 
 
+def _default_artifact_config() -> dict[str, Any]:
+    """Return only safe fallbacks for isolated test fixtures.
+
+    The checked-in JSON is authoritative for the real repository.  Fixtures
+    intentionally do not need to copy that document merely to exercise a
+    missing-manifest or privacy failure.
+    """
+
+    return {
+        "schema": ARTIFACT_CLASS_POLICY_SCHEMA,
+        "repository": REPOSITORY,
+        "classes": [{"name": name, "suffixes": [], "scope_prefixes": [], "lfs_globs": []} for name in sorted(ARTIFACT_CLASS_NAMES)],
+        "safe_source_policy": [
+            {"glob": "README.md", "reason": "fixture orientation", "provenance": "fixture"},
+            {"glob": "AGENTS.md", "reason": "fixture policy", "provenance": "fixture"},
+            {"glob": ".gitignore", "reason": "fixture policy", "provenance": "fixture"},
+            {"glob": ".gitattributes", "reason": "fixture policy", "provenance": "fixture"},
+        ],
+    }
+
+
+def _load_artifact_config(root: Path) -> tuple[dict[str, Any], list[str]]:
+    path = root / ARTIFACT_CLASSES_RELATIVE
+    if not path.is_file():
+        return _default_artifact_config(), []
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return _default_artifact_config(), [f"invalid artifact class policy: {exc}"]
+    if not isinstance(config, dict):
+        return _default_artifact_config(), ["artifact class policy must be an object"]
+    return config, []
+
+
 def _relative_path(root: Path, path: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
 def _privacy_allowlisted(relative: str) -> bool:
     return any(fnmatch.fnmatch(relative, pattern) for pattern in PRIVACY_SCAN_ALLOWLIST)
+
+
+def _safe_source_policy(root: Path, relative: str) -> bool:
+    config, _ = _load_artifact_config(root)
+    entries = config.get("safe_source_policy", [])
+    if not isinstance(entries, list):
+        return False
+    immutable_legacy = any(
+        relative == prefix.rstrip("/") or relative.startswith(prefix)
+        for prefix in ("docs/evidence/", "docs/superpowers/", "experiments/", "benchmarks/models/")
+    )
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("glob"), str):
+            continue
+        glob = entry["glob"]
+        if immutable_legacy and any(marker in glob for marker in ("*", "?", "[")):
+            continue
+        if fnmatch.fnmatch(relative, glob):
+            return True
+    return False
 
 
 def _is_new_since_baseline(root: Path, relative: str) -> bool:
@@ -321,15 +377,40 @@ def _is_new_since_baseline(root: Path, relative: str) -> bool:
     return result is None or result.returncode != 0
 
 
-def _artifact_class(relative: str) -> str | None:
+def _artifact_class(root: Path, relative: str, path: Path | None = None) -> str | None:
+    config, _ = _load_artifact_config(root)
     lowered = relative.lower()
-    if lowered.startswith("tooling/") and any(
-        marker in Path(lowered).name for marker in ("npu", "vip", "viplite")
-    ):
-        return "NPU tools"
-    for suffix, artifact_class in PUBLIC_ARTIFACT_SUFFIXES:
-        if lowered.endswith(suffix):
+    classes = config.get("classes", [])
+    if not isinstance(classes, list):
+        return None
+    for item in classes:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            continue
+        artifact_class = item["name"]
+        scope_prefixes = item.get("scope_prefixes", [])
+        if isinstance(scope_prefixes, list) and any(
+            isinstance(prefix, str) and lowered.startswith(prefix.lower()) for prefix in scope_prefixes
+        ):
             return artifact_class
+        suffixes = item.get("suffixes", [])
+        if isinstance(suffixes, list) and any(
+            isinstance(suffix, str) and lowered.endswith(suffix.lower()) for suffix in suffixes
+        ):
+            return artifact_class
+    if path is not None:
+        try:
+            prefix = path.read_bytes()[:64].hex().lower()
+        except OSError:
+            prefix = ""
+        for item in classes:
+            if not isinstance(item, dict):
+                continue
+            magic_prefixes = item.get("magic_prefixes", [])
+            if isinstance(magic_prefixes, list) and any(
+                isinstance(magic, str) and prefix.startswith(magic.lower())
+                for magic in magic_prefixes
+            ):
+                return item.get("name") if isinstance(item.get("name"), str) else None
     return None
 
 
@@ -337,29 +418,132 @@ def _publication_candidates(root: Path) -> tuple[Path, ...]:
     candidates = []
     for path in _candidate_file_paths(root):
         relative = _relative_path(root, path)
-        if _artifact_class(relative) and _is_new_since_baseline(root, relative):
+        if _is_new_since_baseline(root, relative) and not _safe_source_policy(root, relative):
             candidates.append(path)
     return tuple(candidates)
 
 
+def check_artifact_class_policy(root: Path) -> list[str]:
+    """Validate the single class list consumed by detection and Git LFS."""
+
+    config, errors = _load_artifact_config(root)
+    if config.get("schema") != ARTIFACT_CLASS_POLICY_SCHEMA:
+        errors.append(f"artifact class policy schema must be {ARTIFACT_CLASS_POLICY_SCHEMA}")
+    if config.get("repository") != REPOSITORY:
+        errors.append(f"artifact class policy repository must be {REPOSITORY}")
+    classes = config.get("classes")
+    if not isinstance(classes, list) or not classes:
+        return errors + ["artifact class policy classes must be a non-empty list"]
+    names = {
+        item.get("name") for item in classes if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+    if names != ARTIFACT_CLASS_NAMES:
+        errors.append("artifact class policy class names do not match the approved enum")
+    lfs_patterns: set[str] = set()
+    for index, item in enumerate(classes):
+        prefix = f"artifact class {index}"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} is not an object")
+            continue
+        for key in ("name", "suffixes", "scope_prefixes", "lfs_globs"):
+            if key not in item:
+                errors.append(f"{prefix} missing {key}")
+        for key in ("suffixes", "scope_prefixes", "lfs_globs"):
+            values = item.get(key)
+            if not isinstance(values, list) or any(
+                not isinstance(value, str) or not value for value in values
+            ):
+                errors.append(f"{prefix} {key} must be a list of nonempty strings")
+        lfs_values = item.get("lfs_globs")
+        if isinstance(lfs_values, list):
+            lfs_patterns.update(value for value in lfs_values if isinstance(value, str))
+    safe_entries = config.get("safe_source_policy")
+    if not isinstance(safe_entries, list) or not safe_entries:
+        errors.append("artifact class policy safe_source_policy must be a non-empty list")
+    else:
+        for index, entry in enumerate(safe_entries):
+            if not isinstance(entry, dict) or not all(
+                isinstance(entry.get(key), str) and entry[key].strip()
+                for key in ("glob", "reason", "provenance")
+            ):
+                errors.append(f"safe source policy row {index} needs glob, reason, and provenance")
+    attributes = root / ".gitattributes"
+    if not attributes.is_file():
+        return errors + ["missing .gitattributes Git LFS guidance"]
+    actual_lfs = {
+        line.split()[0]
+        for line in attributes.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#") and "filter=lfs" in line
+    }
+    missing = sorted(lfs_patterns - actual_lfs)
+    unknown = sorted(actual_lfs - lfs_patterns)
+    if missing:
+        errors.append(".gitattributes is missing authoritative LFS patterns: " + ", ".join(missing))
+    if unknown:
+        errors.append(".gitattributes contains LFS patterns outside the authoritative class list: " + ", ".join(unknown))
+    return errors
+
+
+def _printable_decoded_text(value: bytes) -> str | None:
+    if len(value) > 8192:
+        return None
+    decoded_text = value.decode("utf-8", errors="ignore")
+    if not decoded_text:
+        return None
+    printable = sum(character.isprintable() or character in "\r\n\t" for character in decoded_text)
+    if printable / len(decoded_text) < 0.85:
+        return None
+    return decoded_text
+
+
+def _decoded_secret_variants(text: str) -> list[str]:
+    """Bounded recursive decoding for common source and transport escaping."""
+
+    variants: list[str] = []
+    seen = {text}
+    frontier = [text]
+    for _depth in range(3):
+        next_frontier: list[str] = []
+        for current in frontier:
+            if PERCENT_ESCAPE_RE.search(current):
+                decoded = unquote(current)
+                if decoded != current and len(decoded) <= 8192 and decoded not in seen:
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+            if C_ESCAPE_RE.search(current):
+                decoded = C_ESCAPE_RE.sub(
+                    lambda match: chr(int(match.group(0)[2:], 16)), current
+                )
+                if decoded != current and len(decoded) <= 8192 and decoded not in seen:
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+            for candidate in ENCODED_BASE64_RE.findall(current)[:128]:
+                try:
+                    decoded = _printable_decoded_text(base64.b64decode(candidate, validate=True))
+                except (ValueError, binascii.Error):
+                    decoded = None
+                if decoded and decoded not in seen:
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+            for candidate in ENCODED_HEX_RE.findall(current)[:128]:
+                try:
+                    decoded = _printable_decoded_text(bytes.fromhex(candidate))
+                except ValueError:
+                    decoded = None
+                if decoded and decoded not in seen:
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+        variants.extend(next_frontier)
+        frontier = next_frontier
+        if not frontier:
+            break
+    return variants
+
+
 def _secret_labels(text: str) -> set[str]:
-    labels = {label for label, pattern in SECRET_PATTERNS if pattern.search(text)}
-    for candidate in ENCODED_BASE64_RE.findall(text):
-        try:
-            decoded = base64.b64decode(candidate, validate=True)
-        except (ValueError, binascii.Error):
-            continue
-        decoded_text = decoded.decode("utf-8", errors="ignore")
-        if decoded_text and sum(character.isprintable() for character in decoded_text) / len(decoded_text) >= 0.85:
-            labels.update(f"encoded-{label}" for label, pattern in SECRET_PATTERNS if pattern.search(decoded_text))
-    for candidate in ENCODED_HEX_RE.findall(text):
-        try:
-            decoded = bytes.fromhex(candidate)
-        except ValueError:
-            continue
-        decoded_text = decoded.decode("utf-8", errors="ignore")
-        if decoded_text and sum(character.isprintable() for character in decoded_text) / len(decoded_text) >= 0.85:
-            labels.update(f"encoded-{label}" for label, pattern in SECRET_PATTERNS if pattern.search(decoded_text))
+    labels: set[str] = set()
+    for variant in [text, *_decoded_secret_variants(text)]:
+        labels.update(label for label, pattern in SECRET_PATTERNS if pattern.search(variant))
     return labels
 
 
@@ -504,6 +688,33 @@ def check_registry(root: Path) -> list[str]:
             errors.append(f"{prefix} diagnostic claim must not be end_to_end")
         if status == "diagnostic" and row.get("optimization_claim") is not False:
             errors.append(f"{prefix} diagnostic status cannot claim optimization")
+        performance_claim = any(
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and value > 0
+            and (name.endswith("_tok_s") or name.endswith("_ms"))
+            for name, value in metric.items()
+        ) if isinstance(metric, dict) else False
+        if claim_class == "full_model" and performance_claim and (
+            status == "accepted" or row.get("qualified") is True
+        ):
+            if metric.get("exact_quality") is not True:
+                errors.append(f"{prefix} qualified full_model performance requires exact_quality")
+            provenance = row.get("provenance")
+            if not isinstance(provenance, dict) or provenance.get("complete") is not True:
+                errors.append(f"{prefix} qualified full_model performance requires complete provenance")
+            elif any(
+                not isinstance(provenance.get(field), str) or not provenance[field].strip()
+                for field in ("hardware", "runtime", "toolchain", "quality")
+            ):
+                errors.append(f"{prefix} complete provenance must name hardware, runtime, toolchain, and quality")
+            repeatability = row.get("repeatability")
+            if not isinstance(repeatability, dict) or not isinstance(repeatability.get("runs"), int) or repeatability["runs"] < 2:
+                errors.append(f"{prefix} qualified full_model performance requires repeatability runs")
+            elif not isinstance(repeatability.get("method"), str) or not repeatability["method"].strip():
+                errors.append(f"{prefix} repeatability method is required")
+            elif repeatability.get("quality_match") is not True:
+                errors.append(f"{prefix} repeatability must record quality_match=true")
         if row.get("is_current_best") is True:
             if claim_class != "full_model" or status != "accepted":
                 errors.append(f"{prefix} current best must be an accepted full_model claim")
@@ -704,11 +915,22 @@ def check_hardware_facts(root: Path) -> list[str]:
         "unknown sustained bandwidth": re.compile(r"\|\s*Sustained bandwidth for Bonsai decode\s*\|\s*\*\*Unknown\*\*"),
     }
     errors = [f"hardware fact row is missing or misclassified: {name}" for name, pattern in required_rows.items() if not pattern.search(text)]
-    contradictory = re.compile(
-        r"(?i)19\.2\s*GB/s[^.\n]{0,100}\b(?:measured\s+sustained|sustained\s+bandwidth|observed\s+bandwidth)\b"
-        r"|\b(?:measured\s+sustained|sustained\s+bandwidth|observed\s+bandwidth)\b[^.\n]{0,100}19\.2\s*GB/s"
+    ceiling_claim = re.compile(r"19\.2\s*GB/s", re.IGNORECASE)
+    measurement_terms = re.compile(
+        r"\b(?:measured|measurement|observed|actual|sustained|throughput|bandwidth|achieved|recorded|delivered|result|rate)\b",
+        re.IGNORECASE,
     )
-    if contradictory.search(text):
+    negative_terms = re.compile(
+        r"\b(?:theoretical|ceiling|never|not|unknown|does\s+not\s+prove|no\s+independent)\b",
+        re.IGNORECASE,
+    )
+    contradiction = False
+    for match in ceiling_claim.finditer(text):
+        context = text[max(0, match.start() - 140): min(len(text), match.end() + 140)]
+        if measurement_terms.search(context) and not negative_terms.search(context):
+            contradiction = True
+            break
+    if contradiction:
         errors.append("19.2 GB/s must remain a theoretical ceiling, not measured sustained bandwidth")
     if not re.search(r"secure firmware.*safety", text, re.IGNORECASE | re.DOTALL):
         errors.append("secure-firmware safety boundary is missing or misclassified")
@@ -835,13 +1057,30 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
     if manifest.get("repository") != REPOSITORY:
         errors.append(f"public artifact manifest repository must be {REPOSITORY}")
     policy = manifest.get("policy")
+    config, config_errors = _load_artifact_config(root)
+    errors.extend(config_errors)
+    configured_classes = {
+        item.get("name")
+        for item in config.get("classes", [])
+        if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+    if not configured_classes:
+        configured_classes = ARTIFACT_CLASS_NAMES
+    elif configured_classes != ARTIFACT_CLASS_NAMES:
+        errors.append("public artifact manifest class enum does not match the approved class policy")
     if not isinstance(policy, dict):
         errors.append("public artifact manifest policy must be an object")
     else:
-        if not isinstance(policy.get("allowed_public_artifacts"), list) or not policy.get("allowed_public_artifacts"):
+        allowed = policy.get("allowed_public_artifacts")
+        if not isinstance(allowed, list) or not allowed:
             errors.append("manifest policy must list allowed public artifact classes")
-        if not isinstance(policy.get("prohibited_data"), list) or not policy.get("prohibited_data"):
+        elif any(not isinstance(value, str) or value not in configured_classes for value in allowed):
+            errors.append("manifest policy contains an unsupported public artifact class")
+        prohibited = policy.get("prohibited_data")
+        if not isinstance(prohibited, list) or not prohibited:
             errors.append("manifest policy must list prohibited personal/sensitive data")
+        elif any(not isinstance(value, str) or value not in PROHIBITED_DATA_CLASSES for value in prohibited):
+            errors.append("manifest policy contains an unsupported prohibited-data class")
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, list):
         return errors + ["public artifact manifest artifacts must be a list"]
@@ -851,7 +1090,11 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
         if not isinstance(artifact, dict):
             errors.append(f"{prefix} is not an object")
             continue
-        required = {"path", "sha256", "byte_size", "origin", "source_commit", "build_runtime_toolchain", "destination"}
+        required = {
+            "path", "sha256", "byte_size", "origin", "source_commit",
+            "build_runtime_toolchain", "destination", "class", "status",
+            "scientific_use", "verification_state",
+        }
         missing = sorted(required - artifact.keys())
         if missing:
             errors.append(f"{prefix} missing keys: {', '.join(missing)}")
@@ -875,9 +1118,56 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
             errors.append(f"{prefix} source_commit must be a nonzero full lowercase SHA-1")
         if not isinstance(artifact["build_runtime_toolchain"], str) or not artifact["build_runtime_toolchain"].strip():
             errors.append(f"{prefix} build/runtime/toolchain provenance must be nonempty")
-        if artifact["destination"] not in {"git", "release-assets", "external"}:
+        artifact_class = artifact["class"]
+        if not isinstance(artifact_class, str) or artifact_class not in configured_classes:
+            errors.append(f"{prefix} class is outside the authoritative policy enum")
+        inferred_class = _artifact_class(root, path_value, root / path_value)
+        if inferred_class is not None and artifact_class != inferred_class:
+            errors.append(f"{prefix} class does not match authoritative detector: expected {inferred_class}")
+        status = artifact["status"]
+        if status not in ARTIFACT_STATUSES:
+            errors.append(f"{prefix} status must be published or planned")
+        if not isinstance(artifact["scientific_use"], bool):
+            errors.append(f"{prefix} scientific_use must be boolean")
+        verification_state = artifact["verification_state"]
+        if verification_state not in VERIFICATION_STATES:
+            errors.append(f"{prefix} verification_state is invalid")
+        destination = artifact["destination"]
+        if destination not in {"git", "release-assets", "external"}:
             errors.append(f"{prefix} destination is invalid")
-        if artifact["destination"] == "git":
+        if status == "planned":
+            if verification_state != "unverified":
+                errors.append(f"{prefix} planned entries must have verification_state=unverified")
+            if artifact["scientific_use"] is not False:
+                errors.append(f"{prefix} planned entries cannot be used scientifically")
+        elif verification_state == "unverified":
+            errors.append(f"{prefix} published entries cannot be unverified")
+        if destination == "git" and verification_state != "verified-local":
+            errors.append(f"{prefix} Git destinations require verification_state=verified-local")
+        if destination in {"release-assets", "external"}:
+            locator = artifact.get("release_asset_locator") or artifact.get("source_url")
+            if not isinstance(locator, str) or not locator.strip():
+                errors.append(f"{prefix} external/release entries require an immutable source URL or release asset locator")
+            else:
+                parsed = urlsplit(locator)
+                immutable = (
+                    parsed.scheme == "https"
+                    and bool(parsed.netloc)
+                    and not parsed.username
+                    and not parsed.password
+                    and bool(parsed.path)
+                    and ("/releases/download/" in parsed.path or bool(re.search(r"[0-9a-f]{40}", locator, re.IGNORECASE)))
+                )
+                if not immutable:
+                    errors.append(f"{prefix} locator must be an immutable HTTPS source or release asset URL")
+            checksum_provenance = artifact.get("checksum_provenance")
+            if not isinstance(checksum_provenance, str) or not checksum_provenance.strip():
+                errors.append(f"{prefix} external/release entries require checksum provenance or attestation")
+            if verification_state == "unverified" and status != "planned":
+                errors.append(f"{prefix} unverified external/release entries must be planned")
+            if verification_state == "verified-attestation" and not isinstance(artifact.get("checksum_provenance"), str):
+                errors.append(f"{prefix} verified-attestation entries require checksum provenance")
+        if destination == "git":
             path = root / path_value
             if not path.is_file():
                 errors.append(f"{prefix} Git destination does not exist: {path_value}")
@@ -892,7 +1182,7 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
             result = _git(git_root, "cat-file", "-e", f"{source_commit}^{{commit}}")
             if result is None or result.returncode != 0:
                 errors.append(f"{prefix} source_commit does not exist: {source_commit}")
-            elif artifact["destination"] == "git":
+            elif destination == "git":
                 source_path = _git(git_root, "cat-file", "-e", f"{source_commit}:{path_value}")
                 if source_path is None or source_path.returncode != 0:
                     errors.append(f"{prefix} path is absent at source_commit: {path_value}")
@@ -963,6 +1253,7 @@ def run_checks(root: Path) -> list[str]:
         check_hardware_facts,
         check_branch_inventory,
         check_experiment_coverage,
+        check_artifact_class_policy,
         check_artifact_policy,
         check_public_artifact_manifest,
         check_manifest_coverage,

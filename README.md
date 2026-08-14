@@ -8,7 +8,9 @@ Allwinner A733 with a Vivante VIP9000-class NPU.
 The engineering objective is to exceed **1 tok/s steady-state decode for the
 full Bonsai model** while preserving deterministic quality, safe thermals,
 reproducible provenance, and a CPU fallback. The current qualified full-model
-best is **E035 at exactly 0.972497 tok/s**. The objective is not met yet.
+best is **E035 at exactly 0.972497 tok/s**. See the [qualified full-model best
+record](docs/experiments/current-best.md#qualified-full-model-best). The
+objective is not met yet.
 
 The target SoC has **6x Cortex-A55 cores plus 2x Cortex-A76 cores**. The SoC
 family exposes a **32-bit memory interface** and supports **LPDDR5-4800**;

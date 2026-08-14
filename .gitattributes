@@ -1,9 +1,23 @@
-# Large public artifacts may use Git LFS after manifest and privacy review.
+# Large public artifact patterns are defined authoritatively in
+# docs/experiments/public-artifact-classes.json and checked against this file.
 # These attributes do not automatically start tracking existing payloads.
+# Large public artifacts may use Git LFS after manifest and privacy review.
 *.gguf filter=lfs diff=lfs merge=lfs -text
 *.safetensors filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.tflite filter=lfs diff=lfs merge=lfs -text
 *.nb filter=lfs diff=lfs merge=lfs -text
 *.nbg filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
+*.blob filter=lfs diff=lfs merge=lfs -text
 *.so filter=lfs diff=lfs merge=lfs -text
+*.a filter=lfs diff=lfs merge=lfs -text
+*.ko filter=lfs diff=lfs merge=lfs -text
+*.tar filter=lfs diff=lfs merge=lfs -text
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
+*.tgz filter=lfs diff=lfs merge=lfs -text
+*.tar.xz filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.vx filter=lfs diff=lfs merge=lfs -text
+*.cl filter=lfs diff=lfs merge=lfs -text
+*.patch filter=lfs diff=lfs merge=lfs -text

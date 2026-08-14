@@ -1,0 +1,119 @@
+{
+  "schema": "repository-public-artifact-classes/v1",
+  "repository": "msazanov/vivante-vip9000-llm-lab",
+  "classes": [
+    {
+      "name": "weights",
+      "suffixes": [".gguf", ".safetensors", ".onnx", ".tflite"],
+      "scope_prefixes": ["models/"],
+      "lfs_globs": ["*.gguf", "*.safetensors", "*.onnx", "*.tflite"]
+    },
+    {
+      "name": "NBGs",
+      "suffixes": [".nb", ".nbg"],
+      "scope_prefixes": [],
+      "lfs_globs": ["*.nb", "*.nbg"]
+    },
+    {
+      "name": "binaries",
+      "suffixes": [
+        ".bin", ".blob", ".so", ".a", ".ko", ".tar", ".tar.gz",
+        ".tgz", ".tar.xz", ".zip"
+      ],
+      "scope_prefixes": ["artifacts/"],
+      "magic_prefixes": [
+        "7f454c46", "4d5a", "504b0304", "1f8b", "fd377a585a00",
+        "7573746172"
+      ],
+      "lfs_globs": [
+        "*.bin", "*.blob", "*.so", "*.a", "*.ko", "*.tar", "*.tar.gz",
+        "*.tgz", "*.tar.xz", "*.zip"
+      ]
+    },
+    {
+      "name": "custom kernels/source",
+      "suffixes": [".vx", ".cl", ".c", ".cc", ".cpp", ".h", ".hpp"],
+      "scope_prefixes": ["kernels/"],
+      "lfs_globs": ["*.vx", "*.cl"]
+    },
+    {
+      "name": "SDK or kernel patches",
+      "suffixes": [".patch"],
+      "scope_prefixes": ["patches/", "sdk/"],
+      "lfs_globs": ["*.patch"]
+    },
+    {
+      "name": "NPU tools",
+      "suffixes": [],
+      "scope_prefixes": ["tooling/"],
+      "lfs_globs": []
+    }
+  ],
+  "safe_source_policy": [
+    {
+      "glob": "README.md",
+      "reason": "canonical repository orientation",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "AGENTS.md",
+      "reason": "canonical repository workflow policy",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": ".gitignore",
+      "reason": "canonical publication policy",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": ".gitattributes",
+      "reason": "canonical Git LFS guidance",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "docs/*.md",
+      "reason": "canonical English Markdown orientation",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "docs/**/*.md",
+      "reason": "canonical English Markdown orientation",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "docs/*.json",
+      "reason": "canonical machine-readable registry and policy",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "docs/**/*.json",
+      "reason": "canonical machine-readable registry and policy",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "tests/*.py",
+      "reason": "canonical deterministic test source",
+      "provenance": "repository-index test suite"
+    },
+    {
+      "glob": "tests/**/*.py",
+      "reason": "canonical deterministic test source",
+      "provenance": "repository-index test suite"
+    },
+    {
+      "glob": "tooling/check_repository_index.py",
+      "reason": "canonical deterministic checker source",
+      "provenance": "repository-index tooling"
+    },
+    {
+      "glob": "tooling/README.md",
+      "reason": "canonical tooling orientation",
+      "provenance": "repository-index canonical layer"
+    },
+    {
+      "glob": "docs/superpowers/plans/2026-08-14-repository-index.md",
+      "reason": "approved immutable design plan retained as text",
+      "provenance": "repository-index design approval"
+    }
+  ]
+}

@@ -99,6 +99,27 @@
         },
         "optimization_claim": {
           "type": "boolean"
+        },
+        "qualified": {
+          "type": "boolean"
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "complete": {"type": "boolean"},
+            "hardware": {"type": "string"},
+            "runtime": {"type": "string"},
+            "toolchain": {"type": "string"},
+            "quality": {"type": "string"}
+          }
+        },
+        "repeatability": {
+          "type": "object",
+          "properties": {
+            "runs": {"type": "integer", "minimum": 2},
+            "method": {"type": "string", "minLength": 1},
+            "quality_match": {"type": "boolean"}
+          }
         }
       },
       "additionalProperties": true

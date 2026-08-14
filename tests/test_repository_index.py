@@ -14,6 +14,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tooling"))
+import check_repository_index as repository_index  # noqa: E402
 
 from check_repository_index import (  # noqa: E402
     CANONICAL_MARKDOWN,
@@ -49,6 +50,11 @@ def test_canonical_markdown_set_is_present_and_english_only() -> None:
 
 def test_relative_links_in_canonical_markdown_resolve() -> None:
     assert check_links(ROOT) == []
+
+
+def test_canonical_layer_contains_a_real_fragment_link() -> None:
+    readme = (ROOT / "README.md").read_text()
+    assert "current-best.md#qualified-full-model-best" in readme
 
 
 def test_link_checker_rejects_missing_heading_fragment(tmp_path: Path) -> None:
@@ -240,6 +246,25 @@ def test_privacy_scans_untracked_tooling_and_encoded_credentials(tmp_path: Path)
     assert all(secret not in error for error in errors)
 
 
+def test_privacy_recursively_decodes_percent_and_c_escaped_credentials(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    secret = "pass" + "word=recursive-secret-value"
+    percent_encoded = "".join(f"%{byte:02X}" for byte in secret.encode())
+    c_escaped = "".join(f"\\x{byte:02x}" for byte in secret.encode())
+    nested_base64 = base64.b64encode(percent_encoded.encode()).decode()
+    (fixture / "percent.txt").write_text(percent_encoded)
+    (fixture / "escaped.txt").write_text(c_escaped)
+    (fixture / "nested.txt").write_text(nested_base64)
+    errors = check_privacy(fixture)
+    assert any("percent.txt" in error for error in errors)
+    assert any("escaped.txt" in error for error in errors)
+    assert any("nested.txt" in error for error in errors)
+    assert all(secret not in error for error in errors)
+
+
 def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
@@ -264,6 +289,44 @@ def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -
     assert any("npu_tool.py" in error for error in errors)
 
 
+def test_manifest_coverage_is_not_suffix_or_name_heuristic(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    payloads = {
+        "tooling/unknown_tool.py": b"#!/usr/bin/env python3\n",
+        "patches/vendor-sdk.tar.gz": b"archive",
+        "kernels/opaque.tgz": b"archive",
+        "sdk/release.zip": b"archive",
+        "models/weights.tar.xz": b"archive",
+        "artifacts/download": b"PK\x03\x04archive",
+        "artifacts/runner": b"\x7fELF\x02\x01binary",
+    }
+    for relative, contents in payloads.items():
+        path = fixture / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(contents)
+    (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [],
+            }
+        )
+    )
+    errors = check_manifest_coverage(fixture)
+    for relative in payloads:
+        assert any(relative in error for error in errors), relative
+
+
+def test_artifact_class_policy_keeps_lfs_and_manifest_classes_in_sync() -> None:
+    assert repository_index.check_artifact_class_policy(ROOT) == []
+
+
 def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
     tmp_path: Path,
 ) -> None:
@@ -286,6 +349,12 @@ def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
                 "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
                 "build_runtime_toolchain": "compiler 1",
                 "destination": "release-assets",
+                "class": "binaries",
+                "status": "published",
+                "scientific_use": False,
+                "release_asset_locator": "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/missing.bin",
+                "checksum_provenance": "signed release SHA-256 attestation",
+                "verification_state": "verified-attestation",
             }
         ],
     }
@@ -343,6 +412,25 @@ def test_hardware_checker_rejects_theoretical_ceiling_as_measurement(tmp_path: P
     assert any("theoretical" in error or "measured" in error for error in errors)
 
 
+@pytest.mark.parametrize(
+    "claim",
+    (
+        "Observed throughput was 19.2 GB/s on the board.",
+        "The actual sustained bandwidth reached 19.2 GB/s.",
+    ),
+)
+def test_hardware_checker_rejects_semantic_19_2_gb_s_measurement_claims(
+    tmp_path: Path, claim: str
+) -> None:
+    fixture = tmp_path / "repo"
+    destination = fixture / "docs/hardware/a733.md"
+    destination.parent.mkdir(parents=True)
+    copy2(ROOT / "docs/hardware/a733.md", destination)
+    destination.write_text(destination.read_text() + "\n" + claim + "\n")
+    errors = check_hardware_facts(fixture)
+    assert any("theoretical" in error or "measured" in error for error in errors)
+
+
 def test_registry_rejects_metric_claim_semantic_mismatch(tmp_path: Path) -> None:
     fixture = _copy_registry_fixture(tmp_path)
     registry_path = fixture / "docs/experiments/registry.json"
@@ -356,6 +444,114 @@ def test_registry_rejects_metric_claim_semantic_mismatch(tmp_path: Path) -> None
     assert any("metric" in error or "positive" in error for error in errors)
 
 
+def test_registry_requires_quality_provenance_and_repeatability_for_qualified_full_model(
+    tmp_path: Path,
+) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    e035 = next(row for row in registry["experiments"] if row["id"] == "E035")
+    e035.pop("provenance", None)
+    e035.pop("repeatability", None)
+    registry_path.write_text(json.dumps(registry))
+    errors = check_registry(fixture)
+    assert any("provenance" in error for error in errors)
+    assert any("repeatability" in error for error in errors)
+
+
+def test_release_manifest_requires_immutable_locator_attestation_and_state(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [
+                    {
+                        "path": "release/planned.bin",
+                        "sha256": "0123456789abcdef" * 4,
+                        "byte_size": 42,
+                        "origin": "release source",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "compiler 1",
+                        "destination": "release-assets",
+                        "class": "binaries",
+                        "status": "planned",
+                        "scientific_use": True,
+                        "verification_state": "verified-attestation",
+                    }
+                ],
+            }
+        )
+    )
+    errors = check_public_artifact_manifest(fixture)
+    assert any("locator" in error or "URL" in error for error in errors)
+    assert any("checksum" in error or "attestation" in error for error in errors)
+    assert any("unverified" in error or "scientific" in error for error in errors)
+
+
+def test_manifest_rejects_unknown_policy_and_artifact_classes(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "allowed_public_artifacts": ["invented"],
+                    "prohibited_data": ["private databases"],
+                },
+                "artifacts": [
+                    {
+                        "path": "release/missing.bin",
+                        "sha256": "0123456789abcdef" * 4,
+                        "byte_size": 42,
+                        "origin": "release source",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "compiler 1",
+                        "destination": "release-assets",
+                        "class": "invented",
+                        "status": "planned",
+                        "scientific_use": False,
+                        "verification_state": "unverified",
+                        "release_asset_locator": "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/missing.bin",
+                        "checksum_provenance": "planned checksum",
+                    }
+                ],
+            }
+        )
+    )
+    errors = check_public_artifact_manifest(fixture)
+    assert any("unsupported public artifact class" in error for error in errors)
+    assert any("prohibited-data class" in error for error in errors)
+    assert any("class is outside" in error for error in errors)
+
+
+def test_candidate_scope_requires_explicit_safe_source_policy(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    copy2(ROOT / "docs/experiments/public-artifact-classes.json", fixture / "docs/experiments/public-artifact-classes.json")
+    (fixture / "docs/new-canonical.md").write_text("# Canonical source\n")
+    (fixture / "tooling/unknown_tool.py").parent.mkdir()
+    (fixture / "tooling/unknown_tool.py").write_text("print('payload')\n")
+    (fixture / "docs/experiments/public-artifact-manifest.json").write_text(
+        json.dumps({"artifacts": []})
+    )
+    errors = check_manifest_coverage(fixture)
+    assert any("tooling/unknown_tool.py" in error for error in errors)
+    assert not any("docs/new-canonical.md" in error for error in errors)
+
+
 def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
@@ -365,7 +561,10 @@ def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) ->
             {
                 "schema": "repository-public-artifact-manifest/v1",
                 "repository": "msazanov/vivante-vip9000-llm-lab",
-                "policy": {"status": "no-private-data"},
+                "policy": {
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
                 "artifacts": [
                     {
                         "path": "public.txt",
@@ -375,6 +574,10 @@ def test_artifact_manifest_rejects_inconsistent_hash_and_size(tmp_path: Path) ->
                         "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
                         "build_runtime_toolchain": "none",
                         "destination": "git",
+                        "class": "binaries",
+                        "status": "published",
+                        "scientific_use": False,
+                        "verification_state": "verified-local",
                     }
                 ],
             }

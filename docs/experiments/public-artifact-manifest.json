@@ -28,7 +28,11 @@
       "origin": "public profiling source retained from the profiling-foundation branch",
       "source_commit": "082a96afb1ba147cac1f5e5b9811e9eb43b960ff",
       "build_runtime_toolchain": "Python 3 standard library; no generated binary",
-      "destination": "git"
+      "destination": "git",
+      "class": "NPU tools",
+      "status": "published",
+      "scientific_use": false,
+      "verification_state": "verified-local"
     }
   ]
 }

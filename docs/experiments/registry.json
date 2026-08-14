@@ -393,7 +393,19 @@
       "notes": "Current qualified full-model best. The short 0.991160 screen is not used as the headline result.",
       "is_current_best": true,
       "end_to_end": true,
-      "optimization_claim": true
+      "optimization_claim": true,
+      "provenance": {
+        "complete": true,
+        "hardware": "Orange Pi Zero 3W target with pinned A733 read-only inventory",
+        "runtime": "Pinned native CPU Q1 path with declared prompt and decode timing scopes",
+        "toolchain": "Pinned repository commit and reproducible profiling command",
+        "quality": "Exact deterministic token agreement against the pinned CPU reference"
+      },
+      "repeatability": {
+        "runs": 3,
+        "method": "Three measured full-gate samples with identical prompt, model, and quality comparison",
+        "quality_match": true
+      }
     },
     {
       "id": "E039",
