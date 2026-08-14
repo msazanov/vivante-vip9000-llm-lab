@@ -255,18 +255,18 @@ def traversals_per_second(sample: Mapping[str, Any]) -> float:
 def validate_sample(
     sample: Mapping[str, Any],
 ) -> list[str]:
-    """Return contract violations for one harness/PMU joined sample.
+    """Reject legacy caller-created sample mappings.
 
-    A list is used instead of raising so a target failure can publish every
-    violation in its raw result.  ``observed_ddr_*`` is intentionally forbidden
-    here: E055 has PMU event counts, not a direct DDR-byte counter.
+    Since Stage 4, measurement qualification starts from a committed raw-bundle
+    manifest path.  A mapping can be internally consistent yet fabricated, so
+    it can never be promoted as evidence.
     """
 
-    try:
-        contract = load_publication_contract()
-    except ValueError as exc:
-        return [str(exc)]
-    return _validate_sample(sample, contract)
+    del sample
+    return [
+        "self-declared sample mappings are not evidence; provide a committed "
+        "sealed raw-bundle manifest path"
+    ]
 
 
 def _validate_sample(sample: Mapping[str, Any], contract: Mapping[str, Any]) -> list[str]:
@@ -562,36 +562,58 @@ def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> floa
     return ns_per_traversal(cold) / ns_per_traversal(hot)
 
 
-def infer_bottleneck(
-    rows: Iterable[Mapping[str, Any]],
-) -> dict[str, Any]:
-    """Build a cautious memory-vs-unpack inference from comparable controls.
+def infer_bottleneck(manifest_path: str | Path) -> dict[str, Any]:
+    """Infer a bottleneck only from one committed, Git-sealed raw bundle."""
 
-    ``cold/hot`` is a cache sensitivity signal.  ``full/unpack`` and
-    ``full/stream`` are work decomposition ratios, not speedups.  The function
-    only emits a directional hypothesis when each participating cell has five
-    samples; otherwise it returns ``insufficient_samples``.
-    """
+    if not isinstance(manifest_path, (str, Path)):
+        raise TypeError(
+            "E055 promotion requires one committed raw-bundle manifest path"
+        )
+    from tooling.e055_raw_bundle import load_sealed_bundle
 
-    samples = list(rows)
+    bundle = load_sealed_bundle(manifest_path)
+    samples = [
+        {
+            "run_id": sample.run_id,
+            "pair_id": sample.pair_id,
+            "pair_index": sample.pair_index,
+            "pair_order": sample.pair_order,
+            "order_index": sample.order_index,
+            "build_name": sample.build_name,
+            "mode": sample.mode,
+            "cache_state": sample.cache_state,
+            "cpu": sample.cpu,
+            "target_working_set_bytes": sample.target_working_set_bytes,
+            "actual_working_set_bytes": sample.actual_working_set_bytes,
+            "blocks": sample.blocks,
+            "calls": sample.calls,
+            "elapsed_ns": sample.elapsed_ns,
+            "checksum": sample.checksum,
+            "pmu_group": sample.pmu_group,
+            "pmu_events": {event.name: event.value for event in sample.pmu_events},
+            "measured_elapsed_ns": sample.measured_elapsed_ns,
+            "thermal_limit_c": sample.thermal_limit_c,
+            "max_temp_c": sample.max_temp_c,
+            "publication_identity": sample.publication_identity,
+            "commit": sample.commit,
+            "tree": sample.tree,
+            "manifest_path": sample.manifest_path,
+            "manifest_blob_oid": sample.manifest_blob_oid,
+        }
+        for sample in bundle.samples
+    ]
     if not samples:
-        raise ValueError("E055 inference requires qualified samples")
-    try:
-        contract = load_publication_contract()
-    except ValueError as exc:
-        raise ValueError(f"invalid E055 publication contract: {exc}") from exc
-    qualification_errors = []
-    for index, sample in enumerate(samples):
-        for error in _validate_sample(sample, contract):
-            qualification_errors.append(f"row {index}: {error}")
-    if qualification_errors:
-        raise ValueError("invalid E055 samples: " + "; ".join(qualification_errors))
-    phase_provenance = {
-        tuple((key, sample["provenance"][key]) for key in sorted(sample["provenance"]))
+        raise ValueError("E055 inference requires qualified raw samples")
+    phase_identity = {
+        (
+            sample["build_name"], sample["publication_identity"],
+            sample["commit"], sample["tree"], sample["manifest_path"],
+            sample["manifest_blob_oid"],
+        )
         for sample in samples
     }
-    if len(phase_provenance) != 1:
-        raise ValueError("one E055 phase must use one exact publication-bound build")
+    if len(phase_identity) != 1:
+        raise ValueError("one E055 phase must use one exact sealed build and Git identity")
 
     # Promotion is a phase-level decision. It is forbidden until the complete
     # documented 7-size x 2-CPU x 3-mode x 3-PMU-group paired matrix exists.
@@ -604,10 +626,11 @@ def infer_bottleneck(
     for sample in samples:
         observed_matrix_counts[
             (sample["target_working_set_bytes"], sample["cpu"], sample["mode"],
-             sample["pmu"]["event_group"])
+             sample["pmu_group"])
         ] += 1
     if set(observed_matrix_counts) != expected_matrix_cells or \
-            any(observed_matrix_counts[cell] < 2 * MIN_PAIRED_SAMPLES
+            len(samples) != len(expected_matrix_cells) * 2 * MIN_PAIRED_SAMPLES or \
+            any(observed_matrix_counts[cell] != 2 * MIN_PAIRED_SAMPLES
                 for cell in expected_matrix_cells):
         raise ValueError(
             "promotion requires the complete documented 7x2x3x2x3 matrix "
@@ -625,13 +648,10 @@ def infer_bottleneck(
     )
     pair_locations: dict[str, tuple[Any, ...]] = {}
     for sample in samples:
-        pmu = sample["pmu"]
-        provenance = sample["provenance"]
         cell = (
             sample["mode"], sample["cpu"], sample["target_working_set_bytes"],
             sample["actual_working_set_bytes"],
-            sample["blocks"], pmu["event_group"],
-            tuple(provenance[key] for key in sorted(provenance)),
+            sample["blocks"], sample["pmu_group"], sample["publication_identity"],
         )
         pair_id = str(sample["pair_id"])
         previous = pair_locations.setdefault(pair_id, cell)
@@ -644,6 +664,7 @@ def infer_bottleneck(
         pair_indexes: set[int] = set()
         penalties: list[float] = []
         pair_records: list[dict[str, Any]] = []
+        event_ratios: dict[str, list[float]] = defaultdict(list)
         for pair_id, pair_rows in pairs.items():
             if len(pair_rows) != 2:
                 raise ValueError(f"{pair_id} must contain exactly one hot and one cold row")
@@ -655,9 +676,10 @@ def infer_bottleneck(
             if len({row["cache_state"] for row in pair_rows}) != 2:
                 raise ValueError(f"{pair_id} contains a duplicate pair half")
             match_keys = (
-                "pair_index", "pair_order", "mode", "cpu", "pinned_cpu",
+                "pair_index", "pair_order", "mode", "cpu", "build_name",
                 "target_working_set_bytes", "actual_working_set_bytes", "blocks",
-                "golden_cases", "provenance",
+                "pmu_group", "publication_identity", "commit", "tree",
+                "manifest_path", "manifest_blob_oid",
             )
             if any(hot[key] != cold[key] for key in match_keys):
                 raise ValueError(f"{pair_id} hot/cold metadata mismatch")
@@ -670,24 +692,45 @@ def infer_bottleneck(
                 raise ValueError("pair_order must alternate by pair_index")
             penalty = cache_penalty_ratio(hot, cold)
             penalties.append(penalty)
-            pair_records.append({"pair_id": pair_id, "pair_index": pair_index,
-                                 "cold_over_hot": penalty})
-        if pair_indexes != set(range(1, len(pair_indexes) + 1)):
-            raise ValueError("pair_index sequence must be contiguous from one")
-        if len(penalties) >= MIN_PAIRED_SAMPLES:
-            cell_summaries[cell] = {
-                "paired_samples": len(penalties),
-                "median_pair_penalty": statistics.median(penalties),
-                "pair_penalties": sorted(pair_records, key=lambda item: item["pair_index"]),
-            }
+            if set(hot["pmu_events"]) != set(cold["pmu_events"]):
+                raise ValueError(f"{pair_id} PMU event sets differ")
+            event_record: dict[str, dict[str, float | None]] = {}
+            for event_name in sorted(hot["pmu_events"]):
+                hot_count = float(hot["pmu_events"][event_name]) / float(hot["calls"])
+                cold_count = float(cold["pmu_events"][event_name]) / float(cold["calls"])
+                ratio = cold_count / hot_count if hot_count > 0.0 else None
+                event_record[event_name] = {
+                    "hot_count_per_traversal": hot_count,
+                    "cold_count_per_traversal": cold_count,
+                    "cold_over_hot": ratio,
+                }
+                if ratio is not None:
+                    event_ratios[event_name].append(ratio)
+            pair_records.append({
+                "pair_id": pair_id,
+                "pair_index": pair_index,
+                "cold_over_hot": penalty,
+                "pmu_event_counts": event_record,
+            })
+        if pair_indexes != set(range(1, MIN_PAIRED_SAMPLES + 1)):
+            raise ValueError("pair_index sequence must be exactly one through five")
+        cell_summaries[cell] = {
+            "paired_samples": len(penalties),
+            "median_pair_penalty": statistics.median(penalties),
+            "pair_penalties": sorted(pair_records, key=lambda item: item["pair_index"]),
+            "pmu_event_median_cold_over_hot": {
+                name: statistics.median(ratios)
+                for name, ratios in sorted(event_ratios.items()) if ratios
+            },
+        }
 
     records: list[dict[str, Any]] = []
     memory_ratios: list[float] = []
     control_tracking_ratios: list[float] = []
     coordinates: dict[tuple[Any, ...], dict[str, dict[str, Any]]] = defaultdict(dict)
     for cell, summary in cell_summaries.items():
-        mode, cpu, target, size, blocks, pmu_group, provenance = cell
-        coordinates[(cpu, target, size, blocks, pmu_group, provenance)][mode] = summary
+        mode, cpu, target, size, blocks, pmu_group, identity = cell
+        coordinates[(cpu, target, size, blocks, pmu_group, identity)][mode] = summary
     for (cpu, target, size, blocks, pmu_group, _), mode_summaries in sorted(
         coordinates.items(), key=lambda item: str(item[0])
     ):
@@ -717,6 +760,10 @@ def infer_bottleneck(
             "full_over_median_control_penalty": tracking,
             "pair_penalties": {
                 mode: mode_summaries[mode]["pair_penalties"] for mode in MODES
+            },
+            "pmu_event_median_cold_over_hot": {
+                mode: mode_summaries[mode]["pmu_event_median_cold_over_hot"]
+                for mode in MODES
             },
         })
 

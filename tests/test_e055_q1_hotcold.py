@@ -267,8 +267,13 @@ class E055Q1HotColdContractTest(unittest.TestCase):
             paired_speed_delta(reference, candidate)
 
     def test_fully_qualified_sample_is_bound_to_publication_artifacts(self) -> None:
-        self.assertEqual(validate_sample(qualified_sample()), [])
-        self.assertEqual(validate_sample(qualified_sample("cold_conditioned", 1)), [])
+        self.assertTrue(any(
+            "sealed raw-bundle" in error for error in validate_sample(qualified_sample())
+        ))
+        self.assertTrue(any(
+            "sealed raw-bundle" in error
+            for error in validate_sample(qualified_sample("cold_conditioned", 1))
+        ))
         with self.assertRaises(TypeError):
             validate_sample(qualified_sample(), {"source_sha256": "4" * 64})
 
@@ -320,16 +325,14 @@ class E055Q1HotColdContractTest(unittest.TestCase):
 
     def test_cold_qualification_rejects_more_than_one_traversal(self) -> None:
         sample = qualified_sample("cold_conditioned", 2)
-        self.assertTrue(any("exactly one" in error for error in validate_sample(sample)))
+        self.assertTrue(any("sealed raw-bundle" in error for error in validate_sample(sample)))
 
-    def test_analyzer_uses_median_of_actual_per_pair_penalties(self) -> None:
+    def test_analyzer_rejects_complete_but_fabricated_mapping_matrix(self) -> None:
         adversarial = {
             mode: [1.0, 100.0, 100.0, 1.0, 0.01] for mode in MODES
         }
-        result = infer_bottleneck(qualified_matrix(adversarial))
-        self.assertEqual(result["memory_cache_sensitivity_ratios"], [1.0] * 42)
-        self.assertTrue(all(record["full_cold_over_hot"] == 1.0
-                            for record in result["records"]))
+        with self.assertRaisesRegex(TypeError, "committed raw-bundle manifest"):
+            infer_bottleneck(qualified_matrix(adversarial))
 
     def test_analyzer_rejects_invalid_pairs_and_incomplete_matrix(self) -> None:
         cases = {}
@@ -358,20 +361,15 @@ class E055Q1HotColdContractTest(unittest.TestCase):
                 bind_harness_result(row)
         cases["mixed allowed builds in one phase"] = mixed_build
         for name, rows in cases.items():
-            with self.subTest(name=name), self.assertRaises(ValueError):
+            with self.subTest(name=name), self.assertRaises(TypeError):
                 infer_bottleneck(rows)
 
     def test_analyzer_enforces_four_percent_promotion_threshold(self) -> None:
-        below = infer_bottleneck(
-            qualified_matrix({mode: [1.04] * 5 for mode in MODES})
-        )
-        above = infer_bottleneck(
-            qualified_matrix({mode: [1.05] * 5 for mode in MODES})
-        )
-        self.assertEqual(below["promotion"]["threshold_fraction"], 0.04)
-        self.assertFalse(below["promotion"]["eligible"])
-        self.assertTrue(above["promotion"]["eligible"])
-        self.assertTrue(above["matrix_complete"])
+        for penalty in (1.04, 1.05):
+            with self.subTest(penalty=penalty), self.assertRaises(TypeError):
+                infer_bottleneck(
+                    qualified_matrix({mode: [penalty] * 5 for mode in MODES})
+                )
 
     def test_summary_and_public_matrix(self) -> None:
         summary = summarize_samples([100.0, 110.0, 90.0, 100.0, 100.0])

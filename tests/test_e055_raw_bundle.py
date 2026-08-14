@@ -89,12 +89,16 @@ class BundleFixture:
 
     def artifact(self, role: str, path: Path) -> dict:
         relative = path.relative_to(self.root).as_posix()
+        payload = path.read_bytes()
+        git_blob_oid = hashlib.sha1(
+            b"blob " + str(len(payload)).encode("ascii") + b"\0" + payload
+        ).hexdigest()
         return {
             "role": role,
             "path": relative,
-            "sha256": sha256(path),
-            "size_bytes": path.stat().st_size,
-            "git_blob_oid": self.git("hash-object", relative),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "size_bytes": len(payload),
+            "git_blob_oid": git_blob_oid,
         }
 
     def _stream_capture(
@@ -120,7 +124,7 @@ class BundleFixture:
         blocks = (target + 207) // 208
         actual = blocks * 208
         calls = 1 if spec["cache_state"] == "cold_conditioned" else 250
-        elapsed_ns = calls * 1_000_000
+        elapsed_ns = calls * spec.get("ns_per_call", 1_000_000)
         if spec["cache_state"] == "cold_conditioned":
             conditioning = {
                 "strategy": "verified_write_read_each_64B_line",
@@ -157,8 +161,8 @@ class BundleFixture:
             "iterations": calls,
             "calls": calls,
             "elapsed_ns": elapsed_ns,
-            "first_call_ns": 1_000_000,
-            "calls_per_second": 1000.0,
+            "first_call_ns": spec.get("ns_per_call", 1_000_000),
+            "calls_per_second": 1.0e9 / spec.get("ns_per_call", 1_000_000),
             "logical_bytes_per_call": {
                 "q1_packed_bytes": blocks * 72,
                 "q8_bytes": blocks * 4 * 34,
@@ -478,6 +482,15 @@ class E055RawParserTest(unittest.TestCase):
             self.assertEqual(sample.commit, fixture.git("rev-parse", "HEAD"))
             self.assertEqual(sample.tree, fixture.git("rev-parse", "HEAD^{tree}"))
             self.assertEqual(len(sample.raw_artifacts), 5)
+            self.assertEqual(
+                [(event.name, event.config, event.value) for event in sample.pmu_events],
+                [("cpu_cycles", "0x11", 100),
+                 ("instructions", "0x8", 101),
+                 ("stall_backend", "0x24", 102)],
+            )
+            self.assertEqual(sample.measured_elapsed_ns, 250_001_000)
+            self.assertEqual(sample.thermal_limit_c, 80.0)
+            self.assertEqual(sample.max_temp_c, 55.0)
 
     def test_launcher_floor_does_not_relax_qualification_ratio(self) -> None:
         with BundleFixture() as fixture:
@@ -489,6 +502,9 @@ class E055RawParserTest(unittest.TestCase):
 
     def test_thermal_timing_golden_sync_and_stderr_forgeries_fail_closed(self) -> None:
         mutations = {
+            "PMU config": lambda f: f.mutate_e049c(
+                lambda raw: raw["events"][0].update(config="0xff")
+            ),
             "thermal": lambda f: f.mutate_e049c(
                 lambda raw: raw["thermal"].update(max_observed_c=81.0)
             ),

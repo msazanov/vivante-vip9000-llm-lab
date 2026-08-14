@@ -75,6 +75,16 @@ class RawArtifactEvidence:
 
 
 @dataclass(frozen=True)
+class PmuEventEvidence:
+    name: str
+    config: str
+    value: int
+    time_enabled_ns: int
+    time_running_ns: int
+    running_ratio: float
+
+
+@dataclass(frozen=True)
 class DerivedSample:
     """A measurement row constructed only from sealed raw artifact bytes."""
 
@@ -95,6 +105,10 @@ class DerivedSample:
     elapsed_ns: int
     checksum: str
     pmu_group: str
+    measured_elapsed_ns: int
+    thermal_limit_c: float
+    max_temp_c: float
+    pmu_events: tuple[PmuEventEvidence, ...]
     publication_identity: tuple[tuple[str, Any], ...]
     commit: str
     tree: str
@@ -186,30 +200,39 @@ def _repository_root(manifest: Path) -> Path:
     return root
 
 
-def _git_entry(root: Path, source: str, relative: str) -> tuple[str, str]:
+def _git_entries(
+    root: Path, source: str, phase_relative: str,
+) -> dict[str, tuple[str, str]]:
     if source == "HEAD":
-        output = _git(root, "ls-tree", "HEAD", "--", relative)
+        output = _git(root, "ls-tree", "-r", "HEAD", "--", phase_relative)
     else:
-        output = _git(root, "ls-files", "--stage", "--", relative)
+        output = _git(root, "ls-files", "--stage", "--", phase_relative)
     assert isinstance(output, str)
-    lines = [line for line in output.splitlines() if line]
-    if len(lines) != 1:
-        raise ValueError(f"{relative} is not one exact tracked {source} entry")
-    metadata, tab, path = lines[0].partition("\t")
-    if tab != "\t" or path != relative:
-        raise ValueError(f"Git returned an aliased path for {relative}")
-    fields = metadata.split()
-    if source == "HEAD":
-        if len(fields) != 3 or fields[1] != "blob":
-            raise ValueError(f"{relative} is not a regular HEAD blob")
-        mode, _, oid = fields
-    else:
-        if len(fields) != 3 or fields[2] != "0":
-            raise ValueError(f"{relative} has a non-stage-zero index entry")
-        mode, oid, _ = fields
-    if mode not in ("100644", "100755") or GIT_OID_RE.fullmatch(oid) is None:
-        raise ValueError(f"{relative} has an unsupported Git mode or object ID")
-    return mode, oid
+    entries: dict[str, tuple[str, str]] = {}
+    for line in (line for line in output.splitlines() if line):
+        metadata, tab, path = line.partition("\t")
+        fields = metadata.split()
+        if tab != "\t" or path in entries:
+            raise ValueError(f"Git returned a duplicate or aliased {source} path")
+        if source == "HEAD":
+            if len(fields) != 3 or fields[1] != "blob":
+                raise ValueError(f"{path} is not a regular HEAD blob")
+            mode, _, oid = fields
+        else:
+            if len(fields) != 3 or fields[2] != "0":
+                raise ValueError(f"{path} has a non-stage-zero index entry")
+            mode, oid, _ = fields
+        if mode not in ("100644", "100755") or GIT_OID_RE.fullmatch(oid) is None:
+            raise ValueError(f"{path} has an unsupported Git mode or object ID")
+        entries[path] = (mode, oid)
+    return entries
+
+
+def _git_blob_oid(payload: bytes, object_format: str) -> str:
+    if object_format not in ("sha1", "sha256"):
+        raise ValueError(f"unsupported Git object format: {object_format}")
+    framed = b"blob " + str(len(payload)).encode("ascii") + b"\0" + payload
+    return hashlib.new(object_format, framed).hexdigest()
 
 
 def _seal_file(
@@ -218,16 +241,20 @@ def _seal_file(
     role: str,
     maximum: int,
     declared: Mapping[str, Any] | None,
+    head_entries: Mapping[str, tuple[str, str]],
+    index_entries: Mapping[str, tuple[str, str]],
+    object_format: str,
 ) -> tuple[SealedArtifact, tuple[int, int]]:
     path = root / relative
     payload, status = _read_regular_file(path, maximum)
-    head_mode, head_oid = _git_entry(root, "HEAD", relative)
-    index_mode, index_oid = _git_entry(root, "INDEX", relative)
+    try:
+        head_mode, head_oid = head_entries[relative]
+        index_mode, index_oid = index_entries[relative]
+    except KeyError as exc:
+        raise ValueError(f"{relative} is not one exact tracked Git entry") from exc
     if (head_mode, head_oid) != (index_mode, index_oid):
         raise ValueError(f"index and HEAD differ for sealed artifact {relative}")
-    committed = _git(root, "cat-file", "blob", head_oid, binary=True)
-    assert isinstance(committed, bytes)
-    if committed != payload:
+    if _git_blob_oid(payload, object_format) != head_oid:
         raise ValueError(f"worktree bytes differ from HEAD for {relative}")
     digest = _sha256(payload)
     if declared is not None:
@@ -325,8 +352,16 @@ def seal_bundle_files(manifest_path: str | Path) -> SealedBundleFiles:
     if status_output:
         raise ValueError("raw phase has dirty, staged, deleted, or untracked files")
 
+    phase_text = phase_relative.as_posix()
+    head_entries = _git_entries(root, "HEAD", phase_text)
+    index_entries = _git_entries(root, "INDEX", phase_text)
+    format_output = _git(root, "rev-parse", "--show-object-format")
+    assert isinstance(format_output, str)
+    object_format = format_output.strip()
+
     manifest_sealed, manifest_inode = _seal_file(
-        root, manifest_relative, "bundle_manifest", MAX_MANIFEST_BYTES, None
+        root, manifest_relative, "bundle_manifest", MAX_MANIFEST_BYTES, None,
+        head_entries, index_entries, object_format,
     )
     try:
         document = json.loads(manifest_sealed.payload.decode("utf-8"))
@@ -348,7 +383,8 @@ def seal_bundle_files(manifest_path: str | Path) -> SealedBundleFiles:
             raise ValueError(f"artifact path is reused across roles: {relative}")
         paths.add(relative)
         artifact, inode = _seal_file(
-            root, relative, role, ROLE_SIZE_LIMITS[role], declaration
+            root, relative, role, ROLE_SIZE_LIMITS[role], declaration,
+            head_entries, index_entries, object_format,
         )
         if artifact.git_blob_oid in blobs:
             raise ValueError("one Git blob cannot be reused by multiple raw roles")
@@ -646,7 +682,7 @@ def _validate_harness(
 def _validate_e049c(
     raw: Mapping[str, Any], cell: Mapping[str, Any], argv: tuple[str, ...],
     harness_elapsed_ns: int, contract: Mapping[str, Any],
-) -> None:
+) -> tuple[int, float, float, tuple[PmuEventEvidence, ...]]:
     exact = _exact_keys(
         raw,
         {
@@ -709,6 +745,7 @@ def _validate_e049c(
             not _is_int(exact.get("event_group_size")):
         raise ValueError("E049c event group does not have the exact size")
     seen: set[str] = set()
+    qualified_events: list[PmuEventEvidence] = []
     for event in events:
         item = _exact_keys(
             event,
@@ -738,8 +775,17 @@ def _validate_e049c(
         if type(ratio) is not float or not math.isfinite(ratio) or ratio != 1.0:
             raise ValueError("qualified PMU running_ratio must be float exactly 1.0")
         _zero_int(item.get("errno"), "PMU errno")
+        qualified_events.append(PmuEventEvidence(
+            name=str(name),
+            config=str(item["config"]),
+            value=int(item["value"]),
+            time_enabled_ns=enabled,
+            time_running_ns=running,
+            running_ratio=ratio,
+        ))
     if seen != set(configs):
         raise ValueError("E049c event set is incomplete")
+    return measured, limit, maximum, tuple(qualified_events)
 
 
 def _validate_runner(
@@ -874,7 +920,9 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
         executable = build_files[build_name]
         argv = canonical_harness_argv(cell, executable.relative_path, iterations)
         e049c = _parse_json_object(artifact_map["e049c_json"].payload, "E049c raw JSON")
-        _validate_e049c(e049c, cell, argv, elapsed_ns, contract)
+        measured_ns, thermal_limit, max_temp, pmu_events = _validate_e049c(
+            e049c, cell, argv, elapsed_ns, contract
+        )
         provenance = {
             **qualification,
             "binary_sha256": contract["allowed_builds"][build_name],
@@ -901,6 +949,10 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
             elapsed_ns=elapsed_ns,
             checksum=checksum,
             pmu_group=cell["pmu_group"],
+            measured_elapsed_ns=measured_ns,
+            thermal_limit_c=thermal_limit,
+            max_temp_c=max_temp,
+            pmu_events=pmu_events,
             publication_identity=tuple(sorted(provenance.items())),
             commit=files.commit,
             tree=files.tree,
