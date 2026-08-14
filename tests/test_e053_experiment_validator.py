@@ -6,7 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tooling.branch_preflight import build_manifest
+from tooling.branch_preflight import (
+    build_manifest,
+    duplicate_decision_from_refs,
+    tree_binding_sha256,
+)
 from tooling.experiment_validator import build_file_manifest, validate_experiment
 from tooling.scaffold_experiment import scaffold_experiment
 
@@ -23,6 +27,24 @@ def sha256_text(value: str) -> str:
 def token_ids_sha256(values: list[int]) -> str:
     encoded = json.dumps(values, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+def write_jsonl(path: Path, events: list[dict]) -> None:
+    path.write_text("".join(json.dumps(event) + "\n" for event in events), encoding="utf-8")
+
+
+def refresh_manifest_hash(root: Path, relative: str) -> None:
+    path = root / relative
+    manifest_path = root / "data/manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entry = next(item for item in manifest["files"] if item["path"] == relative)
+    entry["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    entry["size_bytes"] = path.stat().st_size
+    manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
 
 
 def write_required_planned_files(root: Path) -> None:
@@ -242,25 +264,10 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
     (root / "raw").mkdir(exist_ok=True)
     (root / "raw/stdout.log").write_text("model output\n", encoding="utf-8")
     (root / "raw/stderr.log").write_text("", encoding="utf-8")
-    telemetry = {
-        "schema_version": "e047-telemetry-event/v1",
-        "run_id": "off-1",
-        "timestamp_ns": 1,
-        "cpu_temperature_c": 42.0,
-        "cpu_frequency_hz": [2208000000, 2208000000],
-        "npu_frequency_hz": 1008000000,
-        "rss_bytes": 1024,
-        "ddr": {
-            "observed_direct_ddr_read_bytes": 800,
-            "observed_direct_ddr_write_bytes": 80,
-            "measurement_method": "pmu_counter_delta",
-            "measurement_source": "A733 DDR PMU",
-            "measurement_confidence": "medium",
-        },
-    }
-    trace = {
+    telemetry_events = []
+    trace_events = []
+    trace_template = {
         "schema_version": "e047-trace-event/v1",
-        "run_id": "off-1",
         "step": 0,
         "phase": "decode",
         "token_index": 0,
@@ -304,8 +311,24 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
             },
         },
     }
-    (root / "raw/telemetry.jsonl").write_text(json.dumps(telemetry) + "\n", encoding="utf-8")
-    (root / "raw/trace.jsonl").write_text(json.dumps(trace) + "\n", encoding="utf-8")
+    for index, run in enumerate(runs, start=1):
+        telemetry_events.append(
+            {
+                "schema_version": "e047-telemetry-event/v1",
+                "run_id": run["run_id"],
+                "timestamp_ns": index,
+                "cpu_temperature_c": 42.0,
+                "cpu_frequency_hz": [2208000000, 2208000000],
+                "npu_frequency_hz": 1008000000,
+                "rss_bytes": 1024,
+                "ddr": dict(run["memory_accounting"]["observed_direct_ddr"]),
+            }
+        )
+        trace = json.loads(json.dumps(trace_template))
+        trace["run_id"] = run["run_id"]
+        trace_events.append(trace)
+    write_jsonl(root / "raw/telemetry.jsonl", telemetry_events)
+    write_jsonl(root / "raw/trace.jsonl", trace_events)
 
     paths = [
         "README.md",
@@ -500,9 +523,9 @@ class E053ExperimentValidatorTest(unittest.TestCase):
                     root.mkdir()
                     write_valid_executed_files(root)
                     path = root / "raw/trace.jsonl"
-                    event = json.loads(path.read_text(encoding="utf-8"))
-                    mutate(event)
-                    path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+                    events = read_jsonl(path)
+                    mutate(events[0])
+                    write_jsonl(path, events)
                     result = validate_experiment(root)
                     self.assertFalse(result["valid"])
                     self.assertTrue(any("trace.jsonl" in error for error in result["errors"]))
@@ -524,9 +547,9 @@ class E053ExperimentValidatorTest(unittest.TestCase):
                     root.mkdir()
                     write_valid_executed_files(root)
                     path = root / f"raw/{stream}.jsonl"
-                    event = json.loads(path.read_text(encoding="utf-8"))
-                    mutate(event)
-                    path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+                    events = read_jsonl(path)
+                    mutate(events[0])
+                    write_jsonl(path, events)
                     result = validate_experiment(root)
                     self.assertFalse(result["valid"])
                     self.assertTrue(any(f"{stream}.jsonl" in error for error in result["errors"]))
@@ -547,7 +570,8 @@ class E053ExperimentValidatorTest(unittest.TestCase):
                 repo_root=repo,
                 hypothesis_query="проверить ref snapshot",
             )
-            self.assertTrue(validate_experiment(root)["valid"])
+            baseline_result = validate_experiment(root)
+            self.assertTrue(baseline_result["valid"], baseline_result)
 
             subprocess.run(["git", "-C", str(repo), "branch", "added-later"], check=True)
             result = validate_experiment(root)
@@ -570,6 +594,107 @@ class E053ExperimentValidatorTest(unittest.TestCase):
             joined = " ".join(result["errors"])
             self.assertIn("commit", joined)
             self.assertIn("duplicate_decision", joined)
+
+    def test_rejects_cross_stream_direct_ddr_contradiction_for_same_run(self):
+        """Один run_id не может заявить два разных прямых PMU-результата."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_valid_executed_files(root)
+            telemetry_path = root / "raw/telemetry.jsonl"
+            events = read_jsonl(telemetry_path)
+            events[0]["ddr"]["observed_direct_ddr_read_bytes"] = 801
+            write_jsonl(telemetry_path, events)
+            refresh_manifest_hash(root, "raw/telemetry.jsonl")
+
+            result = validate_experiment(root)
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(any("direct DDR" in error and "off-1" in error for error in result["errors"]))
+
+    def test_accepts_documented_trace_partitions_that_sum_to_run_ddr_total(self):
+        """Несколько op-событий допустимы, только если их PMU-части явно суммируются."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_valid_executed_files(root)
+            trace_path = root / "raw/trace.jsonl"
+            events = read_jsonl(trace_path)
+            first = events[0]
+            relation = {
+                "kind": "partition_of_run_total",
+                "run_total_source": "results/summary.json:runs[].memory_accounting.observed_direct_ddr",
+            }
+            first["memory"]["observed_direct_ddr"].update(
+                observed_direct_ddr_read_bytes=400,
+                observed_direct_ddr_write_bytes=40,
+                aggregation_relation=relation,
+            )
+            second = json.loads(json.dumps(first))
+            second.update(op_index=1, start_ns=20, end_ns=30, duration_ns=10)
+            events.insert(1, second)
+            write_jsonl(trace_path, events)
+            refresh_manifest_hash(root, "raw/trace.jsonl")
+
+            result = validate_experiment(root)
+            self.assertTrue(result["valid"], result)
+
+    def test_preflight_independently_rescans_hidden_committed_experiment(self):
+        """Подмена сохранённых refs/decision не скрывает новый committed root."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True)
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "seed.txt"], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-qm", "seed"], check=True)
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-review",
+                repo_root=repo,
+                hypothesis_query="независимо пересканировать refs",
+            )
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            experiment_relative = root.relative_to(repo)
+            excludes = [
+                (experiment_relative / "data/branch-preflight.json").as_posix(),
+                (experiment_relative / "data/manifest.json").as_posix(),
+            ]
+            preflight = build_manifest(
+                repo,
+                ["E047", "LFM2.5"],
+                experiment_id="E047-review",
+                hypothesis_query="независимо пересканировать refs",
+                binding_excludes=excludes,
+            )
+            (root / "data/branch-preflight.json").write_text(json.dumps(preflight) + "\n", encoding="utf-8")
+            refresh_manifest_hash(root, "data/branch-preflight.json")
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-qm", "scaffold"], check=True)
+            baseline_result = validate_experiment(root)
+            self.assertTrue(baseline_result["valid"], baseline_result)
+
+            hidden = repo / "experiments/E047-review-hidden/README.md"
+            hidden.parent.mkdir(parents=True)
+            hidden.write_text("# Скрытый E047-review\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
+            subprocess.run(["git", "-C", str(repo), "commit", "-qm", "hidden"], check=True)
+
+            preflight_path = root / "data/branch-preflight.json"
+            forged = json.loads(preflight_path.read_text(encoding="utf-8"))
+            forged["active_worktree"]["tree_binding_sha256"] = tree_binding_sha256(
+                repo, excludes
+            )
+            forged["duplicate_decision"] = duplicate_decision_from_refs(
+                forged["refs"], "E047-review"
+            )
+            preflight_path.write_text(json.dumps(forged) + "\n", encoding="utf-8")
+            refresh_manifest_hash(root, "data/branch-preflight.json")
+
+            result = validate_experiment(root)
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(any("independent ref rescan" in error for error in result["errors"]))
 
     def test_executed_rejects_empty_invalid_or_arbitrary_jsonl(self):
         cases = ("", "not-json\n", "{}\n")

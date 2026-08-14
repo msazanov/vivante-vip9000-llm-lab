@@ -25,15 +25,19 @@ from jsonschema import Draft202012Validator, FormatChecker
 try:
     from tooling.branch_preflight import (
         duplicate_decision_from_refs,
+        experiment_root_topology,
         list_refs,
         ref_commit,
+        scan_refs,
         tree_binding_sha256,
     )
 except ModuleNotFoundError:  # direct: python3 tooling/experiment_validator.py
     from branch_preflight import (
         duplicate_decision_from_refs,
+        experiment_root_topology,
         list_refs,
         ref_commit,
+        scan_refs,
         tree_binding_sha256,
     )
 
@@ -107,6 +111,10 @@ MEMORY_PROVENANCE_REQUIRED = {
     "measurement_source",
     "measurement_confidence",
 }
+DDR_RELATION_FIELD = "aggregation_relation"
+DDR_RUN_TOTAL_SOURCE = (
+    "results/summary.json:runs[].memory_accounting.observed_direct_ddr"
+)
 
 
 def _canonical_sha256(value: object) -> str:
@@ -640,7 +648,9 @@ def _validate_telemetry_events(events: list[dict[str, Any]], run_ids: set[str], 
         )
         ddr = event.get("ddr")
         if isinstance(ddr, dict):
-            unexpected = set(ddr) - (ddr_fields | MEMORY_PROVENANCE_REQUIRED)
+            unexpected = set(ddr) - (
+                ddr_fields | MEMORY_PROVENANCE_REQUIRED | {DDR_RELATION_FIELD}
+            )
             if unexpected:
                 errors.append(f"{prefix}.ddr: смешивает классы измерений")
 
@@ -677,7 +687,10 @@ def _validate_trace_memory(value: object, prefix: str, errors: list[str]) -> Non
             allowed_methods=methods,
         )
         if isinstance(item, dict):
-            unexpected = set(item) - (byte_fields | MEMORY_PROVENANCE_REQUIRED)
+            allowed = byte_fields | MEMORY_PROVENANCE_REQUIRED
+            if group == "observed_direct_ddr":
+                allowed = allowed | {DDR_RELATION_FIELD}
+            unexpected = set(item) - allowed
             if unexpected:
                 errors.append(
                     f"{prefix}.{group}: смешивает классы измерений: "
@@ -730,6 +743,124 @@ def _validate_trace_events(events: list[dict[str, Any]], run_ids: set[str], erro
         _validate_trace_memory(event.get("memory"), f"{prefix}.memory", errors)
 
 
+def _ddr_relation(
+    value: dict[str, Any], prefix: str, errors: list[str]
+) -> str | None:
+    relation = value.get(DDR_RELATION_FIELD)
+    if relation is None:
+        return "exact_run_total"
+    if not isinstance(relation, dict) or set(relation) != {"kind", "run_total_source"}:
+        errors.append(f"{prefix}: aggregation_relation должна явно задать kind и run_total_source")
+        return None
+    kind = relation.get("kind")
+    if kind not in {"exact_run_total", "partition_of_run_total"}:
+        errors.append(f"{prefix}: неизвестный aggregation_relation.kind")
+        return None
+    if relation.get("run_total_source") != DDR_RUN_TOTAL_SOURCE:
+        errors.append(f"{prefix}: aggregation_relation не ссылается на summary run total")
+        return None
+    return str(kind)
+
+
+def _direct_ddr_values(value: object) -> tuple[object, object, object, object, object] | None:
+    if not isinstance(value, dict):
+        return None
+    return (
+        value.get("observed_direct_ddr_read_bytes"),
+        value.get("observed_direct_ddr_write_bytes"),
+        value.get("measurement_method"),
+        value.get("measurement_source"),
+        value.get("measurement_confidence"),
+    )
+
+
+def _validate_ddr_stream_against_summary(
+    stream_name: str,
+    events: list[dict[str, Any]],
+    summary_ddr: dict[str, dict[str, Any]],
+    errors: list[str],
+) -> None:
+    groups_by_run: dict[str, list[dict[str, Any]]] = {}
+    for event in events:
+        run_id = event.get("run_id")
+        if not isinstance(run_id, str):
+            continue
+        if stream_name == "telemetry.jsonl":
+            direct = event.get("ddr")
+        else:
+            memory = event.get("memory")
+            direct = memory.get("observed_direct_ddr") if isinstance(memory, dict) else None
+        if isinstance(direct, dict):
+            groups_by_run.setdefault(run_id, []).append(direct)
+
+    for run_id, run_total in summary_ddr.items():
+        groups = groups_by_run.get(run_id, [])
+        if not groups:
+            errors.append(f"{stream_name}: direct DDR не связан с run_id={run_id}")
+            continue
+        expected = _direct_ddr_values(run_total)
+        relations: list[str] = []
+        for index, group in enumerate(groups, start=1):
+            prefix = f"{stream_name} run_id={run_id} event[{index}] direct DDR"
+            relation = _ddr_relation(group, prefix, errors)
+            if relation is not None:
+                relations.append(relation)
+            actual = _direct_ddr_values(group)
+            if expected is not None and actual is not None and actual[2:] != expected[2:]:
+                errors.append(
+                    f"{prefix}: method/source/confidence противоречат results/summary.json"
+                )
+        if len(relations) != len(groups) or len(set(relations)) != 1:
+            errors.append(
+                f"{stream_name} run_id={run_id}: direct DDR смешивает aggregation relation"
+            )
+            continue
+        if expected is None:
+            continue
+        if relations[0] == "exact_run_total":
+            if any(_direct_ddr_values(group) != expected for group in groups):
+                errors.append(
+                    f"{stream_name} run_id={run_id}: direct DDR противоречит summary run total"
+                )
+        else:
+            read_values = [group.get("observed_direct_ddr_read_bytes") for group in groups]
+            write_values = [group.get("observed_direct_ddr_write_bytes") for group in groups]
+            if not all(_nonnegative_int(value) for value in read_values + write_values):
+                errors.append(
+                    f"{stream_name} run_id={run_id}: direct DDR partitions требуют integer bytes"
+                )
+                continue
+            if sum(read_values) != expected[0] or sum(write_values) != expected[1]:
+                errors.append(
+                    f"{stream_name} run_id={run_id}: direct DDR partitions не равны summary run total"
+                )
+
+
+def _validate_cross_stream_ddr(
+    summary: dict[str, Any],
+    telemetry_events: list[dict[str, Any]],
+    trace_events: list[dict[str, Any]],
+    errors: list[str],
+) -> None:
+    summary_ddr: dict[str, dict[str, Any]] = {}
+    runs = summary.get("runs")
+    if not isinstance(runs, list):
+        return
+    for run in runs:
+        if not isinstance(run, dict) or not isinstance(run.get("run_id"), str):
+            continue
+        memory = run.get("memory_accounting")
+        direct = memory.get("observed_direct_ddr") if isinstance(memory, dict) else None
+        if isinstance(direct, dict):
+            summary_ddr[run["run_id"]] = direct
+    _validate_ddr_stream_against_summary(
+        "telemetry.jsonl", telemetry_events, summary_ddr, errors
+    )
+    _validate_ddr_stream_against_summary(
+        "trace.jsonl", trace_events, summary_ddr, errors
+    )
+
+
 def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, Any] | None, errors: list[str]) -> None:
     if value.get("schema_version") != "e053-branch-preflight/v3":
         errors.append("data/branch-preflight.json: нужен schema_version e053-branch-preflight/v3")
@@ -744,6 +875,9 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
         errors.append("data/branch-preflight.json: отсутствует repository_root")
         return
     repository = Path(str(repository_root)).resolve()
+    if not repository.is_dir():
+        errors.append("data/branch-preflight.json: repository_root не существует")
+        return
     current_refs = sorted(list_refs(repository))
     ref_results = value.get("refs")
     if not isinstance(ref_results, list):
@@ -757,6 +891,14 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
     expected_remote_refs = sorted(ref for ref in current_refs if ref.startswith("refs/remotes/"))
     if value.get("remote_refs_at_scan") != expected_remote_refs:
         errors.append("data/branch-preflight.json: перечень remote refs устарел или неполон")
+    raw_terms = value.get("terms")
+    if not isinstance(raw_terms, list) or any(not _nonempty_string(term) for term in raw_terms):
+        errors.append("data/branch-preflight.json: terms должен быть непустым массивом строк")
+        raw_terms = []
+    actual_ref_results = scan_refs(repository, current_refs, [str(term) for term in raw_terms])
+    actual_by_ref = {
+        str(item.get("ref")): item for item in actual_ref_results if isinstance(item, dict)
+    }
 
     active = value.get("active_worktree")
     if not isinstance(active, dict):
@@ -785,15 +927,41 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
             errors.append("data/branch-preflight.json: binding_excludes разрешает только self-reference файлы")
             exclusions = expected_exclusions
     declared_tree = active.get("tree_binding_sha256")
+    tree_source = active.get("tree_binding_source")
+    if active_ref is not None and tree_source != "git-index-stage0":
+        errors.append("data/branch-preflight.json: tree_binding_source должен быть git-index-stage0")
     if not isinstance(declared_tree, str) or not SHA256_RE.fullmatch(declared_tree):
         errors.append("data/branch-preflight.json: некорректный tree_binding_sha256")
-    elif active_ref is not None and tree_binding_sha256(repository, exclusions) != declared_tree:
-        errors.append("data/branch-preflight.json: active worktree tree binding не совпадает")
+
+    current_head = ref_commit(repository, "HEAD")
+    base_commit = active.get("base_commit")
+    if active_ref is not None and isinstance(declared_tree, str) and SHA256_RE.fullmatch(declared_tree):
+        binding_source = "index" if current_head == base_commit else "HEAD"
+        if tree_binding_sha256(repository, exclusions, source=binding_source) != declared_tree:
+            errors.append("data/branch-preflight.json: active Git tree binding не совпадает")
+        dirty = subprocess.run(
+            ["git", "-C", str(repository), "diff-files", "--name-only", "-z"],
+            check=False,
+            capture_output=True,
+        ).stdout
+        dirty_paths = {
+            value.decode("utf-8", "surrogateescape")
+            for value in dirty.split(b"\0")
+            if value
+        } - set(exclusions)
+        if dirty_paths:
+            errors.append(
+                "data/branch-preflight.json: tracked worktree отличается от Git index: "
+                + ", ".join(sorted(dirty_paths))
+            )
+        if current_head != base_commit and tree_binding_sha256(
+            repository, exclusions, source="index"
+        ) != tree_binding_sha256(repository, exclusions, source="HEAD"):
+            errors.append("data/branch-preflight.json: Git index не совпадает с доказанным HEAD tree")
 
     if active_ref is not None:
-        if active_ref not in current_refs or ref_commit(repository, str(active_ref)) != ref_commit(repository, "HEAD"):
+        if active_ref not in current_refs or ref_commit(repository, str(active_ref)) != current_head:
             errors.append("data/branch-preflight.json: active HEAD/ref не совпадает")
-        base_commit = active.get("base_commit")
         if not isinstance(base_commit, str) or not COMMIT_RE.fullmatch(base_commit):
             errors.append("data/branch-preflight.json: некорректный worktree base commit")
         elif ref_commit(repository, base_commit) != base_commit:
@@ -824,7 +992,6 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
                 errors.append("data/branch-preflight.json: upstream scan не связан с upstream base commit")
             else:
                 current_upstream = ref_commit(repository, upstream_ref)
-                current_head = ref_commit(repository, "HEAD")
                 if current_upstream not in {upstream_base, current_head}:
                     errors.append("data/branch-preflight.json: upstream ref сдвинут вне base/HEAD")
 
@@ -853,9 +1020,104 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
             errors.append(f"data/branch-preflight.json: ref snapshot commit изменился: {ref}")
 
     experiment_id = str(value.get("experiment_id", ""))
+    bound_topology = active.get("bound_experiment_roots")
+    if not isinstance(bound_topology, list):
+        errors.append("data/branch-preflight.json: отсутствует bound_experiment_roots")
+        bound_topology = []
+    current_experiment_path = None
+    try:
+        current_experiment_path = root.relative_to(repository).as_posix()
+    except ValueError:
+        pass
+    stored_by_ref = {
+        str(item.get("ref")): item for item in ref_results if isinstance(item, dict)
+    }
+    for ref in current_refs:
+        actual_result = actual_by_ref.get(ref)
+        if not isinstance(actual_result, dict):
+            errors.append(f"data/branch-preflight.json: independent ref rescan не прочитал {ref}")
+            continue
+        actual_topology = experiment_root_topology(actual_result)
+        current_commit = ref_commit(repository, ref)
+        if ref == active_ref and current_head != base_commit:
+            expected_topology = bound_topology
+        elif (
+            ref == upstream_ref
+            and current_head is not None
+            and current_commit == current_head
+            and current_head != active.get("upstream_base_commit")
+        ):
+            expected_topology = bound_topology
+        else:
+            stored_result = stored_by_ref.get(ref)
+            expected_topology = (
+                experiment_root_topology(stored_result)
+                if isinstance(stored_result, dict)
+                else []
+            )
+        if actual_topology != expected_topology:
+            errors.append(
+                f"data/branch-preflight.json: independent ref rescan обнаружил изменение experiment roots: {ref}"
+            )
+
+        if current_experiment_path is not None:
+            prefix = current_experiment_path + "-"
+            conflicting = [
+                str(item.get("canonical_path"))
+                for item in actual_topology
+                if isinstance(item, dict)
+                and isinstance(item.get("canonical_path"), str)
+                and item.get("canonical_path") != current_experiment_path
+                and str(item.get("canonical_path")).startswith(prefix)
+            ]
+            if conflicting:
+                errors.append(
+                    f"data/branch-preflight.json: independent ref rescan нашёл скрытый duplicate root для {experiment_id}: "
+                    + ", ".join(sorted(conflicting))
+                )
+
     expected_decision = duplicate_decision_from_refs(ref_results, experiment_id)
     if value.get("duplicate_decision") != expected_decision:
         errors.append("data/branch-preflight.json: duplicate_decision не совпадает с refs — решение подделано")
+
+    actual_decision = duplicate_decision_from_refs(actual_ref_results, experiment_id)
+    expected_candidate_keys = {
+        (str(item.get("ref")), str(item.get("canonical_path")))
+        for item in expected_decision.get("candidates", [])
+        if isinstance(item, dict)
+    }
+    advanced_refs: set[str] = set()
+    if isinstance(active_ref, str) and current_head != base_commit:
+        advanced_refs.add(active_ref)
+    if (
+        isinstance(upstream_ref, str)
+        and current_head is not None
+        and ref_commit(repository, upstream_ref) == current_head
+        and current_head != active.get("upstream_base_commit")
+    ):
+        advanced_refs.add(upstream_ref)
+    for advanced_ref in advanced_refs:
+        expected_candidate_keys = {
+            key for key in expected_candidate_keys if key[0] != advanced_ref
+        }
+        bound_decision = duplicate_decision_from_refs(
+            [{"ref": advanced_ref, "commit": current_head, "experiment_roots": bound_topology}],
+            experiment_id,
+        )
+        expected_candidate_keys.update(
+            (str(item.get("ref")), str(item.get("canonical_path")))
+            for item in bound_decision.get("candidates", [])
+            if isinstance(item, dict)
+        )
+    actual_candidate_keys = {
+        (str(item.get("ref")), str(item.get("canonical_path")))
+        for item in actual_decision.get("candidates", [])
+        if isinstance(item, dict)
+    }
+    if actual_candidate_keys != expected_candidate_keys:
+        errors.append(
+            "data/branch-preflight.json: independent ref rescan дал иное duplicate evidence"
+        )
 
 
 def _validate_trace_ab_links(
@@ -1074,6 +1336,9 @@ def validate_experiment(experiment_root: Path | str) -> dict[str, Any]:
         trace_events = _read_jsonl(root / "raw/trace.jsonl", errors) if (root / "raw/trace.jsonl").is_file() else []
         _validate_telemetry_events(telemetry_events, run_ids, errors)
         _validate_trace_events(trace_events, run_ids, errors)
+        _validate_cross_stream_ddr(
+            summary or {}, telemetry_events, trace_events, errors
+        )
 
     if manifest is not None and manifest.get("status") == "planned" and status == "planned":
         warnings.append("эксперимент только запланирован; сырые результаты ещё не требуются")

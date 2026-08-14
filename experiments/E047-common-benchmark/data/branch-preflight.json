@@ -1,266 +1,21 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vivante-vip9000-llm-lab",
-  "generated_at_utc": "2026-08-13T23:30:14.054671+00:00",
+  "generated_at_utc": "2026-08-14T00:13:57.523082+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E047-COMMON-BENCHMARK",
-  "hypothesis_query": "сравнить Bonsai-27B GGUF и LFM2.5-2.6B GGUF/ONNX по единому E047 контракту",
+  "hypothesis_query": "единый детерминированный протокол Bonsai и LFM2.5 с жёстким послойным профайлингом",
   "terms": [
     "LFM2.5",
-    "Bonsai-27B",
-    "E047"
+    "LFM",
+    "E047",
+    "E053"
   ],
   "refs": [
     {
       "ref": "refs/heads/codex/e047-hard-profiling",
-      "match_count": 546,
+      "match_count": 358,
       "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 3,
-          "first_lines": [
-            178,
-            210,
-            220
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            9
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E034-worker-count-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E035-poll-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E039-q1-pair-wholek/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            10
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/data/manifest.json",
-          "occurrences": 1,
-          "first_lines": [
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/README.md",
-          "occurrences": 5,
-          "first_lines": [
-            6,
-            15,
-            34,
-            50,
-            212
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
-          "occurrences": 6,
-          "first_lines": [
-            9,
-            12,
-            13,
-            18,
-            19
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
-          "occurrences": 1,
-          "first_lines": [
-            178
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E047-common-benchmark/commands.txt",
-          "occurrences": 1,
-          "first_lines": [
-            2
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 202,
-          "first_lines": [
-            7,
-            10,
-            19,
-            29,
-            30
-          ]
-        },
         {
           "term": "E047",
           "path": "benchmarks/contracts/e047-common-benchmark.example.json",
@@ -426,6 +181,140 @@
           ]
         },
         {
+          "term": "E053",
+          "path": "benchmarks/schema/e053-experiment-summary.schema.json",
+          "occurrences": 3,
+          "first_lines": [
+            3,
+            4,
+            18
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            13
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 15,
+          "first_lines": [
+            2,
+            375,
+            387,
+            485,
+            497
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/manifest.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/device.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/environment.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 7,
+          "first_lines": [
+            15,
+            20,
+            32,
+            34,
+            35
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 7,
+          "first_lines": [
+            36,
+            40,
+            48,
+            90,
+            102
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 2,
+          "first_lines": [
+            22,
+            23
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/experiment_validator.py",
+          "occurrences": 8,
+          "first_lines": [
+            2,
+            41,
+            42,
+            49,
+            322
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 4,
+          "first_lines": [
+            2,
+            85,
+            94,
+            103
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            32
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            23
+          ]
+        },
+        {
           "term": "LFM2.5",
           "path": "benchmarks/contracts/e047-common-benchmark.example.json",
           "occurrences": 2,
@@ -524,32 +413,6 @@
         }
       ],
       "experiment_ids": [
-        "E023",
-        "E023-GGML-Q1-SEAM",
-        "E025",
-        "E025-DDR-FREQUENCY",
-        "E026",
-        "E026-CPU-DECODE-SCREEN",
-        "E030",
-        "E030-Q1-PAIRED-REUSE",
-        "E031",
-        "E031-Q1-NOINLINE-REUSE",
-        "E032",
-        "E032-Q1-BLOCK4-REUSE",
-        "E033",
-        "E033-SCHEDULER-STRICT0",
-        "E034",
-        "E034-WORKER-COUNT-STRICT0",
-        "E035",
-        "E035-POLL-SCREEN",
-        "E039",
-        "E039-Q1-PAIR-WHOLEK",
-        "E040",
-        "E040-Q1-REGISTER-LUT",
-        "E044",
-        "E044-CLUSTER-PRFM",
-        "E045",
-        "E045-DSPARK-STOCK-OOM",
         "E047",
         "E047-COMMON-BENCHMARK",
         "E047-COMMON-BENCHMARK-V1",
@@ -561,7 +424,13 @@
         "E047-TRACE-AB-RESULT",
         "E047-TRACE-AB-RESULT-V1",
         "E047-TRACE-EVENT",
-        "E053"
+        "E053",
+        "E053-BRANCH-PREFLIGHT",
+        "E053-DEVICE",
+        "E053-ENVIRONMENT",
+        "E053-EXPERIMENT-MANIFEST",
+        "E053-EXPERIMENT-SUMMARY",
+        "E053-EXPERIMENT-SUMMARY-V1"
       ],
       "experiment_roots": [
         {
@@ -969,238 +838,12 @@
           ]
         }
       ],
-      "commit": "d9625df3dbd0f4929f1130022619896a73044c8d"
+      "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
     },
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
-      "match_count": 94,
+      "match_count": 89,
       "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 3,
-          "first_lines": [
-            178,
-            210,
-            220
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            9
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E034-worker-count-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E035-poll-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E039-q1-pair-wholek/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            10
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/data/manifest.json",
-          "occurrences": 1,
-          "first_lines": [
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/README.md",
-          "occurrences": 5,
-          "first_lines": [
-            6,
-            15,
-            34,
-            50,
-            212
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
-          "occurrences": 6,
-          "first_lines": [
-            9,
-            12,
-            13,
-            18,
-            19
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
-          "occurrences": 1,
-          "first_lines": [
-            178
-          ]
-        },
         {
           "term": "E047",
           "path": "benchmarks/contracts/e047-common-benchmark.example.json",
@@ -1271,6 +914,14 @@
         },
         {
           "term": "E047",
+          "path": "experiments/E048-per-op-trace/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            44
+          ]
+        },
+        {
+          "term": "E047",
           "path": "tests/test_e047_contract.py",
           "occurrences": 2,
           "first_lines": [
@@ -1315,6 +966,131 @@
           "first_lines": [
             39,
             50,
+            62
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 10,
+          "first_lines": [
+            2,
+            10,
+            18,
+            24,
+            54
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/manifest.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 3,
+          "first_lines": [
+            15,
+            20,
+            32
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 1,
+          "first_lines": [
+            104
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 2,
+          "first_lines": [
+            21,
+            22
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/experiment_validator.py",
+          "occurrences": 4,
+          "first_lines": [
+            2,
+            21,
+            22,
+            207
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            2,
+            62,
+            85
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 2,
+          "first_lines": [
+            8,
+            106
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 1,
+          "first_lines": [
+            13
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 1,
+          "first_lines": [
             62
           ]
         },
@@ -1403,38 +1179,17 @@
         }
       ],
       "experiment_ids": [
-        "E023",
-        "E023-GGML-Q1-SEAM",
-        "E025",
-        "E025-DDR-FREQUENCY",
-        "E026",
-        "E026-CPU-DECODE-SCREEN",
-        "E030",
-        "E030-Q1-PAIRED-REUSE",
-        "E031",
-        "E031-Q1-NOINLINE-REUSE",
-        "E032",
-        "E032-Q1-BLOCK4-REUSE",
-        "E033",
-        "E033-SCHEDULER-STRICT0",
-        "E034",
-        "E034-WORKER-COUNT-STRICT0",
-        "E035",
-        "E035-POLL-SCREEN",
-        "E039",
-        "E039-Q1-PAIR-WHOLEK",
-        "E040",
-        "E040-Q1-REGISTER-LUT",
-        "E044",
-        "E044-CLUSTER-PRFM",
-        "E045",
-        "E045-DSPARK-STOCK-OOM",
         "E047",
         "E047-COMMON-BENCHMARK",
         "E047-COMMON-BENCHMARK-V1",
         "E047-HARD-PROFILING",
         "E047-QUALITY",
-        "E053"
+        "E048",
+        "E048-PER-OP-TRACE",
+        "E053",
+        "E053-BRANCH-PREFLIGHT",
+        "E053-EXPERIMENT-MANIFEST",
+        "E053-EXPERIMENT-SUMMARY"
       ],
       "experiment_roots": [
         {
@@ -1840,23 +1595,28 @@
             "experiments/E047-common-benchmark/hypothesis-preflight.md",
             "experiments/E047-common-benchmark/results/summary.json"
           ]
-        }
-      ],
-      "commit": "186d082c66bac91fce27cafc2525d95a7e521e86"
-    },
-    {
-      "ref": "refs/heads/main",
-      "match_count": 1,
-      "matches": [
+        },
         {
-          "term": "Bonsai-27B",
-          "path": "docs/npu/ternary-bonsai-custom-kernel-feasibility.md",
-          "occurrences": 1,
-          "first_lines": [
-            60
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/README.md",
+            "experiments/E048-per-op-trace/commands.txt",
+            "experiments/E048-per-op-trace/data/partial-summary.json",
+            "experiments/E048-per-op-trace/raw/trace-capacity4096.jsonl",
+            "experiments/E048-per-op-trace/raw/trace-capacity65536.jsonl"
           ]
         }
       ],
+      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+    },
+    {
+      "ref": "refs/heads/main",
+      "match_count": 0,
+      "matches": [],
       "experiment_ids": [],
       "experiment_roots": [
         {
@@ -1885,25 +1645,8 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e022-fused-q1",
-      "match_count": 2,
-      "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 1,
-          "first_lines": [
-            177
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        }
-      ],
+      "match_count": 0,
+      "matches": [],
       "experiment_ids": [],
       "experiment_roots": [
         {
@@ -2078,263 +1821,9 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e023-ggml-q1-seam",
-      "match_count": 38,
-      "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 3,
-          "first_lines": [
-            178,
-            210,
-            220
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            9
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E034-worker-count-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E035-poll-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E039-q1-pair-wholek/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            10
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/data/manifest.json",
-          "occurrences": 1,
-          "first_lines": [
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/README.md",
-          "occurrences": 5,
-          "first_lines": [
-            6,
-            15,
-            34,
-            50,
-            212
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
-          "occurrences": 6,
-          "first_lines": [
-            9,
-            12,
-            13,
-            18,
-            19
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
-          "occurrences": 1,
-          "first_lines": [
-            178
-          ]
-        }
-      ],
-      "experiment_ids": [
-        "E023",
-        "E023-GGML-Q1-SEAM",
-        "E025",
-        "E025-DDR-FREQUENCY",
-        "E026",
-        "E026-CPU-DECODE-SCREEN",
-        "E030",
-        "E030-Q1-PAIRED-REUSE",
-        "E031",
-        "E031-Q1-NOINLINE-REUSE",
-        "E032",
-        "E032-Q1-BLOCK4-REUSE",
-        "E033",
-        "E033-SCHEDULER-STRICT0",
-        "E034",
-        "E034-WORKER-COUNT-STRICT0",
-        "E035",
-        "E035-POLL-SCREEN",
-        "E039",
-        "E039-Q1-PAIR-WHOLEK",
-        "E040",
-        "E040-Q1-REGISTER-LUT",
-        "E044",
-        "E044-CLUSTER-PRFM",
-        "E045",
-        "E045-DSPARK-STOCK-OOM"
-      ],
+      "match_count": 0,
+      "matches": [],
+      "experiment_ids": [],
       "experiment_roots": [
         {
           "canonical_path": "experiments/E003-q1-packed-carrier",
@@ -2728,254 +2217,8 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-      "match_count": 1755,
+      "match_count": 358,
       "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 3,
-          "first_lines": [
-            178,
-            210,
-            220
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            9
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E034-worker-count-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E035-poll-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E039-q1-pair-wholek/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            10
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/data/manifest.json",
-          "occurrences": 1,
-          "first_lines": [
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/README.md",
-          "occurrences": 5,
-          "first_lines": [
-            6,
-            15,
-            34,
-            50,
-            212
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
-          "occurrences": 6,
-          "first_lines": [
-            9,
-            12,
-            13,
-            18,
-            19
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
-          "occurrences": 1,
-          "first_lines": [
-            178
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E047-common-benchmark/commands.txt",
-          "occurrences": 1,
-          "first_lines": [
-            2
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 609,
-          "first_lines": [
-            7,
-            10,
-            19,
-            22,
-            28
-          ]
-        },
         {
           "term": "E047",
           "path": "benchmarks/contracts/e047-common-benchmark.example.json",
@@ -3040,13 +2283,13 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 880,
+          "occurrences": 177,
           "first_lines": [
             6,
             7,
             11,
             15,
-            24
+            246
           ]
         },
         {
@@ -3088,7 +2331,7 @@
         {
           "term": "E047",
           "path": "tests/test_e053_branch_preflight.py",
-          "occurrences": 17,
+          "occurrences": 23,
           "first_lines": [
             15,
             17,
@@ -3100,13 +2343,13 @@
         {
           "term": "E047",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 9,
+          "occurrences": 13,
           "first_lines": [
             29,
             49,
-            62,
-            64,
-            138
+            63,
+            65,
+            210
           ]
         },
         {
@@ -3114,18 +2357,19 @@
           "path": "tooling/branch_preflight.py",
           "occurrences": 1,
           "first_lines": [
-            22
+            23
           ]
         },
         {
           "term": "E047",
           "path": "tooling/experiment_validator.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
-            437,
-            439,
-            521,
-            586
+            53,
+            517,
+            519,
+            609,
+            698
           ]
         },
         {
@@ -3136,7 +2380,141 @@
             53,
             64,
             77,
-            128
+            129
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "benchmarks/schema/e053-experiment-summary.schema.json",
+          "occurrences": 3,
+          "first_lines": [
+            3,
+            4,
+            18
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            13
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 15,
+          "first_lines": [
+            2,
+            375,
+            387,
+            485,
+            497
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/manifest.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/device.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/environment.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 7,
+          "first_lines": [
+            15,
+            20,
+            32,
+            34,
+            35
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 7,
+          "first_lines": [
+            36,
+            40,
+            48,
+            90,
+            102
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 2,
+          "first_lines": [
+            22,
+            23
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/experiment_validator.py",
+          "occurrences": 8,
+          "first_lines": [
+            2,
+            41,
+            42,
+            49,
+            322
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 4,
+          "first_lines": [
+            2,
+            85,
+            94,
+            103
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            32
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            23
           ]
         },
         {
@@ -3176,13 +2554,13 @@
         {
           "term": "LFM2.5",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 142,
+          "occurrences": 32,
           "first_lines": [
             7,
             9,
-            70,
-            73,
-            82
+            429,
+            438,
+            447
           ]
         },
         {
@@ -3211,10 +2589,10 @@
           "path": "tests/test_e053_experiment_validator.py",
           "occurrences": 4,
           "first_lines": [
-            62,
-            65,
-            285,
-            293
+            63,
+            66,
+            351,
+            359
           ]
         },
         {
@@ -3222,7 +2600,7 @@
           "path": "tooling/branch_preflight.py",
           "occurrences": 1,
           "first_lines": [
-            22
+            23
           ]
         },
         {
@@ -3233,48 +2611,29 @@
             52,
             65,
             77,
-            126
+            127
           ]
         }
       ],
       "experiment_ids": [
-        "E023",
-        "E023-GGML-Q1-SEAM",
-        "E025",
-        "E025-DDR-FREQUENCY",
-        "E026",
-        "E026-CPU-DECODE-SCREEN",
-        "E030",
-        "E030-Q1-PAIRED-REUSE",
-        "E031",
-        "E031-Q1-NOINLINE-REUSE",
-        "E032",
-        "E032-Q1-BLOCK4-REUSE",
-        "E033",
-        "E033-SCHEDULER-STRICT0",
-        "E034",
-        "E034-WORKER-COUNT-STRICT0",
-        "E035",
-        "E035-POLL-SCREEN",
-        "E039",
-        "E039-Q1-PAIR-WHOLEK",
-        "E040",
-        "E040-Q1-REGISTER-LUT",
-        "E044",
-        "E044-CLUSTER-PRFM",
-        "E045",
-        "E045-DSPARK-STOCK-OOM",
         "E047",
         "E047-COMMON-BENCHMARK",
         "E047-COMMON-BENCHMARK-V1",
         "E047-EXISTING",
         "E047-HARD-PROFILING",
         "E047-QUALITY",
+        "E047-REVIEW",
         "E047-TELEMETRY-EVENT",
         "E047-TRACE-AB-RESULT",
         "E047-TRACE-AB-RESULT-V1",
         "E047-TRACE-EVENT",
-        "E053"
+        "E053",
+        "E053-BRANCH-PREFLIGHT",
+        "E053-DEVICE",
+        "E053-ENVIRONMENT",
+        "E053-EXPERIMENT-MANIFEST",
+        "E053-EXPERIMENT-SUMMARY",
+        "E053-EXPERIMENT-SUMMARY-V1"
       ],
       "experiment_roots": [
         {
@@ -3682,267 +3041,786 @@
           ]
         }
       ],
-      "commit": "cb180848e456619a62a5ae921fa46be5bcfae4dd"
+      "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
     },
     {
-      "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
-      "match_count": 38,
+      "ref": "refs/remotes/origin/codex/e048-per-op-trace",
+      "match_count": 89,
       "matches": [
         {
-          "term": "Bonsai-27B",
-          "path": "README.md",
+          "term": "E047",
+          "path": "benchmarks/contracts/e047-common-benchmark.example.json",
           "occurrences": 3,
           "first_lines": [
-            178,
-            210,
-            220
+            2,
+            3,
+            130
           ]
         },
         {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 1,
+          "term": "E047",
+          "path": "benchmarks/schema/e047-common-benchmark.schema.json",
+          "occurrences": 5,
           "first_lines": [
-            3
+            3,
+            4,
+            22,
+            26,
+            225
           ]
         },
         {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 3,
           "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
+            1,
+            8,
             9
           ]
         },
         {
-          "term": "Bonsai-27B",
-          "path": "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json",
-          "occurrences": 1,
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 3,
           "first_lines": [
+            2,
+            3,
             5
           ]
         },
         {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E034-worker-count-strict0/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E035-poll-screen/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E039-q1-pair-wholek/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E040-q1-register-lut/results/e040_target_summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            10
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E044-cluster-prfm/data/manifest.json",
-          "occurrences": 1,
-          "first_lines": [
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/README.md",
-          "occurrences": 5,
-          "first_lines": [
-            6,
-            15,
-            34,
-            50,
-            212
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/manifest.json",
-          "occurrences": 6,
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 2,
           "first_lines": [
             9,
-            12,
-            13,
-            18,
-            19
+            14
           ]
         },
         {
-          "term": "Bonsai-27B",
-          "path": "experiments/E045-dspark-stock-oom/data/metrics.json",
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 2,
+          "first_lines": [
+            3,
+            12
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
           "occurrences": 1,
           "first_lines": [
-            178
+            3
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E048-per-op-trace/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            44
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e047_contract.py",
+          "occurrences": 2,
+          "first_lines": [
+            10,
+            11
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 8,
+          "first_lines": [
+            15,
+            17,
+            20,
+            28,
+            43
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 3,
+          "first_lines": [
+            11,
+            46,
+            63
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            39,
+            50,
+            62
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 10,
+          "first_lines": [
+            2,
+            10,
+            18,
+            24,
+            54
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/manifest.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 3,
+          "first_lines": [
+            15,
+            20,
+            32
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 1,
+          "first_lines": [
+            104
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 2,
+          "first_lines": [
+            21,
+            22
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/experiment_validator.py",
+          "occurrences": 4,
+          "first_lines": [
+            2,
+            21,
+            22,
+            207
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            2,
+            62,
+            85
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 2,
+          "first_lines": [
+            8,
+            106
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 1,
+          "first_lines": [
+            13
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 1,
+          "first_lines": [
+            62
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "benchmarks/contracts/e047-common-benchmark.example.json",
+          "occurrences": 2,
+          "first_lines": [
+            58,
+            66
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "benchmarks/schema/e047-common-benchmark.schema.json",
+          "occurrences": 2,
+          "first_lines": [
+            5,
+            124
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            5
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 4,
+          "first_lines": [
+            7,
+            100,
+            103,
+            109
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 2,
+          "first_lines": [
+            4,
+            11
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 4,
+          "first_lines": [
+            15,
+            17,
+            28,
+            31
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            38,
+            51,
+            62
           ]
         }
       ],
       "experiment_ids": [
-        "E023",
-        "E023-GGML-Q1-SEAM",
-        "E025",
-        "E025-DDR-FREQUENCY",
-        "E026",
-        "E026-CPU-DECODE-SCREEN",
-        "E030",
-        "E030-Q1-PAIRED-REUSE",
-        "E031",
-        "E031-Q1-NOINLINE-REUSE",
-        "E032",
-        "E032-Q1-BLOCK4-REUSE",
-        "E033",
-        "E033-SCHEDULER-STRICT0",
-        "E034",
-        "E034-WORKER-COUNT-STRICT0",
-        "E035",
-        "E035-POLL-SCREEN",
-        "E039",
-        "E039-Q1-PAIR-WHOLEK",
-        "E040",
-        "E040-Q1-REGISTER-LUT",
-        "E044",
-        "E044-CLUSTER-PRFM",
-        "E045",
-        "E045-DSPARK-STOCK-OOM"
+        "E047",
+        "E047-COMMON-BENCHMARK",
+        "E047-COMMON-BENCHMARK-V1",
+        "E047-HARD-PROFILING",
+        "E047-QUALITY",
+        "E048",
+        "E048-PER-OP-TRACE",
+        "E053",
+        "E053-BRANCH-PREFLIGHT",
+        "E053-EXPERIMENT-MANIFEST",
+        "E053-EXPERIMENT-SUMMARY"
       ],
+      "experiment_roots": [
+        {
+          "canonical_path": "experiments/E003-q1-packed-carrier",
+          "experiment_ids": [
+            "E003",
+            "E003-Q1-PACKED-CARRIER"
+          ],
+          "paths": [
+            "experiments/E003-q1-packed-carrier/README.md",
+            "experiments/E003-q1-packed-carrier/vxc_nbg_builder.c"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E019-q1-i16-evis-gemm",
+          "experiment_ids": [
+            "E019",
+            "E019-Q1-I16-EVIS-GEMM"
+          ],
+          "paths": [
+            "experiments/E019-q1-i16-evis-gemm/README.md",
+            "experiments/E019-q1-i16-evis-gemm/matrixmul_i16_coordfix.vx",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.c",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.h",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract_cli.c",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_nbg_builder.c",
+            "experiments/E019-q1-i16-evis-gemm/results/2026-08-11-a733-target.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E020-q1-unpack-native-fc",
+          "experiment_ids": [
+            "E020",
+            "E020-Q1-UNPACK-NATIVE-FC"
+          ],
+          "paths": [
+            "experiments/E020-q1-unpack-native-fc/README.md",
+            "experiments/E020-q1-unpack-native-fc/q1_unpack_i8.vx",
+            "experiments/E020-q1-unpack-native-fc/q1_unpack_native_fc_nbg_builder.c",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/host_m1024_k128.json",
+            "experiments/E020-q1-unpack-native-fc/results/host_m1024_k5120.json",
+            "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k128.log",
+            "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k5120.log",
+            "experiments/E020-q1-unpack-native-fc/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E020-two-custom-kernel",
+          "experiment_ids": [
+            "E020",
+            "E020-TWO-CUSTOM-KERNEL"
+          ],
+          "paths": [
+            "experiments/E020-two-custom-kernel/README.md",
+            "experiments/E020-two-custom-kernel/results/2026-08-11-a733-two-custom-kernel.json",
+            "experiments/E020-two-custom-kernel/two_custom_kernel_nbg_builder.c",
+            "experiments/E020-two-custom-kernel/two_stage_invert.vx"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E021-q1-unpack-native-matmul",
+          "experiment_ids": [
+            "E021",
+            "E021-Q1-UNPACK-NATIVE-MATMUL"
+          ],
+          "paths": [
+            "experiments/E021-q1-unpack-native-matmul/README.md",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_i8.vx",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_conv1x1_nbg_builder.c",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_matmul_nbg_builder.c",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k128.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k5120.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_fc_m96_k5120.log",
+            "experiments/E021-q1-unpack-native-matmul/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E022-fused-q1",
+          "experiment_ids": [
+            "E022",
+            "E022-FUSED-Q1"
+          ],
+          "paths": [
+            "experiments/E022-fused-q1/README.md",
+            "experiments/E022-fused-q1/dp16x2_b_probe.vx",
+            "experiments/E022-fused-q1/dp16x2_b_probe_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_contract.h",
+            "experiments/E022-fused-q1/q1_fused_dp16x1.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_nbg_builder.c",
+            "experiments/E022-fused-q1/results/k128-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-host-summary.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k5120-m1024/golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-m1024/host_summary.json",
+            "experiments/E022-fused-q1/results/k5120-m1024/profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k5120-rows4-host-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-generic-target-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-generic.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-host-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/generic.profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/generic_target_summary.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/host_summary.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/thermal_after.txt",
+            "experiments/E022-fused-q1/results/scaled-m1024/thermal_before.txt",
+            "experiments/E022-fused-q1/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E023-ggml-q1-seam",
+          "experiment_ids": [
+            "E023",
+            "E023-GGML-Q1-SEAM"
+          ],
+          "paths": [
+            "experiments/E023-ggml-q1-seam/README.md",
+            "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E024-npu-full-projection",
+          "experiment_ids": [
+            "E024",
+            "E024-NPU-FULL-PROJECTION"
+          ],
+          "paths": [
+            "experiments/E024-npu-full-projection/README.md",
+            "experiments/E024-npu-full-projection/results/e024_shape_sweep.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E025-ddr-frequency",
+          "experiment_ids": [
+            "E025",
+            "E025-DDR-FREQUENCY"
+          ],
+          "paths": [
+            "experiments/E025-ddr-frequency/README.md",
+            "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E026-cpu-decode-screen",
+          "experiment_ids": [
+            "E026",
+            "E026-CPU-DECODE-SCREEN"
+          ],
+          "paths": [
+            "experiments/E026-cpu-decode-screen/README.md",
+            "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E027-poll-scheduling",
+          "experiment_ids": [
+            "E027",
+            "E027-POLL-SCHEDULING"
+          ],
+          "paths": [
+            "experiments/E027-poll-scheduling/README.md",
+            "experiments/E027-poll-scheduling/results/e027_poll_scheduling.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E028-lto",
+          "experiment_ids": [
+            "E028",
+            "E028-LTO"
+          ],
+          "paths": [
+            "experiments/E028-lto/README.md",
+            "experiments/E028-lto/results/e028_lto.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E029-mtune-a55",
+          "experiment_ids": [
+            "E029",
+            "E029-MTUNE-A55"
+          ],
+          "paths": [
+            "experiments/E029-mtune-a55/README.md",
+            "experiments/E029-mtune-a55/results/e029_mtune_a55.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E030-q1-paired-reuse",
+          "experiment_ids": [
+            "E030",
+            "E030-Q1-PAIRED-REUSE"
+          ],
+          "paths": [
+            "experiments/E030-q1-paired-reuse/README.md",
+            "experiments/E030-q1-paired-reuse/patches/0001-q1-paired-activation-reuse.patch",
+            "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E031-q1-noinline-reuse",
+          "experiment_ids": [
+            "E031",
+            "E031-Q1-NOINLINE-REUSE"
+          ],
+          "paths": [
+            "experiments/E031-q1-noinline-reuse/README.md",
+            "experiments/E031-q1-noinline-reuse/patches/0001-q1-half-noinline-reuse.patch",
+            "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E032-q1-block4-reuse",
+          "experiment_ids": [
+            "E032",
+            "E032-Q1-BLOCK4-REUSE"
+          ],
+          "paths": [
+            "experiments/E032-q1-block4-reuse/0001-q1-block4-reuse.patch",
+            "experiments/E032-q1-block4-reuse/README.md",
+            "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E033-scheduler-strict0",
+          "experiment_ids": [
+            "E033",
+            "E033-SCHEDULER-STRICT0"
+          ],
+          "paths": [
+            "experiments/E033-scheduler-strict0/README.md",
+            "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E034-worker-count-strict0",
+          "experiment_ids": [
+            "E034",
+            "E034-WORKER-COUNT-STRICT0"
+          ],
+          "paths": [
+            "experiments/E034-worker-count-strict0/README.md",
+            "experiments/E034-worker-count-strict0/results/e034_worker_count.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E035-poll-screen",
+          "experiment_ids": [
+            "E035",
+            "E035-POLL-SCREEN"
+          ],
+          "paths": [
+            "experiments/E035-poll-screen/README.md",
+            "experiments/E035-poll-screen/results/e035_poll.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E039-q1-pair-wholek",
+          "experiment_ids": [
+            "E039",
+            "E039-Q1-PAIR-WHOLEK"
+          ],
+          "paths": [
+            "experiments/E039-q1-pair-wholek/README.md",
+            "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+            "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
+            "experiments/E039-q1-pair-wholek/results/e039_target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E040-q1-register-lut",
+          "experiment_ids": [
+            "E040",
+            "E040-Q1-REGISTER-LUT"
+          ],
+          "paths": [
+            "experiments/E040-q1-register-lut/README.md",
+            "experiments/E040-q1-register-lut/e040_q1_group_harness.cpp",
+            "experiments/E040-q1-register-lut/e040_q1_group_wholek.S",
+            "experiments/E040-q1-register-lut/results/e040_target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E044-cluster-prfm",
+          "experiment_ids": [
+            "E044",
+            "E044-CLUSTER-PRFM"
+          ],
+          "paths": [
+            "experiments/E044-cluster-prfm/README.md",
+            "experiments/E044-cluster-prfm/data/full_temperature_1s.csv",
+            "experiments/E044-cluster-prfm/data/manifest.json",
+            "experiments/E044-cluster-prfm/data/screen_results.csv",
+            "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.png",
+            "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.svg",
+            "experiments/E044-cluster-prfm/generated/e044_screen_throughput.png",
+            "experiments/E044-cluster-prfm/generated/e044_screen_throughput.svg",
+            "experiments/E044-cluster-prfm/plot_e044.py",
+            "experiments/E044-cluster-prfm/test_plot_e044.py"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E045-dspark-stock-oom",
+          "experiment_ids": [
+            "E045",
+            "E045-DSPARK-STOCK-OOM"
+          ],
+          "paths": [
+            "experiments/E045-dspark-stock-oom/README.md",
+            "experiments/E045-dspark-stock-oom/data/manifest.json",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_b_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_c_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_e_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_f_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/metrics.json",
+            "experiments/E045-dspark-stock-oom/data/speculation_comparison.csv",
+            "experiments/E045-dspark-stock-oom/data/speculation_smoke.csv",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.svg",
+            "experiments/E045-dspark-stock-oom/plot_e045.py",
+            "experiments/E045-dspark-stock-oom/test_plot_e045.py"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E047-common-benchmark",
+          "experiment_ids": [
+            "E047",
+            "E047-COMMON-BENCHMARK"
+          ],
+          "paths": [
+            "experiments/E047-common-benchmark/README.md",
+            "experiments/E047-common-benchmark/commands.txt",
+            "experiments/E047-common-benchmark/data/branch-preflight.json",
+            "experiments/E047-common-benchmark/data/manifest.json",
+            "experiments/E047-common-benchmark/device.json",
+            "experiments/E047-common-benchmark/environment.json",
+            "experiments/E047-common-benchmark/hypothesis-preflight.md",
+            "experiments/E047-common-benchmark/results/summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/README.md",
+            "experiments/E048-per-op-trace/commands.txt",
+            "experiments/E048-per-op-trace/data/partial-summary.json",
+            "experiments/E048-per-op-trace/raw/trace-capacity4096.jsonl",
+            "experiments/E048-per-op-trace/raw/trace-capacity65536.jsonl"
+          ]
+        }
+      ],
+      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
+      "match_count": 0,
+      "matches": [],
+      "experiment_ids": [],
       "experiment_roots": [
         {
           "canonical_path": "experiments/E003-q1-packed-carrier",
@@ -4346,464 +4224,34 @@
             "experiments/E049-nsi-calibration/results/20260814T0150Z-r3/manifest.json",
             "experiments/E049-nsi-calibration/results/20260814T0150Z-r3/raw.jsonl",
             "experiments/E049-nsi-calibration/results/20260814T0150Z-r3/summary.json",
-            "experiments/E049-nsi-calibration/results/20260814T0150Z-r3/summary.md"
+            "experiments/E049-nsi-calibration/results/20260814T0150Z-r3/summary.md",
+            "experiments/E049-nsi-calibration/results/v2-calibration-20260814T0210Z-r3/manifest.json",
+            "experiments/E049-nsi-calibration/results/v2-calibration-20260814T0210Z-r3/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v2-calibration-20260814T0210Z-r3/summary.json",
+            "experiments/E049-nsi-calibration/results/v2-calibration-20260814T0210Z-r3/summary.md",
+            "experiments/E049-nsi-calibration/results/v2-failed-direct-run-20260814T0205Z/failure.json",
+            "experiments/E049-nsi-calibration/results/v2-failed-smoke-20260814T0206Z/failure.json",
+            "experiments/E049-nsi-calibration/results/v2-failed-smoke-20260814T0206Z/manifest.json",
+            "experiments/E049-nsi-calibration/results/v2-failed-smoke-20260814T0206Z/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v2-failed-smoke-20260814T0206Z/summary.partial.json",
+            "experiments/E049-nsi-calibration/results/v2-failed-smoke-20260814T0206Z/watchdog_failure.json",
+            "experiments/E049-nsi-calibration/results/v2-smoke-20260814T0208Z/manifest.json",
+            "experiments/E049-nsi-calibration/results/v2-smoke-20260814T0208Z/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v2-smoke-20260814T0208Z/summary.json",
+            "experiments/E049-nsi-calibration/results/v2-smoke-20260814T0208Z/summary.md",
+            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/manifest.json",
+            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/raw.jsonl",
+            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/summary.json",
+            "experiments/E049-nsi-calibration/results/v3-calibration-20260814T0230Z-r3/summary.md"
           ]
         }
       ],
-      "commit": "b8220cfda224623e30b1d92e74cba4251a7c3a69"
+      "commit": "5bb259003fcdbf394182395a4440d2d61c995232"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
-      "match_count": 109,
+      "match_count": 1,
       "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "README.md",
-          "occurrences": 1,
-          "first_lines": [
-            177
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/charts/benchmark-overview.svg",
-          "occurrences": 1,
-          "first_lines": [
-            2
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/charts/bonsai-night-a733-20260810.svg",
-          "occurrences": 1,
-          "first_lines": [
-            2
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/models/bonsai-27b.md",
-          "occurrences": 3,
-          "first_lines": [
-            5,
-            6,
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/a733-ddr-pll-600-runtime-attempt-001/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            79
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai-night-a733-20260810/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a55-pp512-tg128-001/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-pp512-tg128-001/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-pp512-tg128-002/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-pp512-tg128-003/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-smoke-001/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/bonsai27b-q1-cpu-a76-smoke-002/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/model-runs.jsonl",
-          "occurrences": 6,
-          "first_lines": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/q1-vip9000-evis-bonsai-20260811/summary.json",
-          "occurrences": 2,
-          "first_lines": [
-            6,
-            100
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/results/vip9000-fused-q1-fc-20260811-001/summary.json",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/schema/model-run.example.json",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/schema/q1-cpu-operator-run.example.jsonl",
-          "occurrences": 1,
-          "first_lines": [
-            1
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/schema/q1-cpu-operator.example.json",
-          "occurrences": 1,
-          "first_lines": [
-            5
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/schema/q1-memory-accounting.example.json",
-          "occurrences": 1,
-          "first_lines": [
-            4
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "benchmarks/workloads/bonsai-27b-q1.json",
-          "occurrences": 2,
-          "first_lines": [
-            57,
-            58
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/bonsai-night-2026-08-10.md",
-          "occurrences": 3,
-          "first_lines": [
-            1,
-            13,
-            256
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/bonsai-q1-cpu-baselines-2026-08-09.md",
-          "occurrences": 1,
-          "first_lines": [
-            7
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/bonsai-q1-npu-partition-audit-2026-08-10.md",
-          "occurrences": 3,
-          "first_lines": [
-            1,
-            21,
-            35
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/orange-rag-prior-tests.md",
-          "occurrences": 3,
-          "first_lines": [
-            25,
-            26,
-            51
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/ternary-packed-format-audit-2026-08-10.md",
-          "occurrences": 1,
-          "first_lines": [
-            72
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/evidence/viplite-matrixmultiply-repair-2026-08-11.md",
-          "occurrences": 1,
-          "first_lines": [
-            3
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/plans/2026-08-07-profiling-foundation.md",
-          "occurrences": 4,
-          "first_lines": [
-            150,
-            151,
-            222,
-            223
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/plans/2026-08-10-a733-ddr-pll-600-ab.md",
-          "occurrences": 3,
-          "first_lines": [
-            5,
-            20,
-            216
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/plans/2026-08-10-benchmark-chart-generator.md",
-          "occurrences": 4,
-          "first_lines": [
-            444,
-            472,
-            503,
-            511
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/plans/2026-08-10-bonsai-a733-heterogeneous-night.md",
-          "occurrences": 2,
-          "first_lines": [
-            1,
-            8
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/plans/2026-08-10-bonsai-q1-cpu-operator-baseline.md",
-          "occurrences": 14,
-          "first_lines": [
-            5,
-            13,
-            35,
-            181,
-            213
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-07-profiling-foundation-design.md",
-          "occurrences": 1,
-          "first_lines": [
-            102
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-10-a733-ddr-pll-ab-design.md",
-          "occurrences": 1,
-          "first_lines": [
-            6
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-10-benchmark-chart-generator-design.md",
-          "occurrences": 1,
-          "first_lines": [
-            49
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-10-bonsai-a733-heterogeneous-night-design.md",
-          "occurrences": 3,
-          "first_lines": [
-            1,
-            12,
-            22
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-10-bonsai-a733-vip9000-single-stream-design.md",
-          "occurrences": 3,
-          "first_lines": [
-            1,
-            12,
-            22
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/superpowers/specs/2026-08-10-q1-vip9000-backend-design.md",
-          "occurrences": 4,
-          "first_lines": [
-            5,
-            35,
-            514,
-            612
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E004-q1-cpu-operator-baseline/q1_cpu_operator_runner.cpp",
-          "occurrences": 2,
-          "first_lines": [
-            338,
-            373
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "experiments/E006-powervr-vulkan-q1/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            132
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_generate_bonsai_night_chart.py",
-          "occurrences": 1,
-          "first_lines": [
-            19
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_q1_cpu_operator_runner.py",
-          "occurrences": 3,
-          "first_lines": [
-            49,
-            94,
-            199
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_q1_memory_accounting.py",
-          "occurrences": 5,
-          "first_lines": [
-            30,
-            108,
-            222,
-            233,
-            355
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_record_model_result.py",
-          "occurrences": 1,
-          "first_lines": [
-            30
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_summarize_bonsai_night.py",
-          "occurrences": 1,
-          "first_lines": [
-            12
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tests/test_summarize_q1_cpu_operator.py",
-          "occurrences": 1,
-          "first_lines": [
-            37
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tooling/README.md",
-          "occurrences": 3,
-          "first_lines": [
-            30,
-            32,
-            40
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tooling/generate_bonsai_night_chart.py",
-          "occurrences": 3,
-          "first_lines": [
-            24,
-            274,
-            278
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tooling/q1_memory_accounting.py",
-          "occurrences": 2,
-          "first_lines": [
-            27,
-            31
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tooling/summarize_bonsai_night.py",
-          "occurrences": 3,
-          "first_lines": [
-            15,
-            25,
-            582
-          ]
-        },
-        {
-          "term": "Bonsai-27B",
-          "path": "tooling/summarize_q1_cpu_operator.py",
-          "occurrences": 1,
-          "first_lines": [
-            27
-          ]
-        },
         {
           "term": "LFM2.5",
           "path": "docs/evidence/orange-rag-prior-tests.md",
@@ -4813,12 +4261,7 @@
           ]
         }
       ],
-      "experiment_ids": [
-        "E004",
-        "E004-Q1-CPU-OPERATOR-BASELINE",
-        "E006",
-        "E006-POWERVR-VULKAN-Q1"
-      ],
+      "experiment_ids": [],
       "experiment_roots": [
         {
           "canonical_path": "experiments/E003-q1-packed-carrier",
@@ -4955,17 +4398,8 @@
     },
     {
       "ref": "refs/remotes/origin/main",
-      "match_count": 1,
-      "matches": [
-        {
-          "term": "Bonsai-27B",
-          "path": "docs/npu/ternary-bonsai-custom-kernel-feasibility.md",
-          "occurrences": 1,
-          "first_lines": [
-            60
-          ]
-        }
-      ],
+      "match_count": 0,
+      "matches": [],
       "experiment_ids": [],
       "experiment_roots": [
         {
@@ -4996,7 +4430,7 @@
   "ref_snapshot": [
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
-      "commit": "186d082c66bac91fce27cafc2525d95a7e521e86"
+      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
     },
     {
       "ref": "refs/heads/main",
@@ -5011,8 +4445,12 @@
       "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8"
     },
     {
+      "ref": "refs/remotes/origin/codex/e048-per-op-trace",
+      "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
+    },
+    {
       "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
-      "commit": "b8220cfda224623e30b1d92e74cba4251a7c3a69"
+      "commit": "5bb259003fcdbf394182395a4440d2d61c995232"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -5025,52 +4463,231 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e047-hard-profiling",
-    "base_commit": "d9625df3dbd0f4929f1130022619896a73044c8d",
+    "base_commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140",
     "upstream_ref": "refs/remotes/origin/codex/e047-hard-profiling",
-    "upstream_base_commit": "cb180848e456619a62a5ae921fa46be5bcfae4dd",
-    "tree_binding_sha256": "564365f97d6eff1bdbcdaabdf65ed0a939d38ca6dac4330e48b3e98bf8ca8bd1",
+    "upstream_base_commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140",
+    "tree_binding_source": "git-index-stage0",
+    "tree_binding_sha256": "d85dd664f42f1068f0e4950ff34da9a9bd2294f7c94dd9fcfc857e0a6d682dda",
     "binding_excludes": [
       "experiments/E047-common-benchmark/data/branch-preflight.json",
       "experiments/E047-common-benchmark/data/manifest.json"
+    ],
+    "bound_experiment_roots": [
+      {
+        "canonical_path": "experiments/E003-q1-packed-carrier",
+        "experiment_ids": [
+          "E003",
+          "E003-Q1-PACKED-CARRIER"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E019-q1-i16-evis-gemm",
+        "experiment_ids": [
+          "E019",
+          "E019-Q1-I16-EVIS-GEMM"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E020-q1-unpack-native-fc",
+        "experiment_ids": [
+          "E020",
+          "E020-Q1-UNPACK-NATIVE-FC"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E020-two-custom-kernel",
+        "experiment_ids": [
+          "E020",
+          "E020-TWO-CUSTOM-KERNEL"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E021-q1-unpack-native-matmul",
+        "experiment_ids": [
+          "E021",
+          "E021-Q1-UNPACK-NATIVE-MATMUL"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E022-fused-q1",
+        "experiment_ids": [
+          "E022",
+          "E022-FUSED-Q1"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E023-ggml-q1-seam",
+        "experiment_ids": [
+          "E023",
+          "E023-GGML-Q1-SEAM"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E024-npu-full-projection",
+        "experiment_ids": [
+          "E024",
+          "E024-NPU-FULL-PROJECTION"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E025-ddr-frequency",
+        "experiment_ids": [
+          "E025",
+          "E025-DDR-FREQUENCY"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E026-cpu-decode-screen",
+        "experiment_ids": [
+          "E026",
+          "E026-CPU-DECODE-SCREEN"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E027-poll-scheduling",
+        "experiment_ids": [
+          "E027",
+          "E027-POLL-SCHEDULING"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E028-lto",
+        "experiment_ids": [
+          "E028",
+          "E028-LTO"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E029-mtune-a55",
+        "experiment_ids": [
+          "E029",
+          "E029-MTUNE-A55"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E030-q1-paired-reuse",
+        "experiment_ids": [
+          "E030",
+          "E030-Q1-PAIRED-REUSE"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E031-q1-noinline-reuse",
+        "experiment_ids": [
+          "E031",
+          "E031-Q1-NOINLINE-REUSE"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E032-q1-block4-reuse",
+        "experiment_ids": [
+          "E032",
+          "E032-Q1-BLOCK4-REUSE"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E033-scheduler-strict0",
+        "experiment_ids": [
+          "E033",
+          "E033-SCHEDULER-STRICT0"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E034-worker-count-strict0",
+        "experiment_ids": [
+          "E034",
+          "E034-WORKER-COUNT-STRICT0"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E035-poll-screen",
+        "experiment_ids": [
+          "E035",
+          "E035-POLL-SCREEN"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E039-q1-pair-wholek",
+        "experiment_ids": [
+          "E039",
+          "E039-Q1-PAIR-WHOLEK"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E040-q1-register-lut",
+        "experiment_ids": [
+          "E040",
+          "E040-Q1-REGISTER-LUT"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E044-cluster-prfm",
+        "experiment_ids": [
+          "E044",
+          "E044-CLUSTER-PRFM"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E045-dspark-stock-oom",
+        "experiment_ids": [
+          "E045",
+          "E045-DSPARK-STOCK-OOM"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E047-common-benchmark",
+        "experiment_ids": [
+          "E047",
+          "E047-COMMON-BENCHMARK"
+        ]
+      }
     ]
   },
   "remote_refs_at_scan": [
     "refs/remotes/origin/codex/e022-fused-q1",
     "refs/remotes/origin/codex/e023-ggml-q1-seam",
     "refs/remotes/origin/codex/e047-hard-profiling",
+    "refs/remotes/origin/codex/e048-per-op-trace",
     "refs/remotes/origin/codex/e049-nsi-calibration",
     "refs/remotes/origin/codex/profiling-foundation",
     "refs/remotes/origin/main"
   ],
-  "searched_ref_count": 9,
-  "match_count": 2584,
+  "searched_ref_count": 10,
+  "match_count": 895,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
     "status": "duplicate_found",
     "experiment_id": "E047-COMMON-BENCHMARK",
-    "candidate_count": 3,
+    "candidate_count": 4,
     "candidates": [
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e047-hard-profiling",
-        "commit": "d9625df3dbd0f4929f1130022619896a73044c8d"
+        "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e048-per-op-trace",
-        "commit": "186d082c66bac91fce27cafc2525d95a7e521e86"
+        "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-        "commit": "cb180848e456619a62a5ae921fa46be5bcfae4dd"
+        "commit": "d54edd06d41ff2c2d3317e3f8128abb7fe8ab140"
+      },
+      {
+        "experiment_id": "E047-COMMON-BENCHMARK",
+        "canonical_path": "experiments/E047-common-benchmark",
+        "path": "experiments/E047-common-benchmark/README.md",
+        "ref": "refs/remotes/origin/codex/e048-per-op-trace",
+        "commit": "0ebb4b3694c618d4b763d3206ef46531032eb3cb"
       }
     ]
   },

@@ -263,44 +263,158 @@ def _upstream_ref(root: Path) -> str | None:
         return None
 
 
-def _tree_binding(root: Path, excludes: Iterable[str]) -> str:
-    excluded = {Path(value).as_posix() for value in excludes}
-    try:
+def _git_tree_entries(root: Path, source: str) -> list[tuple[bytes, bytes, bytes]]:
+    """Return ``(path, mode, object-id)`` from the index or a committed tree."""
+
+    if source == "index":
         output = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(root),
-                "ls-files",
-                "-z",
-                "--cached",
-                "--others",
-                "--exclude-standard",
-            ],
+            ["git", "-C", str(root), "ls-files", "--stage", "-z"],
             check=True,
             capture_output=True,
         ).stdout
-        names = sorted(name.decode("utf-8") for name in output.split(b"\0") if name)
-        files = [(name, (root / name).read_bytes()) for name in names if name not in excluded and (root / name).is_file()]
-    except (subprocess.CalledProcessError, FileNotFoundError, UnicodeDecodeError):
-        files = [
-            (path.relative_to(root).as_posix(), path.read_bytes())
+        entries: list[tuple[bytes, bytes, bytes]] = []
+        for record in output.split(b"\0"):
+            if not record:
+                continue
+            metadata, path = record.split(b"\t", 1)
+            mode, object_id, stage = metadata.split(b" ", 2)
+            if stage != b"0":
+                raise ValueError("unmerged Git index cannot be evidence-bound")
+            entries.append((path, mode, object_id))
+        return sorted(entries)
+
+    output = subprocess.run(
+        ["git", "-C", str(root), "ls-tree", "-r", "-z", source],
+        check=True,
+        capture_output=True,
+    ).stdout
+    entries = []
+    for record in output.split(b"\0"):
+        if not record:
+            continue
+        metadata, path = record.split(b"\t", 1)
+        mode, object_type, object_id = metadata.split(b" ", 2)
+        if object_type == b"blob":
+            entries.append((path, mode, object_id))
+    return sorted(entries)
+
+
+def _tree_binding(root: Path, excludes: Iterable[str], *, source: str = "index") -> str:
+    excluded = {Path(value).as_posix().encode("utf-8") for value in excludes}
+    try:
+        entries = [
+            (path, mode, object_id)
+            for path, mode, object_id in _git_tree_entries(root, source)
+            if path not in excluded
+        ]
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        entries = [
+            (
+                path.relative_to(root).as_posix().encode("utf-8"),
+                b"filesystem",
+                hashlib.sha256(path.read_bytes()).hexdigest().encode("ascii"),
+            )
             for path in _filesystem_files(root)
-            if path.relative_to(root).as_posix() not in excluded
+            if path.relative_to(root).as_posix().encode("utf-8") not in excluded
         ]
     digest = hashlib.sha256()
-    for name, data in files:
-        digest.update(name.encode("utf-8"))
+    for path, mode, object_id in entries:
+        digest.update(path)
         digest.update(b"\0")
-        digest.update(hashlib.sha256(data).digest())
+        digest.update(mode)
+        digest.update(b"\0")
+        digest.update(object_id)
         digest.update(b"\0")
     return digest.hexdigest()
 
 
-def tree_binding_sha256(root: Path, excludes: Iterable[str]) -> str:
+def tree_binding_sha256(
+    root: Path, excludes: Iterable[str], *, source: str = "index"
+) -> str:
     """Return the self-reference-safe binding used by persisted preflights."""
 
-    return _tree_binding(root.resolve(), excludes)
+    return _tree_binding(root.resolve(), excludes, source=source)
+
+
+def experiment_root_topology(ref_result: dict[str, object]) -> list[dict[str, object]]:
+    """Return stable root/ID evidence without circular per-file path details."""
+
+    roots = ref_result.get("experiment_roots")
+    if not isinstance(roots, list):
+        return []
+    topology = []
+    for root in roots:
+        if not isinstance(root, dict):
+            continue
+        canonical_path = root.get("canonical_path")
+        experiment_ids = root.get("experiment_ids")
+        if isinstance(canonical_path, str) and isinstance(experiment_ids, list):
+            topology.append(
+                {
+                    "canonical_path": canonical_path,
+                    "experiment_ids": sorted(str(value) for value in experiment_ids),
+                }
+            )
+    return sorted(topology, key=lambda item: str(item["canonical_path"]))
+
+
+def scan_refs(
+    root: Path, refs: Iterable[str], terms: Iterable[str]
+) -> list[dict[str, object]]:
+    """Independently scan refs and attach their exact commits."""
+
+    results = []
+    for ref in refs:
+        result = scan_ref(root, ref, terms)
+        result["commit"] = _commit(root, ref)
+        result.pop("experiment_paths", None)
+        result["matches"] = _compact_matches(result["matches"])
+        results.append(result)
+    return results
+
+
+def scan_index(root: Path, terms: Iterable[str]) -> dict[str, object]:
+    """Scan stage-0 index blobs, including staged additions and deletions."""
+
+    terms = tuple(dict.fromkeys(term for term in terms if term))
+    matches: list[dict[str, object]] = []
+    experiment_paths: list[dict[str, object]] = []
+    try:
+        entries = _git_tree_entries(root, "index")
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        return scan_ref(root, "HEAD", terms)
+    for raw_path, _, object_id in entries:
+        path = raw_path.decode("utf-8", "surrogateescape")
+        data = subprocess.run(
+            ["git", "-C", str(root), "cat-file", "blob", object_id.decode("ascii")],
+            check=True,
+            capture_output=True,
+        ).stdout
+        path_experiment_ids = _experiment_ids(path)
+        if path_experiment_ids:
+            experiment_paths.append({"path": path, "experiment_ids": path_experiment_ids})
+        matches.extend(_match_lines(path, data, terms))
+    synthetic = {"ref": "INDEX", "match_count": len(matches), "matches": matches}
+    synthetic["experiment_ids"] = sorted(
+        {
+            item
+            for match in matches
+            for item in _experiment_ids(f"{match['path']} {match['text']}")
+        }
+    )
+    synthetic["experiment_paths"] = experiment_paths
+    grouped: dict[tuple[str, tuple[str, ...]], list[str]] = {}
+    for item in experiment_paths:
+        path = Path(str(item["path"]))
+        if len(path.parts) >= 2 and path.parts[0].lower() == "experiments":
+            canonical = Path(path.parts[0], path.parts[1]).as_posix()
+            key = (canonical, tuple(str(value) for value in item["experiment_ids"]))
+            grouped.setdefault(key, []).append(str(item["path"]))
+    synthetic["experiment_roots"] = [
+        {"canonical_path": canonical, "experiment_ids": list(ids), "paths": sorted(paths)}
+        for (canonical, ids), paths in sorted(grouped.items())
+    ]
+    return synthetic
 
 
 def ref_commit(root: Path, ref: str) -> str | None:
@@ -342,15 +456,9 @@ def build_manifest(
     active_ref = _active_ref(root)
     upstream_ref = _upstream_ref(root)
     binding_excludes = sorted(dict.fromkeys(Path(value).as_posix() for value in binding_excludes))
-    ref_results = []
-    for ref in refs:
-        result = scan_ref(root, ref, terms)
-        result["commit"] = _commit(root, ref)
-        ref_results.append(result)
+    ref_results = scan_refs(root, refs, terms)
     candidates = _duplicate_candidates(ref_results, experiment_id)
-    for result in ref_results:
-        result.pop("experiment_paths", None)
-        result["matches"] = _compact_matches(result["matches"])
+    index_topology = experiment_root_topology(scan_index(root, terms))
     match_count = sum(int(item["match_count"]) for item in ref_results)
     snapshot_exclusions = {value for value in (active_ref, upstream_ref) if value}
     ref_snapshot = [
@@ -373,8 +481,10 @@ def build_manifest(
             "base_commit": _commit(root, "HEAD"),
             "upstream_ref": upstream_ref,
             "upstream_base_commit": _commit(root, upstream_ref) if upstream_ref else None,
-            "tree_binding_sha256": _tree_binding(root, binding_excludes),
+            "tree_binding_source": "git-index-stage0",
+            "tree_binding_sha256": _tree_binding(root, binding_excludes, source="index"),
             "binding_excludes": binding_excludes,
+            "bound_experiment_roots": index_topology,
         },
         "remote_refs_at_scan": sorted(
             ref for ref in refs if ref.startswith("refs/remotes/")

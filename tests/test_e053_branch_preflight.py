@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tooling.branch_preflight import build_manifest, scan_ref
+from tooling.branch_preflight import build_manifest, scan_ref, tree_binding_sha256
 
 
 class E053BranchPreflightTest(unittest.TestCase):
@@ -159,7 +159,26 @@ class E053BranchPreflightTest(unittest.TestCase):
             self.assertEqual("refs/heads/master", active["ref"])
             self.assertEqual(40, len(active["base_commit"]))
             self.assertEqual(64, len(active["tree_binding_sha256"]))
+            self.assertEqual("git-index-stage0", active.get("tree_binding_source"))
             self.assertEqual(["evidence.json", "manifest.json"], active["binding_excludes"])
+
+    def test_tree_binding_uses_index_entries_and_cannot_skip_deleted_tracked_file(self):
+        """Удаление tracked-файла меняет binding только после фиксации в Git index."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.email", "test@example.invalid"], check=True)
+            subprocess.run(["git", "-C", str(root), "config", "user.name", "Test"], check=True)
+            (root / "tracked.txt").write_text("данные\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+            subprocess.run(["git", "-C", str(root), "commit", "-qm", "base"], check=True)
+
+            base = tree_binding_sha256(root, ())
+            (root / "tracked.txt").unlink()
+            self.assertEqual(base, tree_binding_sha256(root, ()))
+            subprocess.run(["git", "-C", str(root), "add", "-u"], check=True)
+            self.assertNotEqual(base, tree_binding_sha256(root, ()))
 
 
 if __name__ == "__main__":
