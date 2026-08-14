@@ -1,0 +1,62 @@
+{
+  "schema_version": "e048-trace/v2-requirement",
+  "status": "follow_up_requirement_only",
+  "purpose": "Permit defensible tensor-range deduplication in a future trace; this requirement does not retrofit or reinterpret E048 v1 raw data.",
+  "event_types": {
+    "q1_kernel": {
+      "region_names": [
+        "weight",
+        "activation",
+        "output"
+      ],
+      "region_descriptor": {
+        "required": [
+          "allocation_id",
+          "base_address",
+          "byte_offset",
+          "byte_length"
+        ],
+        "dedup_key": [
+          "allocation_id",
+          "base_address",
+          "byte_offset",
+          "byte_length"
+        ],
+        "constraints": {
+          "allocation_id": "stable for the lifetime of the allocation within one capture",
+          "base_address": "numeric process address captured for provenance, not a DDR physical address",
+          "byte_offset": "non-negative offset from base_address",
+          "byte_length": "positive span length"
+        }
+      },
+      "required_region_object": "regions.<region_name>"
+    },
+    "node_worker": {
+      "region_descriptor": {
+        "required": [
+          "allocation_id",
+          "base_address",
+          "byte_offset",
+          "byte_length"
+        ],
+        "dedup_key": [
+          "allocation_id",
+          "base_address",
+          "byte_offset",
+          "byte_length"
+        ]
+      },
+      "required_region_object": "read_regions[] and write_regions[]"
+    }
+  },
+  "current_e048_v1": {
+    "allocation_identity_present": false,
+    "q8_unique_aggregate": "unknown_unproven",
+    "per_kernel_logical_descriptor_remains_valid": true,
+    "do_not_claim": [
+      "experiment-level unique Q8 bytes",
+      "physical DDR traffic",
+      "deduplicated tensor movement"
+    ]
+  }
+}

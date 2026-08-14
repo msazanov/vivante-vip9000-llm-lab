@@ -100,6 +100,19 @@
     "timer": "profile_elapsed_ms"
   },
   "pairs": 5,
+  "percentile_method": {
+    "linear": "sorted index=(n-1)*p with linear interpolation",
+    "nearest_rank": "rank=ceil(n*p)",
+    "p": 0.95,
+    "profile_elapsed_ms": {
+      "nearest_rank_overhead_fraction": 0.012007131105280067,
+      "off_linear_p95_ms": 36865.2923934,
+      "off_nearest_rank_p95_ms": 37131.00699,
+      "on_linear_p95_ms": 37299.9215792,
+      "on_nearest_rank_p95_ms": 37576.843859
+    },
+    "sample_count": 5
+  },
   "primary_timer": "profile_elapsed_ms",
   "runs": {
     "off": [
@@ -946,5 +959,11 @@
   "status": "complete",
   "token_equal": true,
   "trace_overflow_ok": true,
-  "trace_schema_errors": 0
+  "trace_schema_errors": 0,
+  "workload_identity": {
+    "artifact": "data/compat-ab-workload-identity.json",
+    "historical_pre_run_hashes_captured": false,
+    "note": "Current model/binary/preload hashes are provenance after the completed run, not immutable evidence of what was present before each run.",
+    "status": "post_hoc_current_only"
+  }
 }

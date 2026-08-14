@@ -1,0 +1,47 @@
+{
+  "schema_version": "e048-source-provenance/v1",
+  "source_commit_label": "38c66ad",
+  "baseline_root_on_target": "/home/orangepi/vip9000-lab/src/llama-prismml-38c66",
+  "target_root_on_target": "/home/orangepi/vip9000-lab/src/e048-per-op-trace-38c66",
+  "target_vs_baseline_diff": {
+    "git_artifact": "data/e048-target-vs-baseline.diff",
+    "sha256": "fba30a9060ce94f8c8bfd2c218ca9b56944f542402f70bc7b931671f02251161",
+    "bytes": 38162,
+    "lines": 1001
+  },
+  "checked_in_patch": {
+    "path": "patches/llama.cpp/38c66ad/e048-per-op-trace.patch",
+    "sha256": "4b9a080677b0dccf7d740f9f44af1ccc81fe54df2f8e631534c6d2ddf4825fd0",
+    "bytes": 36972,
+    "lines": 1013
+  },
+  "target_modified_file_sha256": {
+    "ggml/include/ggml-cpu.h": "bb5c353d9b39052f90b688f1cc63f28652c84305ccb5e9dad1811e98d8e4e62d",
+    "ggml/src/ggml-cpu/arch/arm/repack.cpp": "12eea52ee19abb77693c490cc456a0bf811399eda8e753d3128387d55c5da9f6",
+    "ggml/src/ggml-cpu/CMakeLists.txt": "f2213dbcd329e7d37779efd2f753f4b2541982038324af17892474250aac11b9",
+    "ggml/src/ggml-cpu/e048-trace.c": "9a7a20c961ee8994a0cc1fee6bc80f478ad39e6c3e8c5615c4003f47c292f858",
+    "ggml/src/ggml-cpu/e048-trace.h": "a61e98ad3d726c957dc9ae456bdabd4004c45cc3bc5bf1ce9859ea0ce0acc44c",
+    "ggml/src/ggml-cpu/ggml-cpu.c": "65d12842b06f42276b37d46e6363e3036a333b4e08bf84a04e19711cd6881820",
+    "ggml/src/ggml-cpu/ggml-cpu.cpp": "7a1104cc685710deb2db618931761557f5fd291bec1edbcbece201b6beb069ff",
+    "ggml/src/ggml-cpu/ggml-cpu-impl.h": "7f39b5145ce1a450b289d58e7572c84ce533fdbdbeeed856203539e24c74a33d",
+    "src/llama-context.cpp": "6d6323d2a3533d76b65144f3e9a4bd3c30289d9430e565e5a819f5e141e295c0"
+  },
+  "patch_target_delta": {
+    "status": "not_byte_identical",
+    "changed_file": "src/llama-context.cpp",
+    "kind": "comment_only",
+    "checked_in_patch_comment_lines": [
+      "// graph_compute() applies the same value later, but rings must be",
+      "// resized before token_begin marks the graph active.  This avoids",
+      "// dropping workers when llama's backend thread count differs from",
+      "// GGML_DEFAULT_N_THREADS during warmup or the first decode."
+    ],
+    "target_comment_lines": [
+      "// Resize diagnostic rings before token_begin marks the graph active.",
+      "// llama's backend thread count can differ from GGML_DEFAULT_N_THREADS",
+      "// during warmup or the first decode."
+    ],
+    "code_change_outside_comments": false,
+    "note": "The target source was used for the target build; the checked-in patch remains the reproducible source intent. Do not claim byte identity between them."
+  }
+}

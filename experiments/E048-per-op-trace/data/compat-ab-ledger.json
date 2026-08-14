@@ -770,7 +770,12 @@
       "output_write_bytes": 114278400,
       "q1_packed_weight_read_bytes": 24864030720,
       "q8_activation_logical_read_bytes": 46965391360,
-      "q8_activation_unique_read_bytes": 734930944,
+      "q8_activation_unique_read_bytes": null,
+      "q8_activation_unique_read_bytes_bounds": {
+        "lower_bound_bytes": null,
+        "upper_bound_bytes": null
+      },
+      "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id",
       "run": "pair01-on",
       "steady": {
         "duration_ns": 15567935876,
@@ -778,7 +783,12 @@
         "output_write_bytes": 49827840,
         "q1_packed_weight_read_bytes": 10809262080,
         "q8_activation_logical_read_bytes": 20417495040,
-        "q8_activation_unique_read_bytes": 315119616
+        "q8_activation_unique_read_bytes": null,
+        "q8_activation_unique_read_bytes_bounds": {
+          "lower_bound_bytes": null,
+          "upper_bound_bytes": null
+        },
+        "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id"
       },
       "variants": {
         "q1_0_4x4_q8_0": 97824
@@ -790,7 +800,12 @@
       "output_write_bytes": 114278400,
       "q1_packed_weight_read_bytes": 24864030720,
       "q8_activation_logical_read_bytes": 46965391360,
-      "q8_activation_unique_read_bytes": 734930944,
+      "q8_activation_unique_read_bytes": null,
+      "q8_activation_unique_read_bytes_bounds": {
+        "lower_bound_bytes": null,
+        "upper_bound_bytes": null
+      },
+      "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id",
       "run": "pair02-on",
       "steady": {
         "duration_ns": 15717500433,
@@ -798,7 +813,12 @@
         "output_write_bytes": 49827840,
         "q1_packed_weight_read_bytes": 10809262080,
         "q8_activation_logical_read_bytes": 20417495040,
-        "q8_activation_unique_read_bytes": 315119616
+        "q8_activation_unique_read_bytes": null,
+        "q8_activation_unique_read_bytes_bounds": {
+          "lower_bound_bytes": null,
+          "upper_bound_bytes": null
+        },
+        "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id"
       },
       "variants": {
         "q1_0_4x4_q8_0": 97824
@@ -810,7 +830,12 @@
       "output_write_bytes": 114278400,
       "q1_packed_weight_read_bytes": 24864030720,
       "q8_activation_logical_read_bytes": 46965391360,
-      "q8_activation_unique_read_bytes": 734930944,
+      "q8_activation_unique_read_bytes": null,
+      "q8_activation_unique_read_bytes_bounds": {
+        "lower_bound_bytes": null,
+        "upper_bound_bytes": null
+      },
+      "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id",
       "run": "pair03-on",
       "steady": {
         "duration_ns": 15507079163,
@@ -818,7 +843,12 @@
         "output_write_bytes": 49827840,
         "q1_packed_weight_read_bytes": 10809262080,
         "q8_activation_logical_read_bytes": 20417495040,
-        "q8_activation_unique_read_bytes": 315119616
+        "q8_activation_unique_read_bytes": null,
+        "q8_activation_unique_read_bytes_bounds": {
+          "lower_bound_bytes": null,
+          "upper_bound_bytes": null
+        },
+        "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id"
       },
       "variants": {
         "q1_0_4x4_q8_0": 97824
@@ -830,7 +860,12 @@
       "output_write_bytes": 114278400,
       "q1_packed_weight_read_bytes": 24864030720,
       "q8_activation_logical_read_bytes": 46965391360,
-      "q8_activation_unique_read_bytes": 734930944,
+      "q8_activation_unique_read_bytes": null,
+      "q8_activation_unique_read_bytes_bounds": {
+        "lower_bound_bytes": null,
+        "upper_bound_bytes": null
+      },
+      "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id",
       "run": "pair04-on",
       "steady": {
         "duration_ns": 15482158935,
@@ -838,7 +873,12 @@
         "output_write_bytes": 49827840,
         "q1_packed_weight_read_bytes": 10809262080,
         "q8_activation_logical_read_bytes": 20417495040,
-        "q8_activation_unique_read_bytes": 315119616
+        "q8_activation_unique_read_bytes": null,
+        "q8_activation_unique_read_bytes_bounds": {
+          "lower_bound_bytes": null,
+          "upper_bound_bytes": null
+        },
+        "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id"
       },
       "variants": {
         "q1_0_4x4_q8_0": 97824
@@ -850,7 +890,12 @@
       "output_write_bytes": 114278400,
       "q1_packed_weight_read_bytes": 24864030720,
       "q8_activation_logical_read_bytes": 46965391360,
-      "q8_activation_unique_read_bytes": 734930944,
+      "q8_activation_unique_read_bytes": null,
+      "q8_activation_unique_read_bytes_bounds": {
+        "lower_bound_bytes": null,
+        "upper_bound_bytes": null
+      },
+      "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id",
       "run": "pair05-on",
       "steady": {
         "duration_ns": 15673506728,
@@ -858,11 +903,32 @@
         "output_write_bytes": 49827840,
         "q1_packed_weight_read_bytes": 10809262080,
         "q8_activation_logical_read_bytes": 20417495040,
-        "q8_activation_unique_read_bytes": 315119616
+        "q8_activation_unique_read_bytes": null,
+        "q8_activation_unique_read_bytes_bounds": {
+          "lower_bound_bytes": null,
+          "upper_bound_bytes": null
+        },
+        "q8_activation_unique_read_bytes_status": "unknown_unproven_without_allocation_id"
       },
       "variants": {
         "q1_0_4x4_q8_0": 97824
       }
     }
-  ]
+  ],
+  "semantics": {
+    "q8_activation_logical_read_bytes": {
+      "meaning": "logical Q8 activation bytes revisited by each Q1 output group",
+      "status": "declared_per_kernel_descriptor"
+    },
+    "q8_activation_unique_read_bytes": {
+      "lower_bound_bytes": null,
+      "reason": "raw event has no allocation ID, base/offset, or address range; no experiment-level deduplication is defensible",
+      "status": "unknown_unproven",
+      "upper_bound_bytes": null,
+      "value": null
+    },
+    "raw_event_policy": {
+      "q8_activation_unique_read_bytes": "not promoted to aggregate; treat any per-kernel field as an unverified descriptor until allocation identity is recorded"
+    }
+  }
 }

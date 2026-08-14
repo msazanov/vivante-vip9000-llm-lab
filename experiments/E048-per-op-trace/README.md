@@ -48,6 +48,11 @@ thermal guard; менялась только переменная trace (`off` �
 `Explain the A733 memory bottleneck in one short sentence.` Все десять
 запусков завершились `RC=0`. Полная команда и идентичность workload записаны
 в raw metadata на плате и опубликованы в packed/provenance manifests.
+Model/binary/token-capture SHA опубликованы в
+`data/compat-ab-workload-identity.json` со статусом
+`post_hoc_current_only`: до запуска immutable before/after hashes не
+снимались, поэтому эти значения не доказывают историческую identity каждого
+запуска.
 
 | Проверка | Результат |
 |---|---:|
@@ -67,6 +72,12 @@ thermal guard; менялась только переменная trace (`off` �
 |---|---:|---:|---:|---:|---:|---:|
 | полный `profile_elapsed_ms` | 35485.12 ms | 35622.87 ms | **+0.39%** | 36865.29 ms | 37299.92 ms | **+1.18%** |
 
+Для таблицы используется линейная интерполяция по отсортированным пяти
+значениям: `index=(n−1)×0.95`, то есть между соседними order statistics.
+Контрольный nearest-rank (`rank=ceil(n×0.95)=5`) даёт raw p95 `37131.006990 ms`
+для off и `37576.843859 ms` для on; при этом методе overhead также
+положительный (`+1.20%`).
+
 Итоговая классификация — `TRACE_ONLY`: p95 wall overhead `+1.18%` выше
 порога `1%`. Внутренние llama.cpp числа (`eval`: off median 3599.47 ms,
 on median 2933.79 ms) дают отрицательное delta, но это не может означать
@@ -84,17 +95,20 @@ eval` отдельно даёт median `+1.41%` и p95 `+10.61%`, что доп�
 В каждом trace-on сохранено 83 373 405 bytes JSONL. Для steady-state portion
 (`token_seq >= 3` в текущем capture) aggregate одного запуска содержит 41 952
 Q1 kernel events: примерно 10.809 GB packed-Q1 logical reads, 20.417 GB
-logical Q8-activation reads, 315.120 MB unique Q8 activation reads и 49.828 MB
-output writes. Это declared/ledger traffic, не измеренный DDR traffic: поля
+logical Q8-activation reads и 49.828 MB output writes. Experiment-level
+unique Q8 bytes — `null`/`unknown_unproven`: текущий event не содержит
+allocation ID, base/offset или range, поэтому дедупликация не доказуема.
+Нижняя и верхняя границы также оставлены `null`, поскольку их нельзя строго
+вывести из capture. Это declared/ledger traffic, не измеренный DDR traffic: поля
 `observed_ddr_read_bytes` и `observed_ddr_write_bytes` намеренно `null`,
 `counter_method=none`. Полная агрегация, включая per-op node bytes и все пять
 trace hashes, находится в `data/compat-ab-ledger.json`.
 
-Все десять raw stdout/stderr/telemetry/metadata/thermal/token-id файлов и пять
+Все десять raw stdout/stderr/telemetry/phases/metadata/thermal/token-id файлов и пять
 полных trace **забраны в git как zstd-артефакты** в
 `raw/compat-ab/compressed/`. Упаковка детерминирована: zstd level 10,
 single-thread, без timestamp. Файл
-`data/compat-ab-packed-manifest.tsv` содержит для каждого из 85 артефактов
+`data/compat-ab-packed-manifest.tsv` содержит для каждого из 95 артефактов
 source path, git path, SHA-256/размер до распаковки и SHA-256/размер сжатого
 файла. Все compressed files меньше 20 MB, поэтому split не потребовался.
 
@@ -102,11 +116,33 @@ source path, git path, SHA-256/размер до распаковки и SHA-256
 файлов на плате; он не заменяет опубликованные git artifacts. Target raw path:
 `/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/`.
 
+### Source provenance и будущая dedup-схема
+
+Target source diff baseline→E048 опубликован в
+`data/e048-target-vs-baseline.diff`; его SHA/размеры и SHA изменённых target
+файлов находятся в `data/e048-source-provenance.json`. Target source не
+объявляется byte-identical с checked-in patch: в `src/llama-context.cpp`
+есть только comment-only delta — patch содержит четыре строки комментария,
+target три строки. Кодовая часть delta совпадает, но это явно зафиксировано,
+а не скрыто.
+
+Будущий harness обязан снимать model/binary/preload hashes до первого запуска
+и после последнего, сравнивать их и помечать эксперимент invalid при изменении;
+это требование также отражено в workload identity artifact.
+
+Для будущего trace v2 добавлено требование
+`data/trace-v2-allocation-identity-requirement.json` и regression test. Перед
+любой публикацией experiment-level unique bytes он требует для weight,
+activation и output стабильные `allocation_id`, `base_address`,
+`byte_offset`, `byte_length`. E048 v1 этому требованию не соответствует;
+его per-kernel `q8_activation_logical_read_bytes` остаётся только logical
+descriptor.
+
 ## Acceptance gate
 
 Compatibility A/B выше завершён как диагностический прогон. Для каждой пары
-сохранены stdout, stderr, telemetry, E048 JSONL и exit metadata; compact
-summary/ledger/raw manifest лежат в `data/`. Сначала проверялись
+сохранены stdout, stderr, telemetry, phases, E048 JSONL и exit metadata;
+compact summary/ledger/raw manifests лежат в `data/`. Сначала проверялись
 `overflow_count=0`, JSONL schema и одинаковый generated token stream. Затем
 считался paired median/p95 overhead:
 
@@ -119,7 +155,9 @@ summary/ledger/raw manifest лежат в `data/`. Сначала проверя
 ## Известные ограничения
 
 - `logical_*` — declared tensor movement, а не физические DDR транзакции;
-- `unique_*` — union адресных диапазонов доступных tensor buffers;
+- `unique_*` в raw v1 — локальный event-side descriptor без опубликованных
+  allocation identity; experiment-level Q8 dedup не утверждается и в ledger
+  оставлен `null`;
 - Q1 ledger считает packed Q1 4x4/4x8 и Q8 activation отдельно, но не
   утверждает фактический DDR traffic;
 - trace overhead не является скоростью модели и не используется как

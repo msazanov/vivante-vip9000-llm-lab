@@ -1,0 +1,33 @@
+{
+  "schema_version": "e048-compat-ab-workload-identity/v1",
+  "status": "post_hoc_current_only",
+  "warning": "These SHA-256 values were read after the completed A/B runs. The harness did not capture immutable before/after hashes, so they must not be treated as historical run identity.",
+  "historical_pre_run_hashes": null,
+  "objects": {
+    "model": {
+      "path": "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf",
+      "sha256": "17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0",
+      "identity_status": "post_hoc_current_only"
+    },
+    "binary": {
+      "path": "/home/orangepi/vip9000-lab/build/e048-per-op-trace-a733-q1-4x8/bin/llama-completion",
+      "sha256": "0c96de6ceffc441be6feb6e1596b9c5dd36dff48feec11ae6c9115d0163a011c",
+      "identity_status": "post_hoc_current_only"
+    },
+    "token_capture_preload": {
+      "path": "/home/orangepi/vip9000-lab/e048-token-capture.so",
+      "sha256": "7e40075c79990c2ba58bf4f4e5f692efdcd283504e3ea83a653324ddf4eea2b2",
+      "identity_status": "post_hoc_current_only"
+    },
+    "prompt": {
+      "sha256": "3422031cc96896c8aff5ea0363ef6cddca9ba485437f56dbfa63d7703f01a7de",
+      "identity_status": "captured_in_workload_definition"
+    }
+  },
+  "future_harness_requirement": {
+    "capture_before_run": true,
+    "capture_after_run": true,
+    "compare_before_after": true,
+    "reject_if_changed": true
+  }
+}
