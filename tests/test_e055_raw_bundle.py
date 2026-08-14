@@ -25,7 +25,9 @@ from tooling.e055_transport_evidence import (
     EndpointIdentity,
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
+    RemoteRuntimeObservation,
     TargetArtifactObservation,
+    TransportImplementationEvidence,
     canonical_deployment_layout,
     canonical_remote_output_path,
     validate_transport_evidence,
@@ -100,6 +102,29 @@ class BundleFixture:
         endpoint = EndpointIdentity(
             "test_fixture", "sealed-bundle-fixture", "fake-a733", None
         )
+        client_config = (
+            "BatchMode=yes", "StrictHostKeyChecking=yes",
+            "UserKnownHostsFile=external-pinned-file",
+        )
+        implementation = TransportImplementationEvidence(
+            "e055-openssh-implementation/v1", "test_fixture",
+            "tooling/e055_remote_helper.py", "9" * 64, 32768,
+            "/usr/bin/ssh", "8" * 64, 112233, 0o755,
+            "OpenSSH_9.9p2", client_config,
+            hashlib.sha256(("\n".join(client_config) + "\n").encode("ascii"))
+            .hexdigest(),
+            "test_fixture",
+        )
+        def runtime(sequence: int, request_id: str, nonce: str):
+            return RemoteRuntimeObservation(
+                "e055-remote-runtime-observation/v1", sequence,
+                request_id, nonce,
+                "/tmp/e055-q1-hot-cold/helpers/" + "9" * 64 + "/helper.py",
+                "9" * 64, 32768, 0o700, 7, 9001,
+                "e055-remote-helper/v1", "/usr/bin/python3",
+                "/usr/bin/python3.13", "3.13.7", "7" * 64,
+                6839896, 0o755, 7, 42,
+            )
         receipt_observations = tuple(
             TargetArtifactObservation(
                 item["role"], item["target_path"], item["sha256"],
@@ -119,7 +144,7 @@ class BundleFixture:
                 "e055-exclusive-deployment-receipt/v1", 1,
                 "a" * 64, "b" * 64,
                 self.layout.deployment_root, self.layout.lock_path, True, True,
-                endpoint, receipt_observations,
+                endpoint, receipt_observations, runtime(1, "a" * 64, "b" * 64),
             ),
             FreshReadbackProof(
                 "e055-fresh-readback-proof/v1", 2,
@@ -128,9 +153,10 @@ class BundleFixture:
                 EndpointIdentity(
                     "test_fixture", "sealed-bundle-fixture", "fake-a733", None
                 ),
-                readback_observations,
+                readback_observations, runtime(2, "c" * 64, "d" * 64),
             ),
             self.layout, expected,
+            implementation_evidence=implementation,
             exclusive_request_id="a" * 64,
             exclusive_request_nonce="b" * 64,
             readback_request_id="c" * 64,

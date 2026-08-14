@@ -24,7 +24,9 @@ from tooling.e055_transport_evidence import (
     EndpointIdentity,
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
+    RemoteRuntimeObservation,
     TargetArtifactObservation,
+    TransportImplementationEvidence,
 )
 
 
@@ -40,6 +42,34 @@ class FakeTransport:
         self.restored = 0
         self.actions = []
         self.requests = []
+        self.helper_sha256 = "9" * 64
+
+    def implementation_evidence(self) -> TransportImplementationEvidence:
+        config = (
+            "BatchMode=yes", "StrictHostKeyChecking=yes",
+            "UserKnownHostsFile=external-pinned-file",
+        )
+        return TransportImplementationEvidence(
+            "e055-openssh-implementation/v1", "test_fixture",
+            "tooling/e055_remote_helper.py", self.helper_sha256, 32768,
+            "/usr/bin/ssh", "8" * 64, 112233, 0o755,
+            "OpenSSH_9.9p2", config,
+            hashlib.sha256(("\n".join(config) + "\n").encode("ascii")).hexdigest(),
+            "test_fixture",
+        )
+
+    def runtime_observation(
+        self, sequence: int, request_id: str, request_nonce: str,
+    ) -> RemoteRuntimeObservation:
+        return RemoteRuntimeObservation(
+            "e055-remote-runtime-observation/v1", sequence,
+            request_id, request_nonce,
+            "/tmp/e055-q1-hot-cold/helpers/" + self.helper_sha256 + "/helper.py",
+            self.helper_sha256, 32768, 0o700, 7, 9001,
+            "e055-remote-helper/v1", "/usr/bin/python3",
+            "/usr/bin/python3.13", "3.13.7", "7" * 64,
+            6839896, 0o755, 7, 42,
+        )
 
     def _observations(
         self, artifacts: tuple, *, operation_sequence: int,
@@ -90,6 +120,7 @@ class FakeTransport:
                 artifacts, operation_sequence=1,
                 request_id=request_id, request_nonce=request_nonce,
             ),
+            runtime=self.runtime_observation(1, request_id, request_nonce),
         )
 
     def assert_artifact(self, artifact) -> None:
@@ -115,6 +146,7 @@ class FakeTransport:
                 artifacts, operation_sequence=2,
                 request_id=request_id, request_nonce=request_nonce,
             ),
+            runtime=self.runtime_observation(2, request_id, request_nonce),
         )
 
     def capture(self, *, run, e049c_argv, environment) -> TargetCapture:

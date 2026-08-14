@@ -40,6 +40,7 @@ from tooling.e055_raw_bundle import (
 from tooling.e055_transport_evidence import (
     ExclusiveDeploymentReceipt,
     FreshReadbackProof,
+    TransportImplementationEvidence,
     canonical_deployment_layout,
     canonical_remote_output_path,
     validate_transport_evidence,
@@ -107,6 +108,8 @@ class TargetCapture:
 
 
 class TargetTransport(Protocol):
+    def implementation_evidence(self) -> TransportImplementationEvidence: ...
+
     def prepare(
         self, artifacts: tuple[TargetArtifact, ...], *,
         deployment_root: str, lock_path: str,
@@ -418,6 +421,7 @@ class E055TargetExecutor:
                     "size_bytes": len(artifact.payload),
                     "mode": artifact.mode,
                 } for artifact in prepared),
+                implementation_evidence=self.transport.implementation_evidence(),
                 exclusive_request_id=exclusive_request[0],
                 exclusive_request_nonce=exclusive_request[1],
                 readback_request_id=readback_request[0],
