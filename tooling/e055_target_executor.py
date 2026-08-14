@@ -223,6 +223,8 @@ def _strict_capture(capture: Any, run: LimitedRun) -> str | None:
     )
     if any(not isinstance(value, bytes) for value in byte_fields):
         return "transport returned a non-bytes stream"
+    if not isinstance(capture.effective_cpus, tuple):
+        return "transport returned a noncanonical CPU tuple"
     if not isinstance(capture.exit_code, int) or isinstance(capture.exit_code, bool) or \
             capture.exit_code < 0:
         return "wrapper exit code is invalid"
@@ -254,6 +256,38 @@ def _strict_capture(capture: Any, run: LimitedRun) -> str | None:
         if not isinstance(document, dict):
             return "successful JSON capture must contain one object"
     return None
+
+
+def _sanitized_failure_capture(capture: TargetCapture, run: LimitedRun) -> TargetCapture:
+    """Keep every well-typed byte stream while making failure JSON serializable."""
+
+    def exact_bytes(value: Any) -> bytes:
+        return value if isinstance(value, bytes) else b""
+
+    exit_code = capture.exit_code
+    if not isinstance(exit_code, int) or isinstance(exit_code, bool) or exit_code < 0:
+        exit_code = 255
+    signal_value = capture.signal
+    if signal_value is not None and (
+        not isinstance(signal_value, int) or isinstance(signal_value, bool)
+        or signal_value <= 0
+    ):
+        signal_value = None
+    effective = capture.effective_cpus
+    if not isinstance(effective, tuple) or any(
+        not isinstance(value, int) or isinstance(value, bool) for value in effective
+    ):
+        effective = ()
+    strict_values = (capture.cpu_start, capture.cpu_end, capture.migration_count)
+    cpu_start, cpu_end, migration = strict_values
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in strict_values):
+        cpu_start, cpu_end, migration = run.cpu, run.cpu, -1
+    return TargetCapture(
+        exact_bytes(capture.child_stdout), exact_bytes(capture.child_stderr),
+        exact_bytes(capture.e049c_json), exact_bytes(capture.wrapper_stdout),
+        exact_bytes(capture.wrapper_stderr), exit_code, signal_value, effective,
+        cpu_start, cpu_end, migration,
+    )
 
 
 def _ensure_raw_parent(root: Path) -> Path:
@@ -367,6 +401,8 @@ class E055TargetExecutor:
                     )
                 else:
                     failure_reason = _strict_capture(capture, run)
+                    if failure_reason is not None:
+                        capture = _sanitized_failure_capture(capture, run)
                 populated: dict[str, bytes] = {
                     "harness_stdout": _stream_envelope(
                         run.run_id, "e055_harness", "stdout", capture.child_stdout

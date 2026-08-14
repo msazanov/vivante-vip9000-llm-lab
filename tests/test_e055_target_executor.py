@@ -156,6 +156,18 @@ class RaisingTransport(FakeTransport):
         raise OSError("injected transport failure")
 
 
+class MalformedTransport(FakeTransport):
+    def capture(self, *, run, e049c_argv, environment) -> TargetCapture:
+        self.captures.append((run, e049c_argv, dict(environment)))
+        return TargetCapture(
+            child_stdout="not bytes",  # type: ignore[arg-type]
+            child_stderr=b"", e049c_json=b"{}\n", wrapper_stdout=b"",
+            wrapper_stderr=b"", exit_code=0, signal=None,
+            effective_cpus=(run.cpu,), cpu_start=run.cpu, cpu_end=run.cpu,
+            migration_count=0,
+        )
+
+
 class E055TargetExecutorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory(prefix="e055-executor-")
@@ -282,6 +294,18 @@ class E055TargetExecutorTest(unittest.TestCase):
         self.assertEqual(transport.prepared, [])
         self.assertEqual(transport.captures, [])
         self.assertEqual(transport.restored, 0)
+
+    def test_malformed_transport_value_fails_closed_and_records_failure(self) -> None:
+        transport = MalformedTransport()
+        with self.assertRaises(TargetRunFailure):
+            E055TargetExecutor(self.root, transport=transport).execute("phase-malformed")
+        runner = self.root / (
+            "experiments/E055-q1-hot-cold/raw/phase-malformed/"
+            "runs/cpu0-pair1-hot/runner.json"
+        )
+        document = json.loads(runner.read_text(encoding="utf-8"))
+        self.assertEqual(document["schema"], "e055-runner-failure/v1")
+        self.assertEqual(transport.restored, 1)
 
 
 if __name__ == "__main__":

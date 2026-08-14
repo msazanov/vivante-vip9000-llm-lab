@@ -174,6 +174,15 @@ class E055AArch64Gate(unittest.TestCase):
         self.assertEqual(runtime["pmu_compiler_sha256"], first["compiler_sha256"])
         self.assertEqual(runtime["pmu_compiler_id"], first["compiler_id"])
 
+    def test_pmu_artifact_runs_under_qemu_with_separate_stream_contract(self) -> None:
+        result = subprocess.run(
+            ["qemu-aarch64", "-L", "/usr/aarch64-linux-gnu", str(PMU_ARTIFACT),
+             "--help"], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("--child-stdout", result.stdout)
+        self.assertIn("--child-stderr", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

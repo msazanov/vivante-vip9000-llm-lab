@@ -2,7 +2,7 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T10:37:49.183076+00:00",
+  "generated_at_utc": "2026-08-14T10:40:14.294474+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
     "preflight_base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
@@ -197,8 +197,8 @@
     },
     {
       "path": "tooling/e055_target_executor.py",
-      "size_bytes": 19352,
-      "sha256": "06bab857da28192d1de7c112b51b22c68b5c67336d4d5d63f7cb03476d379779",
+      "size_bytes": 21025,
+      "sha256": "b50923fe7ceb957f07e673407158c6bd40010fb54788752011664173fa52e4a8",
       "role": "e055-stage1"
     },
     {
@@ -263,14 +263,14 @@
     },
     {
       "path": "tests/test_e055_target_executor.py",
-      "size_bytes": 13013,
-      "sha256": "73c13f126a4be143976ed4f5c6594be8726b11595cb4cd6755a4989acd1a15be",
+      "size_bytes": 14139,
+      "sha256": "c1ae3faa8baac08d41b8f8fa1118ff4adb086e355429d4ca7f2723a7bfae5fb9",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_aarch64_gate.py",
-      "size_bytes": 8717,
-      "sha256": "f0a03e8b77e5cd3ccc7271a53c3b1ec4670c2909548a6a44a2c3244580b513c4",
+      "size_bytes": 9183,
+      "sha256": "dfec6300548b62f33119dd37c8aedf97b54604debbce54e8a08dd79e52bb4636",
       "role": "e055-stage1"
     },
     {
