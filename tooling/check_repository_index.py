@@ -99,10 +99,17 @@ SECRET_PATTERNS = (
     )),
 )
 
-ENCODED_BASE64_RE = re.compile(r"(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{24,}={0,2}(?![A-Za-z0-9+/=])")
+ENCODED_BASE64_RE = re.compile(
+    r"(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{24,}={0,2}(?![A-Za-z0-9+/_=-])"
+)
 ENCODED_HEX_RE = re.compile(r"\b[0-9a-fA-F]{32,}\b")
 PERCENT_ESCAPE_RE = re.compile(r"%(?:[0-9a-fA-F]{2})")
 C_ESCAPE_RE = re.compile(r"\\x[0-9a-fA-F]{2}")
+PYTHON_UNICODE_ESCAPE_RE = re.compile(r"\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}")
+OCTAL_ESCAPE_RE = re.compile(r"\\[0-7]{1,3}")
+MAX_DECODE_DEPTH = 3
+MAX_DECODE_VARIANTS = 256
+MAX_DECODED_TEXT_BYTES = 8192
 ARTIFACT_CLASSES_RELATIVE = "docs/experiments/public-artifact-classes.json"
 ARTIFACT_CLASS_NAMES = frozenset(
     {
@@ -122,6 +129,8 @@ VERIFICATION_STATES = frozenset(
     {"verified-local", "verified-attestation", "unverified"}
 )
 ARTIFACT_STATUSES = frozenset({"published", "planned"})
+POLICY_STATUSES = frozenset({"public-only-and-manifest-backed"})
+ARTIFACT_DESTINATIONS = frozenset({"git", "release-assets", "external"})
 ARCHIVE_SUFFIXES = (".tar", ".tar.gz", ".tgz", ".tar.xz", ".zip")
 SCOPE_PREFIXES = ("tooling/", "patches/", "kernels/", "sdk/", "models/", "artifacts/")
 PRIVACY_SCAN_ALLOWLIST: dict[str, str] = {
@@ -485,7 +494,7 @@ def check_artifact_class_policy(root: Path) -> list[str]:
 
 
 def _printable_decoded_text(value: bytes) -> str | None:
-    if len(value) > 8192:
+    if len(value) > MAX_DECODED_TEXT_BYTES:
         return None
     decoded_text = value.decode("utf-8", errors="ignore")
     if not decoded_text:
@@ -502,27 +511,73 @@ def _decoded_secret_variants(text: str) -> list[str]:
     variants: list[str] = []
     seen = {text}
     frontier = [text]
-    for _depth in range(3):
+    for _depth in range(MAX_DECODE_DEPTH):
         next_frontier: list[str] = []
         for current in frontier:
+            if len(seen) >= MAX_DECODE_VARIANTS:
+                break
             if PERCENT_ESCAPE_RE.search(current):
                 decoded = unquote(current)
-                if decoded != current and len(decoded) <= 8192 and decoded not in seen:
+                if (
+                    decoded != current
+                    and len(decoded.encode("utf-8", errors="ignore")) <= MAX_DECODED_TEXT_BYTES
+                    and decoded not in seen
+                ):
                     seen.add(decoded)
                     next_frontier.append(decoded)
             if C_ESCAPE_RE.search(current):
                 decoded = C_ESCAPE_RE.sub(
                     lambda match: chr(int(match.group(0)[2:], 16)), current
                 )
-                if decoded != current and len(decoded) <= 8192 and decoded not in seen:
+                if (
+                    decoded != current
+                    and len(decoded.encode("utf-8", errors="ignore")) <= MAX_DECODED_TEXT_BYTES
+                    and decoded not in seen
+                ):
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+            if PYTHON_UNICODE_ESCAPE_RE.search(current):
+                def decode_python_unicode(match: re.Match[str]) -> str:
+                    try:
+                        return chr(int(match.group(0)[2:], 16))
+                    except ValueError:
+                        return match.group(0)
+
+                decoded = PYTHON_UNICODE_ESCAPE_RE.sub(decode_python_unicode, current)
+                if (
+                    decoded != current
+                    and len(decoded.encode("utf-8", errors="ignore")) <= MAX_DECODED_TEXT_BYTES
+                    and decoded not in seen
+                ):
+                    seen.add(decoded)
+                    next_frontier.append(decoded)
+            if OCTAL_ESCAPE_RE.search(current):
+                def decode_octal(match: re.Match[str]) -> str:
+                    try:
+                        return chr(int(match.group(0)[1:], 8))
+                    except ValueError:
+                        return match.group(0)
+
+                decoded = OCTAL_ESCAPE_RE.sub(decode_octal, current)
+                if (
+                    decoded != current
+                    and len(decoded.encode("utf-8", errors="ignore")) <= MAX_DECODED_TEXT_BYTES
+                    and decoded not in seen
+                ):
                     seen.add(decoded)
                     next_frontier.append(decoded)
             for candidate in ENCODED_BASE64_RE.findall(current)[:128]:
                 try:
-                    decoded = _printable_decoded_text(base64.b64decode(candidate, validate=True))
+                    if len(candidate) % 4 == 1:
+                        decoded = None
+                    else:
+                        padded = candidate + "=" * ((4 - len(candidate) % 4) % 4)
+                        decoded = _printable_decoded_text(
+                            base64.b64decode(padded, altchars=b"-_", validate=True)
+                        )
                 except (ValueError, binascii.Error):
                     decoded = None
-                if decoded and decoded not in seen:
+                if decoded and decoded not in seen and len(seen) < MAX_DECODE_VARIANTS:
                     seen.add(decoded)
                     next_frontier.append(decoded)
             for candidate in ENCODED_HEX_RE.findall(current)[:128]:
@@ -530,7 +585,7 @@ def _decoded_secret_variants(text: str) -> list[str]:
                     decoded = _printable_decoded_text(bytes.fromhex(candidate))
                 except ValueError:
                     decoded = None
-                if decoded and decoded not in seen:
+                if decoded and decoded not in seen and len(seen) < MAX_DECODE_VARIANTS:
                     seen.add(decoded)
                     next_frontier.append(decoded)
         variants.extend(next_frontier)
@@ -688,18 +743,16 @@ def check_registry(root: Path) -> list[str]:
             errors.append(f"{prefix} diagnostic claim must not be end_to_end")
         if status == "diagnostic" and row.get("optimization_claim") is not False:
             errors.append(f"{prefix} diagnostic status cannot claim optimization")
-        performance_claim = any(
-            isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and value > 0
-            and (name.endswith("_tok_s") or name.endswith("_ms"))
-            for name, value in metric.items()
-        ) if isinstance(metric, dict) else False
-        if claim_class == "full_model" and performance_claim and (
-            status == "accepted" or row.get("qualified") is True
-        ):
-            if metric.get("exact_quality") is not True:
-                errors.append(f"{prefix} qualified full_model performance requires exact_quality")
+        qualified_full_model = (
+            claim_class == "full_model"
+            and row.get("end_to_end") is True
+            and (status == "accepted" or row.get("qualified") is True)
+        )
+        if qualified_full_model:
+            if not isinstance(metric, dict) or metric.get("exact_quality") is not True:
+                errors.append(f"{prefix} qualified full_model requires exact_quality in metric")
+            if not isinstance(row.get("evidence"), list) or not row.get("evidence"):
+                errors.append(f"{prefix} qualified full_model requires non-empty evidence")
             provenance = row.get("provenance")
             if not isinstance(provenance, dict) or provenance.get("complete") is not True:
                 errors.append(f"{prefix} qualified full_model performance requires complete provenance")
@@ -915,7 +968,12 @@ def check_hardware_facts(root: Path) -> list[str]:
         "unknown sustained bandwidth": re.compile(r"\|\s*Sustained bandwidth for Bonsai decode\s*\|\s*\*\*Unknown\*\*"),
     }
     errors = [f"hardware fact row is missing or misclassified: {name}" for name, pattern in required_rows.items() if not pattern.search(text)]
-    ceiling_claim = re.compile(r"19\.2\s*GB/s", re.IGNORECASE)
+    # Accept decimal/unit spelling variants only for semantic rejection.  The
+    # canonical table deliberately keeps the normalized ``19.2 GB/s`` form.
+    ceiling_claim = re.compile(
+        r"(?<![\w.])19\s*\.\s*(?:2|20)\s*G\s*i?\s*B\s*/\s*s(?!\w)",
+        re.IGNORECASE,
+    )
     measurement_terms = re.compile(
         r"\b(?:measured|measurement|observed|actual|sustained|throughput|bandwidth|achieved|recorded|delivered|result|rate)\b",
         re.IGNORECASE,
@@ -935,6 +993,42 @@ def check_hardware_facts(root: Path) -> list[str]:
     if not re.search(r"secure firmware.*safety", text, re.IGNORECASE | re.DOTALL):
         errors.append("secure-firmware safety boundary is missing or misclassified")
     return errors
+
+
+def _attestation_error(artifact: dict[str, Any], locator: str | None) -> str | None:
+    """Return a safe diagnostic if a release attestation is not asset-bound."""
+
+    attestation = artifact.get("trusted_attestation")
+    if attestation is None and isinstance(artifact.get("attestation"), dict):
+        attestation = artifact["attestation"]
+    if not isinstance(attestation, dict):
+        return "trusted exact-asset attestation is missing"
+    if attestation.get("trusted") is not True:
+        return "trusted exact-asset attestation must set trusted=true"
+    bound_locator = attestation.get("asset_locator") or attestation.get("locator")
+    if not isinstance(locator, str) or bound_locator != locator:
+        return "trusted attestation is not bound to the immutable asset locator"
+    asset_digest = (
+        attestation.get("asset_sha256")
+        or attestation.get("artifact_sha256")
+        or attestation.get("sha256")
+    )
+    if asset_digest != artifact.get("sha256"):
+        return "trusted attestation does not bind the manifest SHA-256"
+    attestation_digest = (
+        attestation.get("attestation_sha256")
+        or attestation.get("proof_sha256")
+        or attestation.get("digest")
+    )
+    if (
+        not isinstance(attestation_digest, str)
+        or not SHA256_RE.fullmatch(attestation_digest)
+        or attestation_digest in PLACEHOLDER_DIGESTS
+        or len(set(attestation_digest)) == 1
+        or attestation_digest == artifact.get("sha256")
+    ):
+        return "trusted attestation requires a separate non-placeholder SHA-256"
+    return None
 
 
 def check_branch_inventory(root: Path) -> list[str]:
@@ -1071,6 +1165,9 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
     if not isinstance(policy, dict):
         errors.append("public artifact manifest policy must be an object")
     else:
+        policy_status = policy.get("status")
+        if not isinstance(policy_status, str) or policy_status not in POLICY_STATUSES:
+            errors.append("manifest policy status must use the approved enum")
         allowed = policy.get("allowed_public_artifacts")
         if not isinstance(allowed, list) or not allowed:
             errors.append("manifest policy must list allowed public artifact classes")
@@ -1125,15 +1222,15 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
         if inferred_class is not None and artifact_class != inferred_class:
             errors.append(f"{prefix} class does not match authoritative detector: expected {inferred_class}")
         status = artifact["status"]
-        if status not in ARTIFACT_STATUSES:
+        if not isinstance(status, str) or status not in ARTIFACT_STATUSES:
             errors.append(f"{prefix} status must be published or planned")
         if not isinstance(artifact["scientific_use"], bool):
             errors.append(f"{prefix} scientific_use must be boolean")
         verification_state = artifact["verification_state"]
-        if verification_state not in VERIFICATION_STATES:
+        if not isinstance(verification_state, str) or verification_state not in VERIFICATION_STATES:
             errors.append(f"{prefix} verification_state is invalid")
         destination = artifact["destination"]
-        if destination not in {"git", "release-assets", "external"}:
+        if not isinstance(destination, str) or destination not in ARTIFACT_DESTINATIONS:
             errors.append(f"{prefix} destination is invalid")
         if status == "planned":
             if verification_state != "unverified":
@@ -1144,7 +1241,7 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
             errors.append(f"{prefix} published entries cannot be unverified")
         if destination == "git" and verification_state != "verified-local":
             errors.append(f"{prefix} Git destinations require verification_state=verified-local")
-        if destination in {"release-assets", "external"}:
+        if isinstance(destination, str) and destination in {"release-assets", "external"}:
             locator = artifact.get("release_asset_locator") or artifact.get("source_url")
             if not isinstance(locator, str) or not locator.strip():
                 errors.append(f"{prefix} external/release entries require an immutable source URL or release asset locator")
@@ -1167,6 +1264,7 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
                 errors.append(f"{prefix} unverified external/release entries must be planned")
             if verification_state == "verified-attestation" and not isinstance(artifact.get("checksum_provenance"), str):
                 errors.append(f"{prefix} verified-attestation entries require checksum provenance")
+        local_payload_verified = False
         if destination == "git":
             path = root / path_value
             if not path.is_file():
@@ -1178,6 +1276,23 @@ def check_public_artifact_manifest(root: Path) -> list[str]:
                     errors.append(f"{prefix} sha256 does not match {path_value}")
                 if size != byte_size:
                     errors.append(f"{prefix} byte_size does not match {path_value}")
+                local_payload_verified = digest == artifact["sha256"] and size == byte_size
+        if artifact.get("scientific_use") is True:
+            if local_payload_verified and destination == "git" and verification_state == "verified-local":
+                pass
+            elif (
+                isinstance(destination, str)
+                and destination in {"release-assets", "external"}
+                and verification_state == "verified-attestation"
+            ):
+                locator = artifact.get("release_asset_locator") or artifact.get("source_url")
+                attestation_error = _attestation_error(artifact, locator)
+                if attestation_error:
+                    errors.append(f"{prefix} scientific use is not permitted: {attestation_error}")
+            else:
+                errors.append(
+                    f"{prefix} scientific use requires a locally verified payload or trusted exact-asset attestation"
+                )
         if git_root and isinstance(source_commit, str) and SHA_RE.fullmatch(source_commit):
             result = _git(git_root, "cat-file", "-e", f"{source_commit}^{{commit}}")
             if result is None or result.returncode != 0:

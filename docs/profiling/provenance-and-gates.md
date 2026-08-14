@@ -69,10 +69,12 @@ Use these statuses in the machine registry:
 
 Only a row with `claim_class=full_model`, complete quality evidence, and
 `is_current_best=true` may define the current best. This repository marks E035
-as the only current best. Any accepted or otherwise qualified full-model row
-with a performance metric must also carry `exact_quality=true`, a complete
-hardware/runtime/toolchain provenance object, and repeatability with at least
-two declared runs and a method. E044 and E049d-v2 remain explicitly bounded.
+as the only current best. Any accepted or otherwise qualified end-to-end
+full-model row must carry `exact_quality=true` in its metric object, a complete
+hardware/runtime/toolchain/quality provenance object, non-empty evidence, and
+repeatability with at least two declared runs, a method, and
+`quality_match=true`, even when no numeric metric is available. E044 and
+E049d-v2 remain explicitly bounded.
 
 ## Public artifact and privacy policy
 

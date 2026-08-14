@@ -265,6 +265,57 @@ def test_privacy_recursively_decodes_percent_and_c_escaped_credentials(
     assert all(secret not in error for error in errors)
 
 
+def test_privacy_decodes_python_unicode_and_octal_escapes(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    secret = "pass" + "word=python-escape-secret"
+    unicode_escaped = "".join(f"\\u{ord(character):04x}" for character in secret)
+    unicode_wide_escaped = "\\U00000070" + "".join(
+        f"\\u{ord(character):04x}" for character in secret[1:]
+    )
+    octal_escaped = "".join(f"\\{ord(character):03o}" for character in secret)
+    (fixture / "unicode.py").write_text(unicode_escaped)
+    (fixture / "wide-unicode.py").write_text(unicode_wide_escaped)
+    (fixture / "octal.py").write_text(octal_escaped)
+
+    errors = check_privacy(fixture)
+
+    assert any("unicode.py" in error for error in errors)
+    assert any("wide-unicode.py" in error for error in errors)
+    assert any("octal.py" in error for error in errors)
+    assert all(secret not in error for error in errors)
+
+
+def test_privacy_decodes_unpadded_urlsafe_base64_without_logging_secret(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    secret_bytes = b"pass" + b"word=urlsafe-secret-value\xfb\xef"
+    encoded = base64.urlsafe_b64encode(secret_bytes).decode().rstrip("=")
+    (fixture / "urlsafe.txt").write_text(encoded)
+
+    errors = check_privacy(fixture)
+
+    assert any("urlsafe.txt" in error for error in errors)
+    assert all("urlsafe-secret-value" not in error for error in errors)
+
+
+def test_privacy_decoder_bounds_recursive_expansion(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    secret = "pass" + "word=bounded-recursion-secret"
+    value = secret
+    for _ in range(8):
+        value = base64.b64encode(value.encode()).decode()
+    (fixture / "deep.txt").write_text(value)
+
+    errors = check_privacy(fixture)
+
+    assert all(secret not in error for error in errors)
+    assert len(repository_index._decoded_secret_variants(value)) <= repository_index.MAX_DECODE_VARIANTS
+
+
 def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     (fixture / "docs/experiments").mkdir(parents=True)
@@ -277,6 +328,7 @@ def test_manifest_coverage_rejects_unmanifested_public_payload(tmp_path: Path) -
                 "schema": "repository-public-artifact-manifest/v1",
                 "repository": "msazanov/vivante-vip9000-llm-lab",
                 "policy": {
+                    "status": "public-only-and-manifest-backed",
                     "allowed_public_artifacts": ["binaries"],
                     "prohibited_data": ["credentials"],
                 },
@@ -311,6 +363,7 @@ def test_manifest_coverage_is_not_suffix_or_name_heuristic(tmp_path: Path) -> No
                 "schema": "repository-public-artifact-manifest/v1",
                 "repository": "msazanov/vivante-vip9000-llm-lab",
                 "policy": {
+                    "status": "public-only-and-manifest-backed",
                     "allowed_public_artifacts": ["binaries"],
                     "prohibited_data": ["credentials"],
                 },
@@ -337,6 +390,7 @@ def test_release_manifest_requires_nonplaceholder_digest_and_positive_size(
         "schema": "repository-public-artifact-manifest/v1",
         "repository": "msazanov/vivante-vip9000-llm-lab",
         "policy": {
+            "status": "public-only-and-manifest-backed",
             "allowed_public_artifacts": ["binaries"],
             "prohibited_data": ["credentials"],
         },
@@ -431,6 +485,29 @@ def test_hardware_checker_rejects_semantic_19_2_gb_s_measurement_claims(
     assert any("theoretical" in error or "measured" in error for error in errors)
 
 
+@pytest.mark.parametrize(
+    "claim",
+    (
+        "Measured 19.20 GB/s on the board.",
+        "Observed 19.2 GiB/s on the board.",
+        "The actual sustained board bandwidth was 19 . 2 GB / s.",
+        "The measured board result was 19 . 20 G i B / s.",
+    ),
+)
+def test_hardware_checker_rejects_normalized_board_bandwidth_claims(
+    tmp_path: Path, claim: str
+) -> None:
+    fixture = tmp_path / "repo"
+    destination = fixture / "docs/hardware/a733.md"
+    destination.parent.mkdir(parents=True)
+    copy2(ROOT / "docs/hardware/a733.md", destination)
+    destination.write_text(destination.read_text() + "\n" + claim + "\n")
+
+    errors = check_hardware_facts(fixture)
+
+    assert any("theoretical" in error or "measured" in error for error in errors)
+
+
 def test_registry_rejects_metric_claim_semantic_mismatch(tmp_path: Path) -> None:
     fixture = _copy_registry_fixture(tmp_path)
     registry_path = fixture / "docs/experiments/registry.json"
@@ -457,6 +534,42 @@ def test_registry_requires_quality_provenance_and_repeatability_for_qualified_fu
     errors = check_registry(fixture)
     assert any("provenance" in error for error in errors)
     assert any("repeatability" in error for error in errors)
+
+
+def test_registry_requires_quality_gates_for_accepted_full_model_with_empty_metric(
+    tmp_path: Path,
+) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    e044 = next(row for row in registry["experiments"] if row["id"] == "E044")
+    e044["status"] = "accepted"
+    e044["metric"] = {}
+    registry_path.write_text(json.dumps(registry))
+
+    errors = check_registry(fixture)
+
+    assert any("exact_quality" in error for error in errors)
+    assert any("provenance" in error for error in errors)
+    assert any("repeatability" in error for error in errors)
+
+
+def test_registry_requires_evidence_for_qualified_full_model_even_without_metric(
+    tmp_path: Path,
+) -> None:
+    fixture = _copy_registry_fixture(tmp_path)
+    registry_path = fixture / "docs/experiments/registry.json"
+    registry = json.loads(registry_path.read_text())
+    e044 = next(row for row in registry["experiments"] if row["id"] == "E044")
+    e044["qualified"] = True
+    e044["metric"] = {}
+    e044["evidence"] = []
+    registry_path.write_text(json.dumps(registry))
+
+    errors = check_registry(fixture)
+
+    assert any("evidence" in error for error in errors)
+    assert any("exact_quality" in error for error in errors)
 
 
 def test_release_manifest_requires_immutable_locator_attestation_and_state(
@@ -496,6 +609,136 @@ def test_release_manifest_requires_immutable_locator_attestation_and_state(
     assert any("locator" in error or "URL" in error for error in errors)
     assert any("checksum" in error or "attestation" in error for error in errors)
     assert any("unverified" in error or "scientific" in error for error in errors)
+
+
+def test_external_scientific_use_requires_exact_asset_attestation(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    locator = "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/external.bin"
+    artifact = {
+        "path": "release/external.bin",
+        "sha256": "0123456789abcdef" * 4,
+        "byte_size": 42,
+        "origin": "release source",
+        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+        "build_runtime_toolchain": "compiler 1",
+        "destination": "release-assets",
+        "class": "binaries",
+        "status": "published",
+        "scientific_use": True,
+        "verification_state": "verified-attestation",
+        "release_asset_locator": locator,
+        "checksum_provenance": "release metadata",
+    }
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "public-only-and-manifest-backed",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [artifact],
+            }
+        )
+    )
+
+    errors = check_public_artifact_manifest(fixture)
+
+    assert any("scientific" in error or "attestation" in error for error in errors)
+
+
+def test_external_scientific_use_accepts_trusted_attestation_bound_to_asset(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    locator = "https://github.com/msazanov/vivante-vip9000-llm-lab/releases/download/v1/external.bin"
+    digest = "0123456789abcdef" * 4
+    artifact = {
+        "path": "release/external.bin",
+        "sha256": digest,
+        "byte_size": 42,
+        "origin": "release source",
+        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+        "build_runtime_toolchain": "compiler 1",
+        "destination": "release-assets",
+        "class": "binaries",
+        "status": "published",
+        "scientific_use": True,
+        "verification_state": "verified-attestation",
+        "release_asset_locator": locator,
+        "checksum_provenance": "release metadata",
+        "trusted_attestation": {
+            "trusted": True,
+            "asset_locator": locator,
+            "sha256": digest,
+            "attestation_sha256": "abcdef0123456789" * 4,
+        },
+    }
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "public-only-and-manifest-backed",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [artifact],
+            }
+        )
+    )
+
+    assert check_public_artifact_manifest(fixture) == []
+
+
+def test_manifest_rejects_unknown_policy_and_destination_enums(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    (fixture / "docs/experiments").mkdir(parents=True)
+    manifest_path = fixture / "docs/experiments/public-artifact-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema": "repository-public-artifact-manifest/v1",
+                "repository": "msazanov/vivante-vip9000-llm-lab",
+                "policy": {
+                    "status": "anything-goes",
+                    "allowed_public_artifacts": ["binaries"],
+                    "prohibited_data": ["credentials"],
+                },
+                "artifacts": [
+                    {
+                        "path": "release/missing.bin",
+                        "sha256": "0123456789abcdef" * 4,
+                        "byte_size": 42,
+                        "origin": "release source",
+                        "source_commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+                        "build_runtime_toolchain": "compiler 1",
+                        "destination": "somewhere",
+                        "class": "binaries",
+                        "status": "published",
+                        "scientific_use": False,
+                        "verification_state": "unverified",
+                    }
+                ],
+            }
+        )
+    )
+
+    errors = check_public_artifact_manifest(fixture)
+
+    assert any("policy status" in error or "enum" in error for error in errors)
+    assert any("destination" in error for error in errors)
 
 
 def test_manifest_rejects_unknown_policy_and_artifact_classes(tmp_path: Path) -> None:

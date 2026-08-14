@@ -122,6 +122,50 @@
           }
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "claim_class": {"const": "full_model"},
+              "end_to_end": {"const": true},
+              "status": {"const": "accepted"}
+            },
+            "required": ["claim_class", "end_to_end", "status"]
+          },
+          "then": {
+            "required": ["provenance", "repeatability"],
+            "properties": {
+              "metric": {
+                "required": ["exact_quality"]
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "claim_class": {"const": "full_model"},
+              "end_to_end": {"const": true},
+              "qualified": {"const": true}
+            },
+            "required": ["claim_class", "end_to_end", "qualified"]
+          },
+          "then": {
+            "required": ["provenance", "repeatability"],
+            "properties": {
+              "metric": {
+                "required": ["exact_quality"]
+              },
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": true
     },
     "evidence": {
