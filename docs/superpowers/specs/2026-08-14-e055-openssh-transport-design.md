@@ -51,7 +51,7 @@ helper rejects unknown keys, wrong schemas, noncanonical types, excessive
 sizes, path traversal, unexpected roots, invalid hashes, invalid modes,
 unexpected argv shapes, and unknown environment variables.
 
-The helper supports exactly four stateful operations:
+The helper supports exactly five stateful operations:
 
 1. `exclusive_deploy` acquires the canonical lock with an owner request ID,
    creates the content-addressed phase tree exclusively, writes the two exact
@@ -66,15 +66,19 @@ The helper supports exactly four stateful operations:
 4. `restore` removes only the deployment and lock whose inode and owner record
    match this transport instance. It terminates any surviving owned process
    group before removal.
+5. `finalize_helper` is a separate, final request issued only after the caller
+   has parsed and durably retained the complete restore response. It removes
+   only the still-exact content-addressed helper inode and its empty directory.
 
 Signals, timeout, stdin disconnect, and SSH channel failure trigger bounded
 TERM/KILL cleanup of the helper-owned process group. Ambiguous ownership,
 replacement, collision, partial output, or inability to prove cleanup fails
 closed. Primary and restore failures remain distinct.
 
-The helper does not self-remove during deploy, readback, or capture. During
-restore it emits and flushes the complete durable response first. Only then may
-it unlink its own exact inode and remove its empty content-hash directory. The
+The helper does not self-remove during deploy, readback, capture, or restore.
+The transport first receives, validates, and retains the complete restore
+response; it then performs the separate `finalize_helper` exchange. This avoids
+claiming that flushing a remote stdout stream proves local durability. The
 local repository retains and seals the exact helper source bytes and digest.
 
 ### OpenSSH client transport
