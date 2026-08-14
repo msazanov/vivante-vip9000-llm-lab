@@ -352,6 +352,104 @@ class A733PmuExecContractTest(unittest.TestCase):
         self.assertEqual(output.read_text(encoding="utf-8"), "keep")
         self.assertFalse(marker.exists())
 
+    def test_child_stdout_and_stderr_are_separate_from_wrapper_streams(self) -> None:
+        child_stdout = self.tmp / "child-separated.stdout"
+        child_stderr = self.tmp / "child-separated.stderr"
+        proc, result = self.run_launcher(
+            "--child-stdout",
+            str(child_stdout),
+            "--child-stderr",
+            str(child_stderr),
+            "--event-group",
+            "core",
+            "--start-immediately",
+            "--",
+            "/bin/sh",
+            "-c",
+            "printf child-out; printf child-err >&2",
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(result["exit"]["code"], 0)
+        self.assertEqual(proc.stdout, "")
+        self.assertEqual(proc.stderr, "")
+        self.assertEqual(child_stdout.read_text(encoding="utf-8"), "child-out")
+        self.assertEqual(child_stderr.read_text(encoding="utf-8"), "child-err")
+
+    def test_child_output_collision_fails_before_workload_and_cleans_new_files(self) -> None:
+        for collision in ("existing", "symlink"):
+            with self.subTest(collision=collision):
+                output = self.tmp / f"child-collision-{collision}.json"
+                child_stdout = self.tmp / f"child-collision-{collision}.stdout"
+                child_stderr = self.tmp / f"child-collision-{collision}.stderr"
+                marker = self.tmp / f"child-collision-{collision}.ran"
+                if collision == "existing":
+                    child_stderr.write_text("keep", encoding="utf-8")
+                else:
+                    sentinel = self.tmp / f"child-collision-{collision}.sentinel"
+                    sentinel.write_text("keep", encoding="utf-8")
+                    child_stderr.symlink_to(sentinel)
+                proc = subprocess.run(
+                    [
+                        str(self.launcher), "--no-drop", "--no-thermal-guard",
+                        "--output", str(output),
+                        "--child-stdout", str(child_stdout),
+                        "--child-stderr", str(child_stderr),
+                        "--event-group", "core", "--start-immediately", "--",
+                        "/bin/sh", "-c", f"printf ran > '{marker}'",
+                    ],
+                    text=True, capture_output=True, timeout=15,
+                )
+                self.assertNotEqual(proc.returncode, 0)
+                self.assertFalse(marker.exists())
+                self.assertFalse(output.exists())
+                self.assertFalse(child_stdout.exists())
+                if collision == "existing":
+                    self.assertEqual(child_stderr.read_text(encoding="utf-8"), "keep")
+                else:
+                    self.assertTrue(child_stderr.is_symlink())
+
+    def test_child_capture_fds_survive_fixed_marker_fd_collision(self) -> None:
+        output = self.next_output()
+        child_stdout = self.tmp / "child-fd-collision.stdout"
+        child_stderr = self.tmp / "child-fd-collision.stderr"
+        inherited = [os.open(os.devnull, os.O_RDONLY) for _ in range(2)]
+        try:
+            proc = subprocess.run(
+                [
+                    str(self.launcher), "--no-drop", "--no-thermal-guard",
+                    "--output", str(output),
+                    "--child-stdout", str(child_stdout),
+                    "--child-stderr", str(child_stderr),
+                    "--event-group", "core", "--start-on-ready",
+                    "--sync-timeout-ms", "1000", "--",
+                    str(self.control), "--mode", "cpu", "--iterations", "10000",
+                ],
+                pass_fds=tuple(inherited), text=True, capture_output=True, timeout=15,
+            )
+        finally:
+            for descriptor in inherited:
+                os.close(descriptor)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        result = json.loads(output.read_text(encoding="utf-8"))
+        self.assertTrue(result["sync"]["acknowledged"])
+        self.assertIn(b"control=cpu iterations=10000", child_stdout.read_bytes())
+        self.assertEqual(child_stderr.read_bytes(), b"")
+
+    def test_child_exec_failure_is_captured_without_polluting_wrapper_stderr(self) -> None:
+        child_stdout = self.tmp / "child-exec-failure.stdout"
+        child_stderr = self.tmp / "child-exec-failure.stderr"
+        proc, result = self.run_launcher(
+            "--child-stdout", str(child_stdout),
+            "--child-stderr", str(child_stderr),
+            "--event-group", "core", "--start-immediately", "--",
+            "/definitely/missing/e055-child",
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertEqual(proc.stderr, "")
+        self.assertEqual(child_stdout.read_bytes(), b"")
+        self.assertIn("execvp", child_stderr.read_text(encoding="utf-8"))
+        self.assertEqual(result["exit"]["code"], 127)
+
     def test_capacity_provenance_does_not_claim_hardware_capacity(self) -> None:
         main_readme = (
             ROOT / "experiments" / "E049c-arm-pmu" / "README.md"
@@ -372,7 +470,13 @@ class A733PmuExecContractTest(unittest.TestCase):
 
     def test_marker_timeout_kills_and_reaps_process_group(self) -> None:
         pid_file = self.tmp / "grandchild.pid"
+        child_stdout = self.tmp / "timeout-child.stdout"
+        child_stderr = self.tmp / "timeout-child.stderr"
         proc, result = self.run_launcher(
+            "--child-stdout",
+            str(child_stdout),
+            "--child-stderr",
+            str(child_stderr),
             "--event-group",
             "core",
             "--start-on-ready",
@@ -387,6 +491,8 @@ class A733PmuExecContractTest(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertEqual(result["failure_reason"], "start_marker_timeout")
         self.assertFalse(result["sample_valid"])
+        self.assertEqual(child_stdout.read_bytes(), b"")
+        self.assertEqual(child_stderr.read_bytes(), b"")
         self.assertTrue(pid_file.exists(), proc.stderr)
         grandchild = int(pid_file.read_text(encoding="ascii"))
         for _ in range(50):

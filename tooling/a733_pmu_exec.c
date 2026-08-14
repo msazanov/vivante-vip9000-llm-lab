@@ -109,6 +109,8 @@ struct event_state {
 
 struct options {
     const char *output_path;
+    const char *child_stdout_path;
+    const char *child_stderr_path;
     const char *user_name;
     const char *group_name;
     const char *thermal_root;
@@ -227,6 +229,8 @@ static void usage(FILE *stream, const char *program) {
             "\n"
             "Options:\n"
             "  -o, --output PATH          create JSON result safely (must not exist)\n"
+            "      --child-stdout PATH    create child stdout safely (paired)\n"
+            "      --child-stderr PATH    create child stderr safely (paired)\n"
             "  -u, --user NAME            drop child to NAME (default orangepi)\n"
             "  -g, --group NAME           drop child to GROUP (default orangepi)\n"
             "      --event-group NAME     core, cache, or memory (default core)\n"
@@ -260,6 +264,8 @@ static int parse_options(int argc, char **argv, struct options *options) {
         {"event-group", required_argument, NULL, 1006},
         {"min-running-ratio", required_argument, NULL, 1007},
         {"thermal-root", required_argument, NULL, 1008},
+        {"child-stdout", required_argument, NULL, 1009},
+        {"child-stderr", required_argument, NULL, 1010},
         {"help", no_argument, NULL, 'h'},
         {NULL, 0, NULL, 0},
     };
@@ -267,6 +273,8 @@ static int parse_options(int argc, char **argv, struct options *options) {
     int option_index = 0;
 
     options->output_path = "pmu-result.json";
+    options->child_stdout_path = NULL;
+    options->child_stderr_path = NULL;
     options->user_name = DEFAULT_USER;
     options->group_name = DEFAULT_GROUP;
     options->thermal_root = "/sys/class/thermal";
@@ -330,6 +338,12 @@ static int parse_options(int argc, char **argv, struct options *options) {
         case 1008:
             options->thermal_root = optarg;
             break;
+        case 1009:
+            options->child_stdout_path = optarg;
+            break;
+        case 1010:
+            options->child_stderr_path = optarg;
+            break;
         case 'h':
             usage(stdout, argv[0]);
             return 1;
@@ -341,6 +355,11 @@ static int parse_options(int argc, char **argv, struct options *options) {
     if (optind >= argc) {
         fprintf(stderr, "missing command after --\n");
         usage(stderr, argv[0]);
+        return -1;
+    }
+    if ((options->child_stdout_path == NULL) !=
+        (options->child_stderr_path == NULL)) {
+        fprintf(stderr, "--child-stdout and --child-stderr must be supplied together\n");
         return -1;
     }
     options->command_index = optind;
@@ -912,6 +931,55 @@ static int reserve_output_safely(const char *path) {
     return fd;
 }
 
+static int move_above_fixed_fds(int fd) {
+    int replacement;
+    if (fd > MARKER_FD) {
+        return fd;
+    }
+    replacement = fcntl(fd, F_DUPFD_CLOEXEC, MARKER_FD + 1);
+    if (replacement < 0) {
+        return -1;
+    }
+    close(fd);
+    return replacement;
+}
+
+static void discard_new_output(const char *path, int *fd) {
+    struct stat opened;
+    struct stat current;
+    int same_file = 0;
+    if (*fd < 0) {
+        return;
+    }
+    if (fstat(*fd, &opened) == 0 && lstat(path, &current) == 0 &&
+        S_ISREG(current.st_mode) && current.st_nlink == 1 &&
+        opened.st_dev == current.st_dev && opened.st_ino == current.st_ino) {
+        same_file = 1;
+    }
+    if (same_file && unlink(path) != 0) {
+        fprintf(stderr, "unlink(%s): %s\n", path, strerror(errno));
+    }
+    close(*fd);
+    *fd = -1;
+}
+
+static int redirect_child_streams(int child_stdout_fd, int child_stderr_fd) {
+    if (child_stdout_fd < 0 && child_stderr_fd < 0) {
+        return 0;
+    }
+    if (child_stdout_fd <= MARKER_FD || child_stderr_fd <= MARKER_FD) {
+        errno = EINVAL;
+        return -1;
+    }
+    if (dup2(child_stdout_fd, STDOUT_FILENO) < 0 ||
+        dup2(child_stderr_fd, STDERR_FILENO) < 0) {
+        return -1;
+    }
+    close(child_stdout_fd);
+    close(child_stderr_fd);
+    return 0;
+}
+
 static int write_result(const struct options *options, const struct run_state *run,
                         int argc, char **argv, int output_fd) {
     FILE *stream = fdopen(output_fd, "w");
@@ -1029,11 +1097,16 @@ static int release_setup_gate(int fd) {
 }
 
 static int child_main(const struct options *options, char **command, int setup_read_fd,
-                      int marker_write_fd, int ack_read_fd, uid_t uid, gid_t gid) {
+                      int marker_write_fd, int ack_read_fd, int child_stdout_fd,
+                      int child_stderr_fd, uid_t uid, gid_t gid) {
     char gate;
     ssize_t bytes;
     if (setsid() < 0) {
         dprintf(STDERR_FILENO, "setsid failed: %s\n", strerror(errno));
+        return 126;
+    }
+    if (redirect_child_streams(child_stdout_fd, child_stderr_fd) != 0) {
+        dprintf(STDERR_FILENO, "child stream redirect failed: %s\n", strerror(errno));
         return 126;
     }
     if (options->start_on_ready) {
@@ -1075,6 +1148,8 @@ int main(int argc, char **argv) {
     int result_write_status;
     int final_code;
     int output_fd;
+    int child_stdout_fd = -1;
+    int child_stderr_fd = -1;
 
     memset(&run, 0, sizeof(run));
     run.max_temp_mc = -1;
@@ -1093,10 +1168,46 @@ int main(int argc, char **argv) {
     if (output_fd < 0) {
         return 2;
     }
+    if (options.child_stdout_path != NULL) {
+        child_stdout_fd = reserve_output_safely(options.child_stdout_path);
+        if (child_stdout_fd < 0) {
+            discard_new_output(options.output_path, &output_fd);
+            return 2;
+        }
+        {
+            int moved = move_above_fixed_fds(child_stdout_fd);
+            if (moved < 0) {
+                discard_new_output(options.child_stdout_path, &child_stdout_fd);
+                discard_new_output(options.output_path, &output_fd);
+                return 2;
+            }
+            child_stdout_fd = moved;
+        }
+        child_stderr_fd = reserve_output_safely(options.child_stderr_path);
+        if (child_stderr_fd < 0) {
+            discard_new_output(options.child_stdout_path, &child_stdout_fd);
+            discard_new_output(options.output_path, &output_fd);
+            return 2;
+        }
+        {
+            int moved = move_above_fixed_fds(child_stderr_fd);
+            if (moved < 0) {
+                discard_new_output(options.child_stderr_path, &child_stderr_fd);
+                discard_new_output(options.child_stdout_path, &child_stdout_fd);
+                discard_new_output(options.output_path, &output_fd);
+                return 2;
+            }
+            child_stderr_fd = moved;
+        }
+    }
     if (pipe(setup_pipe) != 0 ||
         (options.start_on_ready && (pipe(marker_pipe) != 0 || pipe(ack_pipe) != 0))) {
         fprintf(stderr, "pipe setup failed: %s\n", strerror(errno));
-        close(output_fd);
+        if (options.child_stderr_path != NULL) {
+            discard_new_output(options.child_stderr_path, &child_stderr_fd);
+            discard_new_output(options.child_stdout_path, &child_stdout_fd);
+        }
+        discard_new_output(options.output_path, &output_fd);
         return 2;
     }
     (void)prctl(PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0);
@@ -1104,7 +1215,11 @@ int main(int argc, char **argv) {
     child = fork();
     if (child < 0) {
         fprintf(stderr, "fork: %s\n", strerror(errno));
-        close(output_fd);
+        if (options.child_stderr_path != NULL) {
+            discard_new_output(options.child_stderr_path, &child_stderr_fd);
+            discard_new_output(options.child_stdout_path, &child_stdout_fd);
+        }
+        discard_new_output(options.output_path, &output_fd);
         return 2;
     }
     run.child_pid = child;
@@ -1119,14 +1234,17 @@ int main(int argc, char **argv) {
             close(marker_pipe[0]);
             close(ack_pipe[1]);
             status = child_main(&options, command, setup_pipe[0], marker_pipe[1],
-                                ack_pipe[0], child_uid, child_gid);
+                                ack_pipe[0], child_stdout_fd, child_stderr_fd,
+                                child_uid, child_gid);
         } else {
             status = child_main(&options, command, setup_pipe[0], -1, -1,
-                                child_uid, child_gid);
+                                child_stdout_fd, child_stderr_fd, child_uid, child_gid);
         }
         _exit(status);
     }
 
+    if (child_stdout_fd >= 0) close(child_stdout_fd);
+    if (child_stderr_fd >= 0) close(child_stderr_fd);
     close(setup_pipe[0]);
     if (options.start_on_ready) {
         close(marker_pipe[1]);
