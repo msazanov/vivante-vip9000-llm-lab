@@ -168,6 +168,15 @@ static bool parse_options(int argc, char **argv, options &out) {
         std::fprintf(stderr, "working set and thrash buffer must be positive\n");
         return false;
     }
+    if (out.target_bytes > std::numeric_limits<uint64_t>::max() -
+                               (kNativeCarrierBytes - 1)) {
+        std::fprintf(stderr, "working set rounding overflow\n");
+        return false;
+    }
+    if (out.thrash_bytes % kCacheLineBytes != 0) {
+        std::fprintf(stderr, "thrash buffer must be 64-byte aligned\n");
+        return false;
+    }
     if (out.cache_state == "cold_conditioned") {
         // A cold sample is one explicitly conditioned traversal.  Repeating
         // after it would turn the rest of the PMU window into a hot sample.
@@ -460,6 +469,10 @@ static std::string json_result(const options &opt,
                                bool marker_ack,
                                bool marker_ended) {
     const auto bytes = logical_bytes_for_blocks(blocks);
+    const bool hot_conditioned = opt.cache_state == "hot_repeat" && opt.warmup > 0;
+    const bool conditioning_verified = hot_conditioned || cold.verified_touched;
+    const char *conditioning_strategy = hot_conditioned
+        ? "verified_kernel_warmup" : "verified_write_read_each_64B_line";
     char buffer[8192] = {};
     const double calls_per_second = elapsed_ns == 0
         ? 0.0 : static_cast<double>(calls) * 1.0e9 / static_cast<double>(elapsed_ns);
@@ -478,7 +491,7 @@ static std::string json_result(const options &opt,
         "\"q8_bytes\":%" PRIu64 ",\"total_input_bytes\":%" PRIu64 ","
         "\"output_bytes\":%" PRIu64 ",\"dot_products\":%" PRIu64 "},"
         "\"checksum\":\"0x%" PRIx64 "\","
-        "\"cold_conditioning\":{\"strategy\":\"verified_write_read_each_64B_line\","
+        "\"cold_conditioning\":{\"strategy\":\"%s\","
         "\"thrash_bytes\":%" PRIu64 ",\"line_bytes\":%" PRIu64 ","
         "\"lines_touched\":%" PRIu64 ",\"checksum\":\"0x%" PRIx64 "\","
         "\"verified_touched\":%s},"
@@ -489,9 +502,9 @@ static std::string json_result(const options &opt,
         golden_cases, opt.target_bytes, actual_bytes, blocks,
         iterations, calls, elapsed_ns, first_call_ns, calls_per_second,
         bytes.q1_packed_bytes, bytes.q8_bytes, bytes.total_input_bytes,
-        bytes.output_bytes, bytes.dot_products, checksum,
+        bytes.output_bytes, bytes.dot_products, checksum, conditioning_strategy,
         cold.bytes, kCacheLineBytes, cold.lines, cold.checksum,
-        cold.verified_touched ? "true" : "false",
+        conditioning_verified ? "true" : "false",
         opt.sync ? "true" : "false", marker_started ? "true" : "false",
         marker_ack ? "true" : "false", marker_ended ? "true" : "false");
     if (written < 0 || static_cast<size_t>(written) >= sizeof(buffer)) {
@@ -522,7 +535,8 @@ int main(int argc, char **argv) {
     const uint64_t blocks_u64 =
         std::max<uint64_t>(1, (opt.target_bytes + kNativeCarrierBytes - 1) /
                               kNativeCarrierBytes);
-    if (blocks_u64 > static_cast<uint64_t>(std::numeric_limits<int>::max())) {
+    if (blocks_u64 > static_cast<uint64_t>(std::numeric_limits<int>::max()) ||
+        blocks_u64 > static_cast<uint64_t>(std::numeric_limits<int>::max() / 128)) {
         std::fprintf(stderr, "working set has too many native blocks\n");
         return 2;
     }

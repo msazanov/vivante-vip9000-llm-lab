@@ -17,6 +17,7 @@ a software thrash loop proves an architectural cache miss.
 from __future__ import annotations
 
 import math
+import re
 import statistics
 from collections import defaultdict
 from typing import Any, Iterable, Mapping, Sequence
@@ -40,10 +41,15 @@ WORKING_SET_BYTES = (
     512 * 1024,
     1 * 1024 * 1024,
     4 * 1024 * 1024,
-    12_500 * 1024,
+    25 * 1024 * 1024 // 2,
 )
 CPUS = (0, 6)
 MIN_PAIRED_SAMPLES = 5
+PROMOTION_THRESHOLD = 0.04
+MAX_UINT64 = (1 << 64) - 1
+UPSTREAM_REPACK_SHA256 = "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+CHECKSUM_RE = re.compile(r"^0x[0-9a-f]+$")
 PMU_GROUP_EVENTS = {
     "core": {"cpu_cycles", "instructions", "stall_backend"},
     "cache": {"l1d_cache_refill", "l2d_cache_refill", "l3d_cache_refill"},
@@ -57,6 +63,8 @@ def actual_working_set(target_bytes: int) -> dict[str, int]:
     target = int(target_bytes)
     if target <= 0:
         raise ValueError("working set must be positive")
+    if target > MAX_UINT64 - (NATIVE_CARRIER_BYTES - 1):
+        raise ValueError("working set rounding would overflow uint64")
     blocks = max(1, (target + NATIVE_CARRIER_BYTES - 1) // NATIVE_CARRIER_BYTES)
     return {
         "target_bytes": target,
@@ -131,7 +139,10 @@ def traversals_per_second(sample: Mapping[str, Any]) -> float:
     return 1.0e9 / ns_per_traversal(sample)
 
 
-def validate_sample(sample: Mapping[str, Any]) -> list[str]:
+def validate_sample(
+    sample: Mapping[str, Any],
+    expected_provenance: Mapping[str, Any] | None = None,
+) -> list[str]:
     """Return contract violations for one harness/PMU joined sample.
 
     A list is used instead of raising so a target failure can publish every
@@ -157,6 +168,8 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
         errors.append("run_id is required")
     if not isinstance(sample.get("pair_id"), str) or not sample["pair_id"]:
         errors.append("pair_id is required")
+    if not _is_int(sample.get("pair_index")) or sample.get("pair_index", 0) <= 0:
+        errors.append("pair_index must be a positive integer")
     if sample.get("pair_order") not in ("hot_then_cold", "cold_then_hot"):
         errors.append("pair_order is invalid")
     if sample.get("order_index") not in (1, 2):
@@ -174,14 +187,15 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
     cold = sample.get("cold_conditioning")
     if not isinstance(cold, Mapping):
         errors.append("cold_conditioning metadata is required")
-    elif sample.get("cache_state") == "cold_conditioned" and cold.get("verified_touched") is not True:
-        errors.append("cold conditioning did not verify every thrash line")
+    elif cold.get("verified_touched") is not True:
+        errors.append("cache conditioning must be verified for both hot and cold samples")
     for key in ("actual_working_set_bytes", "blocks", "iterations", "elapsed_ns", "calls"):
         if not _is_int(sample.get(key)) or int(sample[key]) <= 0:
             errors.append(f"{key} must be a positive integer")
-    if not isinstance(sample.get("checksum"), str) or not sample["checksum"]:
-        errors.append("checksum is required to defeat dead-code elimination")
-    elif sample["checksum"].lower() in {"0x0", "0x00"}:
+    checksum = sample.get("checksum")
+    if not isinstance(checksum, str) or CHECKSUM_RE.fullmatch(checksum) is None:
+        errors.append("checksum must use exact lowercase hexadecimal 0x schema")
+    elif int(checksum, 16) == 0:
         errors.append("checksum must be non-zero")
     if sample.get("cache_state") == "cold_conditioned" and (
         sample.get("iterations") != 1 or sample.get("calls") != 1
@@ -224,10 +238,11 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
                     continue
                 if event.get("support") != "supported" or event.get("sample_valid") is not True:
                     errors.append("every PMU event must be supported and sample_valid")
-                if not _is_int(event.get("value")):
-                    errors.append("PMU event value must be an integer count")
-                if event.get("running_ratio") != 1.0:
-                    errors.append("every PMU event must have running_ratio exactly 1")
+                if not _is_int(event.get("value")) or event.get("value", -1) < 0:
+                    errors.append("PMU event value must be a non-negative integer count")
+                ratio = event.get("running_ratio")
+                if type(ratio) is not float or not math.isfinite(ratio) or ratio != 1.0:
+                    errors.append("every PMU event must have finite float running_ratio exactly 1.0")
                 if any(key in event for key in ("bytes", "ddr_bytes", "bandwidth_bytes")):
                     errors.append("PMU event counts must never be named bytes")
     for key in ("observed_ddr_read_bytes", "observed_ddr_write_bytes"):
@@ -247,15 +262,31 @@ def validate_sample(sample: Mapping[str, Any]) -> list[str]:
             or thermal["max_temp_c"] > thermal["limit_c"]:
         errors.append("thermal maximum must not exceed its limit")
     provenance = sample.get("provenance")
+    provenance_keys = (
+        "source_sha256", "binary_sha256", "compiler_sha256",
+        "upstream_repack_sha256", "compiler_id",
+    )
+    if not isinstance(expected_provenance, Mapping):
+        errors.append("declared expected provenance binding is required")
+    else:
+        for key in provenance_keys:
+            if key not in expected_provenance:
+                errors.append(f"expected provenance is missing {key}")
+        if expected_provenance.get("upstream_repack_sha256") != UPSTREAM_REPACK_SHA256:
+            errors.append("expected provenance does not pin the reviewed upstream repack.cpp")
     if not isinstance(provenance, Mapping):
         errors.append("provenance is required")
     else:
-        for key in ("source_sha256", "binary_sha256", "compiler_sha256"):
+        for key in ("source_sha256", "binary_sha256", "compiler_sha256", "upstream_repack_sha256"):
             value = provenance.get(key)
-            if not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
-                errors.append(f"{key} must be a lowercase SHA-256")
+            if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None or value == "0" * 64:
+                errors.append(f"{key} must be a nonzero lowercase SHA-256")
         if not isinstance(provenance.get("compiler_id"), str) or not provenance["compiler_id"]:
             errors.append("compiler_id is required")
+        if isinstance(expected_provenance, Mapping):
+            for key in provenance_keys:
+                if provenance.get(key) != expected_provenance.get(key):
+                    errors.append(f"{key} does not match declared expected provenance")
     if sample.get("exit_code") != 0:
         errors.append("exit_code must be zero")
     return errors
@@ -297,23 +328,10 @@ def cache_penalty_ratio(hot: Mapping[str, Any], cold: Mapping[str, Any]) -> floa
     return ns_per_traversal(cold) / ns_per_traversal(hot)
 
 
-def _group_rows(rows: Iterable[Mapping[str, Any]]) -> dict[tuple[Any, ...], list[Mapping[str, Any]]]:
-    grouped: dict[tuple[Any, ...], list[Mapping[str, Any]]] = defaultdict(list)
-    for row in rows:
-        grouped[
-            (
-                row.get("mode"),
-                row.get("cache_state"),
-                row.get("cpu"),
-                row.get("actual_working_set_bytes"),
-                (row.get("pmu") or {}).get("event_group") if isinstance(row.get("pmu"), Mapping)
-                else row.get("event_group"),
-            )
-        ].append(row)
-    return grouped
-
-
-def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+def infer_bottleneck(
+    rows: Iterable[Mapping[str, Any]],
+    expected_provenance: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a cautious memory-vs-unpack inference from comparable controls.
 
     ``cold/hot`` is a cache sensitivity signal.  ``full/unpack`` and
@@ -322,43 +340,92 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     samples; otherwise it returns ``insufficient_samples``.
     """
 
-    grouped = _group_rows(rows)
-    cells: dict[tuple[Any, ...], dict[str, Any]] = {}
-    for key, samples in grouped.items():
-        if len(samples) < MIN_PAIRED_SAMPLES:
-            continue
-        normalized = [ns_per_traversal(item) for item in samples]
-        cells[key] = summarize_samples(normalized)
+    samples = list(rows)
+    if not samples:
+        raise ValueError("E055 inference requires qualified samples")
+    qualification_errors = []
+    for index, sample in enumerate(samples):
+        for error in validate_sample(sample, expected_provenance):
+            qualification_errors.append(f"row {index}: {error}")
+    if qualification_errors:
+        raise ValueError("invalid E055 samples: " + "; ".join(qualification_errors))
+
+    run_ids = [str(sample["run_id"]) for sample in samples]
+    if len(run_ids) != len(set(run_ids)):
+        raise ValueError("run_id must be globally unique")
+
+    # A cell is one mode/CPU/shape/PMU/provenance combination. Pair IDs may
+    # appear exactly twice inside one cell: one qualified hot and one cold row.
+    cell_pairs: dict[tuple[Any, ...], dict[str, list[Mapping[str, Any]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    pair_locations: dict[str, tuple[Any, ...]] = {}
+    for sample in samples:
+        pmu = sample["pmu"]
+        provenance = sample["provenance"]
+        cell = (
+            sample["mode"], sample["cpu"], sample["actual_working_set_bytes"],
+            sample["blocks"], pmu["event_group"],
+            tuple(provenance[key] for key in sorted(provenance)),
+        )
+        pair_id = str(sample["pair_id"])
+        previous = pair_locations.setdefault(pair_id, cell)
+        if previous != cell:
+            raise ValueError("pair_id must be unique to one mode/shape/PMU cell")
+        cell_pairs[cell][pair_id].append(sample)
+
+    cell_summaries: dict[tuple[Any, ...], dict[str, Any]] = {}
+    for cell, pairs in cell_pairs.items():
+        pair_indexes: set[int] = set()
+        penalties: list[float] = []
+        pair_records: list[dict[str, Any]] = []
+        for pair_id, pair_rows in pairs.items():
+            if len(pair_rows) != 2:
+                raise ValueError(f"{pair_id} must contain exactly one hot and one cold row")
+            by_state = {str(row["cache_state"]): row for row in pair_rows}
+            if set(by_state) != set(CACHE_STATES):
+                raise ValueError(f"{pair_id} must contain exactly one hot and one cold row")
+            hot = by_state["hot_repeat"]
+            cold = by_state["cold_conditioned"]
+            if len({row["cache_state"] for row in pair_rows}) != 2:
+                raise ValueError(f"{pair_id} contains a duplicate pair half")
+            match_keys = ("pair_index", "pair_order", "mode", "cpu", "pinned_cpu",
+                          "actual_working_set_bytes", "blocks", "provenance")
+            if any(hot[key] != cold[key] for key in match_keys):
+                raise ValueError(f"{pair_id} hot/cold metadata mismatch")
+            pair_index = int(hot["pair_index"])
+            if pair_index in pair_indexes:
+                raise ValueError("pair_index must be unique inside each cell")
+            pair_indexes.add(pair_index)
+            expected_order = "hot_then_cold" if pair_index % 2 else "cold_then_hot"
+            if hot["pair_order"] != expected_order:
+                raise ValueError("pair_order must alternate by pair_index")
+            penalty = cache_penalty_ratio(hot, cold)
+            penalties.append(penalty)
+            pair_records.append({"pair_id": pair_id, "pair_index": pair_index,
+                                 "cold_over_hot": penalty})
+        if pair_indexes != set(range(1, len(pair_indexes) + 1)):
+            raise ValueError("pair_index sequence must be contiguous from one")
+        if len(penalties) >= MIN_PAIRED_SAMPLES:
+            cell_summaries[cell] = {
+                "paired_samples": len(penalties),
+                "median_pair_penalty": statistics.median(penalties),
+                "pair_penalties": sorted(pair_records, key=lambda item: item["pair_index"]),
+            }
 
     records: list[dict[str, Any]] = []
     memory_ratios: list[float] = []
     control_tracking_ratios: list[float] = []
-    coordinates = sorted({(key[2], key[3], key[4]) for key in cells}, key=str)
-    for cpu, size, pmu_group in coordinates:
-        keys = {(mode, state): (mode, state, cpu, size, pmu_group)
-                for mode in MODES for state in CACHE_STATES}
-        if not all(key in cells for key in keys.values()):
+    coordinates: dict[tuple[Any, ...], dict[str, dict[str, Any]]] = defaultdict(dict)
+    for cell, summary in cell_summaries.items():
+        mode, cpu, size, blocks, pmu_group, provenance = cell
+        coordinates[(cpu, size, blocks, pmu_group, provenance)][mode] = summary
+    for (cpu, size, blocks, pmu_group, _), mode_summaries in sorted(
+        coordinates.items(), key=lambda item: str(item[0])
+    ):
+        if set(mode_summaries) != set(MODES):
             continue
-        # Each mode must have at least five actual hot/cold pair identifiers.
-        # This prevents six unrelated bags of repeats from masquerading as a
-        # paired design.
-        pair_counts = {}
-        complete = True
-        for mode in MODES:
-            hot_rows = grouped[keys[(mode, "hot_repeat")]]
-            cold_rows = grouped[keys[(mode, "cold_conditioned")]]
-            hot_pairs = {row.get("pair_id") for row in hot_rows if row.get("pair_id")}
-            cold_pairs = {row.get("pair_id") for row in cold_rows if row.get("pair_id")}
-            pair_counts[mode] = len(hot_pairs & cold_pairs)
-            if pair_counts[mode] < MIN_PAIRED_SAMPLES:
-                complete = False
-        if not complete:
-            continue
-        penalties = {
-            mode: cells[keys[(mode, "cold_conditioned")]]["median"] /
-                  cells[keys[(mode, "hot_repeat")]]["median"]
-            for mode in MODES
-        }
+        penalties = {mode: mode_summaries[mode]["median_pair_penalty"] for mode in MODES}
         full_penalty = penalties["full_dotprod"]
         control_penalty = statistics.median(
             [penalties["packed_stream"], penalties["unpack_scale"]]
@@ -367,18 +434,24 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         memory_ratios.append(full_penalty)
         control_tracking_ratios.append(tracking)
         records.append({
-            "kind": "like_for_like_cold_penalty_tracking",
+            "kind": "median_of_per_pair_cold_penalties",
             "cpu": cpu,
             "actual_working_set_bytes": size,
+            "blocks": blocks,
             "pmu_group": pmu_group,
-            "paired_samples_per_mode": pair_counts,
+            "paired_samples_per_mode": {
+                mode: mode_summaries[mode]["paired_samples"] for mode in MODES
+            },
             "full_cold_over_hot": full_penalty,
             "packed_stream_cold_over_hot": penalties["packed_stream"],
             "unpack_scale_cold_over_hot": penalties["unpack_scale"],
             "full_over_median_control_penalty": tracking,
+            "pair_penalties": {
+                mode: mode_summaries[mode]["pair_penalties"] for mode in MODES
+            },
         })
 
-    if not cells:
+    if not cell_summaries:
         classification = "insufficient_samples"
         confidence = 0.0
     elif memory_ratios and control_tracking_ratios:
@@ -386,7 +459,7 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         median_tracking = statistics.median(control_tracking_ratios)
         classification = (
             "memory_cache_sensitive"
-            if median_memory >= 1.20 and 0.80 <= median_tracking <= 1.25
+            if median_memory > 1.0 and 0.80 <= median_tracking <= 1.25
             else "unpack_compute_sensitive"
         )
         confidence = min(1.0, 0.5 + 0.1 * min(len(memory_ratios), 5) +
@@ -398,10 +471,26 @@ def infer_bottleneck(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "schema": "e055-q1-inference/v1",
         "classification": classification,
         "confidence": confidence,
-        "cell_count": len(cells),
+        "cell_count": len(cell_summaries),
         "memory_cache_sensitivity_ratios": memory_ratios,
         "full_to_control_cold_penalty_ratio_of_ratios": control_tracking_ratios,
         "records": records,
+        "promotion": {
+            "threshold_fraction": PROMOTION_THRESHOLD,
+            "projected_q1_gain_fraction": (
+                max(0.0, 1.0 - 1.0 / statistics.median(memory_ratios))
+                if memory_ratios else 0.0
+            ),
+            "eligible": bool(
+                classification == "memory_cache_sensitive" and memory_ratios and
+                max(0.0, 1.0 - 1.0 / statistics.median(memory_ratios)) >=
+                PROMOTION_THRESHOLD
+            ),
+            "semantics": (
+                "Optimistic component bound from making full cold traversal equal hot; "
+                "not an end-to-end model speedup claim."
+            ),
+        },
         "interpretation": (
             "Directional microbenchmark inference only; PMU values are event counts, "
             "not DDR bytes. A full-model decision requires the E049 per-token trace."

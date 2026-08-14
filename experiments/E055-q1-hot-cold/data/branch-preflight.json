@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vip9000-e055-q1-hot-cold",
-  "generated_at_utc": "2026-08-14T05:20:53.343620+00:00",
+  "generated_at_utc": "2026-08-14T06:15:53.200693+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E055-Q1-HOT-COLD",
   "hypothesis_query": "separate stock Q1 4x4 packed-carrier loading, register unpack plus scale, and full DOTPROD under cache-hot/cold conditions on A733; do not repeat E004 E008 E009 E023 E030-E040",
@@ -26119,7 +26119,7 @@
     },
     {
       "ref": "refs/heads/codex/e055-q1-hot-cold",
-      "match_count": 97649,
+      "match_count": 100317,
       "matches": [
         {
           "term": "DOTPROD",
@@ -26519,15 +26519,15 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 3,
           "first_lines": [
-            7,
-            35,
-            95
+            26,
+            33,
+            112
           ]
         },
         {
           "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 359,
+          "occurrences": 421,
           "first_lines": [
             7,
             15,
@@ -26538,10 +26538,26 @@
         },
         {
           "term": "DOTPROD",
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
+          "first_lines": [
+            4
+          ]
+        },
+        {
+          "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
+          "first_lines": [
+            28
           ]
         },
         {
@@ -26555,11 +26571,18 @@
         {
           "term": "DOTPROD",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 2,
           "first_lines": [
-            37,
-            97,
-            120
+            32,
+            139
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 1,
+          "first_lines": [
+            2
           ]
         },
         {
@@ -26569,21 +26592,20 @@
           "first_lines": [
             4,
             41,
-            57,
-            155,
-            444
+            59,
+            159,
+            470
           ]
         },
         {
           "term": "DOTPROD",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 5,
+          "occurrences": 4,
           "first_lines": [
             9,
-            33,
-            183,
-            245,
-            248
+            34,
+            277,
+            362
           ]
         },
         {
@@ -26593,21 +26615,29 @@
           "first_lines": [
             1,
             5,
-            14,
-            21,
-            88
+            13,
+            67,
+            69
           ]
         },
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 8,
+          "occurrences": 258,
           "first_lines": [
             3,
             6,
             9,
             26121,
-            75550
+            26519
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
           ]
         },
         {
@@ -26622,7 +26652,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 20,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -26638,13 +26668,25 @@
           "first_lines": [
             3,
             4,
-            13
+            8
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 6,
+          "first_lines": [
+            1,
+            12,
+            24,
+            25,
+            29
           ]
         },
         {
           "term": "E055",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 5,
+          "occurrences": 6,
           "first_lines": [
             1,
             10,
@@ -26656,13 +26698,20 @@
         {
           "term": "E055",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 5,
+          "occurrences": 3,
           "first_lines": [
             1,
             7,
-            36,
-            60,
-            80
+            27
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            2,
+            50
           ]
         },
         {
@@ -26672,27 +26721,27 @@
           "first_lines": [
             1,
             9,
-            442,
-            472,
-            491
+            468,
+            498,
+            517
           ]
         },
         {
           "term": "E055",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 8,
+          "occurrences": 9,
           "first_lines": [
             1,
             3,
             25,
-            117,
-            122
+            26,
+            139
           ]
         },
         {
           "term": "E055",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 14,
+          "occurrences": 18,
           "first_lines": [
             2,
             14,
@@ -27019,16 +27068,8 @@
         },
         {
           "term": "GEMV",
-          "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            34
-          ]
-        },
-        {
-          "term": "GEMV",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 568,
+          "occurrences": 615,
           "first_lines": [
             16,
             184,
@@ -28003,19 +28044,17 @@
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 7,
+          "occurrences": 3,
           "first_lines": [
-            42,
-            47,
-            48,
-            67,
-            77
+            81,
+            82,
+            93
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1340,
+          "occurrences": 1767,
           "first_lines": [
             21,
             431,
@@ -28026,11 +28065,20 @@
         },
         {
           "term": "PMU",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
           "first_lines": [
-            10,
-            53
+            15
+          ]
+        },
+        {
+          "term": "PMU",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 3,
+          "first_lines": [
+            6,
+            32,
+            36
           ]
         },
         {
@@ -28109,17 +28157,19 @@
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 1,
           "first_lines": [
-            64
+            81
           ]
         },
         {
           "term": "PMU",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 9,
           "first_lines": [
-            48,
-            72,
-            92
+            50,
+            51,
+            107,
+            108,
+            109
           ]
         },
         {
@@ -28170,25 +28220,24 @@
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 5,
+          "occurrences": 4,
           "first_lines": [
-            63,
-            169,
-            227,
-            387,
-            461
+            65,
+            173,
+            246,
+            413
           ]
         },
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 14,
+          "occurrences": 32,
           "first_lines": [
             12,
-            113,
-            117,
-            143,
-            144
+            47,
+            135,
+            139,
+            198
           ]
         },
         {
@@ -29542,19 +29591,19 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 17,
+          "occurrences": 12,
           "first_lines": [
             1,
             6,
-            21,
-            26,
-            27
+            24,
+            25,
+            31
           ]
         },
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 9302,
+          "occurrences": 10114,
           "first_lines": [
             3,
             6,
@@ -29577,7 +29626,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 11,
+          "occurrences": 13,
           "first_lines": [
             2,
             3,
@@ -29593,7 +29642,7 @@
           "first_lines": [
             3,
             4,
-            13
+            8
           ]
         },
         {
@@ -29724,8 +29773,18 @@
         },
         {
           "term": "Q1",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 3,
+          "first_lines": [
+            29,
+            30,
+            56
+          ]
+        },
+        {
+          "term": "Q1",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 7,
+          "occurrences": 8,
           "first_lines": [
             10,
             19,
@@ -29737,13 +29796,10 @@
         {
           "term": "Q1",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 7,
+          "occurrences": 2,
           "first_lines": [
-            1,
             7,
-            27,
-            29,
-            36
+            27
           ]
         },
         {
@@ -29897,13 +29953,13 @@
             4,
             5,
             10,
-            201
+            205
           ]
         },
         {
           "term": "Q1",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 17,
+          "occurrences": 18,
           "first_lines": [
             1,
             4,
@@ -29971,7 +30027,7 @@
         {
           "term": "Q1",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 12,
+          "occurrences": 14,
           "first_lines": [
             14,
             18,
@@ -30163,16 +30219,8 @@
         },
         {
           "term": "bandwidth",
-          "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            69
-          ]
-        },
-        {
-          "term": "bandwidth",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 116,
+          "occurrences": 132,
           "first_lines": [
             23,
             1766,
@@ -30186,17 +30234,16 @@
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 1,
           "first_lines": [
-            63
+            80
           ]
         },
         {
           "term": "bandwidth",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 2,
           "first_lines": [
-            67,
-            159,
-            266
+            73,
+            231
           ]
         },
         {
@@ -30775,19 +30822,19 @@
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 8,
+          "occurrences": 5,
           "first_lines": [
             1,
-            49,
+            5,
+            15,
             51,
-            66,
-            68
+            72
           ]
         },
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 494,
+          "occurrences": 609,
           "first_lines": [
             7,
             17,
@@ -30798,11 +30845,21 @@
         },
         {
           "term": "cache",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
           "first_lines": [
-            7,
-            15
+            21
+          ]
+        },
+        {
+          "term": "cache",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 4,
+          "first_lines": [
+            6,
+            14,
+            39,
+            67
           ]
         },
         {
@@ -30816,14 +30873,23 @@
         },
         {
           "term": "cache",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 2,
+          "first_lines": [
+            51,
+            62
+          ]
+        },
+        {
+          "term": "cache",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 6,
+          "occurrences": 12,
           "first_lines": [
             8,
-            38,
-            62,
-            82,
-            97
+            12,
+            23,
+            31,
+            33
           ]
         },
         {
@@ -30840,26 +30906,34 @@
         },
         {
           "term": "cache",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 1,
+          "first_lines": [
+            62
+          ]
+        },
+        {
+          "term": "cache",
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 11,
           "first_lines": [
             42,
-            58,
-            122,
-            125,
-            159
+            60,
+            124,
+            127,
+            163
           ]
         },
         {
           "term": "cache",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 14,
+          "occurrences": 20,
           "first_lines": [
             13,
             14,
-            34,
-            125,
-            126
+            35,
+            49,
+            147
           ]
         },
         {
@@ -30909,16 +30983,16 @@
           "occurrences": 9,
           "first_lines": [
             1,
-            21,
-            40,
-            45,
-            48
+            44,
+            48,
+            55,
+            56
           ]
         },
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 94,
+          "occurrences": 245,
           "first_lines": [
             3,
             6,
@@ -30930,7 +31004,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 6,
+          "occurrences": 8,
           "first_lines": [
             2,
             3,
@@ -30941,67 +31015,90 @@
         },
         {
           "term": "cold",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 3,
+          "first_lines": [
+            7,
+            8,
+            10
+          ]
+        },
+        {
+          "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 6,
+          "occurrences": 9,
           "first_lines": [
             3,
             4,
-            10,
-            13,
-            15
+            6,
+            8,
+            11
+          ]
+        },
+        {
+          "term": "cold",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 5,
+          "first_lines": [
+            50,
+            52,
+            56,
+            59,
+            62
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
             26,
             38,
             41,
-            59
+            64,
+            76
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 11,
+          "occurrences": 16,
           "first_lines": [
-            1,
-            36,
+            27,
+            30,
             41,
-            58,
-            60
+            76,
+            78
           ]
         },
         {
           "term": "cold",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 21,
+          "occurrences": 22,
           "first_lines": [
             1,
-            58,
-            62,
-            159,
-            167
+            60,
+            64,
+            163,
+            171
           ]
         },
         {
           "term": "cold",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 17,
+          "occurrences": 36,
           "first_lines": [
             1,
             13,
             25,
-            34,
-            122
+            26,
+            35
           ]
         },
         {
           "term": "cold",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 7,
+          "occurrences": 9,
           "first_lines": [
             14,
             18,
@@ -31029,19 +31126,19 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 5,
+          "occurrences": 9,
           "first_lines": [
             1,
-            21,
-            40,
-            42,
-            125
+            44,
+            46,
+            55,
+            56
           ]
         },
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 42,
+          "occurrences": 193,
           "first_lines": [
             3,
             6,
@@ -31053,7 +31150,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 6,
+          "occurrences": 8,
           "first_lines": [
             2,
             3,
@@ -31064,13 +31161,24 @@
         },
         {
           "term": "hot",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 3,
+          "first_lines": [
+            7,
+            8,
+            11
+          ]
+        },
+        {
+          "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
             3,
             4,
-            13,
-            15
+            8,
+            11,
+            14
           ]
         },
         {
@@ -31083,24 +31191,33 @@
         },
         {
           "term": "hot",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
+          "first_lines": [
+            56
+          ]
+        },
+        {
+          "term": "hot",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 3,
+          "occurrences": 4,
           "first_lines": [
             26,
             38,
-            41
+            41,
+            64
           ]
         },
         {
           "term": "hot",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 8,
+          "occurrences": 14,
           "first_lines": [
-            1,
-            36,
-            38,
-            60,
-            80
+            23,
+            27,
+            30,
+            31,
+            76
           ]
         },
         {
@@ -31126,27 +31243,27 @@
           "first_lines": [
             1,
             42,
-            58,
-            61,
-            63
+            60,
+            63,
+            65
           ]
         },
         {
           "term": "hot",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 20,
+          "occurrences": 25,
           "first_lines": [
             1,
             25,
-            34,
-            122,
-            214
+            26,
+            35,
+            144
           ]
         },
         {
           "term": "hot",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 7,
+          "occurrences": 9,
           "first_lines": [
             14,
             18,
@@ -32187,22 +32304,29 @@
         {
           "term": "memory",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 2,
+          "occurrences": 1,
           "first_lines": [
-            66,
-            128
+            72
           ]
         },
         {
           "term": "memory",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1293,
+          "occurrences": 1515,
           "first_lines": [
             22,
             1923,
             1934,
             1946,
             1958
+          ]
+        },
+        {
+          "term": "memory",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 1,
+          "first_lines": [
+            39
           ]
         },
         {
@@ -32262,6 +32386,15 @@
         },
         {
           "term": "memory",
+          "path": "tests/test_e055_q1_hotcold.py",
+          "occurrences": 2,
+          "first_lines": [
+            108,
+            157
+          ]
+        },
+        {
+          "term": "memory",
           "path": "tooling/a733_pmu_control.c",
           "occurrences": 7,
           "first_lines": [
@@ -32286,19 +32419,19 @@
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 1,
           "first_lines": [
-            200
+            204
           ]
         },
         {
           "term": "memory",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 9,
+          "occurrences": 11,
           "first_lines": [
-            212,
-            229,
-            237,
-            262,
-            264
+            50,
+            207,
+            317,
+            334,
+            367
           ]
         },
         {
@@ -32421,7 +32554,7 @@
         {
           "term": "prefetch",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 87,
+          "occurrences": 101,
           "first_lines": [
             19,
             2251,
@@ -32778,15 +32911,18 @@
         {
           "term": "scale",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
+          "occurrences": 4,
           "first_lines": [
-            34
+            31,
+            32,
+            36,
+            60
           ]
         },
         {
           "term": "scale",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 656,
+          "occurrences": 716,
           "first_lines": [
             7,
             14,
@@ -32797,10 +32933,18 @@
         },
         {
           "term": "scale",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
+          "first_lines": [
+            12
+          ]
+        },
+        {
+          "term": "scale",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
           ]
         },
         {
@@ -32816,9 +32960,11 @@
         {
           "term": "scale",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 1,
+          "occurrences": 3,
           "first_lines": [
-            46
+            46,
+            54,
+            55
           ]
         },
         {
@@ -32826,8 +32972,8 @@
           "path": "tests/test_e055_q1_hotcold.py",
           "occurrences": 2,
           "first_lines": [
-            104,
-            120
+            89,
+            139
           ]
         },
         {
@@ -32844,6 +32990,15 @@
           "occurrences": 1,
           "first_lines": [
             43
+          ]
+        },
+        {
+          "term": "scale",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            12,
+            37
           ]
         },
         {
@@ -32891,23 +33046,24 @@
         {
           "term": "scale",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 11,
+          "occurrences": 23,
           "first_lines": [
-            57,
-            154,
-            202,
-            224,
-            226
+            59,
+            158,
+            216,
+            218,
+            219
           ]
         },
         {
           "term": "scale",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 4,
           "first_lines": [
             7,
-            33,
-            246
+            34,
+            364,
+            377
           ]
         },
         {
@@ -32959,27 +33115,29 @@
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 2,
+          "occurrences": 1,
           "first_lines": [
-            45,
-            48
+            49
           ]
         },
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1,
+          "occurrences": 11,
           "first_lines": [
-            18
+            18,
+            32960,
+            32969,
+            32977,
+            32986
           ]
         },
         {
           "term": "thrash",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
           "first_lines": [
-            32,
-            35
+            53
           ]
         },
         {
@@ -32988,10 +33146,10 @@
           "occurrences": 12,
           "first_lines": [
             46,
-            62,
-            135,
-            137,
-            163
+            64,
+            139,
+            141,
+            167
           ]
         },
         {
@@ -33000,7 +33158,7 @@
           "occurrences": 2,
           "first_lines": [
             14,
-            135
+            178
           ]
         },
         {
@@ -33201,7 +33359,7 @@
         {
           "term": "tile",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 381,
+          "occurrences": 410,
           "first_lines": [
             20,
             2675,
@@ -33269,13 +33427,13 @@
         {
           "term": "tile",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 10,
+          "occurrences": 11,
           "first_lines": [
-            242,
-            244,
-            245,
-            247,
-            248
+            262,
+            264,
+            265,
+            267,
+            268
           ]
         },
         {
@@ -33672,16 +33830,16 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            34,
-            115,
-            126,
-            130
+            6,
+            31,
+            32,
+            60
           ]
         },
         {
           "term": "unpack",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2026,
+          "occurrences": 2186,
           "first_lines": [
             7,
             13,
@@ -33692,10 +33850,18 @@
         },
         {
           "term": "unpack",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
+          "first_lines": [
+            12
+          ]
+        },
+        {
+          "term": "unpack",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
           ]
         },
         {
@@ -33710,9 +33876,13 @@
         {
           "term": "unpack",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 1,
+          "occurrences": 5,
           "first_lines": [
-            46
+            46,
+            54,
+            55,
+            59,
+            60
           ]
         },
         {
@@ -33720,8 +33890,8 @@
           "path": "tests/test_e055_q1_hotcold.py",
           "occurrences": 2,
           "first_lines": [
-            104,
-            120
+            89,
+            139
           ]
         },
         {
@@ -33734,6 +33904,15 @@
             46,
             47,
             49
+          ]
+        },
+        {
+          "term": "unpack",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            12,
+            37
           ]
         },
         {
@@ -33767,25 +33946,25 @@
         {
           "term": "unpack",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 11,
+          "occurrences": 10,
           "first_lines": [
-            57,
-            154,
-            202,
-            224,
-            230
+            59,
+            158,
+            242,
+            249,
+            263
           ]
         },
         {
           "term": "unpack",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 15,
+          "occurrences": 7,
           "first_lines": [
             7,
-            33,
-            212,
-            214,
-            230
+            34,
+            317,
+            319,
+            364
           ]
         },
         {
@@ -33987,8 +34166,12 @@
         "E054-NULL-P05-STOCK",
         "E054-Q1-RUNNER",
         "E055",
+        "E055-DISASSEMBLY-REVIEW",
+        "E055-GATE-",
         "E055-Q1-HOT-COLD",
+        "E055-Q1-HOT-COLD-HARNESS",
         "E055-Q1-HOT-COLD-MANIFEST",
+        "E055-Q1-HOTCOLD-AARCH64",
         "E055-Q1-INFERENCE",
         "E055-STAGE1"
       ],
@@ -34575,13 +34758,15 @@
           "paths": [
             "experiments/E055-q1-hot-cold/README.md",
             "experiments/E055-q1-hot-cold/data/branch-preflight.json",
+            "experiments/E055-q1-hot-cold/data/disassembly-review.json",
             "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
             "experiments/E055-q1-hot-cold/data/manifest.json",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
             "experiments/E055-q1-hot-cold/data/sample.schema.json"
           ]
         }
       ],
-      "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569"
+      "commit": "bba62cbb7abd8737281355f5f784e30904037cc6"
     },
     {
       "ref": "refs/heads/main",
@@ -71376,7 +71561,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-      "match_count": 97649,
+      "match_count": 100317,
       "matches": [
         {
           "term": "DOTPROD",
@@ -71776,15 +71961,15 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 3,
           "first_lines": [
-            7,
-            35,
-            95
+            26,
+            33,
+            112
           ]
         },
         {
           "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 359,
+          "occurrences": 421,
           "first_lines": [
             7,
             15,
@@ -71795,10 +71980,26 @@
         },
         {
           "term": "DOTPROD",
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
+          "first_lines": [
+            4
+          ]
+        },
+        {
+          "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
+          "first_lines": [
+            28
           ]
         },
         {
@@ -71812,11 +72013,18 @@
         {
           "term": "DOTPROD",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 2,
           "first_lines": [
-            37,
-            97,
-            120
+            32,
+            139
+          ]
+        },
+        {
+          "term": "DOTPROD",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 1,
+          "first_lines": [
+            2
           ]
         },
         {
@@ -71826,21 +72034,20 @@
           "first_lines": [
             4,
             41,
-            57,
-            155,
-            444
+            59,
+            159,
+            470
           ]
         },
         {
           "term": "DOTPROD",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 5,
+          "occurrences": 4,
           "first_lines": [
             9,
-            33,
-            183,
-            245,
-            248
+            34,
+            277,
+            362
           ]
         },
         {
@@ -71850,21 +72057,29 @@
           "first_lines": [
             1,
             5,
-            14,
-            21,
-            88
+            13,
+            67,
+            69
           ]
         },
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 8,
+          "occurrences": 258,
           "first_lines": [
             3,
             6,
             9,
             26121,
-            75550
+            26519
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
           ]
         },
         {
@@ -71879,7 +72094,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 20,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -71895,13 +72110,25 @@
           "first_lines": [
             3,
             4,
-            13
+            8
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 6,
+          "first_lines": [
+            1,
+            12,
+            24,
+            25,
+            29
           ]
         },
         {
           "term": "E055",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 5,
+          "occurrences": 6,
           "first_lines": [
             1,
             10,
@@ -71913,13 +72140,20 @@
         {
           "term": "E055",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 5,
+          "occurrences": 3,
           "first_lines": [
             1,
             7,
-            36,
-            60,
-            80
+            27
+          ]
+        },
+        {
+          "term": "E055",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            2,
+            50
           ]
         },
         {
@@ -71929,27 +72163,27 @@
           "first_lines": [
             1,
             9,
-            442,
-            472,
-            491
+            468,
+            498,
+            517
           ]
         },
         {
           "term": "E055",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 8,
+          "occurrences": 9,
           "first_lines": [
             1,
             3,
             25,
-            117,
-            122
+            26,
+            139
           ]
         },
         {
           "term": "E055",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 14,
+          "occurrences": 18,
           "first_lines": [
             2,
             14,
@@ -72276,16 +72510,8 @@
         },
         {
           "term": "GEMV",
-          "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            34
-          ]
-        },
-        {
-          "term": "GEMV",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 568,
+          "occurrences": 615,
           "first_lines": [
             16,
             184,
@@ -73260,19 +73486,17 @@
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 7,
+          "occurrences": 3,
           "first_lines": [
-            42,
-            47,
-            48,
-            67,
-            77
+            81,
+            82,
+            93
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1340,
+          "occurrences": 1767,
           "first_lines": [
             21,
             431,
@@ -73283,11 +73507,20 @@
         },
         {
           "term": "PMU",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
           "first_lines": [
-            10,
-            53
+            15
+          ]
+        },
+        {
+          "term": "PMU",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 3,
+          "first_lines": [
+            6,
+            32,
+            36
           ]
         },
         {
@@ -73366,17 +73599,19 @@
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 1,
           "first_lines": [
-            64
+            81
           ]
         },
         {
           "term": "PMU",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 9,
           "first_lines": [
-            48,
-            72,
-            92
+            50,
+            51,
+            107,
+            108,
+            109
           ]
         },
         {
@@ -73427,25 +73662,24 @@
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 5,
+          "occurrences": 4,
           "first_lines": [
-            63,
-            169,
-            227,
-            387,
-            461
+            65,
+            173,
+            246,
+            413
           ]
         },
         {
           "term": "PMU",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 14,
+          "occurrences": 32,
           "first_lines": [
             12,
-            113,
-            117,
-            143,
-            144
+            47,
+            135,
+            139,
+            198
           ]
         },
         {
@@ -74799,19 +75033,19 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 17,
+          "occurrences": 12,
           "first_lines": [
             1,
             6,
-            21,
-            26,
-            27
+            24,
+            25,
+            31
           ]
         },
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 9302,
+          "occurrences": 10114,
           "first_lines": [
             3,
             6,
@@ -74834,7 +75068,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 11,
+          "occurrences": 13,
           "first_lines": [
             2,
             3,
@@ -74850,7 +75084,7 @@
           "first_lines": [
             3,
             4,
-            13
+            8
           ]
         },
         {
@@ -74981,8 +75215,18 @@
         },
         {
           "term": "Q1",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 3,
+          "first_lines": [
+            29,
+            30,
+            56
+          ]
+        },
+        {
+          "term": "Q1",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 7,
+          "occurrences": 8,
           "first_lines": [
             10,
             19,
@@ -74994,13 +75238,10 @@
         {
           "term": "Q1",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 7,
+          "occurrences": 2,
           "first_lines": [
-            1,
             7,
-            27,
-            29,
-            36
+            27
           ]
         },
         {
@@ -75154,13 +75395,13 @@
             4,
             5,
             10,
-            201
+            205
           ]
         },
         {
           "term": "Q1",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 17,
+          "occurrences": 18,
           "first_lines": [
             1,
             4,
@@ -75228,7 +75469,7 @@
         {
           "term": "Q1",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 12,
+          "occurrences": 14,
           "first_lines": [
             14,
             18,
@@ -75420,16 +75661,8 @@
         },
         {
           "term": "bandwidth",
-          "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
-          "first_lines": [
-            69
-          ]
-        },
-        {
-          "term": "bandwidth",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 116,
+          "occurrences": 132,
           "first_lines": [
             23,
             1766,
@@ -75443,17 +75676,16 @@
           "path": "tests/test_e055_harness_contract.py",
           "occurrences": 1,
           "first_lines": [
-            63
+            80
           ]
         },
         {
           "term": "bandwidth",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 2,
           "first_lines": [
-            67,
-            159,
-            266
+            73,
+            231
           ]
         },
         {
@@ -76032,19 +76264,19 @@
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 8,
+          "occurrences": 5,
           "first_lines": [
             1,
-            49,
+            5,
+            15,
             51,
-            66,
-            68
+            72
           ]
         },
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 494,
+          "occurrences": 609,
           "first_lines": [
             7,
             17,
@@ -76055,11 +76287,21 @@
         },
         {
           "term": "cache",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+          "occurrences": 1,
           "first_lines": [
-            7,
-            15
+            21
+          ]
+        },
+        {
+          "term": "cache",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 4,
+          "first_lines": [
+            6,
+            14,
+            39,
+            67
           ]
         },
         {
@@ -76073,14 +76315,23 @@
         },
         {
           "term": "cache",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 2,
+          "first_lines": [
+            51,
+            62
+          ]
+        },
+        {
+          "term": "cache",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 6,
+          "occurrences": 12,
           "first_lines": [
             8,
-            38,
-            62,
-            82,
-            97
+            12,
+            23,
+            31,
+            33
           ]
         },
         {
@@ -76097,26 +76348,34 @@
         },
         {
           "term": "cache",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 1,
+          "first_lines": [
+            62
+          ]
+        },
+        {
+          "term": "cache",
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 11,
           "first_lines": [
             42,
-            58,
-            122,
-            125,
-            159
+            60,
+            124,
+            127,
+            163
           ]
         },
         {
           "term": "cache",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 14,
+          "occurrences": 20,
           "first_lines": [
             13,
             14,
-            34,
-            125,
-            126
+            35,
+            49,
+            147
           ]
         },
         {
@@ -76166,16 +76425,16 @@
           "occurrences": 9,
           "first_lines": [
             1,
-            21,
-            40,
-            45,
-            48
+            44,
+            48,
+            55,
+            56
           ]
         },
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 94,
+          "occurrences": 245,
           "first_lines": [
             3,
             6,
@@ -76187,7 +76446,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 6,
+          "occurrences": 8,
           "first_lines": [
             2,
             3,
@@ -76198,67 +76457,90 @@
         },
         {
           "term": "cold",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 3,
+          "first_lines": [
+            7,
+            8,
+            10
+          ]
+        },
+        {
+          "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 6,
+          "occurrences": 9,
           "first_lines": [
             3,
             4,
-            10,
-            13,
-            15
+            6,
+            8,
+            11
+          ]
+        },
+        {
+          "term": "cold",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 5,
+          "first_lines": [
+            50,
+            52,
+            56,
+            59,
+            62
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
             26,
             38,
             41,
-            59
+            64,
+            76
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 11,
+          "occurrences": 16,
           "first_lines": [
-            1,
-            36,
+            27,
+            30,
             41,
-            58,
-            60
+            76,
+            78
           ]
         },
         {
           "term": "cold",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 21,
+          "occurrences": 22,
           "first_lines": [
             1,
-            58,
-            62,
-            159,
-            167
+            60,
+            64,
+            163,
+            171
           ]
         },
         {
           "term": "cold",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 17,
+          "occurrences": 36,
           "first_lines": [
             1,
             13,
             25,
-            34,
-            122
+            26,
+            35
           ]
         },
         {
           "term": "cold",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 7,
+          "occurrences": 9,
           "first_lines": [
             14,
             18,
@@ -76286,19 +76568,19 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 5,
+          "occurrences": 9,
           "first_lines": [
             1,
-            21,
-            40,
-            42,
-            125
+            44,
+            46,
+            55,
+            56
           ]
         },
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 42,
+          "occurrences": 193,
           "first_lines": [
             3,
             6,
@@ -76310,7 +76592,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 6,
+          "occurrences": 8,
           "first_lines": [
             2,
             3,
@@ -76321,13 +76603,24 @@
         },
         {
           "term": "hot",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 3,
+          "first_lines": [
+            7,
+            8,
+            11
+          ]
+        },
+        {
+          "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 4,
+          "occurrences": 5,
           "first_lines": [
             3,
             4,
-            13,
-            15
+            8,
+            11,
+            14
           ]
         },
         {
@@ -76340,24 +76633,33 @@
         },
         {
           "term": "hot",
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
+          "first_lines": [
+            56
+          ]
+        },
+        {
+          "term": "hot",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 3,
+          "occurrences": 4,
           "first_lines": [
             26,
             38,
-            41
+            41,
+            64
           ]
         },
         {
           "term": "hot",
           "path": "tests/test_e055_q1_hotcold.py",
-          "occurrences": 8,
+          "occurrences": 14,
           "first_lines": [
-            1,
-            36,
-            38,
-            60,
-            80
+            23,
+            27,
+            30,
+            31,
+            76
           ]
         },
         {
@@ -76383,27 +76685,27 @@
           "first_lines": [
             1,
             42,
-            58,
-            61,
-            63
+            60,
+            63,
+            65
           ]
         },
         {
           "term": "hot",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 20,
+          "occurrences": 25,
           "first_lines": [
             1,
             25,
-            34,
-            122,
-            214
+            26,
+            35,
+            144
           ]
         },
         {
           "term": "hot",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 7,
+          "occurrences": 9,
           "first_lines": [
             14,
             18,
@@ -77444,22 +77746,29 @@
         {
           "term": "memory",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 2,
+          "occurrences": 1,
           "first_lines": [
-            66,
-            128
+            72
           ]
         },
         {
           "term": "memory",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1293,
+          "occurrences": 1515,
           "first_lines": [
             22,
             1923,
             1934,
             1946,
             1958
+          ]
+        },
+        {
+          "term": "memory",
+          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
+          "occurrences": 1,
+          "first_lines": [
+            39
           ]
         },
         {
@@ -77519,6 +77828,15 @@
         },
         {
           "term": "memory",
+          "path": "tests/test_e055_q1_hotcold.py",
+          "occurrences": 2,
+          "first_lines": [
+            108,
+            157
+          ]
+        },
+        {
+          "term": "memory",
           "path": "tooling/a733_pmu_control.c",
           "occurrences": 7,
           "first_lines": [
@@ -77543,19 +77861,19 @@
           "path": "tooling/e055_q1_hotcold.cpp",
           "occurrences": 1,
           "first_lines": [
-            200
+            204
           ]
         },
         {
           "term": "memory",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 9,
+          "occurrences": 11,
           "first_lines": [
-            212,
-            229,
-            237,
-            262,
-            264
+            50,
+            207,
+            317,
+            334,
+            367
           ]
         },
         {
@@ -77678,7 +77996,7 @@
         {
           "term": "prefetch",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 87,
+          "occurrences": 101,
           "first_lines": [
             19,
             2251,
@@ -78035,15 +78353,18 @@
         {
           "term": "scale",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 1,
+          "occurrences": 4,
           "first_lines": [
-            34
+            31,
+            32,
+            36,
+            60
           ]
         },
         {
           "term": "scale",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 656,
+          "occurrences": 716,
           "first_lines": [
             7,
             14,
@@ -78054,10 +78375,18 @@
         },
         {
           "term": "scale",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
+          "first_lines": [
+            12
+          ]
+        },
+        {
+          "term": "scale",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
           ]
         },
         {
@@ -78073,9 +78402,11 @@
         {
           "term": "scale",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 1,
+          "occurrences": 3,
           "first_lines": [
-            46
+            46,
+            54,
+            55
           ]
         },
         {
@@ -78083,8 +78414,8 @@
           "path": "tests/test_e055_q1_hotcold.py",
           "occurrences": 2,
           "first_lines": [
-            104,
-            120
+            89,
+            139
           ]
         },
         {
@@ -78101,6 +78432,15 @@
           "occurrences": 1,
           "first_lines": [
             43
+          ]
+        },
+        {
+          "term": "scale",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            12,
+            37
           ]
         },
         {
@@ -78148,23 +78488,24 @@
         {
           "term": "scale",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 11,
+          "occurrences": 23,
           "first_lines": [
-            57,
-            154,
-            202,
-            224,
-            226
+            59,
+            158,
+            216,
+            218,
+            219
           ]
         },
         {
           "term": "scale",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 3,
+          "occurrences": 4,
           "first_lines": [
             7,
-            33,
-            246
+            34,
+            364,
+            377
           ]
         },
         {
@@ -78216,27 +78557,29 @@
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/README.md",
-          "occurrences": 2,
+          "occurrences": 1,
           "first_lines": [
-            45,
-            48
+            49
           ]
         },
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 1,
+          "occurrences": 11,
           "first_lines": [
-            18
+            18,
+            32960,
+            32969,
+            32977,
+            32986
           ]
         },
         {
           "term": "thrash",
-          "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-          "occurrences": 2,
+          "path": "tests/test_e055_aarch64_gate.py",
+          "occurrences": 1,
           "first_lines": [
-            32,
-            35
+            53
           ]
         },
         {
@@ -78245,10 +78588,10 @@
           "occurrences": 12,
           "first_lines": [
             46,
-            62,
-            135,
-            137,
-            163
+            64,
+            139,
+            141,
+            167
           ]
         },
         {
@@ -78257,7 +78600,7 @@
           "occurrences": 2,
           "first_lines": [
             14,
-            135
+            178
           ]
         },
         {
@@ -78458,7 +78801,7 @@
         {
           "term": "tile",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 381,
+          "occurrences": 410,
           "first_lines": [
             20,
             2675,
@@ -78526,13 +78869,13 @@
         {
           "term": "tile",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 10,
+          "occurrences": 11,
           "first_lines": [
-            242,
-            244,
-            245,
-            247,
-            248
+            262,
+            264,
+            265,
+            267,
+            268
           ]
         },
         {
@@ -78929,16 +79272,16 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            34,
-            115,
-            126,
-            130
+            6,
+            31,
+            32,
+            60
           ]
         },
         {
           "term": "unpack",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2026,
+          "occurrences": 2186,
           "first_lines": [
             7,
             13,
@@ -78949,10 +79292,18 @@
         },
         {
           "term": "unpack",
+          "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
+          "occurrences": 1,
+          "first_lines": [
+            12
+          ]
+        },
+        {
+          "term": "unpack",
           "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
           "occurrences": 1,
           "first_lines": [
-            14
+            13
           ]
         },
         {
@@ -78967,9 +79318,13 @@
         {
           "term": "unpack",
           "path": "tests/test_e055_harness_contract.py",
-          "occurrences": 1,
+          "occurrences": 5,
           "first_lines": [
-            46
+            46,
+            54,
+            55,
+            59,
+            60
           ]
         },
         {
@@ -78977,8 +79332,8 @@
           "path": "tests/test_e055_q1_hotcold.py",
           "occurrences": 2,
           "first_lines": [
-            104,
-            120
+            89,
+            139
           ]
         },
         {
@@ -78991,6 +79346,15 @@
             46,
             47,
             49
+          ]
+        },
+        {
+          "term": "unpack",
+          "path": "tooling/check_e055_disassembly.py",
+          "occurrences": 2,
+          "first_lines": [
+            12,
+            37
           ]
         },
         {
@@ -79024,25 +79388,25 @@
         {
           "term": "unpack",
           "path": "tooling/e055_q1_hotcold.cpp",
-          "occurrences": 11,
+          "occurrences": 10,
           "first_lines": [
-            57,
-            154,
-            202,
-            224,
-            230
+            59,
+            158,
+            242,
+            249,
+            263
           ]
         },
         {
           "term": "unpack",
           "path": "tooling/e055_q1_hotcold.py",
-          "occurrences": 15,
+          "occurrences": 7,
           "first_lines": [
             7,
-            33,
-            212,
-            214,
-            230
+            34,
+            317,
+            319,
+            364
           ]
         },
         {
@@ -79244,8 +79608,12 @@
         "E054-NULL-P05-STOCK",
         "E054-Q1-RUNNER",
         "E055",
+        "E055-DISASSEMBLY-REVIEW",
+        "E055-GATE-",
         "E055-Q1-HOT-COLD",
+        "E055-Q1-HOT-COLD-HARNESS",
         "E055-Q1-HOT-COLD-MANIFEST",
+        "E055-Q1-HOTCOLD-AARCH64",
         "E055-Q1-INFERENCE",
         "E055-STAGE1"
       ],
@@ -79832,13 +80200,15 @@
           "paths": [
             "experiments/E055-q1-hot-cold/README.md",
             "experiments/E055-q1-hot-cold/data/branch-preflight.json",
+            "experiments/E055-q1-hot-cold/data/disassembly-review.json",
             "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
             "experiments/E055-q1-hot-cold/data/manifest.json",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
             "experiments/E055-q1-hot-cold/data/sample.schema.json"
           ]
         }
       ],
-      "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569"
+      "commit": "bba62cbb7abd8737281355f5f784e30904037cc6"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -85032,11 +85402,11 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e055-q1-hot-cold",
-    "base_commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
+    "base_commit": "bba62cbb7abd8737281355f5f784e30904037cc6",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-    "upstream_base_commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
+    "upstream_base_commit": "bba62cbb7abd8737281355f5f784e30904037cc6",
     "tree_binding_source": "git-index-stage0",
-    "tree_binding_sha256": "8fbd2e5ce1483c4a3458b0b9a7db8274d7f599ff850eeae05cd5f1939c31f82b",
+    "tree_binding_sha256": "d9c9cdd167206dc0b0e562f6cb1fea5bc8efff4f111d0198cf688a0b0dcd99cd",
     "binding_excludes": [
       "experiments/E055-q1-hot-cold/data/branch-preflight.json",
       "experiments/E055-q1-hot-cold/data/manifest.json"
@@ -87027,12 +87397,12 @@
           {
             "path": "experiments/E055-q1-hot-cold/README.md",
             "mode": "100644",
-            "blob_oid": "d1b63769d9b7ff495c3beb45853ed0334b1f88c9"
+            "blob_oid": "2f53a2d7b4a2998f433bbcd246796bb51516ccba"
           },
           {
             "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
             "mode": "100644",
-            "blob_oid": "dad3a72c9c12b1a3034c6d49e02d0c8e9ccc7b52"
+            "blob_oid": "3c3adad907fa834effd7d5ecbe60a3e4b30c28fa"
           },
           {
             "path": "experiments/E055-q1-hot-cold/data/failure-qemu-uninitialized-lut.txt",
@@ -87045,9 +87415,19 @@
             "blob_oid": "c343eaeba597db3a242aa4b83811702d297d55f6"
           },
           {
+            "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage2-bba62cb.md",
+            "mode": "100644",
+            "blob_oid": "3163bfd1840f6c4a5127922c8cc85652c42ec16f"
+          },
+          {
             "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
             "mode": "100644",
-            "blob_oid": "06ebf2ddada544baeca1de427bfbe89ab1433e65"
+            "blob_oid": "d36d229d8032b3fa12e431ef22af4dfdb6b6de15"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
+            "mode": "100644",
+            "blob_oid": "4c1a88e9702df73b048dbb4858a4723ac75bac19"
           }
         ]
       }
@@ -87067,7 +87447,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 18,
-  "match_count": 646289,
+  "match_count": 651625,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -87080,14 +87460,14 @@
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/README.md",
         "ref": "refs/heads/codex/e055-q1-hot-cold",
-        "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569"
+        "commit": "bba62cbb7abd8737281355f5f784e30904037cc6"
       },
       {
         "experiment_id": "E055-Q1-HOT-COLD",
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/README.md",
         "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-        "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569"
+        "commit": "bba62cbb7abd8737281355f5f784e30904037cc6"
       }
     ]
   },

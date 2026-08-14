@@ -3,11 +3,12 @@
   "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-q1-hot-cold/v2/sample.schema.json",
   "title": "E055 qualified Q1 hot/cold sample",
   "type": "object",
-  "required": ["schema", "run_id", "pair_id", "pair_order", "order_index", "mode", "cache_state", "cpu", "pinned_cpu", "affinity_cpus", "cpu_start", "cpu_end", "cpu_migration_count", "golden_pass", "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns", "checksum", "cold_conditioning", "sync", "pmu", "thermal", "provenance", "exit_code"],
+  "required": ["schema", "run_id", "pair_id", "pair_index", "pair_order", "order_index", "mode", "cache_state", "cpu", "pinned_cpu", "affinity_cpus", "cpu_start", "cpu_end", "cpu_migration_count", "golden_pass", "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns", "checksum", "cold_conditioning", "sync", "pmu", "thermal", "provenance", "exit_code"],
   "properties": {
     "schema": {"const": "e055-q1-hot-cold/v2"},
     "run_id": {"type": "string", "minLength": 1},
     "pair_id": {"type": "string", "minLength": 1},
+    "pair_index": {"type": "integer", "minimum": 1},
     "pair_order": {"enum": ["hot_then_cold", "cold_then_hot"]},
     "order_index": {"enum": [1, 2]},
     "mode": {"enum": ["packed_stream", "unpack_scale", "full_dotprod"]},
@@ -24,10 +25,10 @@
     "iterations": {"type": "integer", "minimum": 1},
     "calls": {"type": "integer", "minimum": 1},
     "elapsed_ns": {"type": "integer", "minimum": 1},
-    "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-fA-F]+$"},
+    "checksum": {"type": "string", "pattern": "^0x(?!0+$)[0-9a-f]+$"},
     "observed_ddr_read_bytes": {"type": "null"},
     "observed_ddr_write_bytes": {"type": "null"},
-    "cold_conditioning": {"type": "object", "required": ["verified_touched"], "properties": {"verified_touched": {"type": "boolean"}}},
+    "cold_conditioning": {"type": "object", "required": ["verified_touched"], "properties": {"verified_touched": {"const": true}}},
     "sync": {"type": "object", "required": ["requested", "started", "acknowledged", "ended", "sequence"], "properties": {"requested": {"const": true}, "started": {"const": true}, "acknowledged": {"const": true}, "ended": {"const": true}, "sequence": {"const": "S/A/E"}}, "additionalProperties": false},
     "pmu": {
       "type": "object",
@@ -50,7 +51,7 @@
               "support": {"const": "supported"},
               "sample_valid": {"const": true},
               "value": {"type": "integer", "minimum": 0},
-              "running_ratio": {"const": 1.0}
+              "running_ratio": {"type": "number", "const": 1.0, "description": "Python qualifier additionally requires runtime type float, excluding integer and Boolean JSON decoders."}
             }
           }
         },
@@ -58,7 +59,7 @@
       }
     },
     "thermal": {"type": "object", "required": ["readable", "tripped", "max_temp_c", "limit_c"], "properties": {"readable": {"const": true}, "tripped": {"const": false}, "max_temp_c": {"type": "number"}, "limit_c": {"type": "number"}}},
-    "provenance": {"type": "object", "required": ["source_sha256", "binary_sha256", "compiler_sha256", "compiler_id"], "properties": {"source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "compiler_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "compiler_id": {"type": "string", "minLength": 1}}},
+    "provenance": {"type": "object", "required": ["source_sha256", "binary_sha256", "compiler_sha256", "compiler_id", "upstream_repack_sha256"], "properties": {"source_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "binary_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "compiler_sha256": {"type": "string", "pattern": "^(?!0{64}$)[0-9a-f]{64}$"}, "compiler_id": {"type": "string", "minLength": 1}, "upstream_repack_sha256": {"const": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"}}, "additionalProperties": false},
     "exit_code": {"const": 0}
   },
   "additionalProperties": true,

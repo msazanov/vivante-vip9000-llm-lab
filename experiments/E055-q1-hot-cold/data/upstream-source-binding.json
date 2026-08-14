@@ -1,0 +1,9 @@
+{
+  "schema": "e055-upstream-source-binding/v1",
+  "path": "ggml/src/ggml-cpu/arch/arm/repack.cpp",
+  "sha256": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
+  "source_scope": "local upstream stock source used to derive the E039 fixture",
+  "payload_included": false,
+  "verification": "sha256sum before Stage 1 publication",
+  "target_workload_executed": false
+}

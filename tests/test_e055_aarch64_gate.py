@@ -56,12 +56,33 @@ class E055AArch64Gate(unittest.TestCase):
         self.assertEqual(data["schema"], "e055-q1-hot-cold-harness/v1")
         self.assertEqual((data["iterations"], data["calls"]), (1, 1))
 
+    def test_hot_default_reports_verified_warmup_conditioning(self) -> None:
+        result = self.run_harness("--mode", "packed_stream", "--cache-state",
+                                  "hot_repeat", "--working-set-bytes", "65536",
+                                  "--iterations", "1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        conditioning = json.loads(result.stdout)["cold_conditioning"]
+        self.assertEqual(conditioning["strategy"], "verified_kernel_warmup")
+        self.assertTrue(conditioning["verified_touched"])
+
     def test_cold_rejects_iteration_and_budget_overrides(self) -> None:
         for args in (("--iterations", "2"), ("--budget-ms", "10")):
             with self.subTest(args=args):
                 result = self.run_harness("--cache-state", "cold_conditioned", *args)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("requires --iterations 1", result.stderr)
+
+    def test_thrash_size_must_be_cache_line_aligned(self) -> None:
+        result = self.run_harness("--cache-state", "cold_conditioned",
+                                  "--thrash-bytes", "65")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("64-byte aligned", result.stderr)
+
+    def test_working_set_rounding_overflow_fails_closed(self) -> None:
+        result = self.run_harness("--working-set-bytes", str((1 << 64) - 207),
+                                  "--iterations", "1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("rounding overflow", result.stderr)
 
     def test_sync_without_fds_fails_closed(self) -> None:
         result = self.run_harness("--iterations", "1", "--sync")
@@ -70,6 +91,18 @@ class E055AArch64Gate(unittest.TestCase):
 
     def test_optimized_disassembly_shape(self) -> None:
         report = inspect(str(self.binary), "aarch64-linux-gnu-objdump")
+        self.assertEqual(report["status"], "PASS", report["failures"])
+
+    def test_lto_optimized_disassembly_shape(self) -> None:
+        binary = pathlib.Path(self.temp.name) / "e055-lto"
+        subprocess.run([
+            "aarch64-linux-gnu-g++", "-std=c++17", "-O3", "-flto", "-Wall",
+            "-Wextra", "-Werror", "-march=armv8.2-a+dotprod",
+            str(ROOT / "tooling/e055_q1_hotcold.cpp"),
+            str(ROOT / "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S"),
+            "-o", str(binary),
+        ], check=True)
+        report = inspect(str(binary), "aarch64-linux-gnu-objdump")
         self.assertEqual(report["status"], "PASS", report["failures"])
 
 
