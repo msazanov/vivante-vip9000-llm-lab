@@ -356,6 +356,7 @@ class E055TargetExecutor:
         }
         object_format = _git_object_format(self.repository_root)
         run_entries: list[dict[str, Any]] = []
+        primary_failure: BaseException | None = None
         try:
             self.transport.prepare(prepared)
             for run in plan:
@@ -486,8 +487,19 @@ class E055TargetExecutor:
                     "cell": cell,
                     "artifacts": role_declarations,
                 })
-        finally:
+        except BaseException as exc:
+            primary_failure = exc
+        try:
             self.transport.restore()
+        except BaseException as restore_failure:
+            if primary_failure is not None:
+                raise BaseExceptionGroup(
+                    "E055 target execution and restoration both failed",
+                    [primary_failure, restore_failure],
+                )
+            raise
+        if primary_failure is not None:
+            raise primary_failure.with_traceback(primary_failure.__traceback__)
         build_declaration = _artifact_declaration(
             self.repository_root, harness_reservation, "harness_executable",
             object_format,

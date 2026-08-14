@@ -71,6 +71,8 @@ class E055CaptureScaffoldTest(unittest.TestCase):
     def test_partial_open_failure_closes_every_reserved_descriptor(self) -> None:
         real_open = os.open
         opened: list[int] = []
+        sentinel = self.root / "preexisting-sentinel"
+        sentinel.write_text("keep", encoding="utf-8")
 
         def failing_open(path: os.PathLike[str] | str, flags: int, mode: int = 0o777) -> int:
             if len(opened) == 3:
@@ -85,6 +87,44 @@ class E055CaptureScaffoldTest(unittest.TestCase):
         for descriptor in opened:
             with self.assertRaises(OSError):
                 os.fstat(descriptor)
+        self.assertFalse(self.phase.exists())
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+    def test_unsafe_post_open_validation_rolls_back_created_phase(self) -> None:
+        real_fstat = os.fstat
+        injected = False
+
+        def unsafe_first_fstat(descriptor: int) -> os.stat_result:
+            nonlocal injected
+            status = real_fstat(descriptor)
+            if injected:
+                return status
+            injected = True
+            fields = list(status)
+            fields[3] = 2
+            return os.stat_result(fields)
+
+        sentinel = self.root / "validation-sentinel"
+        sentinel.write_text("keep", encoding="utf-8")
+        with mock.patch(
+            "tooling.e055_capture_scaffold.os.fstat", side_effect=unsafe_first_fstat
+        ):
+            with self.assertRaisesRegex(OSError, "regular file"):
+                reserve_phase(self.phase, self.plans)
+        self.assertFalse(self.phase.exists())
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
+    def test_fstat_exception_after_open_rolls_back_created_phase(self) -> None:
+        sentinel = self.root / "fstat-sentinel"
+        sentinel.write_text("keep", encoding="utf-8")
+        with mock.patch(
+            "tooling.e055_capture_scaffold.os.fstat",
+            side_effect=OSError("injected fstat failure"),
+        ):
+            with self.assertRaisesRegex(OSError, "injected fstat failure"):
+                reserve_phase(self.phase, self.plans)
+        self.assertFalse(self.phase.exists())
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
 
     def test_environment_is_exact_and_non_secret(self) -> None:
         self.assertEqual(

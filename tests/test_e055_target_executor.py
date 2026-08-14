@@ -156,6 +156,12 @@ class RaisingTransport(FakeTransport):
         raise OSError("injected transport failure")
 
 
+class RaisingAndRestoreFailingTransport(RaisingTransport):
+    def restore(self) -> None:
+        self.restored += 1
+        raise RuntimeError("injected restore failure")
+
+
 class MalformedTransport(FakeTransport):
     def capture(self, *, run, e049c_argv, environment) -> TargetCapture:
         self.captures.append((run, e049c_argv, dict(environment)))
@@ -283,6 +289,26 @@ class E055TargetExecutorTest(unittest.TestCase):
         document = json.loads(runner.read_text(encoding="utf-8"))
         self.assertEqual(document["failure_kind"], "OSError")
         self.assertNotIn("injected transport failure", runner.read_text(encoding="utf-8"))
+
+    def test_restore_failure_preserves_primary_target_failure(self) -> None:
+        transport = RaisingAndRestoreFailingTransport()
+        with self.assertRaises(BaseExceptionGroup) as caught:
+            E055TargetExecutor(self.root, transport=transport).execute("phase-double-fail")
+        failures = caught.exception.exceptions
+        self.assertEqual(len(failures), 2)
+        self.assertIsInstance(failures[0], TargetRunFailure)
+        self.assertIsInstance(failures[0].__cause__, OSError)
+        self.assertIsInstance(failures[1], RuntimeError)
+        self.assertEqual(str(failures[1]), "injected restore failure")
+        self.assertEqual(transport.restored, 1)
+        runner = self.root / (
+            "experiments/E055-q1-hot-cold/raw/phase-double-fail/"
+            "runs/cpu0-pair1-hot/runner.json"
+        )
+        self.assertEqual(
+            json.loads(runner.read_text(encoding="utf-8"))["failure_kind"],
+            "OSError",
+        )
 
     def test_existing_phase_refuses_before_transport_prepare(self) -> None:
         raw = self.root / "experiments/E055-q1-hot-cold/raw"

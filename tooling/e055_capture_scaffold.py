@@ -101,9 +101,33 @@ def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
         | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
     )
     descriptor = os.open(path, flags, 0o600)
-    status = os.fstat(descriptor)
+    try:
+        status = os.fstat(descriptor)
+    except BaseException:
+        try:
+            # Keep cleanup identity-bound even when the validation call itself
+            # fails. ``os.stat(fd)`` is an independent Python entry point to
+            # the already-open inode; never unlink from the pathname alone.
+            opened = os.stat(descriptor)
+            current = path.lstat()
+            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+                    (current.st_dev, current.st_ino) == (
+                        opened.st_dev, opened.st_ino
+                    ):
+                path.unlink()
+        except (FileNotFoundError, OSError):
+            pass
+        finally:
+            os.close(descriptor)
+        raise
     if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
-        os.close(descriptor)
+        try:
+            current = path.lstat()
+            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+                    (current.st_dev, current.st_ino) == (status.st_dev, status.st_ino):
+                path.unlink()
+        finally:
+            os.close(descriptor)
         raise OSError(f"reserved path is not one regular file: {path}")
     return descriptor, ReservedOutput(
         path=path,
@@ -111,6 +135,31 @@ def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
         inode=status.st_ino,
         maximum_size_bytes=maximum_size_bytes,
     )
+
+
+def _rollback_reservations(
+    reservations: Sequence[ReservedOutput], directories: Sequence[Path],
+) -> None:
+    """Remove only inodes and empty directories created by this invocation."""
+
+    for reservation in reversed(tuple(reservations)):
+        try:
+            current = reservation.path.lstat()
+            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+                    (current.st_dev, current.st_ino) == (
+                        reservation.device, reservation.inode
+                    ):
+                reservation.path.unlink()
+        except FileNotFoundError:
+            pass
+    for directory in reversed(tuple(directories)):
+        try:
+            directory.rmdir()
+        except FileNotFoundError:
+            pass
+        except OSError:
+            # A replaced or concurrently populated path is not ours to remove.
+            pass
 
 
 def populate_reserved(reservation: ReservedOutput, payload: bytes) -> PopulationResult:
@@ -175,32 +224,42 @@ def reserve_phase(
             phase.parent.resolve(strict=True) != phase.parent.absolute():
         raise ValueError("phase parent must be one existing non-symlink directory")
 
-    os.mkdir(phase, 0o700)
-    artifact_dir = phase / "artifacts"
-    runs_dir = phase / "runs"
-    os.mkdir(artifact_dir, 0o700)
-    os.mkdir(runs_dir, 0o700)
-
-    outputs: list[tuple[Path, int]] = [(phase / "bundle.json", MAX_BUNDLE_BYTES)]
-    for build_name in sorted({plan.build_name for plan in plans}):
-        outputs.append((
-            artifact_dir / f"harness-{build_name}.bin", MAX_EXECUTABLE_BYTES,
-        ))
-    for plan in plans:
-        run_dir = runs_dir / plan.run_id
-        os.mkdir(run_dir, 0o700)
-        outputs.extend((run_dir / name, RUN_FILE_LIMITS[name]) for name in RUN_FILENAMES)
-
+    directories: list[Path] = []
     descriptors: list[int] = []
     reservations: list[ReservedOutput] = []
     try:
+        os.mkdir(phase, 0o700)
+        directories.append(phase)
+        artifact_dir = phase / "artifacts"
+        runs_dir = phase / "runs"
+        os.mkdir(artifact_dir, 0o700)
+        directories.append(artifact_dir)
+        os.mkdir(runs_dir, 0o700)
+        directories.append(runs_dir)
+
+        outputs: list[tuple[Path, int]] = [(phase / "bundle.json", MAX_BUNDLE_BYTES)]
+        for build_name in sorted({plan.build_name for plan in plans}):
+            outputs.append((
+                artifact_dir / f"harness-{build_name}.bin", MAX_EXECUTABLE_BYTES,
+            ))
+        for plan in plans:
+            run_dir = runs_dir / plan.run_id
+            os.mkdir(run_dir, 0o700)
+            directories.append(run_dir)
+            outputs.extend(
+                (run_dir / name, RUN_FILE_LIMITS[name]) for name in RUN_FILENAMES
+            )
         for path, maximum_size_bytes in outputs:
             descriptor, reservation = _reserve(path, maximum_size_bytes)
             descriptors.append(descriptor)
             reservations.append(reservation)
-    finally:
+    except BaseException:
         for descriptor in descriptors:
             os.close(descriptor)
+        _rollback_reservations(reservations, directories)
+        raise
+    for descriptor in descriptors:
+        os.close(descriptor)
     return tuple(reservations)
 
 
