@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -67,12 +68,43 @@ class NsiCalibrationUnitTest(unittest.TestCase):
                  "-pedantic", str(root / "tooling" / "nsi_sequential_read.c"),
                  "-o", str(binary)], text=True, capture_output=True)
             self.assertEqual(compiled.returncode, 0, compiled.stderr)
-            completed = subprocess.run([str(binary), "1", "5"], text=True,
-                                       capture_output=True, check=True)
-            result = __import__("json").loads(completed.stdout)
+            start_read_fd, start_write_fd = os.pipe()
+            environment = dict(os.environ)
+            environment["E049_START_FD"] = str(start_read_fd)
+            process = subprocess.Popen(
+                [str(binary), "1"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=environment,
+                pass_fds=(start_read_fd,),
+            )
+            os.close(start_read_fd)
+            assert process.stdout is not None
+            ready_line = process.stdout.readline()
+            if not ready_line.startswith("READY "):
+                os.close(start_write_fd)
+                stdout_tail, stderr = process.communicate(timeout=5)
+                self.fail(f"helper did not announce JSON READY: {ready_line!r} {stdout_tail!r} {stderr!r}")
+            ready = __import__("json").loads(ready_line.removeprefix("READY "))
+            self.assertGreater(ready["calibration_bytes"], 0)
+            self.assertGreater(ready["calibration_elapsed_ns"], 0)
+            planned_bytes = 256 * 1024
+            deadline_ns = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW) + 1_000_000_000
+            os.write(start_write_fd, f"{planned_bytes} {deadline_ns}\n".encode("ascii"))
+            os.close(start_write_fd)
+            stdout_tail, stderr = process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 0, stderr)
+            result = __import__("json").loads(stdout_tail)
+            self.assertEqual(result["status"], "done")
             self.assertEqual(result["load_width_bytes"], 8)
-            self.assertEqual(result["bytes_read"],
-                             result["bytes_per_pass"] * result["passes"])
+            self.assertEqual(result["bytes_read"], planned_bytes)
+            self.assertEqual(result["planned_bytes"], planned_bytes)
+            self.assertLessEqual(result["workload_end_ns"], deadline_ns)
+            self.assertEqual(
+                result["active_ns"],
+                result["workload_end_ns"] - result["workload_start_ns"],
+            )
 
     def test_thermal_limit_rejects_nan_and_infinity(self) -> None:
         for value in (math.nan, math.inf, -math.inf, -1.0, 85.001):
