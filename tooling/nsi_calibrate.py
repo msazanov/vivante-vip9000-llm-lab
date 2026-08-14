@@ -540,6 +540,65 @@ def _json_from_stdout(stdout: str) -> dict[str, Any]:
     raise NSIError("helper не вывел результата")
 
 
+def plan_exact_read_bytes(
+    ready: Mapping[str, Any],
+    *,
+    window_us: int,
+) -> dict[str, int | float]:
+    """Choose one exact, chunk-aligned read volume below half the PMU window.
+
+    The helper calibration happens before READY, hence outside the PMU window.
+    Limiting the predicted active time to half the programmed interval leaves a
+    deliberately large scheduling margin and an observable idle tail.
+    """
+
+    if not isinstance(window_us, int) or isinstance(window_us, bool) or window_us <= 0:
+        raise NSIError("window_us должен быть положительным integer")
+    numeric: dict[str, float] = {}
+    for name in (
+        "buffer_bytes",
+        "calibration_bytes",
+        "calibration_elapsed_ns",
+        "deadline_chunk_bytes",
+        "deadline_guard_ns",
+    ):
+        value = ready.get(name)
+        if (
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(float(value))
+            or float(value) <= 0.0
+        ):
+            raise NSIError(f"helper READY: {name} должен быть конечным положительным числом")
+        numeric[name] = float(value)
+    integer_fields = ("buffer_bytes", "calibration_bytes", "deadline_chunk_bytes", "deadline_guard_ns")
+    if any(not float(numeric[name]).is_integer() for name in integer_fields):
+        raise NSIError("helper READY: byte/guard поля должны быть integer")
+    chunk_bytes = int(numeric["deadline_chunk_bytes"])
+    buffer_bytes = int(numeric["buffer_bytes"])
+    if chunk_bytes % 8 != 0 or buffer_bytes % chunk_bytes != 0:
+        raise NSIError("helper READY: chunk/buffer alignment не поддерживается")
+    window_ns = window_us * 1000
+    guard_ns = int(numeric["deadline_guard_ns"])
+    planned_active_budget_ns = min(window_ns // 2, window_ns - 2 * guard_ns)
+    if planned_active_budget_ns <= 0:
+        raise NSIError("PMU window слишком короткое для deadline guard")
+    bytes_per_ns = numeric["calibration_bytes"] / numeric["calibration_elapsed_ns"]
+    capacity = int(bytes_per_ns * planned_active_budget_ns)
+    planned_bytes = min(buffer_bytes, capacity)
+    planned_bytes -= planned_bytes % chunk_bytes
+    if planned_bytes < chunk_bytes:
+        raise NSIError("калибровка не позволяет безопасно запланировать один bounded chunk")
+    return {
+        "planned_bytes": planned_bytes,
+        "planned_active_budget_ns": planned_active_budget_ns,
+        "calibrated_bytes_per_ns": bytes_per_ns,
+        "safety_fraction": 0.5,
+        "chunk_bytes": chunk_bytes,
+        "deadline_guard_ns": guard_ns,
+    }
+
+
 def _sleep_with_thermal(
     seconds: float,
     nsi: SysfsNSI,

@@ -17,6 +17,7 @@ from tooling.nsi_calibrate import (
     TimerRestoreFailure,
     classify_unit_hypothesis,
     fit_line,
+    plan_exact_read_bytes,
     resolve_pinned_helper,
     raw_thermal_maxima,
     run_under_watchdog,
@@ -59,6 +60,23 @@ class FailingRestoreNSI(SysfsNSI):
 
 
 class NsiCalibrationUnitTest(unittest.TestCase):
+    def test_read_plan_is_exact_aligned_and_rejects_nonfinite_calibration(self) -> None:
+        ready = {
+            "buffer_bytes": 32 * 1024 * 1024,
+            "calibration_bytes": 16 * 1024 * 1024,
+            "calibration_elapsed_ns": 8_000_000,
+            "deadline_chunk_bytes": 4096,
+            "deadline_guard_ns": 1_000_000,
+        }
+        plan = plan_exact_read_bytes(ready, window_us=100_000)
+        self.assertEqual(plan["planned_bytes"], 32 * 1024 * 1024)
+        self.assertEqual(plan["planned_bytes"] % ready["deadline_chunk_bytes"], 0)
+        self.assertLessEqual(plan["planned_active_budget_ns"], 50_000_000)
+
+        invalid = dict(ready, calibration_elapsed_ns=math.nan)
+        with self.assertRaises(NSIError):
+            plan_exact_read_bytes(invalid, window_us=100_000)
+
     def test_c_helper_reports_exact_architected_load_bytes(self) -> None:
         root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as tmp:
