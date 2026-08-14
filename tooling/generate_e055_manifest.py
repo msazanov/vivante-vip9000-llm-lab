@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPERIMENT = ROOT / "experiments/E055-q1-hot-cold"
 OUTPUT = EXPERIMENT / "data/manifest.json"
 PREFLIGHT = EXPERIMENT / "data/branch-preflight.json"
+RESULTS = EXPERIMENT / "results"
 
 PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/README.md",
@@ -62,6 +63,7 @@ PUBLISHED = (
     ROOT / "tooling/e055_transport_evidence.py",
     ROOT / "tooling/e055_remote_helper.py",
     ROOT / "tooling/e055_openssh_transport.py",
+    ROOT / "tooling/e055_direct_result.py",
     ROOT / "tooling/build_e055_pmu_artifact.py",
     ROOT / "tooling/a733_pmu_exec.c",
     ROOT / "tooling/check_e055_disassembly.py",
@@ -78,12 +80,13 @@ PUBLISHED = (
     ROOT / "tests/test_e055_transport_runtime.py",
     ROOT / "tests/test_e055_remote_helper.py",
     ROOT / "tests/test_e055_openssh_transport.py",
+    ROOT / "tests/test_e055_direct_result.py",
     ROOT / "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
     ROOT / "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
     ROOT / "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
     ROOT / "docs/superpowers/plans/2026-08-14-e055-git-sealed-raw-bundles.md",
     ROOT / "docs/superpowers/specs/2026-08-14-e055-openssh-transport-design.md",
-)
+) + tuple(sorted(path for path in RESULTS.rglob("*") if path.is_file()))
 
 
 def sha256(path: Path) -> str:
@@ -148,7 +151,7 @@ def build_payload(
     return {
         "schema": "e055-q1-hot-cold-manifest/v2",
         "experiment": "E055-Q1-HOT-COLD",
-        "status": "revised_stage1_source_only_no_target_workload",
+        "status": "bounded_target_microgate_published",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "publication_binding": {
             "mode": "e047-staged-index-plus-post-commit-ref-verification",
@@ -193,7 +196,7 @@ def build_payload(
             "sample mappings are never measurement evidence."
         ),
         "model_payload_included": False,
-        "target_workload_executed": False,
+        "target_workload_executed": True,
         "files": files,
     }
 

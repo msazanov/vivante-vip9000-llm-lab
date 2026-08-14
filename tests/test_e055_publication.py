@@ -200,8 +200,23 @@ class E055PublicationBindingTest(unittest.TestCase):
             "tests/test_e055_transport_runtime.py",
             "tests/test_e055_remote_helper.py",
             "tests/test_e055_openssh_transport.py",
+            "tooling/e055_direct_result.py",
+            "tests/test_e055_direct_result.py",
         }
         self.assertTrue(required.issubset(relative), sorted(required - relative))
+        result_root = (
+            generator.ROOT / "experiments/E055-q1-hot-cold/results"
+        )
+        result_files = {
+            path.relative_to(generator.ROOT).as_posix()
+            for path in result_root.rglob("*")
+            if path.is_file()
+        }
+        self.assertTrue(result_files)
+        self.assertTrue(
+            result_files.issubset(relative),
+            sorted(result_files - relative),
+        )
 
     def test_sample_schema_is_derived_output_not_an_analyzer_input(self) -> None:
         schema = json.loads((
@@ -303,6 +318,11 @@ class E055PublicationBindingTest(unittest.TestCase):
                 published=(source,),
                 preflight_path=preflight_path,
             )
+            self.assertEqual(
+                payload["status"], "bounded_target_microgate_published"
+            )
+            self.assertTrue(payload["target_workload_executed"])
+            self.assertFalse(payload["model_payload_included"])
             binding = payload["publication_binding"]
             self.assertNotIn("base_commit_at_generation", payload)
             self.assertEqual(binding["mode"],

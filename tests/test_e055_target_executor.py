@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 import tooling.e055_target_executor as target_executor
 from tooling.e055_target_executor import (
@@ -334,6 +335,26 @@ class MalformedTransport(FakeTransport):
         )
 
 
+class ShortPmuWindowTransport(FakeTransport):
+    """Return one structurally successful capture that violates T+1 ms >= H."""
+
+    def capture(self, *, run, e049c_argv, environment) -> TargetCapture:
+        capture = super().capture(
+            run=run, e049c_argv=e049c_argv, environment=environment
+        )
+        harness = json.loads(capture.child_stdout)
+        pmu = json.loads(capture.e049c_json)
+        short_window = harness["elapsed_ns"] - 1_000_001
+        for event in pmu["events"]:
+            event["time_enabled_ns"] = short_window
+            event["time_running_ns"] = short_window
+            event["running_ratio"] = 1.0
+        return replace(
+            capture,
+            e049c_json=(json.dumps(pmu, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii"),
+        )
+
+
 class NoProofTransport(FakeTransport):
     def prepare(
         self, artifacts: tuple, *, deployment_root: str, lock_path: str,
@@ -645,6 +666,26 @@ class E055TargetExecutorTest(unittest.TestCase):
         failure = json.loads((failed / "runner.json").read_text(encoding="utf-8"))
         self.assertEqual(failure["schema"], "e055-runner-failure/v1")
         self.assertEqual(failure["exit"], {"code": 127, "signal": None})
+
+    def test_short_pmu_window_fails_before_second_run(self) -> None:
+        transport = ShortPmuWindowTransport()
+        contract = json.loads(
+            (ROOT / "experiments/E055-q1-hot-cold/data/manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )["runtime_qualification"]
+        with mock.patch.object(target_executor, "load_publication_contract", return_value=contract):
+            with self.assertRaisesRegex(TargetRunFailure, "cpu0-pair1-hot"):
+                self.executor(transport).execute("phase-short-pmu-window")
+        self.assertEqual(len(transport.captures), 1)
+        failure = self.root / (
+            "experiments/E055-q1-hot-cold/raw/phase-short-pmu-window/"
+            "runs/cpu0-pair1-hot/runner.json"
+        )
+        self.assertIn(
+            "PMU enabled/running time is shorter than the harness window",
+            failure.read_text(encoding="utf-8"),
+        )
 
     def test_transport_exception_is_recorded_without_leaking_exception_text(self) -> None:
         transport = RaisingTransport()

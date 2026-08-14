@@ -1,7 +1,7 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vip9000-e055-q1-hot-cold",
-  "generated_at_utc": "2026-08-14T15:15:36.377887+00:00",
+  "generated_at_utc": "2026-08-14T18:46:52.004739+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E055-Q1-HOT-COLD",
   "hypothesis_query": "separate stock Q1 4x4 packed-carrier loading, register unpack plus scale, and full DOTPROD under cache-hot/cold conditions on A733; do not repeat E004 E008 E009 E023 E030-E040; qualify only Git-sealed raw E055 and E049c captures",
@@ -30846,7 +30846,7 @@
     },
     {
       "ref": "refs/heads/codex/e055-q1-hot-cold",
-      "match_count": 115613,
+      "match_count": 115762,
       "matches": [
         {
           "term": "DOTPROD",
@@ -31262,17 +31262,17 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 6,
           "first_lines": [
-            35,
-            48,
-            290,
-            365,
-            366
+            40,
+            53,
+            300,
+            391,
+            392
           ]
         },
         {
           "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 493,
+          "occurrences": 495,
           "first_lines": [
             7,
             15,
@@ -31297,7 +31297,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -31341,10 +31341,10 @@
           "occurrences": 9,
           "first_lines": [
             82,
-            289,
-            704,
-            747,
-            855
+            297,
+            712,
+            755,
+            863
           ]
         },
         {
@@ -31352,7 +31352,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            103
+            105
           ]
         },
         {
@@ -31370,9 +31370,9 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 3,
           "first_lines": [
-            220,
-            437,
-            591
+            226,
+            443,
+            617
           ]
         },
         {
@@ -31420,7 +31420,7 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            488
+            523
           ]
         },
         {
@@ -31428,7 +31428,7 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            167
+            168
           ]
         },
         {
@@ -32710,9 +32710,9 @@
           "first_lines": [
             35,
             32707,
-            42188,
-            87667,
-            96923
+            42286,
+            87785,
+            97364
           ]
         },
         {
@@ -32722,9 +32722,9 @@
           "first_lines": [
             36,
             32719,
-            42189,
-            87679,
-            96924
+            42287,
+            87797,
+            97365
           ]
         },
         {
@@ -32897,10 +32897,10 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            32,
-            34,
-            48,
-            367
+            37,
+            39,
+            53,
+            393
           ]
         },
         {
@@ -32937,8 +32937,8 @@
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
           "occurrences": 2,
           "first_lines": [
-            326,
-            332
+            332,
+            338
           ]
         },
         {
@@ -32971,7 +32971,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            289
+            297
           ]
         },
         {
@@ -32979,7 +32979,7 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            220
+            226
           ]
         },
         {
@@ -33007,9 +33007,9 @@
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 3,
           "first_lines": [
-            80,
             81,
-            145
+            82,
+            146
           ]
         },
         {
@@ -33185,7 +33185,7 @@
             10,
             39,
             42,
-            86
+            89
           ]
         },
         {
@@ -33196,14 +33196,14 @@
             1,
             5,
             13,
-            93,
-            97
+            98,
+            102
           ]
         },
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 840,
+          "occurrences": 913,
           "first_lines": [
             3,
             6,
@@ -33236,7 +33236,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 101,
+          "occurrences": 103,
           "first_lines": [
             2,
             3,
@@ -33338,7 +33338,7 @@
           "path": "tests/test_a733_pmu_exec.py",
           "occurrences": 1,
           "first_lines": [
-            518
+            528
           ]
         },
         {
@@ -33380,7 +33380,7 @@
         {
           "term": "E055",
           "path": "tests/test_e055_openssh_transport.py",
-          "occurrences": 22,
+          "occurrences": 21,
           "first_lines": [
             1,
             14,
@@ -33392,7 +33392,7 @@
         {
           "term": "E055",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 67,
+          "occurrences": 68,
           "first_lines": [
             1,
             13,
@@ -33428,13 +33428,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_remote_helper.py",
-          "occurrences": 14,
+          "occurrences": 16,
           "first_lines": [
             1,
-            14,
-            17,
-            18,
-            56
+            16,
+            19,
+            20,
+            58
           ]
         },
         {
@@ -33464,13 +33464,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_transport_runtime.py",
-          "occurrences": 19,
+          "occurrences": 25,
           "first_lines": [
             1,
-            12,
-            57,
-            60,
-            80
+            14,
+            30,
+            34,
+            36
           ]
         },
         {
@@ -33513,7 +33513,7 @@
             25,
             30,
             120,
-            151
+            160
           ]
         },
         {
@@ -33555,7 +33555,7 @@
         {
           "term": "E055",
           "path": "tooling/e055_remote_helper.py",
-          "occurrences": 19,
+          "occurrences": 20,
           "first_lines": [
             2,
             27,
@@ -33584,14 +33584,14 @@
             1,
             31,
             78,
-            289,
-            297
+            321,
+            329
           ]
         },
         {
           "term": "E055",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 56,
+          "occurrences": 57,
           "first_lines": [
             2,
             12,
@@ -34932,17 +34932,17 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 13,
           "first_lines": [
-            85,
-            133,
-            135,
-            173,
-            177
+            90,
+            138,
+            140,
+            178,
+            182
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2069,
+          "occurrences": 2076,
           "first_lines": [
             21,
             1249,
@@ -34979,10 +34979,10 @@
           "occurrences": 10,
           "first_lines": [
             28,
-            213,
-            222,
-            238,
-            239
+            226,
+            235,
+            251,
+            252
           ]
         },
         {
@@ -35024,10 +35024,10 @@
           "occurrences": 8,
           "first_lines": [
             10,
-            241,
-            242,
-            250,
-            251
+            253,
+            254,
+            262,
+            263
           ]
         },
         {
@@ -35074,7 +35074,7 @@
             26,
             27,
             28,
-            35
+            36
           ]
         },
         {
@@ -35139,11 +35139,11 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 5,
           "first_lines": [
-            226,
-            229,
-            234,
-            235,
-            367
+            238,
+            241,
+            246,
+            247,
+            438
           ]
         },
         {
@@ -35151,11 +35151,11 @@
           "path": "tests/test_e055_publication.py",
           "occurrences": 18,
           "first_lines": [
-            243,
             244,
-            248,
+            245,
             249,
-            250
+            250,
+            251
           ]
         },
         {
@@ -35187,10 +35187,10 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 4,
           "first_lines": [
-            50,
-            57,
-            109,
-            149
+            52,
+            59,
+            111,
+            151
           ]
         },
         {
@@ -35210,11 +35210,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 5,
           "first_lines": [
-            250,
-            259,
-            438,
-            467,
-            469
+            256,
+            265,
+            444,
+            473,
+            475
           ]
         },
         {
@@ -35222,8 +35222,8 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 2,
           "first_lines": [
-            44,
-            45
+            61,
+            62
           ]
         },
         {
@@ -35288,7 +35288,7 @@
           "path": "tooling/e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            477
+            505
           ]
         },
         {
@@ -35332,10 +35332,10 @@
           "occurrences": 6,
           "first_lines": [
             39,
-            468,
-            470,
-            471,
-            473
+            503,
+            505,
+            506,
+            508
           ]
         },
         {
@@ -35344,10 +35344,10 @@
           "occurrences": 15,
           "first_lines": [
             31,
-            70,
-            81,
-            173,
-            369
+            71,
+            82,
+            174,
+            375
           ]
         },
         {
@@ -35355,11 +35355,11 @@
           "path": "tooling/e055_transport_evidence.py",
           "occurrences": 8,
           "first_lines": [
-            157,
-            278,
-            284,
-            290,
-            298
+            178,
+            310,
+            316,
+            322,
+            330
           ]
         },
         {
@@ -35377,9 +35377,9 @@
           "first_lines": [
             14,
             24,
-            47,
-            55,
-            64
+            48,
+            56,
+            65
           ]
         },
         {
@@ -36767,15 +36767,15 @@
           "first_lines": [
             1,
             6,
-            33,
-            34,
-            46
+            38,
+            39,
+            51
           ]
         },
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 11971,
+          "occurrences": 11982,
           "first_lines": [
             3,
             6,
@@ -36810,7 +36810,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 32,
+          "occurrences": 33,
           "first_lines": [
             2,
             3,
@@ -36826,9 +36826,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            233
+            160,
+            161,
+            246
           ]
         },
         {
@@ -36838,8 +36838,8 @@
           "first_lines": [
             11,
             38,
-            124,
-            125
+            136,
+            137
           ]
         },
         {
@@ -37005,13 +37005,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "Q1",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -37049,7 +37049,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            18
+            20
           ]
         },
         {
@@ -37069,11 +37069,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 13,
           "first_lines": [
-            101,
-            216,
-            220,
-            232,
-            415
+            107,
+            222,
+            226,
+            238,
+            421
           ]
         },
         {
@@ -37081,11 +37081,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -37280,10 +37280,10 @@
           "occurrences": 5,
           "first_lines": [
             30,
-            52,
             53,
-            326,
-            587
+            54,
+            327,
+            593
           ]
         },
         {
@@ -37353,7 +37353,7 @@
         {
           "term": "Q1",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 30,
+          "occurrences": 31,
           "first_lines": [
             12,
             22,
@@ -38180,14 +38180,14 @@
             1,
             5,
             15,
-            72,
-            132
+            77,
+            137
           ]
         },
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 676,
+          "occurrences": 678,
           "first_lines": [
             7,
             17,
@@ -38220,9 +38220,9 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 3,
           "first_lines": [
-            212,
-            217,
-            222
+            225,
+            230,
+            235
           ]
         },
         {
@@ -38257,8 +38257,8 @@
           "path": "tests/test_a733_pmu_exec.py",
           "occurrences": 2,
           "first_lines": [
-            126,
-            138
+            136,
+            148
           ]
         },
         {
@@ -38291,10 +38291,10 @@
           "occurrences": 14,
           "first_lines": [
             83,
-            260,
-            262,
-            287,
-            318
+            268,
+            270,
+            295,
+            326
           ]
         },
         {
@@ -38302,7 +38302,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            103
+            105
           ]
         },
         {
@@ -38318,9 +38318,9 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 3,
           "first_lines": [
-            193,
-            218,
-            449
+            199,
+            224,
+            455
           ]
         },
         {
@@ -38384,10 +38384,10 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 4,
           "first_lines": [
-            463,
-            464,
-            488,
-            492
+            498,
+            499,
+            523,
+            527
           ]
         },
         {
@@ -38395,11 +38395,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 6,
           "first_lines": [
-            65,
-            76,
-            158,
+            66,
+            77,
             159,
-            168
+            160,
+            169
           ]
         },
         {
@@ -38487,16 +38487,16 @@
           "occurrences": 17,
           "first_lines": [
             1,
-            59,
-            65,
-            76,
-            77
+            64,
+            70,
+            81,
+            82
           ]
         },
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 484,
+          "occurrences": 495,
           "first_lines": [
             3,
             6,
@@ -38518,7 +38518,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 27,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -38534,9 +38534,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            217
+            160,
+            161,
+            230
           ]
         },
         {
@@ -38556,9 +38556,9 @@
           "first_lines": [
             11,
             38,
-            124,
-            125,
-            198
+            136,
+            137,
+            210
           ]
         },
         {
@@ -38600,13 +38600,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -38636,7 +38636,7 @@
             42,
             81,
             87,
-            154
+            162
           ]
         },
         {
@@ -38644,7 +38644,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            18
+            20
           ]
         },
         {
@@ -38664,11 +38664,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 17,
           "first_lines": [
-            101,
-            193,
-            216,
-            239,
-            415
+            107,
+            199,
+            222,
+            245,
+            421
           ]
         },
         {
@@ -38676,11 +38676,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -38726,8 +38726,8 @@
           "first_lines": [
             29,
             41,
-            463,
-            492
+            498,
+            527
           ]
         },
         {
@@ -38735,11 +38735,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 8,
           "first_lines": [
-            52,
             53,
-            153,
-            155,
-            156
+            54,
+            154,
+            156,
+            157
           ]
         },
         {
@@ -38753,7 +38753,7 @@
         {
           "term": "cold",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 23,
+          "occurrences": 24,
           "first_lines": [
             32,
             37,
@@ -38834,16 +38834,16 @@
           "occurrences": 17,
           "first_lines": [
             1,
-            59,
-            61,
-            76,
-            77
+            64,
+            66,
+            81,
+            82
           ]
         },
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 433,
+          "occurrences": 444,
           "first_lines": [
             3,
             6,
@@ -38865,7 +38865,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 27,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -38881,9 +38881,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            217
+            160,
+            161,
+            230
           ]
         },
         {
@@ -38911,9 +38911,9 @@
           "first_lines": [
             11,
             38,
-            124,
-            125,
-            198
+            136,
+            137,
+            210
           ]
         },
         {
@@ -38963,13 +38963,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "hot",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -39007,11 +39007,11 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 5,
           "first_lines": [
-            18,
-            97,
-            103,
-            250,
-            255
+            20,
+            99,
+            105,
+            348,
+            353
           ]
         },
         {
@@ -39031,11 +39031,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 16,
           "first_lines": [
-            101,
-            216,
-            415,
-            446,
-            447
+            107,
+            222,
+            421,
+            452,
+            453
           ]
         },
         {
@@ -39043,11 +39043,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -39109,8 +39109,8 @@
           "first_lines": [
             29,
             41,
-            463,
-            464
+            498,
+            499
           ]
         },
         {
@@ -39118,11 +39118,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 9,
           "first_lines": [
-            52,
             53,
-            153,
-            155,
-            156
+            54,
+            154,
+            156,
+            157
           ]
         },
         {
@@ -39136,7 +39136,7 @@
         {
           "term": "hot",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 23,
+          "occurrences": 24,
           "first_lines": [
             32,
             37,
@@ -40191,8 +40191,8 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 2,
           "first_lines": [
-            132,
-            171
+            137,
+            176
           ]
         },
         {
@@ -40220,7 +40220,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            222
+            235
           ]
         },
         {
@@ -40252,14 +40252,26 @@
         },
         {
           "term": "memory",
+          "path": "tests/e049c_proc_stat_override.c",
+          "occurrences": 7,
+          "first_lines": [
+            46,
+            121,
+            122,
+            123,
+            124
+          ]
+        },
+        {
+          "term": "memory",
           "path": "tests/test_a733_pmu_exec.py",
           "occurrences": 6,
           "first_lines": [
-            127,
-            138,
-            250,
-            253,
-            258
+            137,
+            148,
+            260,
+            263,
+            268
           ]
         },
         {
@@ -40499,19 +40511,19 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 1,
           "first_lines": [
-            97
+            102
           ]
         },
         {
           "term": "raw-bundle",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 58,
+          "occurrences": 60,
           "first_lines": [
             24,
             31297,
             33258,
-            34946,
-            36772
+            34978,
+            36824
           ]
         },
         {
@@ -40520,7 +40532,7 @@
           "occurrences": 2,
           "first_lines": [
             63,
-            146
+            152
           ]
         },
         {
@@ -40529,7 +40541,7 @@
           "occurrences": 2,
           "first_lines": [
             3,
-            232
+            245
           ]
         },
         {
@@ -40573,10 +40585,10 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 4,
           "first_lines": [
-            496,
-            634,
-            682,
-            780
+            504,
+            642,
+            690,
+            788
           ]
         },
         {
@@ -40584,8 +40596,8 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 2,
           "first_lines": [
-            310,
-            315
+            343,
+            348
           ]
         },
         {
@@ -40613,7 +40625,7 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            586
+            592
           ]
         },
         {
@@ -40621,8 +40633,8 @@
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 2,
           "first_lines": [
-            50,
-            189
+            51,
+            190
           ]
         },
         {
@@ -40975,10 +40987,10 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            46,
-            47,
             51,
-            81
+            52,
+            56,
+            86
           ]
         },
         {
@@ -40998,7 +41010,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -41195,20 +41207,20 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 2,
           "first_lines": [
-            66,
-            70
+            71,
+            75
           ]
         },
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 19,
+          "occurrences": 21,
           "first_lines": [
             18,
-            41096,
-            41105,
-            41117,
-            41125
+            41194,
+            41203,
+            41215,
+            41223
           ]
         },
         {
@@ -41233,7 +41245,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            326
+            334
           ]
         },
         {
@@ -41241,7 +41253,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            105
+            107
           ]
         },
         {
@@ -41281,7 +41293,7 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            496
+            531
           ]
         },
         {
@@ -41954,9 +41966,9 @@
           "occurrences": 4,
           "first_lines": [
             6,
-            46,
-            47,
-            81
+            51,
+            52,
+            86
           ]
         },
         {
@@ -41976,7 +41988,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -42367,6 +42379,7 @@
         "E055-O3-FLTO-AARCH64",
         "E055-OPENSSH-IMPLEMENTATION",
         "E055-OPENSSH-TRANSPORT-DESIGN",
+        "E055-OWNED-PROCESS",
         "E055-PMU-BUILD-A-",
         "E055-PMU-BUILD-B-",
         "E055-PMU-BUILD-REVIEW",
@@ -42385,6 +42398,7 @@
         "E055-RESTORE-RESULT",
         "E055-RUNNER-CAPTURE",
         "E055-RUNNER-FAILURE",
+        "E055-RUNTIME-",
         "E055-RUNTIME-QUALIFICATION",
         "E055-SEALED-",
         "E055-STAGE1",
@@ -43011,6 +43025,7 @@
             "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage7-6f7a6cb.md",
             "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
             "experiments/E055-q1-hot-cold/data/sample.schema.json",
             "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
@@ -43018,7 +43033,7 @@
           ]
         }
       ],
-      "commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467"
+      "commit": "4e572e16e829a1819f70db984d724f71d77e0d06"
     },
     {
       "ref": "refs/heads/main",
@@ -85924,7 +85939,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-      "match_count": 115613,
+      "match_count": 115755,
       "matches": [
         {
           "term": "DOTPROD",
@@ -86340,17 +86355,17 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 6,
           "first_lines": [
-            35,
-            48,
-            290,
-            365,
-            366
+            40,
+            53,
+            300,
+            391,
+            392
           ]
         },
         {
           "term": "DOTPROD",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 493,
+          "occurrences": 495,
           "first_lines": [
             7,
             15,
@@ -86375,7 +86390,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -86419,10 +86434,10 @@
           "occurrences": 9,
           "first_lines": [
             82,
-            289,
-            704,
-            747,
-            855
+            297,
+            712,
+            755,
+            863
           ]
         },
         {
@@ -86430,7 +86445,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            103
+            105
           ]
         },
         {
@@ -86448,9 +86463,9 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 3,
           "first_lines": [
-            220,
-            437,
-            591
+            226,
+            443,
+            617
           ]
         },
         {
@@ -86498,7 +86513,7 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            488
+            523
           ]
         },
         {
@@ -86506,7 +86521,7 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            167
+            168
           ]
         },
         {
@@ -87788,9 +87803,9 @@
           "first_lines": [
             35,
             32707,
-            42188,
-            87667,
-            96923
+            42286,
+            87785,
+            97364
           ]
         },
         {
@@ -87800,9 +87815,9 @@
           "first_lines": [
             36,
             32719,
-            42189,
-            87679,
-            96924
+            42287,
+            87797,
+            97365
           ]
         },
         {
@@ -87975,10 +87990,10 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            32,
-            34,
-            48,
-            367
+            37,
+            39,
+            53,
+            393
           ]
         },
         {
@@ -88015,8 +88030,8 @@
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
           "occurrences": 2,
           "first_lines": [
-            326,
-            332
+            332,
+            338
           ]
         },
         {
@@ -88049,7 +88064,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            289
+            297
           ]
         },
         {
@@ -88057,7 +88072,7 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            220
+            226
           ]
         },
         {
@@ -88085,9 +88100,9 @@
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 3,
           "first_lines": [
-            80,
             81,
-            145
+            82,
+            146
           ]
         },
         {
@@ -88263,7 +88278,7 @@
             10,
             39,
             42,
-            86
+            89
           ]
         },
         {
@@ -88274,14 +88289,14 @@
             1,
             5,
             13,
-            93,
-            97
+            98,
+            102
           ]
         },
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 840,
+          "occurrences": 913,
           "first_lines": [
             3,
             6,
@@ -88314,7 +88329,7 @@
         {
           "term": "E055",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 101,
+          "occurrences": 103,
           "first_lines": [
             2,
             3,
@@ -88458,7 +88473,7 @@
         {
           "term": "E055",
           "path": "tests/test_e055_openssh_transport.py",
-          "occurrences": 22,
+          "occurrences": 21,
           "first_lines": [
             1,
             14,
@@ -88470,7 +88485,7 @@
         {
           "term": "E055",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 67,
+          "occurrences": 68,
           "first_lines": [
             1,
             13,
@@ -88506,13 +88521,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_remote_helper.py",
-          "occurrences": 14,
+          "occurrences": 16,
           "first_lines": [
             1,
-            14,
-            17,
-            18,
-            56
+            16,
+            19,
+            20,
+            58
           ]
         },
         {
@@ -88542,13 +88557,13 @@
         {
           "term": "E055",
           "path": "tests/test_e055_transport_runtime.py",
-          "occurrences": 19,
+          "occurrences": 25,
           "first_lines": [
             1,
-            12,
-            57,
-            60,
-            80
+            14,
+            30,
+            34,
+            36
           ]
         },
         {
@@ -88591,7 +88606,7 @@
             25,
             30,
             120,
-            151
+            160
           ]
         },
         {
@@ -88633,7 +88648,7 @@
         {
           "term": "E055",
           "path": "tooling/e055_remote_helper.py",
-          "occurrences": 19,
+          "occurrences": 20,
           "first_lines": [
             2,
             27,
@@ -88662,14 +88677,14 @@
             1,
             31,
             78,
-            289,
-            297
+            321,
+            329
           ]
         },
         {
           "term": "E055",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 56,
+          "occurrences": 57,
           "first_lines": [
             2,
             12,
@@ -90010,17 +90025,17 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 13,
           "first_lines": [
-            85,
-            133,
-            135,
-            173,
-            177
+            90,
+            138,
+            140,
+            178,
+            182
           ]
         },
         {
           "term": "PMU",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 2069,
+          "occurrences": 2076,
           "first_lines": [
             21,
             1249,
@@ -90057,10 +90072,10 @@
           "occurrences": 10,
           "first_lines": [
             28,
-            213,
-            222,
-            238,
-            239
+            226,
+            235,
+            251,
+            252
           ]
         },
         {
@@ -90102,10 +90117,10 @@
           "occurrences": 8,
           "first_lines": [
             10,
-            241,
-            242,
-            250,
-            251
+            253,
+            254,
+            262,
+            263
           ]
         },
         {
@@ -90217,11 +90232,11 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 5,
           "first_lines": [
-            226,
-            229,
-            234,
-            235,
-            367
+            238,
+            241,
+            246,
+            247,
+            438
           ]
         },
         {
@@ -90229,11 +90244,11 @@
           "path": "tests/test_e055_publication.py",
           "occurrences": 18,
           "first_lines": [
-            243,
             244,
-            248,
+            245,
             249,
-            250
+            250,
+            251
           ]
         },
         {
@@ -90265,10 +90280,10 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 4,
           "first_lines": [
-            50,
-            57,
-            109,
-            149
+            52,
+            59,
+            111,
+            151
           ]
         },
         {
@@ -90288,11 +90303,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 5,
           "first_lines": [
-            250,
-            259,
-            438,
-            467,
-            469
+            256,
+            265,
+            444,
+            473,
+            475
           ]
         },
         {
@@ -90300,8 +90315,8 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 2,
           "first_lines": [
-            44,
-            45
+            61,
+            62
           ]
         },
         {
@@ -90366,7 +90381,7 @@
           "path": "tooling/e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            477
+            505
           ]
         },
         {
@@ -90410,10 +90425,10 @@
           "occurrences": 6,
           "first_lines": [
             39,
-            468,
-            470,
-            471,
-            473
+            503,
+            505,
+            506,
+            508
           ]
         },
         {
@@ -90422,10 +90437,10 @@
           "occurrences": 15,
           "first_lines": [
             31,
-            70,
-            81,
-            173,
-            369
+            71,
+            82,
+            174,
+            375
           ]
         },
         {
@@ -90433,11 +90448,11 @@
           "path": "tooling/e055_transport_evidence.py",
           "occurrences": 8,
           "first_lines": [
-            157,
-            278,
-            284,
-            290,
-            298
+            178,
+            310,
+            316,
+            322,
+            330
           ]
         },
         {
@@ -90455,9 +90470,9 @@
           "first_lines": [
             14,
             24,
-            47,
-            55,
-            64
+            48,
+            56,
+            65
           ]
         },
         {
@@ -91845,15 +91860,15 @@
           "first_lines": [
             1,
             6,
-            33,
-            34,
-            46
+            38,
+            39,
+            51
           ]
         },
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 11971,
+          "occurrences": 11982,
           "first_lines": [
             3,
             6,
@@ -91888,7 +91903,7 @@
         {
           "term": "Q1",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 32,
+          "occurrences": 33,
           "first_lines": [
             2,
             3,
@@ -91904,9 +91919,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            233
+            160,
+            161,
+            246
           ]
         },
         {
@@ -91916,8 +91931,8 @@
           "first_lines": [
             11,
             38,
-            124,
-            125
+            136,
+            137
           ]
         },
         {
@@ -92083,13 +92098,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "Q1",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -92127,7 +92142,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            18
+            20
           ]
         },
         {
@@ -92147,11 +92162,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 13,
           "first_lines": [
-            101,
-            216,
-            220,
-            232,
-            415
+            107,
+            222,
+            226,
+            238,
+            421
           ]
         },
         {
@@ -92159,11 +92174,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -92358,10 +92373,10 @@
           "occurrences": 5,
           "first_lines": [
             30,
-            52,
             53,
-            326,
-            587
+            54,
+            327,
+            593
           ]
         },
         {
@@ -92431,7 +92446,7 @@
         {
           "term": "Q1",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 30,
+          "occurrences": 31,
           "first_lines": [
             12,
             22,
@@ -93258,14 +93273,14 @@
             1,
             5,
             15,
-            72,
-            132
+            77,
+            137
           ]
         },
         {
           "term": "cache",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 676,
+          "occurrences": 678,
           "first_lines": [
             7,
             17,
@@ -93298,9 +93313,9 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 3,
           "first_lines": [
-            212,
-            217,
-            222
+            225,
+            230,
+            235
           ]
         },
         {
@@ -93369,10 +93384,10 @@
           "occurrences": 14,
           "first_lines": [
             83,
-            260,
-            262,
-            287,
-            318
+            268,
+            270,
+            295,
+            326
           ]
         },
         {
@@ -93380,7 +93395,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            103
+            105
           ]
         },
         {
@@ -93396,9 +93411,9 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 3,
           "first_lines": [
-            193,
-            218,
-            449
+            199,
+            224,
+            455
           ]
         },
         {
@@ -93462,10 +93477,10 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 4,
           "first_lines": [
-            463,
-            464,
-            488,
-            492
+            498,
+            499,
+            523,
+            527
           ]
         },
         {
@@ -93473,11 +93488,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 6,
           "first_lines": [
-            65,
-            76,
-            158,
+            66,
+            77,
             159,
-            168
+            160,
+            169
           ]
         },
         {
@@ -93565,16 +93580,16 @@
           "occurrences": 17,
           "first_lines": [
             1,
-            59,
-            65,
-            76,
-            77
+            64,
+            70,
+            81,
+            82
           ]
         },
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 484,
+          "occurrences": 495,
           "first_lines": [
             3,
             6,
@@ -93596,7 +93611,7 @@
         {
           "term": "cold",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 27,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -93612,9 +93627,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            217
+            160,
+            161,
+            230
           ]
         },
         {
@@ -93634,9 +93649,9 @@
           "first_lines": [
             11,
             38,
-            124,
-            125,
-            198
+            136,
+            137,
+            210
           ]
         },
         {
@@ -93678,13 +93693,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "cold",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -93714,7 +93729,7 @@
             42,
             81,
             87,
-            154
+            162
           ]
         },
         {
@@ -93722,7 +93737,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            18
+            20
           ]
         },
         {
@@ -93742,11 +93757,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 17,
           "first_lines": [
-            101,
-            193,
-            216,
-            239,
-            415
+            107,
+            199,
+            222,
+            245,
+            421
           ]
         },
         {
@@ -93754,11 +93769,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -93804,8 +93819,8 @@
           "first_lines": [
             29,
             41,
-            463,
-            492
+            498,
+            527
           ]
         },
         {
@@ -93813,11 +93828,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 8,
           "first_lines": [
-            52,
             53,
-            153,
-            155,
-            156
+            54,
+            154,
+            156,
+            157
           ]
         },
         {
@@ -93831,7 +93846,7 @@
         {
           "term": "cold",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 23,
+          "occurrences": 24,
           "first_lines": [
             32,
             37,
@@ -93912,16 +93927,16 @@
           "occurrences": 17,
           "first_lines": [
             1,
-            59,
-            61,
-            76,
-            77
+            64,
+            66,
+            81,
+            82
           ]
         },
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 433,
+          "occurrences": 444,
           "first_lines": [
             3,
             6,
@@ -93943,7 +93958,7 @@
         {
           "term": "hot",
           "path": "experiments/E055-q1-hot-cold/data/manifest.json",
-          "occurrences": 27,
+          "occurrences": 28,
           "first_lines": [
             2,
             3,
@@ -93959,9 +93974,9 @@
           "first_lines": [
             29,
             56,
-            147,
-            148,
-            217
+            160,
+            161,
+            230
           ]
         },
         {
@@ -93989,9 +94004,9 @@
           "first_lines": [
             11,
             38,
-            124,
-            125,
-            198
+            136,
+            137,
+            210
           ]
         },
         {
@@ -94041,13 +94056,13 @@
           "path": "tests/test_e055_openssh_transport.py",
           "occurrences": 1,
           "first_lines": [
-            175
+            180
           ]
         },
         {
           "term": "hot",
           "path": "tests/test_e055_publication.py",
-          "occurrences": 40,
+          "occurrences": 41,
           "first_lines": [
             32,
             39,
@@ -94085,11 +94100,11 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 5,
           "first_lines": [
-            18,
-            97,
-            103,
-            250,
-            255
+            20,
+            99,
+            105,
+            348,
+            353
           ]
         },
         {
@@ -94109,11 +94124,11 @@
           "path": "tests/test_e055_target_executor.py",
           "occurrences": 16,
           "first_lines": [
-            101,
-            216,
-            415,
-            446,
-            447
+            107,
+            222,
+            421,
+            452,
+            453
           ]
         },
         {
@@ -94121,11 +94136,11 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 5,
           "first_lines": [
-            119,
-            284,
-            291,
-            310,
-            313
+            145,
+            317,
+            324,
+            343,
+            346
           ]
         },
         {
@@ -94187,8 +94202,8 @@
           "first_lines": [
             29,
             41,
-            463,
-            464
+            498,
+            499
           ]
         },
         {
@@ -94196,11 +94211,11 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 9,
           "first_lines": [
-            52,
             53,
-            153,
-            155,
-            156
+            54,
+            154,
+            156,
+            157
           ]
         },
         {
@@ -94214,7 +94229,7 @@
         {
           "term": "hot",
           "path": "tooling/generate_e055_manifest.py",
-          "occurrences": 23,
+          "occurrences": 24,
           "first_lines": [
             32,
             37,
@@ -95269,8 +95284,8 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 2,
           "first_lines": [
-            132,
-            171
+            137,
+            176
           ]
         },
         {
@@ -95298,7 +95313,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            222
+            235
           ]
         },
         {
@@ -95577,19 +95592,19 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 1,
           "first_lines": [
-            97
+            102
           ]
         },
         {
           "term": "raw-bundle",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 58,
+          "occurrences": 60,
           "first_lines": [
             24,
             31297,
             33258,
-            34946,
-            36772
+            34978,
+            36824
           ]
         },
         {
@@ -95598,7 +95613,7 @@
           "occurrences": 2,
           "first_lines": [
             63,
-            146
+            152
           ]
         },
         {
@@ -95607,7 +95622,7 @@
           "occurrences": 2,
           "first_lines": [
             3,
-            232
+            245
           ]
         },
         {
@@ -95651,10 +95666,10 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 4,
           "first_lines": [
-            496,
-            634,
-            682,
-            780
+            504,
+            642,
+            690,
+            788
           ]
         },
         {
@@ -95662,8 +95677,8 @@
           "path": "tests/test_e055_transport_runtime.py",
           "occurrences": 2,
           "first_lines": [
-            310,
-            315
+            343,
+            348
           ]
         },
         {
@@ -95691,7 +95706,7 @@
           "path": "tooling/e055_target_executor.py",
           "occurrences": 1,
           "first_lines": [
-            586
+            592
           ]
         },
         {
@@ -95699,8 +95714,8 @@
           "path": "tooling/generate_e055_manifest.py",
           "occurrences": 2,
           "first_lines": [
-            50,
-            189
+            51,
+            190
           ]
         },
         {
@@ -96053,10 +96068,10 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 4,
           "first_lines": [
-            46,
-            47,
             51,
-            81
+            52,
+            56,
+            86
           ]
         },
         {
@@ -96076,7 +96091,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -96273,20 +96288,20 @@
           "path": "experiments/E055-q1-hot-cold/README.md",
           "occurrences": 2,
           "first_lines": [
-            66,
-            70
+            71,
+            75
           ]
         },
         {
           "term": "thrash",
           "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-          "occurrences": 19,
+          "occurrences": 21,
           "first_lines": [
             18,
-            41096,
-            41105,
-            41117,
-            41125
+            41194,
+            41203,
+            41215,
+            41223
           ]
         },
         {
@@ -96311,7 +96326,7 @@
           "path": "tests/test_e055_raw_bundle.py",
           "occurrences": 1,
           "first_lines": [
-            326
+            334
           ]
         },
         {
@@ -96319,7 +96334,7 @@
           "path": "tests/test_e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            105
+            107
           ]
         },
         {
@@ -96359,7 +96374,7 @@
           "path": "tooling/e055_remote_helper.py",
           "occurrences": 1,
           "first_lines": [
-            496
+            531
           ]
         },
         {
@@ -97032,9 +97047,9 @@
           "occurrences": 4,
           "first_lines": [
             6,
-            46,
-            47,
-            81
+            51,
+            52,
+            86
           ]
         },
         {
@@ -97054,7 +97069,7 @@
           "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
           "occurrences": 1,
           "first_lines": [
-            216
+            229
           ]
         },
         {
@@ -97445,6 +97460,7 @@
         "E055-O3-FLTO-AARCH64",
         "E055-OPENSSH-IMPLEMENTATION",
         "E055-OPENSSH-TRANSPORT-DESIGN",
+        "E055-OWNED-PROCESS",
         "E055-PMU-BUILD-A-",
         "E055-PMU-BUILD-B-",
         "E055-PMU-BUILD-REVIEW",
@@ -97463,6 +97479,7 @@
         "E055-RESTORE-RESULT",
         "E055-RUNNER-CAPTURE",
         "E055-RUNNER-FAILURE",
+        "E055-RUNTIME-",
         "E055-RUNTIME-QUALIFICATION",
         "E055-SEALED-",
         "E055-STAGE1",
@@ -98089,6 +98106,7 @@
             "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
             "experiments/E055-q1-hot-cold/data/review-rejection-stage6-eca4b03.md",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage7-6f7a6cb.md",
             "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
             "experiments/E055-q1-hot-cold/data/sample.schema.json",
             "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
@@ -98096,7 +98114,7 @@
           ]
         }
       ],
-      "commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467"
+      "commit": "03adbc2c722bda65ac9928782e59a9794c500a9c"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -113880,11 +113898,11 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e055-q1-hot-cold",
-    "base_commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467",
+    "base_commit": "4e572e16e829a1819f70db984d724f71d77e0d06",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-    "upstream_base_commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467",
+    "upstream_base_commit": "03adbc2c722bda65ac9928782e59a9794c500a9c",
     "tree_binding_source": "git-index-stage0",
-    "tree_binding_sha256": "258490842d7c3f16912791a73cd966a516d27ccfea274aa3f6ca52732b7b186e",
+    "tree_binding_sha256": "b5bf323a9e8236c1006e6b3131583271247dd97f99ec1f1df2191a248fbdf991",
     "binding_excludes": [
       "experiments/E055-q1-hot-cold/data/branch-preflight.json",
       "experiments/E055-q1-hot-cold/data/manifest.json"
@@ -114100,6 +114118,14 @@
         "canonical_path": "experiments/E055-q1-hot-cold",
         "experiment_ids": [
           "E055",
+          "E055-NATIVE-AARCH64",
+          "E055-Q1-HOT-COLD"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E055-q1-hot-cold",
+        "experiment_ids": [
+          "E055",
           "E055-O3-AARCH64",
           "E055-Q1-HOT-COLD"
         ]
@@ -114116,7 +114142,23 @@
         "canonical_path": "experiments/E055-q1-hot-cold",
         "experiment_ids": [
           "E055",
+          "E055-PAIRED-HOT-COLD",
           "E055-Q1-HOT-COLD"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E055-q1-hot-cold",
+        "experiment_ids": [
+          "E055",
+          "E055-Q1-HOT-COLD"
+        ]
+      },
+      {
+        "canonical_path": "experiments/E055-q1-hot-cold",
+        "experiment_ids": [
+          "E055",
+          "E055-Q1-HOT-COLD",
+          "E055-Q1-HOTCOLD-NATIVE-AARCH64"
         ]
       }
     ],
@@ -115891,12 +115933,12 @@
           {
             "path": "experiments/E055-q1-hot-cold/README.md",
             "mode": "100644",
-            "blob_oid": "def0f3b0b15598ce58eb5c40b8c4db6eda890f48"
+            "blob_oid": "ec197f0c2b8bfc1db042650537611f8307d8b857"
           },
           {
             "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
             "mode": "100755",
-            "blob_oid": "56c99054f2fd433ed296624a90e7ad568e403272"
+            "blob_oid": "053e1f8fc1f54da089c443fcb60ed07761a44e34"
           },
           {
             "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
@@ -115921,7 +115963,7 @@
           {
             "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
             "mode": "100644",
-            "blob_oid": "d9a6612561797362853f8e91070114855e9e0827"
+            "blob_oid": "fff26d2ad8470ffd6242a9c6b11c97576422ad1b"
           },
           {
             "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
@@ -115982,6 +116024,1271 @@
             "path": "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
             "mode": "100644",
             "blob_oid": "eaed8938e79da2605e919408f94be531d77c4ccc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/PROVENANCE_HASH_DISCREPANCY.md",
+            "mode": "100644",
+            "blob_oid": "95ab4bc2c46d96178b0a7e0f72068ad613a3d7ec"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/README.md",
+            "mode": "100644",
+            "blob_oid": "e9d5f6aca2abe488e3347288cded8b3d4fceadc9"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/TIMING_ROOT_CAUSE.md",
+            "mode": "100644",
+            "blob_oid": "b9cf8aa785a47a7bd041d9c363e505ab220f5a0b"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/analysis.json",
+            "mode": "100644",
+            "blob_oid": "8d1d2ae2a1e9574a859780165dd7f1687a9ad94e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/artifacts/a733-pmu-exec-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "053e1f8fc1f54da089c443fcb60ed07761a44e34"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/artifacts/e055-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "0a307223a5576e7decb6196f9d15252fceeb537d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/build-evidence/native-builds.json",
+            "mode": "100644",
+            "blob_oid": "bdd419e780714f639bb61a51a2f176cf598c5d12"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.json",
+            "mode": "100644",
+            "blob_oid": "70df598987541439152d19fdc474c1ac73dc24bd"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.stderr",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.stdout",
+            "mode": "100644",
+            "blob_oid": "7b162c33b5a9c6350a7693d0edd1502d40de3513"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.json",
+            "mode": "100644",
+            "blob_oid": "2adc3c1653f3844f4febc39a3a6c2fcd5c48ed05"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.stderr",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.stdout",
+            "mode": "100644",
+            "blob_oid": "7b162c33b5a9c6350a7693d0edd1502d40de3513"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/e055-paired-hot-cold.png",
+            "mode": "100644",
+            "blob_oid": "e096aadf6bc544cb5d2c6a19f4900e80ca2d859e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.e049c.json",
+            "mode": "100644",
+            "blob_oid": "c64b3b0f960c35a105cd43f82d0bc979a2df58c5"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.owned-process.json",
+            "mode": "100644",
+            "blob_oid": "4a7e6db4ce3d414e98eda4c5350d7bda4c9cab99"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.target-harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "a04e8e5dce12e13772a112a9af021d15c630d3ac"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.target-harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/pmu-glibc238/loader.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "0cb08fa449a563e3a961ffad291c53cd8571d5bd"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw-manifest.json",
+            "mode": "100644",
+            "blob_oid": "c4b604cb0f18383d33c9501eeba9c3738c943513"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "c337df8d04b67a831dc107cc9b4130edacb18f64"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "3b8cf6033c53eb713c08f58f4bc5c0c28e9738cb"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "da3c29691f1710fefbdb6538a43c53a83f9ccd4e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "1cffeaeb9e0b8919381f5f3a5e91ee28a90cefc6"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "93109aac1109e61e81fe736e97a9423a26889b5c"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "c443b7819ede83839cb4e469685b98d227f32bdc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "dab8342e97fa190d492483f878333cacda8ac1c6"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "62bfcbdae2b21a9c39af64a0314cb35a7306b753"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "140ad46df42360a771e7d921f882c134c819261c"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "b19cfad6fd11f2e12b7b07acb97c4fb3a6a76941"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "21b567c2358120bf9322cec75f9fbd2afb691e8a"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "d9ed7ad8a4e793194c0c4e6ead1b3c113496bb63"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "fe91c582a6b676aae79d3b5f95e06d5ce24981c8"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "75dcd198832e5af2c51eb7bed400ce72fcf9fe81"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "7be0babec9109109b197ac32a7784eca8a1debc1"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "a17339b8ffa690dff90b056f6bd1dd971bf2bd2d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "5f61dd2ccc95e0f2dd14e8d02b2d358c2d70c101"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "44bcac9c8aa352bc32aa25dd9278531b526c12d4"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "57915c8338de7642649deb2b3b76da726c6a3742"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "8f2a01963ba50c53a1a620085bedf401bd75da48"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "98eda05df33cead8fa9ac93bde25c511ee9a6a3e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "fa44d11e36537ba7e9e391e7ce9a76d34ea3ad04"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "3d9f28279754f965f3313ecda1d5c726686e0d6e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "43eff5f8ba22bf8a5f00c3f4d2663426f9fa6e6e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "52ecef5fb101db4d6257388c2e58652501bc27e6"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "8e3c93cb9744c8140cf92997de68e26f8a6633f5"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "652d34fbb7c815971a26d0d2b4cb9115d554a858"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "0eec55d146ca132ca75bd92271730ff6ca531d6e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "d01649ce9efe4d2d11b6e4e449b9d68c05121595"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "19d72ae4c62fc63138ce030464803b1b5aca631e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "c7f409534b972165f0c8fa589261c8bd3f3d550b"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "82181d3cd56ea40f1f0d18b6dd0e9d7b3224be84"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "5b90e5ae33e9a6ecaa374b974555b19de8663b52"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "59fd16da97b781bea450b5d0fb02abcc6b78907b"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "a4c13145c92d3f25a01e36a64702ef4c7251d476"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "ebdb4e7d0f56aed37f5eb7d069e56a4dc4b19214"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "622681a87b43c02bb504d4743ae4b0e2a9d551bc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "4dfbc2c9ea63700620a6f799c81ad7c2a847ee39"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "71f80c455c9616e3c37f7035fa6177525079d4db"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "6b31db7a7e7b058da0a523a00bea39f63ecda921"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/samples.csv",
+            "mode": "100644",
+            "blob_oid": "0b01f211abf5547b65f35cd1a95ac2892dc895e9"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/timing-comparison.csv",
+            "mode": "100644",
+            "blob_oid": "1b5045dfb43b933b360369f7b1e27b7ebbe9fed2"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/README.md",
+            "mode": "100644",
+            "blob_oid": "f7966f1a2a7b2fd872b89f6f4264ea246671381d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/artifacts/a733-pmu-exec-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "053e1f8fc1f54da089c443fcb60ed07761a44e34"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/artifacts/e055-q1-hotcold-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "0a307223a5576e7decb6196f9d15252fceeb537d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/controls/no-pty-identity-core-attempt/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "3f7714a84d38ddc1da883b8c75d1d394d15a5343"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/controls/no-pty-identity-core-attempt/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw-manifest.json",
+            "mode": "100644",
+            "blob_oid": "45f22d481ac5e0106f087d448072d36c6f98078d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "62597994fd64c06cf3b9cde21fb61bf8309f743a"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "cf0a71fc40dae2c3e605e5ef0639e3f9d44b3aed"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "8b137891791fe96927ad78e64b0aad7bded08bdc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/README.md",
+            "mode": "100644",
+            "blob_oid": "b597dd453ca67be30b5cf4e44b3435dc259158c6"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/analysis.json",
+            "mode": "100644",
+            "blob_oid": "3cf7705975b8af28617386a1d479f61b0dc181d9"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/artifacts/a733-pmu-exec-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "053e1f8fc1f54da089c443fcb60ed07761a44e34"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/artifacts/e055-q1-hotcold-native-aarch64",
+            "mode": "100755",
+            "blob_oid": "0a307223a5576e7decb6196f9d15252fceeb537d"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/build-evidence/native-builds.json",
+            "mode": "100644",
+            "blob_oid": "942fd9a24771d9a0a2bd42a6f87c301c1eb4976f"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/e049c.json",
+            "mode": "100644",
+            "blob_oid": "b3482b0409315d07fec5b0572eabe2670f71724b"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "8305f509c4565a2e174dfaab8c8e3b558a8522e8"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/child.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/child.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "7b162c33b5a9c6350a7693d0edd1502d40de3513"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/e049c.json",
+            "mode": "100644",
+            "blob_oid": "00b2fbf25d953727ca419bd070949b11856aab57"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/e055-paired-hot-cold.png",
+            "mode": "100644",
+            "blob_oid": "df841c378a6895270459e6fcc306affcf6e4aa6e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw-manifest.json",
+            "mode": "100644",
+            "blob_oid": "c66077ec96539373c367cce4bcfc395ec74500c6"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "0c707871c0a37106402fbeac89fee7dd5aa4fc36"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "89942c56c7a269bb0eacadcd34f35569418f50fa"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "2e68640aac90982746530205d68bd05dc457c747"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "f18ff872695991f98bc0eeccd3be41c982bec7a3"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "42c855641aae72e860573d0234fee397df943565"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "1b2845de9b02faf5adced6363577da4bfb7ba870"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "e9985d3d916748dbd4f1a42ff57d542c148ed1bc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "31332e40a41561b33d8830c931e8801390d79b76"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "4bef81b7cd7ecb62bf2952ac9e77cb266517c6b5"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "a188c3f2dbaa0d9f992c3489e87f74311f4d7e09"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "57314d83453c14fd13e70b9e4d54db2ba99d27fc"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "3779ca8d7ca469b099e23397ff8e25aa3acba5e9"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "51cae4fb8498f1d1f455782eb2422c232d3c80bb"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "aaa70f0ec8e0bace6e92a7274acc3d410a0ed433"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "3da5b7e6a2385bedd94703451dbc50b8a61e598e"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "00bfc2b535694db08d83fe363844f3f3f8359e7f"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "faf2d316293906a1783d83154d1120f0214df7cb"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e2514b46b8730453c9579decc694124e7e6467d3"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "6cfedd0cc90a58307747253fd8286eae82f26242"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "a9c7a3d8d00b94c1f65f2adb8b30338e61016532"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "ee6e0ea9e567474b1b23ceed22706c6fd67bc8fe"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "94735f13e1b0e7b8d30f617027bd386ca6a20cae"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "88db55ef03edc314e223d9dfb2651702e3599a16"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "a5bd036e268ee6c5096fe4c8a11dd3a2139dfeae"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "68d46c74775c3a03e964744dddb6e1650c95b3a1"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "ccdceb6dbf62d382f213319a6d1b132a9e71cbf0"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "e4d18b59104ebf136d76b317f37a2ac54fad1a1f"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "c93bcef9c9342c2365a54abe7fd3c50409a415ae"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "ba60704f6b45f122d204755a175c32cd2672a0ab"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "ce181e1b6c0d370420033e45560bf1c1059c5d9c"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "29ccaed0a21a25c3f91fb940a8b7b28eeecde410"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "0cbed71aa1c5fe7af4e35b7becc7006c5b1cac87"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "c985e6c79e6e2cf72981ca824e7640fe17b4df93"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e004f65375976d864b269394c2e3117e9cabcf50"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "972806e696c56fc0c71270ee931fa97e58731552"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "ffb06c003e792289f9acef149af23728f049b18b"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/e049c.json",
+            "mode": "100644",
+            "blob_oid": "3355ddbb944c08b6b813407bafeb8820f873a48c"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "ff37c33e1d1b3d33b8885f8fc57c210d81e8f6a8"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/e049c.json",
+            "mode": "100644",
+            "blob_oid": "200f587dabee8d34749b04d499d31da9e199dff8"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/harness.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/harness.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "66828350110fba1bfac998a5d74cb1d19f3f7001"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/wrapper.stderr.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/wrapper.stdout.raw",
+            "mode": "100644",
+            "blob_oid": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+          },
+          {
+            "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/samples.csv",
+            "mode": "100644",
+            "blob_oid": "92215cc7a55d85b25349ff03c1521a6ce7ec2dff"
           }
         ]
       }
@@ -116002,7 +117309,7 @@
     "refs/remotes/origin/main"
   ],
   "searched_ref_count": 19,
-  "match_count": 706893,
+  "match_count": 707184,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
@@ -116015,14 +117322,14 @@
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
         "ref": "refs/heads/codex/e055-q1-hot-cold",
-        "commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467"
+        "commit": "4e572e16e829a1819f70db984d724f71d77e0d06"
       },
       {
         "experiment_id": "E055-Q1-HOT-COLD",
         "canonical_path": "experiments/E055-q1-hot-cold",
         "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
         "ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
-        "commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467"
+        "commit": "03adbc2c722bda65ac9928782e59a9794c500a9c"
       }
     ]
   },

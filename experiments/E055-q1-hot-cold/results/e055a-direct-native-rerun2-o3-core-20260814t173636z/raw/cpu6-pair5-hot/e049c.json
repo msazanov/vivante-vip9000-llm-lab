@@ -1,0 +1,25 @@
+{
+  "schema_version": "e049c-arm-pmu/v2",
+  "status": "ok",
+  "sample_valid": true,
+  "event_source": "armv8_pmuv3_raw_config",
+  "counter_semantics": "event counts only; no DDR-byte conversion",
+  "event_group": "core",
+  "software_group_size_limit": 4,
+  "event_group_size": 3,
+  "software_group_size_limit_semantics": "conservative launcher policy; not measured hardware PMU capacity",
+  "min_running_ratio": 0.950000,
+  "pid": 308252,
+  "process_group": 308252,
+  "command": ["taskset", "-c", "6", "/tmp/e055-harness-native-7dcdab61-20260814t161000z-c/e055", "--mode", "full_dotprod", "--cache-state", "hot_repeat", "--working-set-bytes", "65536", "--iterations", "250", "--warmup", "16", "--thrash-bytes", "67108864", "--sync"],
+  "sync": {"mode": "start_ack_end", "started": true, "acknowledged": true, "ended": true},
+  "measured_elapsed_ns": 8147203,
+  "thermal": {"guard_enabled": true, "checked": true, "readable": true, "limit_c": 85.000, "max_observed_c": 32.426, "tripped": false},
+  "exit": {"code": 0, "raw_wait_status": 0},
+  "failure_reason": null,
+  "events": [
+    {"name": "cpu_cycles", "config": "0x11", "meaning": "ARMv8 PMUv3 CPU_CYCLES event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 7162215, "time_enabled_ns": 3587000, "time_running_ns": 3587000, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "instructions", "config": "0x8", "meaning": "ARMv8 PMUv3 INST_RETIRED event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 18753467, "time_enabled_ns": 3587000, "time_running_ns": 3587000, "running_ratio": 1.000000000, "errno": 0, "error": null},
+    {"name": "stall_backend", "config": "0x24", "meaning": "ARMv8 PMUv3 STALL_BACKEND event count", "support": "supported", "count_semantics": "event_count_not_bytes", "sample_valid": true, "value": 631059, "time_enabled_ns": 3587000, "time_running_ns": 3587000, "running_ratio": 1.000000000, "errno": 0, "error": null}
+  ]
+}

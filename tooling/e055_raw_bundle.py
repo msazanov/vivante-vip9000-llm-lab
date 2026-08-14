@@ -901,6 +901,27 @@ def _validate_e049c(
     return measured, limit, maximum, tuple(qualified_events)
 
 
+def validate_live_capture_semantics(
+    child_stdout: bytes,
+    e049c_json: bytes,
+    cell: Mapping[str, Any],
+    harness_argv: tuple[str, ...],
+    contract: Mapping[str, Any],
+) -> None:
+    """Apply the sealed analyzer's cross-file qualifier before the next run.
+
+    This does not make an uncommitted capture measurement evidence. It only
+    prevents a known-invalid sample from being followed by more target work.
+    The same strict harness and E049c validators are reused later when Git-
+    sealed bytes are loaded.
+    """
+
+    harness = _parse_json_object(child_stdout, "live E055 harness stdout")
+    _, _, elapsed_ns, _ = _validate_harness(harness, {}, cell)
+    e049c = _parse_json_object(e049c_json, "live E049c raw JSON")
+    _validate_e049c(e049c, cell, harness_argv, elapsed_ns, contract)
+
+
 def _validate_runner(
     raw: Mapping[str, Any], run: Mapping[str, Any], cell: Mapping[str, Any],
     argv: tuple[str, ...], e049c_argv: tuple[str, ...],

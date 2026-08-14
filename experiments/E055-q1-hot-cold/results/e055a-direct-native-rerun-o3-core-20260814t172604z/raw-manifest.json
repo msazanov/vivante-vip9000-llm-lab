@@ -1,0 +1,17 @@
+{
+  "schema": "e055-direct-raw-manifest/v1",
+  "phase": "e055a-direct-native-rerun-o3-core-20260814t172604z",
+  "transport": "direct /usr/bin/ssh and /usr/bin/scp argv only",
+  "device_attestation": false,
+  "files": [
+    {"path": "raw/cpu0-pair1-hot/e049c.json", "size_bytes": 2051, "sha256": "32118c271fdf57e328141941b81d9bd088a10fd5a1c56d15724ab4c75676a0e4"},
+    {"path": "raw/cpu0-pair1-hot/harness.stderr.raw", "size_bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "raw/cpu0-pair1-hot/harness.stdout.raw", "size_bytes": 917, "sha256": "f942321e4589e312dec264f430abed8fe376a4d35236652e6cb7d93510475107"},
+    {"path": "raw/cpu0-pair1-hot/wrapper.stderr.raw", "size_bytes": 1, "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"},
+    {"path": "raw/cpu0-pair1-hot/wrapper.stdout.raw", "size_bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    {"path": "artifacts/a733-pmu-exec-native-aarch64", "size_bytes": 74744, "sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4"},
+    {"path": "artifacts/e055-q1-hotcold-native-aarch64", "size_bytes": 75160, "sha256": "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80"},
+    {"path": "controls/no-pty-identity-core-attempt/wrapper.stderr.raw", "size_bytes": 61, "sha256": "0e5b77c0bad947fdb75a59c98a14a8e77192f9a08488ceb45d3ec4a7018c6bcd"},
+    {"path": "controls/no-pty-identity-core-attempt/wrapper.stdout.raw", "size_bytes": 0, "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+  ]
+}

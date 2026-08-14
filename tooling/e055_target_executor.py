@@ -36,6 +36,7 @@ from tooling.e055_q1_hotcold import (
 from tooling.e055_raw_bundle import (
     canonical_e049c_launcher_argv,
     canonical_harness_argv,
+    validate_live_capture_semantics,
 )
 from tooling.e055_transport_evidence import (
     ExclusiveDeploymentReceipt,
@@ -247,7 +248,12 @@ def _artifact_declaration(
     }
 
 
-def _strict_capture(capture: Any, run: LimitedRun) -> str | None:
+def _strict_capture(
+    capture: Any,
+    run: LimitedRun,
+    harness_argv: tuple[str, ...],
+    contract: Mapping[str, Any],
+) -> str | None:
     if not isinstance(capture, TargetCapture):
         return "transport returned a noncanonical capture type"
     byte_fields = (
@@ -288,6 +294,13 @@ def _strict_capture(capture: Any, run: LimitedRun) -> str | None:
             return "successful JSON capture is malformed"
         if not isinstance(document, dict):
             return "successful JSON capture must contain one object"
+    try:
+        validate_live_capture_semantics(
+            capture.child_stdout, capture.e049c_json, run.cell(),
+            harness_argv, contract,
+        )
+    except ValueError as exc:
+        return str(exc)
     return None
 
 
@@ -482,7 +495,9 @@ class E055TargetExecutor:
                         run.cpu, run.cpu, 0,
                     )
                 else:
-                    failure_reason = _strict_capture(capture, run)
+                    failure_reason = _strict_capture(
+                        capture, run, harness_argv, contract
+                    )
                     if failure_reason is not None:
                         capture = _sanitized_failure_capture(capture, run)
                 populated: dict[str, bytes] = {

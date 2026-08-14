@@ -1,5 +1,15 @@
 {
-  "binary_sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
+  "schema": "e055-pmu-build-review/v1",
+  "status": "PASS",
+  "source_path": "tooling/a733_pmu_exec.c",
+  "source_sha256": "fe2a41c60c4b957973cfea7d391e53b604c14d69e996fce2c8c4317859b17681",
+  "compiler_sha256": "dc53dbc5a583d03ae8ed6272ca9afc0f58873f9f9b86dd7d448b17fb3f88a8d0",
+  "compiler_id": "aarch64-linux-gnu-gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0",
+  "binary_sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+  "independent_build_sha256": [
+    "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+    "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4"
+  ],
   "compile_flags": [
     "-std=c11",
     "-O2",
@@ -7,22 +17,15 @@
     "-Wextra",
     "-Werror",
     "-fno-record-gcc-switches",
-    "-ffile-prefix-map=<root>=.",
-    "-fdebug-prefix-map=<root>=.",
+    "-ffile-prefix-map=<fresh-target-build-directory>=.",
+    "-fdebug-prefix-map=<fresh-target-build-directory>=.",
     "-c"
   ],
-  "compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0",
-  "compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
+  "link_flags": ["-Wl,--build-id=none"],
   "fixed_object_name": "a733_pmu_exec.o",
-  "independent_build_sha256": [
-    "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
-    "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad"
-  ],
-  "link_flags": [
-    "-Wl,--build-id=none"
-  ],
-  "schema": "e055-pmu-build-review/v1",
-  "source_path": "tooling/a733_pmu_exec.c",
-  "source_sha256": "7f7851024d47a88ec42fd75293c5fdc6166674bf0179110b75d4026f3a8d7846",
-  "status": "PASS"
+  "object_sha256": "e2a8949a583cc98eba9a9d23ea9f852815083995d25a4a9d48abcf37b91e6b55",
+  "build_environment": "native A733 Debian GCC 12.2.0; two fresh directories",
+  "elf_interpreter": "/lib/ld-linux-aarch64.so.1",
+  "elf_needed": ["libc.so.6"],
+  "elf_glibc_versions": ["GLIBC_2.17", "GLIBC_2.33", "GLIBC_2.34"]
 }

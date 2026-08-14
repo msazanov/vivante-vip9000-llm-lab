@@ -1,11 +1,49 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Status: **REVISED PRE-TARGET EXECUTOR HARDENING AWAITING REVIEW; NO TARGET RUN**.
+Status: **BOUNDED DIRECT TARGET MICROGATE PASS — 20/20 QUALIFIED; FULL-MATRIX PROMOTION REJECTED**.
 
 E055 is a bounded experiment designed to distinguish cache/data-carrier cost
 from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
 Bonsai-27B run and it provides no tokens/s result. A full Bonsai `n_predict=32`
-run remains prohibited until this gate is reviewed and passes on the board.
+run remains prohibited until the complete promotion matrix passes.
+
+## Qualified no-TTY target microgate
+
+The corrected fresh phase is published under
+[`results/e055a-direct-native-rerun2-o3-core-20260814t173636z/`](results/e055a-direct-native-rerun2-o3-core-20260814t173636z/).
+It used the exact native PMU and harness artifacts, direct `/usr/bin/ssh -T` and
+`/usr/bin/scp`, and live validation after every copied sample. All 20 samples
+qualified; requested CPU0/CPU6 affinity matched the harness's post-measurement
+`sched_getcpu()` observation. Maximum temperature was 39.618 °C.
+
+The bounded result does not authorize promotion. It covers only 20 of the required
+1,260 rows and one of 126 phase cells. Its meaningful repeated-pair chart and exact
+limits are documented in the result README. No model or NPU workload ran.
+
+One preceding PTY-contaminated fresh phase was stopped after one sample because
+wrapper stderr contained a single newline. It is preserved unchanged under
+[`results/e055a-direct-native-rerun-o3-core-20260814t172604z/`](results/e055a-direct-native-rerun-o3-core-20260814t172604z/).
+
+## First direct target phase: invalid, fully preserved
+
+The first 20-sample attempt used direct system `/usr/bin/ssh` and
+`/usr/bin/scp` only. It ran CPU0 and CPU6, five alternating hot/cold pairs,
+64 KiB, `full_dotprod`, and the `core` PMU group. No model or NPU workload ran.
+All raw files, ABI-compatible native build evidence, failures, analysis, and a
+meaningful paired chart are published under
+[`results/e055a-direct-native-o3-core-20260814t161316z/`](results/e055a-direct-native-o3-core-20260814t161316z/).
+
+The attempt is **not a qualified 20-run phase**. `cpu6-pair1-hot` and
+`cpu6-pair3-hot` violate `T + 1 ms >= H`, so the exact classification is 18
+qualified raw samples and two invalid raw samples. The source-grounded timing
+investigation is in
+[`TIMING_ROOT_CAUSE.md`](results/e055a-direct-native-o3-core-20260814t161316z/TIMING_ROOT_CAUSE.md).
+No result from this phase supports promotion or an optimization claim.
+
+The previously developed helper/transport adapter is rejected historical
+pre-target evidence and was not used for the direct phase. Project policy is
+to use the installed OpenSSH executables directly; the custom adapter must not
+be invoked for target work.
 
 ## Scope and duplicate preflight
 
@@ -119,16 +157,15 @@ from Git and attached to every derived row. Git proves byte immutability, not
 that a device produced those bytes; this limitation is deliberate and must be
 reported with every result.
 
-The target transport is a narrow adapter around the system `/usr/bin/ssh` and
-`/usr/bin/sftp`; it is not an SSH implementation. Credentials stay in the
-caller's external key or agent configuration and are never copied into Git or
-raw evidence. A run requires separately supplied immutable pins for the host
-key fingerprint, board identity digest, known-hosts file digest, sanitized
-host/port digest, committed helper blob, and both local OpenSSH executables. The
-adapter executes with `-F /dev/null`, strict known-host checking, no password
-or interactive prompts, no forwarding, proxy, TTY, or local commands, and
-bounded connect/alive timeouts. Outer raw/runner v1 is rejected for this target
-phase because it predates these pins; qualification begins at v2.
+Target measurements use the installed `/usr/bin/ssh` and `/usr/bin/scp`
+directly. The rejected custom SSH transport is historical pre-target evidence
+and must not be invoked. Credentials stay outside the repository and are never
+copied into raw evidence. The passing phase used `ssh -T`, strict external
+known-host checking, an external key, and an echo-disabled local terminal only
+to carry interactive sudo input; the board received no SSH TTY. Each target
+file was checked by direct stat/SHA-256 and copied before live validation. The
+published raw manifest binds the copied local bytes; it is not a cryptographic
+device attestation and does not claim a sealed per-file remote stat receipt.
 
 Raw qualification requires:
 
@@ -400,12 +437,15 @@ directories must produce identical final hashes. Both binaries must
 retain load/vector-consume controls without calls or SDOT and retain SDOT in
 the stock full kernel.
 
-E049c is independently built twice from the fixed object name
-`a733_pmu_exec.o` with `aarch64-linux-gnu-gcc -O2` and
-`-Wl,--build-id=none`. The clean-directory hashes must match each other and
-the committed `a733-pmu-exec-aarch64` artifact. Its source hash, compiler hash
-and ID, and binary hash are part of every runtime qualification and runner
-record.
+The host cross-build gate independently builds E049c twice from the fixed
+object name `a733_pmu_exec.o` with `aarch64-linux-gnu-gcc -O2` and
+`-Wl,--build-id=none`; its clean-directory hashes must match each other. This
+is reproducible functional/QEMU evidence, not the A733 runtime binary. The
+committed `a733-pmu-exec-aarch64` artifact is the separate byte-identical
+two-directory native GCC 12 build recorded in `data/pmu-build-review.json`.
+That native artifact avoids the rejected host/target glibc ABI drift. Its
+source hash, compiler hash and ID, object hash, binary hash, interpreter,
+NEEDED libraries, and glibc requirements are runtime provenance.
 
 QEMU must report `golden_pass=true` and `golden_cases=18`. QEMU results are
 functional evidence only and are not used as A733 performance evidence. The
@@ -414,8 +454,7 @@ first uninitialized-LUT failure remains at
 it was a harness initialization bug, was rejected, and must not be interpreted
 as a hardware or mathematical result.
 
-No board workload, model run, OPP/DDR change, NPU run, or full-model bottleneck
-claim is part of this pre-target hardening. After independent acceptance of
-the executor and stream-separation changes,
-the first hardware phase is limited to CPU0 and CPU6, 64 KiB,
-`full_dotprod`, the `core` PMU group, and five alternating hot/cold pairs.
+No model run, OPP/DDR change, NPU run, or full-model bottleneck claim is part of
+E055. The first hardware attempt was limited to CPU0 and CPU6, 64 KiB,
+`full_dotprod`, the `core` PMU group, and five alternating hot/cold pairs. It is
+published as an invalid 18+2 phase rather than relabeled as a success.

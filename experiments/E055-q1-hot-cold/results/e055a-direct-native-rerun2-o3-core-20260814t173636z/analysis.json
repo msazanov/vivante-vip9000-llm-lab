@@ -1,0 +1,187 @@
+{
+  "chart_annotation": "20/20 qualified; taskset CPU matched post-measurement sched_getcpu\nPMU event ratios are excluded from kernel-cache inference",
+  "cpus": {
+    "0": {
+      "median_cold_ns_per_traversal": 57833.0,
+      "median_cold_traversals_per_second": 17291.165943319556,
+      "median_hot_ns_per_traversal": 60248.5,
+      "median_hot_traversals_per_second": 16597.92359975767,
+      "median_pair_cold_hot_penalty": 0.9599077155447854,
+      "median_pmu_event_count_ratios_per_traversal": {
+        "cpu_cycles": 10.377299037396154,
+        "instructions": 4.234502384470081,
+        "stall_backend": 24.340023166862
+      },
+      "pairs": [
+        {
+          "cold_hot_penalty": 0.9599077155447854,
+          "cold_ns_per_traversal": 57833.0,
+          "hot_ns_per_traversal": 60248.5,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 1,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 11.021521688204036,
+            "instructions": 4.657633644653687,
+            "stall_backend": 24.948460845222456
+          }
+        },
+        {
+          "cold_hot_penalty": 0.9553171541044371,
+          "cold_ns_per_traversal": 57708.0,
+          "hot_ns_per_traversal": 60407.164,
+          "order": "cold_conditioned->hot_repeat",
+          "pair_index": 2,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 10.539624211216985,
+            "instructions": 4.394648309039478,
+            "stall_backend": 24.340023166862
+          }
+        },
+        {
+          "cold_hot_penalty": 1.8104428522658766,
+          "cold_ns_per_traversal": 113000.0,
+          "hot_ns_per_traversal": 62415.668,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 3,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 10.377299037396154,
+            "instructions": 3.69194740793242,
+            "stall_backend": 26.67431260183208
+          }
+        },
+        {
+          "cold_hot_penalty": 1.1697146256029824,
+          "cold_ns_per_traversal": 58792.0,
+          "hot_ns_per_traversal": 50261.832,
+          "order": "cold_conditioned->hot_repeat",
+          "pair_index": 4,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 10.14672333306584,
+            "instructions": 4.092291720106859,
+            "stall_backend": 24.143462335870463
+          }
+        },
+        {
+          "cold_hot_penalty": 0.9183126854694024,
+          "cold_ns_per_traversal": 54000.0,
+          "hot_ns_per_traversal": 58803.5,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 5,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 9.98930925343945,
+            "instructions": 4.234502384470081,
+            "stall_backend": 22.68815925614919
+          }
+        }
+      ],
+      "qualified_pair_count": 5
+    },
+    "6": {
+      "median_cold_ns_per_traversal": 23833.0,
+      "median_cold_traversals_per_second": 41958.62879201108,
+      "median_hot_ns_per_traversal": 13745.164,
+      "median_hot_traversals_per_second": 72752.86056972474,
+      "median_pair_cold_hot_penalty": 1.7339189259582497,
+      "median_pmu_event_count_ratios_per_traversal": {
+        "cpu_cycles": 12.364491755923767,
+        "instructions": 2.9312717588696757,
+        "stall_backend": 81.89426641808741
+      },
+      "pairs": [
+        {
+          "cold_hot_penalty": 1.7983002098871779,
+          "cold_ns_per_traversal": 24542.0,
+          "hot_ns_per_traversal": 13647.332,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 1,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 7.37015781140804,
+            "instructions": 1.920744629253083,
+            "stall_backend": 44.1453787860598
+          }
+        },
+        {
+          "cold_hot_penalty": 0.8323487953448288,
+          "cold_ns_per_traversal": 22708.0,
+          "hot_ns_per_traversal": 27281.832,
+          "order": "cold_conditioned->hot_repeat",
+          "pair_index": 2,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 15.102997925085376,
+            "instructions": 3.757504412298047,
+            "stall_backend": 104.98784994909992
+          }
+        },
+        {
+          "cold_hot_penalty": 0.9023732557541035,
+          "cold_ns_per_traversal": 24334.0,
+          "hot_ns_per_traversal": 26966.668,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 3,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 12.364491755923767,
+            "instructions": 2.9312717588696757,
+            "stall_backend": 81.89426641808741
+          }
+        },
+        {
+          "cold_hot_penalty": 1.7443790682137195,
+          "cold_ns_per_traversal": 23791.0,
+          "hot_ns_per_traversal": 13638.664,
+          "order": "cold_conditioned->hot_repeat",
+          "pair_index": 4,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 5.06829559965697,
+            "instructions": 1.2815811519922207,
+            "stall_backend": 20.852090791585017
+          }
+        },
+        {
+          "cold_hot_penalty": 1.7339189259582497,
+          "cold_ns_per_traversal": 23833.0,
+          "hot_ns_per_traversal": 13745.164,
+          "order": "hot_repeat->cold_conditioned",
+          "pair_index": 5,
+          "pmu_event_count_ratios_per_traversal": {
+            "cpu_cycles": 82.69976536588192,
+            "instructions": 26.556636167595038,
+            "stall_backend": 646.4581758599434
+          }
+        }
+      ],
+      "qualified_pair_count": 5
+    }
+  },
+  "invalid_run_count": 0,
+  "invalid_runs": [],
+  "max_temperature_c": 39.618,
+  "normalization": "elapsed_ns / calls",
+  "phase": "e055a-direct-native-rerun2-o3-core-20260814t173636z",
+  "pmu_interpretation": {
+    "qualified_for_kernel_cache_attribution": false,
+    "reason": "cold_conditioned performs exactly one measured traversal while hot_repeat performs 250; fixed S/A/E, launcher, and counter-window overhead remains in the single cold count and dominates the normalized PMU ratios",
+    "unit": "raw event counts per traversal; never bytes"
+  },
+  "promotion": {
+    "eligible": false,
+    "qualified_matrix_rows": 20,
+    "reason": "the bounded 20-run microgate passed, but only one of 126 phase cells was attempted; the complete matrix is mandatory",
+    "required_matrix_rows": 1260,
+    "threshold_fraction": 0.04
+  },
+  "raw_run_count": 20,
+  "schema": "e055-direct-target-analysis/v1",
+  "scope": {
+    "actual_working_set_bytes": 65728,
+    "cpus": [
+      0,
+      6
+    ],
+    "mode": "full_dotprod",
+    "pairs_per_cpu": 5,
+    "pmu_group": "core",
+    "working_set_bytes": 65536
+  },
+  "status": "PASS_BOUNDED_MICROGATE",
+  "valid_run_count": 20
+}

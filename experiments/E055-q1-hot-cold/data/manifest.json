@@ -1,12 +1,12 @@
 {
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
-  "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T15:15:52.013319+00:00",
+  "status": "bounded_target_microgate_published",
+  "generated_at_utc": "2026-08-14T18:47:24.383946+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "6f7a6cb12013a69038d2bbac2f02b1305262e467",
-    "staged_tree_binding_sha256": "258490842d7c3f16912791a73cd966a516d27ccfea274aa3f6ca52732b7b186e",
+    "preflight_base_commit": "4e572e16e829a1819f70db984d724f71d77e0d06",
+    "staged_tree_binding_sha256": "b5bf323a9e8236c1006e6b3131583271247dd97f99ec1f1df2191a248fbdf991",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -53,27 +53,27 @@
         "bus_access": "0x19"
       }
     },
-    "pmu_source_sha256": "7f7851024d47a88ec42fd75293c5fdc6166674bf0179110b75d4026f3a8d7846",
+    "pmu_source_sha256": "fe2a41c60c4b957973cfea7d391e53b604c14d69e996fce2c8c4317859b17681",
     "pmu_artifact_path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-    "pmu_binary_sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
-    "pmu_binary_size_bytes": 74752,
-    "pmu_compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
-    "pmu_compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0"
+    "pmu_binary_sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+    "pmu_binary_size_bytes": 74744,
+    "pmu_compiler_sha256": "dc53dbc5a583d03ae8ed6272ca9afc0f58873f9f9b86dd7d448b17fb3f88a8d0",
+    "pmu_compiler_id": "aarch64-linux-gnu-gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0"
   },
   "sample_provenance_contract": "infer_bottleneck accepts only a committed raw-bundle manifest path. It derives rows from Git-sealed artifacts and publication-bound source, binary, compiler, PMU config, and upstream identities; caller-created sample mappings are never measurement evidence.",
   "model_payload_included": false,
-  "target_workload_executed": false,
+  "target_workload_executed": true,
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 25122,
-      "sha256": "fed5ed9ec2ff07386da24c6be9e597e5107259577961688ea069b38e09a51eac",
+      "size_bytes": 27566,
+      "sha256": "e24760096f4f57dfd28249353ce27a25d19b0757aeeea5fae5140a8b9eb09d10",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 3088849,
-      "sha256": "f2395455c892b201d7cc96df0689f3d1d5f44e464dc93560c82c215c920e29a3",
+      "size_bytes": 3157594,
+      "sha256": "bfbdf96d2f5b1d9978b3847be1c04db33657d8281dbbb433f980092da0620aac",
       "role": "e055-stage1"
     },
     {
@@ -132,8 +132,8 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
-      "size_bytes": 902,
-      "sha256": "baae5ad6638606e4c014b8221a52cdfc22cf23d8bcccda224bdd5ab49bcc7438",
+      "size_bytes": 1282,
+      "sha256": "de1091a5d3838d159d07ed6e7566ebb4b15fe0684b9fdcc139c4eaa9b870787b",
       "role": "e055-stage1"
     },
     {
@@ -180,8 +180,8 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
-      "size_bytes": 74752,
-      "sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
+      "size_bytes": 74744,
+      "sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
       "role": "e055-stage1"
     },
     {
@@ -198,8 +198,8 @@
     },
     {
       "path": "tooling/e055_raw_bundle.py",
-      "size_bytes": 52763,
-      "sha256": "4cb103d1f074f21ac6112b58c19b16fcef380c96cb2e8c3debe766e3ec992f43",
+      "size_bytes": 53576,
+      "sha256": "660646dbd044575dffe27383b5c32bc2408cf85161ae64dc44827653e99473bb",
       "role": "e055-stage1"
     },
     {
@@ -210,8 +210,8 @@
     },
     {
       "path": "tooling/e055_target_executor.py",
-      "size_bytes": 25149,
-      "sha256": "6c965d3490940bb1de3ebfd6648950b83ce9e3cf92c68ce2a2b30c7d67839778",
+      "size_bytes": 25551,
+      "sha256": "a3abcaa10e913d3dc4fc80665c2b1c664fbff6ccbdff79103bdf6b3674d10841",
       "role": "e055-stage1"
     },
     {
@@ -233,6 +233,12 @@
       "role": "e055-stage1"
     },
     {
+      "path": "tooling/e055_direct_result.py",
+      "size_bytes": 33306,
+      "sha256": "b2a082d736fe95fb67607d228ef0847f16dbe78582572c28aafcaab94d50a336",
+      "role": "e055-stage1"
+    },
+    {
       "path": "tooling/build_e055_pmu_artifact.py",
       "size_bytes": 5657,
       "sha256": "991505a3e4be25b8e583268a6cbf34f9adc4b31a6435a51f99c8bdf54d704e8d",
@@ -240,8 +246,8 @@
     },
     {
       "path": "tooling/a733_pmu_exec.c",
-      "size_bytes": 58659,
-      "sha256": "7f7851024d47a88ec42fd75293c5fdc6166674bf0179110b75d4026f3a8d7846",
+      "size_bytes": 58886,
+      "sha256": "fe2a41c60c4b957973cfea7d391e53b604c14d69e996fce2c8c4317859b17681",
       "role": "e055-stage1"
     },
     {
@@ -258,8 +264,8 @@
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 9529,
-      "sha256": "2b011f9e2f79ba3122e8f4dda379e51bd8d915a2f24bd5c1deba79fdacb88fa1",
+      "size_bytes": 9712,
+      "sha256": "9f3f153034f5ccafdb93fc7cf0a6d9ea9d37c26a2a835b7526166bdced34898c",
       "role": "e055-stage1"
     },
     {
@@ -294,20 +300,20 @@
     },
     {
       "path": "tests/test_e055_target_executor.py",
-      "size_bytes": 31661,
-      "sha256": "5dc996320765f4bc4c9e51b567395411de8971f0dd57a6ced00ae04a6a94ba79",
+      "size_bytes": 33428,
+      "sha256": "5c986f6adc2bd52b808b8649fa1c9fa336a22138fb82e32fd4252a4310deddcd",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_aarch64_gate.py",
-      "size_bytes": 9183,
-      "sha256": "dfec6300548b62f33119dd37c8aedf97b54604debbce54e8a08dd79e52bb4636",
+      "size_bytes": 9631,
+      "sha256": "a337c166e04ad411cbbf313bad833b5e4e471d5007caf48e86818780a92af668",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 19878,
-      "sha256": "731af1d55dffa8db2c1895eb920166959bfeebb8469932c381fe0dbe9b49abe7",
+      "size_bytes": 20649,
+      "sha256": "92dd0c54ab1f742060330191d60ae573b0cad492a28d789e1d66b506ef218aac",
       "role": "e055-stage1"
     },
     {
@@ -326,6 +332,12 @@
       "path": "tests/test_e055_openssh_transport.py",
       "size_bytes": 21140,
       "sha256": "ad7cdec370ede6d31887de73be6e504e2761b2b6aff1273ebe3abf5b443aa4f2",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_direct_result.py",
+      "size_bytes": 7815,
+      "sha256": "d3384a6f9de5dff25c57cb851d015b90624b13dca23db2de4edbe9946272eb4b",
       "role": "e055-stage1"
     },
     {
@@ -356,6 +368,1524 @@
       "path": "docs/superpowers/specs/2026-08-14-e055-openssh-transport-design.md",
       "size_bytes": 8332,
       "sha256": "d119ab3294b475e6bde0571418642abd865a1145818e69b4784e79fb75fcad23",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/PROVENANCE_HASH_DISCREPANCY.md",
+      "size_bytes": 4138,
+      "sha256": "4d033547dc91a6899a52859a76df4a6df0141cf87d39c052e941e62bdc8f8274",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/README.md",
+      "size_bytes": 3228,
+      "sha256": "68500f9554a6a06479f1cacdd793c652d0db4ddd973e9a177ad05a8861037c46",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/TIMING_ROOT_CAUSE.md",
+      "size_bytes": 5420,
+      "sha256": "968ab624810abf215437c0ffc745581127fd4ebbd438b45296f008c815a2484b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/analysis.json",
+      "size_bytes": 6572,
+      "sha256": "58e5fd892c49587394eaa12c0be7dfb71e87ca3bee7674a82223e3b545a60558",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/artifacts/a733-pmu-exec-native-aarch64",
+      "size_bytes": 74744,
+      "sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/artifacts/e055-native-aarch64",
+      "size_bytes": 75160,
+      "sha256": "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/build-evidence/native-builds.json",
+      "size_bytes": 5833,
+      "sha256": "502bb9febcb6a9dc8bbeb252ff8581cf6863e4f1d4a655e2ee651ceee1dc9d3b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.json",
+      "size_bytes": 1863,
+      "sha256": "14a8a00258bab6f9c2617c9a59b3fa5a6398e187219c7ebd026002f4670015c3",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.stderr",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r1.stdout",
+      "size_bytes": 205,
+      "sha256": "04a63a15c088b85becb6b06a6eb467c04c2eb8d5738284c8809688c8b0e082ef",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.json",
+      "size_bytes": 1863,
+      "sha256": "9c8ece7852295a932ff9ecd8f2adc5c8a08e83934ecb3475b30ee2c20976993e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.stderr",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/controls/control-fe2a41c6-root-r2.stdout",
+      "size_bytes": 205,
+      "sha256": "04a63a15c088b85becb6b06a6eb467c04c2eb8d5738284c8809688c8b0e082ef",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/e055-paired-hot-cold.png",
+      "size_bytes": 205140,
+      "sha256": "4b29d95a3b3a5c150bce6eefa714325ae339c4cb2a298a28c08e88c5f0b913b9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.e049c.json",
+      "size_bytes": 2134,
+      "sha256": "7c5d98ab8568a30f0cf6a9ff9d375752d14be1676ea1db7da48cd3e83a604367",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.owned-process.json",
+      "size_bytes": 371,
+      "sha256": "263b70c8be3942599a82828e36d57acdc3973449b5f89afdad7ce68013ac9911",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.target-harness.stderr.raw",
+      "size_bytes": 460,
+      "sha256": "713cfdaa0580b93ef108cfdb6744abda21148fe9a34546015032f5c358ab2623",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.target-harness.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/harness-glibc238/failed-sample1.wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/failures/pmu-glibc238/loader.stderr.raw",
+      "size_bytes": 472,
+      "sha256": "61651ed1a50b962a653c34f556e568f0f2dffb34371dc44b486733c61cfa1e83",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "2b36294619363f128d6e7bbc9ad6cf22d6a3cb1c0f049b70e6a2c87248769b33",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "aa24c98aa0a351993c71e13eb7add981259d1b3237eec935c8c43204eaf1f301",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "3daed36ea3eb39433201d2dea63d583e16dd2650df9441cb729a83fb9df8c7d4",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "117cc6bdab782ba15b5ebbfb3742bacb6dc0fa9dd5217371b0beb68023a3d24d",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "3187badc3bd54c25e0ebe86ea0b5816e8917ffc49ca1cdd69aabbfc2b0f421a9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "04dc3f2eae413428ec2086f47ab8a55be94050f8b086549d7f0e60e38e3c14ec",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "fea620e3578b7777455edb4a00f346597c2d5227cbef6b7730b7ff5adcd23188",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "67ec455ef4b0c41e37a9fed16ef08327b70344909cf68a077711cec636e53c4f",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair2-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "0f35e83a157bfedbed58cea885c8f768ad2f46cc9ab8a1a21a44e5f24fc94cc1",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "46b6dfc7388130f6c12277c684ead6f30032c5a5983efe08c7258da8530341bd",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "6ab50ba172ef276d361f627a7fa1aa3e6969dbb866d3c86cbb38b4057f0308e2",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "bf2001eee53556fed28bc7151907199ec0b2a013b9567218f082559cf2da850e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair3-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "436169d357a6ae5024d0ea29353354251a77afc97a33a31014b71ba9f548c269",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "fa5a290f4960ee34aeed607a559e0bb5054f264b0ae85573b74698ef3489b18d",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "fe28adf4ed81d2283fcb0d638597fed0f3d17fe4aa2445123e5dbb960d4ca741",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "379149d590693067d2f9dd0ff36d9490289327720db04af3a518a5e196be13e8",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair4-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "c20ce11791fd4aeb39ccc35cf8f8110ed3008ed48682111c582a9550d4b9872d",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "762462fa6c5331e8953a437f71621e35e4c8349accef1abec77afbe67b877ecc",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "49f96d1231b13860fa037d8c4542a1221294e46b7421adfff5578f4ca21cb0da",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "f8d889fdff5cf6a8134563a07ec568755ed74f3669a9f435091fa567e0d564e3",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu0-pair5-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/e049c.json",
+      "size_bytes": 2079,
+      "sha256": "260f8795b1567907ed39cfaa444a75f345285edb4d9bc59a1965abc66b28aa12",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "6aa2c3e22ef69e17e863b1bcf8f51abafab634da321cc3c4c4e42856850e3c47",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/e049c.json",
+      "size_bytes": 2057,
+      "sha256": "196ddd09b8de47e1030260110d9c920ab4f23bc49c9bb4f3226b03cafcd9f95a",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "97f0b73af12e35c5354f86f5ee3e234cb96e98bf418162b481548a674c1cfead",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair1-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/e049c.json",
+      "size_bytes": 2079,
+      "sha256": "d2649fbca41e829889b22ecbebbc304a305d6a37c06b28b4a1d78dc98e74b84b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "7a1a5faba3a451dd58110bb33941ed42f6560a53a54e01a0b0102ba0767605e7",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/e049c.json",
+      "size_bytes": 2056,
+      "sha256": "8342fc4bdb1478c823d233697e884fda81f4a2a1f6e78db7f978a58761822013",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "7c341d653395cb8f9c412d2b10cf282276dec25ca9130fadea304cc92ada5d9e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair2-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/e049c.json",
+      "size_bytes": 2079,
+      "sha256": "f9b5c2fee2b256bba1feed49b14d24a9304c4cd994f2fe16cf2498d1186782d9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "bc88fba22213a2e2bce215e967820b44d0c502ae92d62c882000e6fd1a9aed31",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/e049c.json",
+      "size_bytes": 2057,
+      "sha256": "1fed485f06da1663622c953d57701562e63b155e4c2ed767e1c98fcd9c0b98df",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "6741d9de433a50adedccb7582b1dabebdda69216950a50d95cfee5abfd0d4a65",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair3-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/e049c.json",
+      "size_bytes": 2079,
+      "sha256": "0644cb37d7fff505370fc9b6c425de069ee3f3281f1d655987f0011298c7d644",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "fdf80b40054c74865bb342c5cfdca41821762416fc090a07e3b142a4846b5f5a",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/e049c.json",
+      "size_bytes": 2056,
+      "sha256": "56a889e99f020354c7f4de6da01933bb6a596216db8f6978bff3be7e16f5c3bc",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "9b991238d5b5cc960975aab24e04ee7e292162492384cf992b9d5a1b9f68bf39",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair4-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/e049c.json",
+      "size_bytes": 2069,
+      "sha256": "c9e818361e8365b236a8be3cb859c1657ed003633b8c574ec43fd76884248f46",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "adfaba6dfceba987b18a38edd246b3ab30f9b76bcd0bd84f43a8bd47fb10bc3b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/e049c.json",
+      "size_bytes": 2056,
+      "sha256": "6399422314d6cf3ade7419c9255fb14312723f628a70d36513f5dc62905197cf",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "66042ae5e2bb3e562d35a352c2f4c5d0305a9d10967f04064fb5d1ed91fb4353",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw/cpu6-pair5-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/raw-manifest.json",
+      "size_bytes": 20565,
+      "sha256": "be2b8196ed514593cee04e111bb6f3ec8a74f0cc701f44fc3c94858f51d65040",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/samples.csv",
+      "size_bytes": 2857,
+      "sha256": "5d9216a86266483b7fc596b24cff4f019454102cecd9a94b67d73ebf7b3678e1",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-o3-core-20260814t161316z/timing-comparison.csv",
+      "size_bytes": 1716,
+      "sha256": "b8a8e8aa704acd988863d80d47b5089908a6c19b7f74cc3e08a91354f7ff5b3d",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/README.md",
+      "size_bytes": 1270,
+      "sha256": "714510a25c9f3fea02c3c6e933a3ebd16059aa7d5d27df705e82752f00ee92d0",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/artifacts/a733-pmu-exec-native-aarch64",
+      "size_bytes": 74744,
+      "sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/artifacts/e055-q1-hotcold-native-aarch64",
+      "size_bytes": 75160,
+      "sha256": "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/controls/no-pty-identity-core-attempt/wrapper.stderr.raw",
+      "size_bytes": 61,
+      "sha256": "0e5b77c0bad947fdb75a59c98a14a8e77192f9a08488ceb45d3ec4a7018c6bcd",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/controls/no-pty-identity-core-attempt/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "32118c271fdf57e328141941b81d9bd088a10fd5a1c56d15724ab4c75676a0e4",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "f942321e4589e312dec264f430abed8fe376a4d35236652e6cb7d93510475107",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+      "size_bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun-o3-core-20260814t172604z/raw-manifest.json",
+      "size_bytes": 1622,
+      "sha256": "888cb5bda34ac1cba91e156dd8255c61b049a2525e6f164acc96ea96b2850fb9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/README.md",
+      "size_bytes": 4910,
+      "sha256": "26917ac316fd9c9163bd5938ffc74c653923bf9eedc67ffe7d8bf19cf1ce79d2",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/analysis.json",
+      "size_bytes": 6835,
+      "sha256": "09399e32c2a9893a0162691354351503d8603b987373260d7420a22cc743e89b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/artifacts/a733-pmu-exec-native-aarch64",
+      "size_bytes": 74744,
+      "sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/artifacts/e055-q1-hotcold-native-aarch64",
+      "size_bytes": 75160,
+      "sha256": "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/build-evidence/native-builds.json",
+      "size_bytes": 5278,
+      "sha256": "9c5af572b98f2d26e9e98b0675899e2f7a23337d39b02bf6ca77da64aa3977fe",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "1c500153a10db3d953e05f994b8e7f2a51cda9455b4aa349eef985616306d302",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/harness.stdout.raw",
+      "size_bytes": 918,
+      "sha256": "fc9d94406f8f87f9874eedab4092496f7544c42ef0798c93615e32132574fd36",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/harness-pmu-gate/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/child.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/child.stdout.raw",
+      "size_bytes": 205,
+      "sha256": "04a63a15c088b85becb6b06a6eb467c04c2eb8d5738284c8809688c8b0e082ef",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/e049c.json",
+      "size_bytes": 1863,
+      "sha256": "3dbe7ef7d77d878cff8b5d9bc843bd84c8d4347cd688f63f0b8e0731d58434eb",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/controls/identity-core/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/e055-paired-hot-cold.png",
+      "size_bytes": 214695,
+      "sha256": "45ec7851a8833100667dec08ad098c21cee9fc2bdfb8a27d57db5d42f63c48aa",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "0f077c1fc612c7a4b0a02a2013bfdbbbca6db3aaf14f3e27b02d3fd0bebbefd3",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "de7baa951e551732104db2bbcb971956665892ddc1c8263325021d911d2048cd",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "a63cf9948b22848e1ad9afd2d1b75bb6a66e7956d94fb1f52cc84f1b68182409",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/harness.stdout.raw",
+      "size_bytes": 918,
+      "sha256": "233f344e401a0c703cd368cbbef49f863d7c4e3131887923056d5d877baa28c1",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair1-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "22fa5cbdf169ba5cd60c15824560aa6edc0e6951a741683a4a2fc5d84d5fbaf6",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "fe8ad0ab2c581cad47d89c1e2869ee4b05f22934f1394f7ee16d9aa101665b70",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "44c443204d464c6262099c39ed084d86d8c1054d0b8085e6de54f39c35aeec2b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "0c32c2f0fc13f9f22c5438b6484d571f91eda57b3fa93dd6bd76f1a45586455e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair2-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "93180a32a05df766a8fb5eb6b4018a4e3e5c06ebb9e3648c5841cf318650d33b",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/harness.stdout.raw",
+      "size_bytes": 936,
+      "sha256": "39081b4d88ecca6a3bab3554e7824f41f8a6dd2cf5b007eb1041b244a768e4ec",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "431cf3404d3340e002b1ecfa375cb5060fb88864fe3c27db71497fa368559375",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "dd4112eae5fa5cea9ae65d36ccc5411d0ab9ec3fa8a6eb7f3c465e095c906e76",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair3-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "1a72b4a896d88ca5c5bd83adae6594e3a669e956b1aa78a4c1b526f9d7fb7a31",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "cad6d78a2b57c76c553907c79b1a8a5355826faf1a380f3049e3d8e3e90a1bea",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "e1525fb4c675ef3f0fd9c80178daa0194dfa1a7cb3307e49de45c535e5b941f9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "204828efe455deec6f9552d64a9c1f1d95b9c7dcc313fe9da15e14aae7f24ade",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair4-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "010d192af60ab7fca7fd5a8756641462e83bc22f99162354f09613c521211105",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "709908e42392149bb339ef376de4811ddc1c42c67f9d9b7fa4f9f81cc38d2373",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/e049c.json",
+      "size_bytes": 2051,
+      "sha256": "e7b9a9bc54fe112341399bc24433f933a2c1277bb2c407006e701230f2463740",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/harness.stdout.raw",
+      "size_bytes": 917,
+      "sha256": "ecf79d7f5d597dc2a42d97dea7e1a3df17bf1eea86bed84168452afb31271dee",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu0-pair5-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/e049c.json",
+      "size_bytes": 2054,
+      "sha256": "092ca2bb5cd66fec6c0c3f9a96ca1a5bcc752f4a1d83d8f6705fcdf66ae7eb10",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "cbef0eb8b777608fea4eb7e44db96566383d151ce079ffdf2dbea0046a3946fd",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/e049c.json",
+      "size_bytes": 2042,
+      "sha256": "4a5afdac371877d4f2dd02f2f0d8daf18d7e213c67a9af4fe5939c942f093621",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "a3c62be842de500a16219a0bc574f07ca854dda54c500ced2f0beb495cc9219e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair1-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "d85a3f2452058492ab4fa607aa2643855c8e5b35dbd322a13805c7e96dcc1644",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "094e57b1c4750241ef1c4a252def88d644f0ede94df30dacb3559144f89a0dba",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/e049c.json",
+      "size_bytes": 2042,
+      "sha256": "bbd6aa4b246d404076de8dde190efabeba14e7ab1e6d5237cd2429ae7aca70da",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "da3766e7b2fe83321560fc053800a63c16e1e73a62b145c94b849e1278dbb925",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair2-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/e049c.json",
+      "size_bytes": 2055,
+      "sha256": "2e5e647c013fe18278b5d310cb741b4543d562c49d2d3abfbf3847dc4ea71566",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "6d400d55a91108e1e8168f33ca21fa82e32667d55848d32aba255dc03c5d2b86",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/e049c.json",
+      "size_bytes": 2042,
+      "sha256": "c54870aefbc1b528c49812ad931b75263b08540e7e3c047cb63507089d414c03",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "7ace10b08c20cf84b236a737884cc434ea19dfd894ac3c3d5982c12a2e933210",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair3-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/e049c.json",
+      "size_bytes": 2047,
+      "sha256": "c364ab58173a25e51f4b476278bd75e9124de90d7fba3a7e1b9adb8a7594d464",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "8ec3678af626ca7c09f2d77db53d1f790b8b0ca65114ebf0068499749540e8f1",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/e049c.json",
+      "size_bytes": 2042,
+      "sha256": "4dea8f96aab9b7d0173b0f433eb8e6dcf918a4a472752413327b2b3f53655647",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "b63b3060c2bb3b232048e7eaec373cbbf664bb5e3caa64681fffca9ab1947a9a",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair4-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/e049c.json",
+      "size_bytes": 2065,
+      "sha256": "7a39b38d46b57e7dd1c7494c2dff71de7fb76df8b03328bb167b96736f668ed7",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/harness.stdout.raw",
+      "size_bytes": 935,
+      "sha256": "8345d1a7d2cb4cc0b9fcbd0eeac91693209e153aac64f80411ca1ddd3e3d82a8",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-cold/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/e049c.json",
+      "size_bytes": 2042,
+      "sha256": "91ce091263286f5f5ad6e6255ca65594060a2800924968f75853ca9eb3055ccc",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/harness.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/harness.stdout.raw",
+      "size_bytes": 916,
+      "sha256": "6449ffd969c94b88d21ae4a9fd5dcf85c1986eb286ca737618358801da7c886d",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/wrapper.stderr.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw/cpu6-pair5-hot/wrapper.stdout.raw",
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/raw-manifest.json",
+      "size_bytes": 19933,
+      "sha256": "689c6197ed51b35bb4254df1597e4df9f2046abd62b86411cbe2dfa73a8a057f",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/results/e055a-direct-native-rerun2-o3-core-20260814t173636z/samples.csv",
+      "size_bytes": 3143,
+      "sha256": "a9d015cb8049be04979db0a7b098e3e767987d4136834ba24ce3cac7e7bdb77e",
       "role": "e055-stage1"
     }
   ]

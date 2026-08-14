@@ -18,6 +18,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DISASSEMBLY_REVIEW = (
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json"
 )
+PMU_BUILD_REVIEW = (
+    ROOT / "experiments/E055-q1-hot-cold/data/pmu-build-review.json"
+)
 PMU_ARTIFACT = (
     ROOT / "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64"
 )
@@ -157,22 +160,30 @@ class E055AArch64Gate(unittest.TestCase):
         )
         self.assertEqual(sha256(binary), expected["binary_sha256"])
 
-    def test_pmu_artifact_is_reproducible_and_publication_bound(self) -> None:
+    def test_cross_pmu_build_is_reproducible_functional_evidence(self) -> None:
         first_dir = pathlib.Path(self.temp.name) / "pmu-first"
         second_dir = pathlib.Path(self.temp.name) / "pmu-second"
         first = build_pmu_artifact(ROOT, first_dir)
         second = build_pmu_artifact(ROOT, second_dir)
         self.assertEqual(first["binary_sha256"], second["binary_sha256"])
-        self.assertEqual(first["binary_sha256"], sha256(PMU_ARTIFACT))
         self.assertEqual(first["compiler_sha256"], second["compiler_sha256"])
         self.assertEqual(first["compiler_id"], second["compiler_id"])
+
+    def test_native_runtime_pmu_artifact_is_publication_bound(self) -> None:
+        review = json.loads(PMU_BUILD_REVIEW.read_text(encoding="utf-8"))
+        self.assertEqual(review["status"], "PASS")
+        self.assertEqual(
+            review["independent_build_sha256"],
+            [review["binary_sha256"], review["binary_sha256"]],
+        )
+        self.assertEqual(review["binary_sha256"], sha256(PMU_ARTIFACT))
         runtime = json.loads(PUBLICATION_MANIFEST.read_text(encoding="utf-8"))[
             "runtime_qualification"
         ]
         self.assertEqual(runtime["pmu_artifact_path"], PMU_ARTIFACT.relative_to(ROOT).as_posix())
-        self.assertEqual(runtime["pmu_binary_sha256"], first["binary_sha256"])
-        self.assertEqual(runtime["pmu_compiler_sha256"], first["compiler_sha256"])
-        self.assertEqual(runtime["pmu_compiler_id"], first["compiler_id"])
+        self.assertEqual(runtime["pmu_binary_sha256"], review["binary_sha256"])
+        self.assertEqual(runtime["pmu_compiler_sha256"], review["compiler_sha256"])
+        self.assertEqual(runtime["pmu_compiler_id"], review["compiler_id"])
 
     def test_pmu_artifact_runs_under_qemu_with_separate_stream_contract(self) -> None:
         result = subprocess.run(

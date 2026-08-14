@@ -1,0 +1,152 @@
+{
+  "schema": "e055-native-abi-build-evidence/v1",
+  "status": "PASS_BYTE_IDENTICAL_TARGET_COMPATIBLE_BUILDS",
+  "semantics_changed": false,
+  "target": {
+    "identity": "orangepi / aarch64 / sun60iw2",
+    "glibc_version": "2.36",
+    "dynamic_interpreter": "/lib/ld-linux-aarch64.so.1"
+  },
+  "pmu_launcher": {
+    "source_path": "tooling/a733_pmu_exec.c",
+    "source_sha256": "fe2a41c60c4b957973cfea7d391e53b604c14d69e996fce2c8c4317859b17681",
+    "source_size_bytes": 58886,
+    "compiler_path": "/usr/bin/aarch64-linux-gnu-gcc-12",
+    "compiler_id": "aarch64-linux-gnu-gcc (Debian 12.2.0-14+deb12u1) 12.2.0",
+    "compiler_sha256": "dc53dbc5a583d03ae8ed6272ca9afc0f58873f9f9b86dd7d448b17fb3f88a8d0",
+    "compiler_size_bytes": 1319624,
+    "fresh_build_directories": [
+      "/tmp/e055-pmu-native-fe2a41c6-20260814t155546z-a",
+      "/tmp/e055-pmu-native-fe2a41c6-20260814t155546z-b"
+    ],
+    "compile_argv_template": [
+      "/usr/bin/gcc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-fno-record-gcc-switches",
+      "-ffile-prefix-map=<fresh-build-directory>=.",
+      "-fdebug-prefix-map=<fresh-build-directory>=.",
+      "-c",
+      "a733_pmu_exec.c",
+      "-o",
+      "a733_pmu_exec.o"
+    ],
+    "link_argv": [
+      "/usr/bin/gcc",
+      "-Wl,--build-id=none",
+      "a733_pmu_exec.o",
+      "-o",
+      "a733-pmu-exec"
+    ],
+    "object_sha256": "e2a8949a583cc98eba9a9d23ea9f852815083995d25a4a9d48abcf37b91e6b55",
+    "independent_binary_sha256": [
+      "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+      "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4"
+    ],
+    "published_phase_artifact": "artifacts/a733-pmu-exec-native-aarch64",
+    "binary_sha256": "ebc54b5070985a3668a2811dde8e41997b76ee71c8052fa30642866d28b1a8b4",
+    "binary_size_bytes": 74744,
+    "binary_mode": "0755",
+    "elf_needed": ["libc.so.6"],
+    "elf_glibc_versions": ["GLIBC_2.17", "GLIBC_2.33", "GLIBC_2.34"],
+    "argument_parse_smoke": "PASS",
+    "root_assisted_identity_core_controls": [
+      "controls/control-fe2a41c6-root-r1.json",
+      "controls/control-fe2a41c6-root-r2.json"
+    ]
+  },
+  "q1_harness": {
+    "source_path": "tooling/e055_q1_hotcold.cpp",
+    "source_sha256": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281",
+    "fixture_source_path": "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
+    "fixture_source_sha256": "4bbd8841069bef4b6e29f99b1b31dc7e4d1e67a15e0ec644282ef9ca7e5b567e",
+    "stock_assembly_path": "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+    "stock_assembly_sha256": "3338df3dfedf683247ef0da3975db371667add1c2552f77219718a444687143f",
+    "compiler_path": "/usr/bin/aarch64-linux-gnu-g++-12",
+    "compiler_id": "aarch64-linux-gnu-g++ (Debian 12.2.0-14+deb12u1) 12.2.0",
+    "compiler_sha256": "22084e38d464db4299003c899eae3f1cb563ed6a75b3179e3e2a2d593d640528",
+    "compiler_size_bytes": 1319624,
+    "fresh_build_directories": [
+      "/tmp/e055-harness-native-7dcdab61-20260814t161000z-c",
+      "/tmp/e055-harness-native-7dcdab61-20260814t161000z-d"
+    ],
+    "cpp_compile_argv_template": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-march=armv8.2-a+dotprod",
+      "-fno-record-gcc-switches",
+      "-ffile-prefix-map=<fresh-build-directory>=.",
+      "-fdebug-prefix-map=<fresh-build-directory>=.",
+      "-c",
+      "tooling/e055_q1_hotcold.cpp",
+      "-o",
+      "e055_cpp.o"
+    ],
+    "assembly_compile_argv_template": [
+      "/usr/bin/g++",
+      "-march=armv8.2-a+dotprod",
+      "-fno-record-gcc-switches",
+      "-ffile-prefix-map=<fresh-build-directory>=.",
+      "-fdebug-prefix-map=<fresh-build-directory>=.",
+      "-c",
+      "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+      "-o",
+      "e055_asm.o"
+    ],
+    "link_argv": [
+      "/usr/bin/g++",
+      "-O3",
+      "-Wl,--build-id=none",
+      "e055_cpp.o",
+      "e055_asm.o",
+      "-o",
+      "e055"
+    ],
+    "cpp_object_sha256": "8523c3953b8b56324dd430cd68beee5947540ec5b30de0ecc4dab1e76966d109",
+    "assembly_object_sha256": "00b5bb114f300b04b69a596964f499ba76b9b6e66d8d83c2342747f3fb590c53",
+    "independent_binary_sha256": [
+      "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80",
+      "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80"
+    ],
+    "published_phase_artifact": "artifacts/e055-native-aarch64",
+    "binary_sha256": "12262831a5527f98426863721ea9fb0c1bb6045bd468124c00675328e8d35f80",
+    "binary_size_bytes": 75160,
+    "binary_mode": "0755",
+    "elf_needed": ["libstdc++.so.6", "libm.so.6", "libgcc_s.so.1", "libc.so.6"],
+    "elf_glibc_versions": ["GLIBC_2.17", "GLIBC_2.34"],
+    "elf_glibcxx_versions": ["GLIBCXX_3.4", "GLIBCXX_3.4.19", "GLIBCXX_3.4.21", "GLIBCXX_3.4.29"],
+    "golden": {"golden_pass": true, "golden_cases": 18},
+    "cold_conditioning_self_test": {
+      "requested_bytes": 67108864,
+      "actual_bytes": 67108864,
+      "lines_touched": 1048576,
+      "checksum": "0x8d3ea13d15850279",
+      "verified_touched": true
+    },
+    "hot_conditioning_self_test": {
+      "warmup_calls": 16,
+      "target_working_set_bytes": 65536,
+      "actual_working_set_bytes": 65728,
+      "verified_touched": true
+    }
+  },
+  "preserved_abi_failures": {
+    "pmu_binary": {
+      "sha256": "4fffccd623b4120df919cae732d3b8b37c65a4937b90db20949f52e6362008ad",
+      "required_missing_symbol_version": "GLIBC_2.38",
+      "stderr": "failures/pmu-glibc238/loader.stderr.raw"
+    },
+    "harness_binary": {
+      "sha256": "9c3ea8fed87fec1f3f8cf84d6a941a135daf276174e4f52c78174c66cfe600f9",
+      "required_missing_symbol_version": "GLIBC_2.38",
+      "stderr": "failures/harness-glibc238/failed-sample1.target-harness.stderr.raw"
+    }
+  }
+}
