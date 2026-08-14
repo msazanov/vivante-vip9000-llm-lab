@@ -1,6 +1,6 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Status: **FIFTH-REVIEW CANDIDATE WITH STRICT GIT-SEALED INGESTION; NO TARGET RUN**.
+Status: **ACCEPTED SOURCE CONTRACT WITH PRE-TARGET EXECUTOR HARDENING; NO TARGET RUN**.
 
 E055 is a bounded experiment designed to distinguish cache/data-carrier cost
 from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
@@ -233,8 +233,9 @@ The verifier also requires the excluded preflight and manifest worktree/index
 bytes to equal their committed `HEAD` blobs. It computes the committed-tree
 binding with its own fixed list of exactly those two paths and rejects any
 caller-declared raw, source, or other extra exclusion. This closes the
-self-reference gap without writing a stale parent SHA into either file. Both deterministic
-AArch64 executables are committed under `artifacts/`; their SHA-256 values,
+self-reference gap without writing a stale parent SHA into either file. Three deterministic
+AArch64 executables are committed under `artifacts/` (two harness builds and
+the E049c wrapper); their SHA-256 values,
 source/compiler provenance, and disassembly checks are publication-bound.
 `infer_bottleneck()` invokes this global verifier unconditionally before it
 loads the phase-scoped sealed bundle. A locally sealed phase cannot bypass a
@@ -259,8 +260,21 @@ or a replaced inode. A producer such as E049c that creates its own output with
 capture its output separately and populate the reserved role through this
 primitive. The CLI reservation report contains paths only and is not a
 standalone population token. The scaffold contains no process, remote-login,
-harness, or board execution path. Actual capture remains disabled until an
-accepted runner composes these primitives.
+harness, or board execution path.
+
+`tooling/e055_target_executor.py` composes those primitives but remains
+disabled unless a reviewed transport object is explicitly injected. It has no
+SSH or board implementation. Its only plan is 20 O3 runs: CPU0 then CPU6,
+pair indexes 1–5, odd pairs hot→cold, even pairs cold→hot, 64 KiB,
+`full_dotprod`, and the `core` PMU group. It reserves the complete local phase
+before transport preparation, deploys only the publication-bound harness and
+E049c bytes through the injected interface, records child stdout/stderr
+separately from wrapper stderr, and restores transport-owned target state in a
+`finally` path. A failed run leaves the bundle manifest empty, preserves every
+available captured byte plus a failure runner record, and stops before the
+next run. A successful uncommitted bundle is still not evidence: all files
+must be staged, committed, pushed, publication-verified, and reloaded by the
+sealed analyzer.
 
 ## Reproduction of revised Stage 1
 
@@ -270,7 +284,8 @@ Run the adversarial host, cross/QEMU, and disassembly gates:
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
   tests.test_e055_q1_hotcold tests.test_e055_harness_contract \
   tests.test_e055_raw_bundle tests.test_e055_sealed_promotion \
-  tests.test_e055_capture_scaffold tests.test_e055_aarch64_gate \
+  tests.test_e055_capture_scaffold tests.test_e055_target_executor \
+  tests.test_e055_aarch64_gate \
   tests.test_e055_publication -v
 ```
 
@@ -293,6 +308,13 @@ directories must produce identical final hashes. Both binaries must
 retain load/vector-consume controls without calls or SDOT and retain SDOT in
 the stock full kernel.
 
+E049c is independently built twice from the fixed object name
+`a733_pmu_exec.o` with `aarch64-linux-gnu-gcc -O2` and
+`-Wl,--build-id=none`. The clean-directory hashes must match each other and
+the committed `a733-pmu-exec-aarch64` artifact. Its source hash, compiler hash
+and ID, and binary hash are part of every runtime qualification and runner
+record.
+
 QEMU must report `golden_pass=true` and `golden_cases=18`. QEMU results are
 functional evidence only and are not used as A733 performance evidence. The
 first uninitialized-LUT failure remains at
@@ -301,6 +323,7 @@ it was a harness initialization bug, was rejected, and must not be interpreted
 as a hardware or mathematical result.
 
 No board workload, model run, OPP/DDR change, NPU run, or full-model bottleneck
-claim is part of this revised Stage 1. After a fourth independent acceptance,
+claim is part of this pre-target hardening. After independent acceptance of
+the executor and stream-separation changes,
 the first hardware phase is limited to CPU0 and CPU6, 64 KiB,
 `full_dotprod`, the `core` PMU group, and five alternating hot/cold pairs.

@@ -2,7 +2,7 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T10:30:08.627983+00:00",
+  "generated_at_utc": "2026-08-14T10:37:49.183076+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
     "preflight_base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
@@ -65,8 +65,8 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 17655,
-      "sha256": "dadf283047f6211d7e286b0af1b308662b32b9edb4d73a047ee18885753dd757",
+      "size_bytes": 18981,
+      "sha256": "c55437b66337705b5256db6234e2809b0f0c32e4d9711dbe2af6f4661d882c18",
       "role": "e055-stage1"
     },
     {
@@ -196,6 +196,12 @@
       "role": "e055-stage1"
     },
     {
+      "path": "tooling/e055_target_executor.py",
+      "size_bytes": 19352,
+      "sha256": "06bab857da28192d1de7c112b51b22c68b5c67336d4d5d63f7cb03476d379779",
+      "role": "e055-stage1"
+    },
+    {
       "path": "tooling/build_e055_pmu_artifact.py",
       "size_bytes": 5657,
       "sha256": "991505a3e4be25b8e583268a6cbf34f9adc4b31a6435a51f99c8bdf54d704e8d",
@@ -221,8 +227,8 @@
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 8831,
-      "sha256": "d99087bd9d177ea88ce962c92f3c43a09ccf658bf2605f68cef73f5f37a0f5a4",
+      "size_bytes": 8926,
+      "sha256": "bc0d8437b1d649acbb2b5ffb08df51ed2dbe50b99e29758c3287ed61676d551a",
       "role": "e055-stage1"
     },
     {
@@ -253,6 +259,12 @@
       "path": "tests/test_e055_capture_scaffold.py",
       "size_bytes": 5568,
       "sha256": "12df6612f8f35c550ccfc260ace7387cb1a03ee11b4fbe23f65edbef5178b1c0",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_target_executor.py",
+      "size_bytes": 13013,
+      "sha256": "73c13f126a4be143976ed4f5c6594be8726b11595cb4cd6755a4989acd1a15be",
       "role": "e055-stage1"
     },
     {
