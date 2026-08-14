@@ -164,7 +164,7 @@ def _validate_event_clock(event: Mapping[str, Any], errors: list[str]) -> None:
 
 
 def _validate_run_structure(events: Sequence[dict[str, Any]]) -> list[str]:
-    """Validate E048 events plus token and overflow invariants."""
+    """Validate E048 events plus token, overflow and containment invariants."""
 
     errors = list(validate_trace_events(events))
     begins: dict[int, dict[str, Any]] = {}
@@ -186,11 +186,93 @@ def _validate_run_structure(events: Sequence[dict[str, Any]]) -> list[str]:
         errors.append("нет token_begin")
     if set(begins) != set(ends):
         errors.append("множества token_begin и token_end различаются")
+    bounds = {
+        seq: (int(begins[seq]["start_ns"]), int(ends[seq]["end_ns"]))
+        for seq in set(begins).intersection(ends)
+    }
+    for event in events:
+        kind = event.get("event")
+        if kind not in {"node_worker", "q1_kernel", "phase_worker"}:
+            continue
+        seq = int(event.get("token_seq", 0))
+        if seq not in bounds:
+            errors.append(f"{kind} token {seq}: нет matching token begin/end")
+            continue
+        token_start, token_end = bounds[seq]
+        start = event.get("start_ns")
+        end_field = "post_barrier_end_ns" if kind == "node_worker" else "end_ns"
+        end = event.get(end_field)
+        if not isinstance(start, int) or not isinstance(end, int):
+            continue
+        if start < token_start or end > token_end:
+            errors.append(
+                f"{kind} token {seq}: interval [{start}, {end}] вне token "
+                f"[{token_start}, {token_end}]"
+            )
     return errors
 
 
 def _as_interval(event: Mapping[str, Any], start_field: str, end_field: str) -> tuple[int, int]:
     return int(event[start_field]), int(event[end_field])
+
+
+def assert_category_partition(
+    category_intervals: Mapping[str, Iterable[tuple[int, int]]],
+    token_start: int,
+    token_end: int,
+    *,
+    tolerance_ns: int = 0,
+) -> int:
+    """Assert a disjoint category partition and return its exact duration.
+
+    Nested raw events (Q1 inside a node, for example) are valid.  The caller
+    must first subtract those nested spans into category-specific intervals.
+    This assertion is applied to the *derived* categories, not to raw event
+    spans, and catches both accidental double-counting and out-of-token
+    attribution.
+    """
+
+    if token_end < token_start:
+        raise ValueError("category partition: token end раньше token start")
+    normalized = {
+        name: merge_intervals(intervals)
+        for name, intervals in category_intervals.items()
+    }
+    names = list(normalized)
+    for name in names:
+        for start, end in normalized[name]:
+            if start < token_start or end > token_end:
+                raise ValueError(
+                    f"category {name}: interval [{start}, {end}] вне token "
+                    f"[{token_start}, {token_end}]"
+                )
+    for index, left_name in enumerate(names):
+        for right_name in names[index + 1:]:
+            left_intervals = normalized[left_name]
+            right_intervals = normalized[right_name]
+            left_index = right_index = 0
+            while left_index < len(left_intervals) and right_index < len(right_intervals):
+                left_start, left_end = left_intervals[left_index]
+                right_start, right_end = right_intervals[right_index]
+                overlap_start = max(left_start, right_start)
+                overlap_end = min(left_end, right_end)
+                if overlap_start < overlap_end:
+                    raise ValueError(
+                        f"category overlap: {left_name} и {right_name} "
+                        f"пересекаются в [{overlap_start}, {overlap_end}]"
+                    )
+                if left_end <= right_end:
+                    left_index += 1
+                else:
+                    right_index += 1
+    total = sum(interval_duration(intervals) for intervals in normalized.values())
+    wall = token_end - token_start
+    if abs(total - wall) > tolerance_ns:
+        raise ValueError(
+            f"category partition sum {total} ns != token wall {wall} ns "
+            f"(tolerance {tolerance_ns} ns)"
+        )
+    return total
 
 
 def aggregate_run_events(events: Sequence[dict[str, Any]]) -> dict[str, Any]:
@@ -330,6 +412,16 @@ def aggregate_run_events(events: Sequence[dict[str, Any]]) -> dict[str, Any]:
         covered = merge_intervals([*q1_union, *phase_exclusive, *other_compute, *barrier_exclusive])
         token_interval = [(token_start, token_end)]
         unattributed = subtract_intervals(token_interval, covered)
+        category_interval_sets = {
+            "q1_gemv": q1_union,
+            "f32_to_q8": phase_exclusive,
+            "other_compute": other_compute,
+            "barrier_sync": barrier_exclusive,
+            "unattributed": unattributed,
+        }
+        category_sum_ns = assert_category_partition(
+            category_interval_sets, token_start, token_end, tolerance_ns=0
+        )
         categories = {
             "q1_gemv": interval_duration(q1_union),
             "f32_to_q8": interval_duration(phase_exclusive),
@@ -351,6 +443,8 @@ def aggregate_run_events(events: Sequence[dict[str, Any]]) -> dict[str, Any]:
             "end_ns": token_end,
             "duration_ns": token_end - token_start,
             "categories_ns": categories,
+            "category_sum_ns": category_sum_ns,
+            "category_partition_valid": True,
             "logical_bytes": {
                 "q1_packed_weight_read_bytes": logical_q1,
                 "q8_activation_logical_read_bytes": logical_q8,
@@ -552,7 +646,9 @@ def _run_bytes_sample(run: Mapping[str, Any], key: str) -> float:
     ))
 
 
-def _build_category_rows(runs: Sequence[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def _build_category_rows(
+    runs: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     categories = ("q1_gemv", "f32_to_q8", "other_compute", "barrier_sync", "unattributed")
     rows: list[dict[str, Any]] = []
     summary: dict[str, Any] = {}
@@ -584,7 +680,34 @@ def _build_category_rows(runs: Sequence[Mapping[str, Any]]) -> tuple[list[dict[s
         "q8_activation_unique_read_bytes_descriptor_per_token",
     ]:
         summary[key] = summarize_samples([row[key] for row in rows])
-    return rows, summary
+    target_wall_ms = summary["token_wall_median_ms"]["median"]
+    representative = min(
+        rows,
+        key=lambda row: abs(float(row["token_wall_median_ms"]) - target_wall_ms),
+    )
+    category_fields = [f"{category}_ms" for category in categories]
+    category_sum_ms = sum(float(representative[field]) for field in category_fields)
+    representative_wall_ms = float(representative["token_wall_median_ms"])
+    residual_ms = round(category_sum_ms - representative_wall_ms, 9)
+    if abs(residual_ms) > 1e-6:
+        raise ValueError(
+            f"representative category sum {category_sum_ms} ms != "
+            f"token wall {representative_wall_ms} ms"
+        )
+    partition = {
+        "selection_rule": "run sample whose representative token wall is closest to the independent cross-run token-wall median",
+        "run": representative["run"],
+        "token_wall_ms": representative_wall_ms,
+        "categories_ms": {
+            category: float(representative[f"{category}_ms"])
+            for category in categories
+        },
+        "category_sum_ms": round(category_sum_ms, 9),
+        "residual_ms": residual_ms,
+        "additive_partition_valid": True,
+        "note_ru": "Это единственный additive representative-run partition. Медианы отдельных категорий ниже считаются независимо по пяти runs и не обязаны складываться в median token wall.",
+    }
+    return rows, summary, partition
 
 
 def _group_node_rows(runs: Sequence[Mapping[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -700,6 +823,7 @@ def write_outputs(
     runs: Sequence[Mapping[str, Any]],
     category_rows: Sequence[Mapping[str, Any]],
     category_summary: Mapping[str, Any],
+    category_partition: Mapping[str, Any],
     node_rows: Sequence[Mapping[str, Any]],
     node_summary: Mapping[str, Any],
     trace_off: Mapping[str, Any],
@@ -713,14 +837,21 @@ def write_outputs(
     _write_csv(data_dir / "e049b-run-category.csv", category_rows)
     node_csv: list[dict[str, Any]] = []
     for row in node_rows:
-        flat = {key: value for key, value in row.items() if key != "run_samples"}
+        # Keep the CSV rectangular: summary fields are mappings in JSON, but
+        # nested mappings are not portable CSV cells. Preserve scalar identity
+        # fields and flatten each statistic exactly once into
+        # ``<field>_{median,p10,p90,cv}`` columns.
+        flat = {
+            key: value
+            for key, value in row.items()
+            if key != "run_samples" and not isinstance(value, Mapping)
+        }
         for field, stats in row.items():
             if field in {"run_samples"} or not isinstance(stats, Mapping):
                 continue
-            flat[f"{field}_median"] = stats.get("median")
-            flat[f"{field}_p10"] = stats.get("p10")
-            flat[f"{field}_p90"] = stats.get("p90")
-            flat[f"{field}_cv"] = stats.get("cv")
+            base = field[:-len("_median")] if field.endswith("_median") else field
+            for suffix in ("median", "p10", "p90", "cv"):
+                flat[f"{base}_{suffix}"] = stats.get(suffix)
         node_csv.append(flat)
     _write_csv(data_dir / "e049b-layer-op.csv", node_csv)
 
@@ -734,6 +865,11 @@ def write_outputs(
         for token in run["steady_tokens"]:
             for family, count in token["q1_variant_event_counts"].items():
                 q1_variants[family] += int(count)
+    all_partition_valid = all(
+        token["category_partition_valid"]
+        for run in runs
+        for token in run["aggregate"]["tokens"]
+    )
     summary = {
         "schema": ANALYZER_SCHEMA,
         "experiment_id": "E049b-trace-analysis",
@@ -752,9 +888,17 @@ def write_outputs(
             "across_runs": "five run samples",
             "percentile": "linear interpolation",
             "cv": "population standard deviation / mean",
+            "category_summary_semantics": "each category median/p10/p90/CV is computed independently across five run samples",
+            "additive_partition_semantics": "use latency.representative_run_partition for one real run whose categories sum exactly to its token wall",
+        },
+        "category_partition_validation": {
+            "all_token_rows_valid": all_partition_valid,
+            "tolerance_ns": 0,
+            "rule": "derived categories are mutually exclusive and their exact integer-nanosecond sum equals token wall",
         },
         "latency": {
             "category_summary": category_summary,
+            "representative_run_partition": category_partition,
             "layer_op_summary": node_summary,
             "trace_off_reference": trace_off,
         },
@@ -793,6 +937,13 @@ def write_outputs(
                 } and row["f32_to_q8_wall_ns"] > 0
             ),
             "f32_to_q8_status": "not_observed_in_e048_capture",
+        },
+        "q1_kernel_variant": {
+            "observed_event_variants": dict(sorted(q1_variants.items())),
+            "build_directory_label": "e048-per-op-trace-a733-q1-4x8",
+            "status": "new_hypothesis_to_audit",
+            "conclusion": False,
+            "note_ru": "Raw event variant says q1_0_4x4_q8_0 although the build-directory label contains q1-4x8. This discrepancy is a new audit hypothesis, not a conclusion about the binary or runtime dispatch.",
         },
         "charts": {
             "stacked_category_latency": "charts/e049b-category-latency-stack.png",
@@ -941,7 +1092,7 @@ def run_analysis(repo_root: Path, output_dir: Path, manifest_path: Path, *, skip
         if not manifest_result["valid"]:
             raise ValueError(f"packed manifest invalid: {manifest_result['failures'][:3]}")
     runs = _load_trace_runs(repo_root, trace_paths)
-    category_rows, category_summary = _build_category_rows(runs)
+    category_rows, category_summary, category_partition = _build_category_rows(runs)
     node_rows, node_summary = _group_node_rows(runs)
     trace_off = _load_trace_off_summary(experiment_dir / "data/compat-ab-summary.json", repo_root)
     return write_outputs(
@@ -950,6 +1101,7 @@ def run_analysis(repo_root: Path, output_dir: Path, manifest_path: Path, *, skip
         runs=runs,
         category_rows=category_rows,
         category_summary=category_summary,
+        category_partition=category_partition,
         node_rows=node_rows,
         node_summary=node_summary,
         trace_off=trace_off,

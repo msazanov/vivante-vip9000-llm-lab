@@ -49,7 +49,14 @@
     "run_sample": "median of three steady tokens within each run",
     "across_runs": "five run samples",
     "percentile": "linear interpolation",
-    "cv": "population standard deviation / mean"
+    "cv": "population standard deviation / mean",
+    "category_summary_semantics": "each category median/p10/p90/CV is computed independently across five run samples",
+    "additive_partition_semantics": "use latency.representative_run_partition for one real run whose categories sum exactly to its token wall"
+  },
+  "category_partition_validation": {
+    "all_token_rows_valid": true,
+    "tolerance_ns": 0,
+    "rule": "derived categories are mutually exclusive and their exact integer-nanosecond sum equals token wall"
   },
   "latency": {
     "category_summary": {
@@ -197,6 +204,22 @@
         "stdev_population": 0.0,
         "cv": 0.0
       }
+    },
+    "representative_run_partition": {
+      "selection_rule": "run sample whose representative token wall is closest to the independent cross-run token-wall median",
+      "run": "pair04",
+      "token_wall_ms": 897.562125,
+      "categories_ms": {
+        "q1_gemv": 676.433207,
+        "f32_to_q8": 0.0,
+        "other_compute": 183.364101,
+        "barrier_sync": 36.555186,
+        "unattributed": 1.209631
+      },
+      "category_sum_ms": 897.562125,
+      "residual_ms": 0.0,
+      "additive_partition_valid": true,
+      "note_ru": "Это единственный additive representative-run partition. Медианы отдельных категорий ниже считаются независимо по пяти runs и не обязаны складываться в median token wall."
     },
     "layer_op_summary": {
       "layer=-1|op=ADD|family=ADD": {
@@ -169829,6 +169852,15 @@
     },
     "f32_to_q8_event_count": 0,
     "f32_to_q8_status": "not_observed_in_e048_capture"
+  },
+  "q1_kernel_variant": {
+    "observed_event_variants": {
+      "q1_gemv_4x4": 209760
+    },
+    "build_directory_label": "e048-per-op-trace-a733-q1-4x8",
+    "status": "new_hypothesis_to_audit",
+    "conclusion": false,
+    "note_ru": "Raw event variant says q1_0_4x4_q8_0 although the build-directory label contains q1-4x8. This discrepancy is a new audit hypothesis, not a conclusion about the binary or runtime dispatch."
   },
   "charts": {
     "stacked_category_latency": "charts/e049b-category-latency-stack.png",

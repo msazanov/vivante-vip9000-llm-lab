@@ -2,6 +2,7 @@ import unittest
 
 from tooling.e049b_trace_analysis import (
     aggregate_run_events,
+    assert_category_partition,
     family_for_q1_variant,
     interval_duration,
     merge_intervals,
@@ -62,8 +63,66 @@ class E049bTraceAnalysisTest(unittest.TestCase):
         self.assertEqual(token["categories_ns"]["q1_gemv"], 100)
         self.assertEqual(token["categories_ns"]["barrier_sync"], 80)
         self.assertEqual(sum(token["categories_ns"].values()), 500)
+        self.assertEqual(token["category_sum_ns"], token["duration_ns"])
+        self.assertTrue(token["category_partition_valid"])
         self.assertEqual(result["nodes"][0]["wall_duration_ns"], 280)
         self.assertEqual(result["nodes"][0]["worker_sum_duration_ns"], 360)
+
+    def test_category_partition_rejects_overlap_and_out_of_bounds(self):
+        with self.assertRaisesRegex(ValueError, "category overlap"):
+            assert_category_partition(
+                {"q1": [(0, 10)], "other": [(5, 15)], "gap": [(15, 20)]},
+                0,
+                20,
+            )
+        with self.assertRaisesRegex(ValueError, "вне token"):
+            assert_category_partition(
+                {"q1": [(-1, 10)], "gap": [(10, 20)]}, 0, 20
+            )
+
+    def test_node_q1_and_phase_outside_matching_token_are_rejected(self):
+        begin = {
+            "schema": "e048-trace/v1", "event": "token_begin", "token_seq": 3,
+            "start_ns": 0, "steady_decode": True,
+            "counter_method": "none", "observed_ddr_read_bytes": None,
+            "observed_ddr_write_bytes": None,
+        }
+        end = {
+            "schema": "e048-trace/v1", "event": "token_end", "token_seq": 3,
+            "end_ns": 40, "status": 0, "overflow_count": 0,
+            "counter_method": "none", "observed_ddr_read_bytes": None,
+            "observed_ddr_write_bytes": None,
+        }
+        node = {
+            "schema": "e048-trace/v1", "event": "node_worker", "token_seq": 3,
+            "node_index": 1, "layer_index": 0, "worker_ith": 0, "fused_nodes": 1,
+            "op_name": "MUL_MAT", "tensor_id": "x", "start_ns": 10,
+            "end_ns": 20, "post_barrier_end_ns": 45, "cpu_start": 0,
+            "cpu_end": 0, "logical_read_bytes": 0, "logical_write_bytes": 0,
+            "unique_read_bytes": 0, "unique_write_bytes": 0,
+            "counter_method": "none", "observed_ddr_read_bytes": None,
+            "observed_ddr_write_bytes": None,
+        }
+        q1 = {
+            "schema": "e048-trace/v1", "event": "q1_kernel", "token_seq": 3,
+            "node_index": 1, "worker_ith": 0, "variant": "q1_0_4x4_q8_0",
+            "n": 128, "nr": 1, "nc": 4, "start_ns": 10, "end_ns": 45,
+            "cpu_start": 0, "cpu_end": 0, "q1_packed_weight_read_bytes": 0,
+            "q8_activation_logical_read_bytes": 0,
+            "q8_activation_unique_read_bytes": 0, "output_write_bytes": 0,
+            "counter_method": "none", "observed_ddr_read_bytes": None,
+            "observed_ddr_write_bytes": None,
+        }
+        phase = {
+            "schema": "e048-trace/v1", "event": "phase_worker", "token_seq": 3,
+            "node_index": 1, "worker_ith": 0, "phase": "f32_to_q8",
+            "start_ns": 10, "end_ns": 45, "cpu_start": 0, "cpu_end": 0,
+            "counter_method": "none", "observed_ddr_read_bytes": None,
+            "observed_ddr_write_bytes": None,
+        }
+        for bad_event in (node, q1, phase):
+            with self.assertRaisesRegex(ValueError, "вне token"):
+                aggregate_run_events([begin, bad_event, end])
 
     def test_fused_node_is_retained_in_group_identity(self):
         events = [
