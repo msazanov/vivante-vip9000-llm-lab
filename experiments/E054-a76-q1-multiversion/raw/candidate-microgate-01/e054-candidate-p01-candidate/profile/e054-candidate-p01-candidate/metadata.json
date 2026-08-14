@@ -1,0 +1,59 @@
+{
+  "child_return_code": 0,
+  "command": [
+    "taskset",
+    "-c",
+    "6-7",
+    "/home/orangepi/vip9000-lab/build/e054-q1-runner/q1_cpu_operator_runner",
+    "--run-id",
+    "e054-candidate-p01-candidate",
+    "--weights",
+    "/tmp/e054-blk0-ffn-gate-seed1843-v1/weights.q1_0.bin",
+    "--activation",
+    "/tmp/e054-blk0-ffn-gate-seed1843-v1/activation.f32.bin",
+    "--ne0",
+    "5120",
+    "--ne1",
+    "17408",
+    "--threads",
+    "2",
+    "--warmup",
+    "1",
+    "--iterations",
+    "50",
+    "--output-jsonl",
+    "/home/orangepi/vip9000-lab/runs/e054-a76-q1-multiversion/candidate-microgate-01/e054-candidate-p01-candidate/runner.jsonl",
+    "--output-f32",
+    "/home/orangepi/vip9000-lab/runs/e054-a76-q1-multiversion/candidate-microgate-01/e054-candidate-p01-candidate/output.f32.bin",
+    "--output-q8",
+    "/home/orangepi/vip9000-lab/runs/e054-a76-q1-multiversion/candidate-microgate-01/e054-candidate-p01-candidate/activation.q8_0.bin"
+  ],
+  "elapsed_ns": 526671635,
+  "end_utc": "2026-08-14T02:18:58.465879+00:00",
+  "exit_code": 0,
+  "files": {
+    "phases": "phases.jsonl",
+    "stderr": "stderr.log",
+    "stdout": "stdout.log",
+    "telemetry": "telemetry.jsonl"
+  },
+  "label": "E054 candidate pair 1 candidate",
+  "launch_error": null,
+  "phase_file": {
+    "path": "phases.jsonl",
+    "size_bytes": 775
+  },
+  "profiler": {
+    "interval_ms": 20,
+    "platform": "Linux-6.6.98-sun60iw2-aarch64-with-glibc2.36",
+    "python": "3.11.2",
+    "scope": "direct child process plus board-wide readable /proc and /sys telemetry"
+  },
+  "profiler_error": null,
+  "run_id": "e054-candidate-p01-candidate",
+  "schema_version": 1,
+  "signal": null,
+  "start_utc": "2026-08-14T02:18:57.939132+00:00",
+  "telemetry_samples": 22,
+  "working_directory": "/home/orangepi"
+}

@@ -1,0 +1,420 @@
+{
+  "schema_version": "e054-external-sensitive-artifacts/v1",
+  "publication_policy": "Бинарные входы и выходы не публикуются; локальные payload сверяются по SHA-256 и размеру.",
+  "external_sensitive_artifacts": [
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p01-candidate/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p01-candidate/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p01-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p01-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p02-candidate/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p02-candidate/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p02-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p02-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p03-candidate/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p03-candidate/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p03-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p03-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p04-candidate/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p04-candidate/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p04-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p04-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p05-candidate/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p05-candidate/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p05-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/candidate-microgate-01/e054-candidate-p05-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-candidate/output/activation.q8_0.bin",
+      "sha256": "69065740893c2429b05ac2e4a556e0ac0028aa4fe18da2bcf011e0bdc8602f0e",
+      "size_bytes": 136,
+      "origin": "synthetic_fixture",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-candidate/output/output.f32.bin",
+      "sha256": "5b045df84161aafd743bd50b1b1358bbcd8b36a1bee571d07849552b04033446",
+      "size_bytes": 64,
+      "origin": "synthetic_fixture",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-null/output/activation.q8_0.bin",
+      "sha256": "69065740893c2429b05ac2e4a556e0ac0028aa4fe18da2bcf011e0bdc8602f0e",
+      "size_bytes": 136,
+      "origin": "synthetic_fixture",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-null/output/output.f32.bin",
+      "sha256": "5b045df84161aafd743bd50b1b1358bbcd8b36a1bee571d07849552b04033446",
+      "size_bytes": 64,
+      "origin": "synthetic_fixture",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-stock/output/activation.q8_0.bin",
+      "sha256": "69065740893c2429b05ac2e4a556e0ac0028aa4fe18da2bcf011e0bdc8602f0e",
+      "size_bytes": 136,
+      "origin": "synthetic_fixture",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/literal-stock/output/output.f32.bin",
+      "sha256": "5b045df84161aafd743bd50b1b1358bbcd8b36a1bee571d07849552b04033446",
+      "size_bytes": 64,
+      "origin": "synthetic_fixture",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p01-null/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p01-null/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p01-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p01-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p02-null/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p02-null/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p02-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p02-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p03-null/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p03-null/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p03-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p03-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p04-null/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p04-null/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p04-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p04-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p05-null/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p05-null/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p05-stock/activation.q8_0.bin",
+      "sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+      "size_bytes": 5440,
+      "origin": "real_model_derived",
+      "payload_kind": "q8_activation",
+      "published": false,
+      "retention": "local_only"
+    },
+    {
+      "path": "raw/null-microgate-03/e054-null-p05-stock/output.f32.bin",
+      "sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+      "size_bytes": 69632,
+      "origin": "real_model_derived",
+      "payload_kind": "f32_output",
+      "published": false,
+      "retention": "local_only"
+    }
+  ]
+}

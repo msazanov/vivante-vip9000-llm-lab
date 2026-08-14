@@ -1,0 +1,4 @@
+[  1%] Built target llama-common-base
+[  1%] Built target cpp-httplib
+[  5%] Built target ggml-base
+[  5%] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o

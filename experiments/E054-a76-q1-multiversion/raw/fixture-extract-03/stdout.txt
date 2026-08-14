@@ -1,0 +1,7 @@
+fixture=/tmp/e054-blk0-ffn-gate-seed1843-v1
+tensor=blk.0.ffn_gate.weight
+weights_bytes=12533760
+activation_bytes=20480
+model_sha256=17ef842e47450caeb8eaa3ebfbbab5d2f2278b62b79be107985fb69a2f819aa0
+weights_sha256=0f42ca3b81099f540ed67941809ee7fdc0a672563bf852b87db75034135fc6fe
+activation_sha256=053e8523718a3a6fd9a9d3a3a922a9b82b031a564b8f6886980463b8cd538c52

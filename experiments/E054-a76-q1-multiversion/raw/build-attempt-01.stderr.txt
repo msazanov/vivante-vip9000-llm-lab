@@ -1,0 +1,9 @@
+/home/orangepi/vip9000-lab/src/e054-a76-q1-multiversion-38c66/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp: In function ‘void ggml_gemv_q1_0_4x4_q8_0_a76(int, float*, size_t, const void*, const void*, int, int)’:
+/home/orangepi/vip9000-lab/src/e054-a76-q1-multiversion-38c66/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp:59:34: error: ‘GGML_CPU_FP16_TO_FP32’ was not declared in this scope; did you mean ‘GGML_COMPUTE_FP16_TO_FP32’?
+   59 |                 const float ad = GGML_CPU_FP16_TO_FP32(a_blk->d);
+      |                                  ^~~~~~~~~~~~~~~~~~~~~
+      |                                  GGML_COMPUTE_FP16_TO_FP32
+gmake[3]: *** [ggml/src/CMakeFiles/ggml-cpu.dir/build.make:286: ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:1078: ggml/src/CMakeFiles/ggml-cpu.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:2293: tools/llama-bench/CMakeFiles/llama-bench.dir/rule] Error 2
+gmake: *** [Makefile:715: llama-bench] Error 2

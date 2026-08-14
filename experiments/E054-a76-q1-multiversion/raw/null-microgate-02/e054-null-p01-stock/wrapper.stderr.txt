@@ -1,0 +1,5 @@
+usage: profile_command.py [-h] --output-dir OUTPUT_DIR --run-id RUN_ID
+                          [--interval-ms INTERVAL_MS] [--label LABEL]
+                          [--phase-file PHASE_FILE]
+                          ...
+profile_command.py: error: --phase-file must be a canonical safe relative path

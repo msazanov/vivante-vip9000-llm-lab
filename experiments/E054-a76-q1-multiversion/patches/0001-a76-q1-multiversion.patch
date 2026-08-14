@@ -1,0 +1,249 @@
+diff --git a/ggml/src/ggml-cpu/CMakeLists.txt b/ggml/src/ggml-cpu/CMakeLists.txt
+index 8c735a0..ce5a717 100644
+--- a/ggml/src/ggml-cpu/CMakeLists.txt
++++ b/ggml/src/ggml-cpu/CMakeLists.txt
+@@ -100,8 +100,15 @@ function(ggml_add_cpu_backend_variant_impl tag_name)
+         list(APPEND GGML_CPU_SOURCES
+             ggml-cpu/arch/arm/quants.c
+             ggml-cpu/arch/arm/repack.cpp
++            ggml-cpu/arch/arm/repack-a76.cpp
+             )
+ 
++        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
++            set_source_files_properties(
++                ggml-cpu/arch/arm/repack-a76.cpp
++                PROPERTIES COMPILE_OPTIONS "-mtune=cortex-a76;-fno-lto")
++        endif()
++
+         if (MSVC AND NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
+             message(FATAL_ERROR "MSVC is not supported for ARM, use clang")
+         else()
+diff --git a/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp b/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp
+new file mode 100644
+index 0000000..4e04a6e
+--- /dev/null
++++ b/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp
+@@ -0,0 +1,90 @@
++#include "ggml-common.h"
++#include "ggml-cpu-impl.h"
++#include "simd-mappings.h"
++
++#define GGML_CPU_CLANG_WORKAROUND
++#include "../../repack.h"
++#include "repack-a76.h"
++
++#include <cassert>
++
++#define UNUSED GGML_UNUSED
++
++#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
++#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
++#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
++#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
++#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
++#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
++#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
++#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
++#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
++
++static const uint64_t table_q1_signs_a76[256] = { B8(ff, 01) };
++
++static inline int8x16_t ggml_q1_0_unpack_pair_a76(uint8_t bits0, uint8_t bits1) {
++    return vreinterpretq_s8_u8(vcombine_u8(vcreate_u8(table_q1_signs_a76[bits0]),
++                                           vcreate_u8(table_q1_signs_a76[bits1])));
++}
++#endif
++
++void ggml_gemv_q1_0_4x4_q8_0_a76(int                        n,
++                                 float * GGML_RESTRICT      s,
++                                 size_t                     bs,
++                                 const void * GGML_RESTRICT vx,
++                                 const void * GGML_RESTRICT vy,
++                                 int                        nr,
++                                 int                        nc) {
++    const int qk                = QK1_0;
++    const int nb                = n / qk;
++    const int ncols_interleaved = 4;
++
++    assert(n % qk == 0);
++    assert(nc % ncols_interleaved == 0);
++
++    UNUSED(nb);
++    UNUSED(ncols_interleaved);
++
++#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
++    for (int c = 0; c < nc; c += ncols_interleaved) {
++        const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (c / ncols_interleaved) * nb;
++        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
++        float32x4_t acc = vdupq_n_f32(0);
++
++        for (int l = 0; l < nb; l++) {
++            const float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
++            float32x4_t accb = vdupq_n_f32(0);
++
++            for (int k = 0; k < 4; k++) {
++                const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * 4 + k;
++                const float ad = GGML_CPU_FP16_TO_FP32(a_blk->d);
++                int32x4_t ret = vdupq_n_s32(0);
++
++                for (int tile = 0; tile < 8; tile += 4) {
++                    const int8x16_t signs0 = ggml_q1_0_unpack_pair_a76(b_ptr[l].qs[k * 16 + 2 * (tile + 0) + 0],
++                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 0) + 1]);
++                    const int8x16_t signs1 = ggml_q1_0_unpack_pair_a76(b_ptr[l].qs[k * 16 + 2 * (tile + 1) + 0],
++                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 1) + 1]);
++                    const int8x16_t signs2 = ggml_q1_0_unpack_pair_a76(b_ptr[l].qs[k * 16 + 2 * (tile + 2) + 0],
++                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 2) + 1]);
++                    const int8x16_t signs3 = ggml_q1_0_unpack_pair_a76(b_ptr[l].qs[k * 16 + 2 * (tile + 3) + 0],
++                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 3) + 1]);
++                    const int8x16_t q_tiles = vld1q_s8(a_blk->qs + tile * 4);
++
++                    ret = vdotq_laneq_s32(ret, signs0, q_tiles, 0);
++                    ret = vdotq_laneq_s32(ret, signs1, q_tiles, 1);
++                    ret = vdotq_laneq_s32(ret, signs2, q_tiles, 2);
++                    ret = vdotq_laneq_s32(ret, signs3, q_tiles, 3);
++                }
++
++                accb = vfmaq_n_f32(accb, vcvtq_f32_s32(ret), ad);
++            }
++            acc = vfmaq_f32(acc, accb, b_d);
++        }
++        vst1q_f32(s, acc);
++        s += ncols_interleaved;
++    }
++    return;
++#endif
++    ggml_gemv_q1_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
++}
+diff --git a/ggml/src/ggml-cpu/arch/arm/repack-a76.h b/ggml/src/ggml-cpu/arch/arm/repack-a76.h
+new file mode 100644
+index 0000000..6b697ba
+--- /dev/null
++++ b/ggml/src/ggml-cpu/arch/arm/repack-a76.h
+@@ -0,0 +1,58 @@
++#pragma once
++
++#include <cstddef>
++#include <cstring>
++
++#include "ggml.h"
++
++enum class ggml_q1_a76_dispatch_mode : unsigned char {
++    stock,
++    null_dispatch,
++    candidate,
++};
++
++using ggml_q1_gemv_function = void (*)(
++    int,
++    float * GGML_RESTRICT,
++    size_t,
++    const void * GGML_RESTRICT,
++    const void * GGML_RESTRICT,
++    int,
++    int);
++
++inline ggml_q1_a76_dispatch_mode ggml_q1_a76_parse_dispatch_mode(const char * value) {
++    if (value != nullptr && std::strcmp(value, "null") == 0) {
++        return ggml_q1_a76_dispatch_mode::null_dispatch;
++    }
++    if (value != nullptr && std::strcmp(value, "candidate") == 0) {
++        return ggml_q1_a76_dispatch_mode::candidate;
++    }
++    return ggml_q1_a76_dispatch_mode::stock;
++}
++
++inline ggml_q1_gemv_function ggml_q1_a76_resolve_kernel(
++    ggml_q1_a76_dispatch_mode mode,
++    int current_cpu,
++    ggml_q1_gemv_function stock,
++    ggml_q1_gemv_function a76) {
++    const bool on_a76 = current_cpu == 6 || current_cpu == 7;
++    return mode == ggml_q1_a76_dispatch_mode::candidate && on_a76 ? a76 : stock;
++}
++
++void ggml_gemv_q1_0_4x4_q8_0_stock(
++    int n,
++    float * GGML_RESTRICT s,
++    size_t bs,
++    const void * GGML_RESTRICT vx,
++    const void * GGML_RESTRICT vy,
++    int nr,
++    int nc);
++
++void ggml_gemv_q1_0_4x4_q8_0_a76(
++    int n,
++    float * GGML_RESTRICT s,
++    size_t bs,
++    const void * GGML_RESTRICT vx,
++    const void * GGML_RESTRICT vy,
++    int nr,
++    int nc);
+diff --git a/ggml/src/ggml-cpu/arch/arm/repack.cpp b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+index ad0e5cc..ca35aa3 100644
+--- a/ggml/src/ggml-cpu/arch/arm/repack.cpp
++++ b/ggml/src/ggml-cpu/arch/arm/repack.cpp
+@@ -17,6 +17,11 @@
+ 
+ #define GGML_CPU_CLANG_WORKAROUND
+ #include "../../repack.h"
++#include "repack-a76.h"
++
++#if defined(__linux__)
++#include <sched.h>
++#endif
+ 
+ #if defined(__GNUC__)
+ #pragma GCC diagnostic ignored "-Woverlength-strings"
+@@ -1841,13 +1846,13 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
+     ggml_gemv_q8_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
+ }
+ 
+-void ggml_gemv_q1_0_4x4_q8_0(int                        n,
+-                             float * GGML_RESTRICT      s,
+-                             size_t                     bs,
+-                             const void * GGML_RESTRICT vx,
+-                             const void * GGML_RESTRICT vy,
+-                             int                        nr,
+-                             int                        nc) {
++void ggml_gemv_q1_0_4x4_q8_0_stock(int                        n,
++                                   float * GGML_RESTRICT      s,
++                                   size_t                     bs,
++                                   const void * GGML_RESTRICT vx,
++                                   const void * GGML_RESTRICT vy,
++                                   int                        nr,
++                                   int                        nc) {
+     const int qk                = QK1_0;
+     const int nb                = n / qk;
+     const int ncols_interleaved = 4;
+@@ -1902,6 +1907,31 @@ void ggml_gemv_q1_0_4x4_q8_0(int                        n,
+     ggml_gemv_q1_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
+ }
+ 
++void ggml_gemv_q1_0_4x4_q8_0(int                        n,
++                             float * GGML_RESTRICT      s,
++                             size_t                     bs,
++                             const void * GGML_RESTRICT vx,
++                             const void * GGML_RESTRICT vy,
++                             int                        nr,
++                             int                        nc) {
++    static const ggml_q1_a76_dispatch_mode mode =
++        ggml_q1_a76_parse_dispatch_mode(std::getenv("GGML_Q1_A76_DISPATCH"));
++
++    int current_cpu = -1;
++#if defined(__linux__)
++    if (mode != ggml_q1_a76_dispatch_mode::stock) {
++        current_cpu = sched_getcpu();
++    }
++#endif
++
++    const ggml_q1_gemv_function kernel = ggml_q1_a76_resolve_kernel(
++        mode,
++        current_cpu,
++        ggml_gemv_q1_0_4x4_q8_0_stock,
++        ggml_gemv_q1_0_4x4_q8_0_a76);
++    kernel(n, s, bs, vx, vy, nr, nc);
++}
++
+ void ggml_gemv_q1_0_4x8_q8_0(int                        n,
+                              float * GGML_RESTRICT      s,
+                              size_t                     bs,

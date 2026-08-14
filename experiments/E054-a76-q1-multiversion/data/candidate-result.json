@@ -1,0 +1,59 @@
+{
+  "activation_q8_sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+  "decision": "REJECT_MICROGATE",
+  "gate": "a76_candidate",
+  "golden_exact": true,
+  "median_pair_gain_percent": 0.5424960166842958,
+  "median_pair_overhead_percent": -0.5424960166842958,
+  "output_f32_sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+  "pair_count": 5,
+  "pairs": [
+    {
+      "comparison_median_us": 4447.3125,
+      "comparison_run_id": "e054-candidate-p01-candidate",
+      "gain_percent": 57.10246293035563,
+      "overhead_percent": -57.10246293035563,
+      "pair_id": "p01",
+      "stock_median_us": 10367.291000366211,
+      "stock_run_id": "e054-candidate-p01-stock"
+    },
+    {
+      "comparison_median_us": 4458.3125,
+      "comparison_run_id": "e054-candidate-p02-candidate",
+      "gain_percent": 56.903782840052486,
+      "overhead_percent": -56.903782840052486,
+      "pair_id": "p02",
+      "stock_median_us": 10345.020500183105,
+      "stock_run_id": "e054-candidate-p02-stock"
+    },
+    {
+      "comparison_median_us": 4449.7705001831055,
+      "comparison_run_id": "e054-candidate-p03-candidate",
+      "gain_percent": 0.5424960166842958,
+      "overhead_percent": -0.5424960166842958,
+      "pair_id": "p03",
+      "stock_median_us": 4474.0419998168945,
+      "stock_run_id": "e054-candidate-p03-stock"
+    },
+    {
+      "comparison_median_us": 4443.9794998168945,
+      "comparison_run_id": "e054-candidate-p04-candidate",
+      "gain_percent": -1.3041258338062722,
+      "overhead_percent": 1.3041258338062722,
+      "pair_id": "p04",
+      "stock_median_us": 4386.770492553711,
+      "stock_run_id": "e054-candidate-p04-stock"
+    },
+    {
+      "comparison_median_us": 4458.02099609375,
+      "comparison_run_id": "e054-candidate-p05-candidate",
+      "gain_percent": -0.7400562081370851,
+      "overhead_percent": 0.7400562081370851,
+      "pair_id": "p05",
+      "stock_median_us": 4425.271499633789,
+      "stock_run_id": "e054-candidate-p05-stock"
+    }
+  ],
+  "samples_per_run": 50,
+  "schema_version": "e054-a76-analysis/v1"
+}

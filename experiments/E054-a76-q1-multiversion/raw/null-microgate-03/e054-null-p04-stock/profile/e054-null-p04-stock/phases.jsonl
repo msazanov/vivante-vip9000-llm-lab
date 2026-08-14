@@ -1,0 +1,12 @@
+{"event":"profiler_start","monotonic_ns":76720425571399,"step":0}
+{"event":"setup_begin","monotonic_ns":76720432392939,"step":1}
+{"event":"repack_begin","monotonic_ns":76720592558738,"step":2}
+{"event":"repack_end","monotonic_ns":76720670096262,"step":3}
+{"event":"warmup_begin","monotonic_ns":76720679308135,"step":4}
+{"event":"warmup_end","monotonic_ns":76720686395259,"step":5}
+{"event":"compute_begin","monotonic_ns":76720688822550,"step":6}
+{"event":"compute_end","monotonic_ns":76720911598251,"step":7}
+{"event":"output_read_begin","monotonic_ns":76720913868251,"step":8}
+{"event":"output_read_end","monotonic_ns":76720915967959,"step":9}
+{"event":"teardown","monotonic_ns":76720929691372,"step":10}
+{"event":"profiler_complete","monotonic_ns":76720944168494,"step":0}

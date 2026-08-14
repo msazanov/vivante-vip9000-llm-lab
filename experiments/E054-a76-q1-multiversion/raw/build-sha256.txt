@@ -1,0 +1,3 @@
+a7c52746806c43711f0bf6ffb8f95c9cff87b9f1ab294471f7a4caf0f73b7f29  /home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/bin/libggml-cpu.so
+b8e128bb18d6714c5fda5328d50082241f9557d8fdece6cbe20eab545975efb7  /home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/bin/llama-bench
+471d680b5e80e1e1dd86fd0d2740128c64fabb533b8194fb1ffe6fe00881ccb3  /home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o

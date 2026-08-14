@@ -1,0 +1,27 @@
+279-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.s"
+280-	cd /home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/ggml/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/orangepi/vip9000-lab/src/e054-a76-q1-multiversion-38c66/ggml/src/ggml-cpu/arch/arm/repack.cpp -o CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.s
+281-
+282:ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o: ggml/src/CMakeFiles/ggml-cpu.dir/flags.make
+283:ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o: /home/orangepi/vip9000-lab/src/e054-a76-q1-multiversion-38c66/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp
+284:ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o: ggml/src/CMakeFiles/ggml-cpu.dir/compiler_depend.ts
+285:	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o"
+286:	cd /home/orangepi/vip9000-lab/build/e054-a76-q1-multiversion/ggml/src && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -mtune=cortex-a76 -fno-lto -MD -MT ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o -MF CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o.d -o CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o -c /home/orangepi/vip9000-lab/src/e054-a76-q1-multiversion-38c66/ggml/src/ggml-cpu/arch/arm/repack-a76.cpp
+287-
+288-ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.i: cmake_force
+289-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.i"
+--
+310-"CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o" \
+311-"CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/quants.c.o" \
+312-"CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.o" \
+313:"CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o"
+314-
+315-# External object files for target ggml-cpu
+316-ggml__cpu_EXTERNAL_OBJECTS =
+--
+330-bin/libggml-cpu.so.0.13.1: ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o
+331-bin/libggml-cpu.so.0.13.1: ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/quants.c.o
+332-bin/libggml-cpu.so.0.13.1: ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack.cpp.o
+333:bin/libggml-cpu.so.0.13.1: ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/arm/repack-a76.cpp.o
+334-bin/libggml-cpu.so.0.13.1: ggml/src/CMakeFiles/ggml-cpu.dir/build.make
+335-bin/libggml-cpu.so.0.13.1: bin/libggml-base.so.0.13.1
+336-bin/libggml-cpu.so.0.13.1: /usr/lib/gcc/aarch64-linux-gnu/12/libgomp.so

@@ -1,0 +1,11 @@
+{
+  "schema_version": "e054-llama-baseline/v1",
+  "llama_commit": "38c66ad0241da4f9fcce541cda8edc219086cec5",
+  "source_root_on_target": "/home/orangepi/vip9000-lab/src/llama-prismml-38c66",
+  "files": {
+    "ggml/src/ggml-cpu/CMakeLists.txt": "7e17ca2625178776864bc8ecef6f85a346c6536c8556d4a8910b9a133b1690aa",
+    "ggml/src/ggml-cpu/arch/arm/repack.cpp": "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d",
+    "ggml/src/ggml-cpu/repack.h": "740249b481faf8d20c1bfad3311973cec520e33919612d2e84059c285cd15fc0"
+  },
+  "patch_sha256": "c0d51559de8b79a1a0eec3bbbcb2513de6135a9de83d0bccf7867618eab71ed5"
+}

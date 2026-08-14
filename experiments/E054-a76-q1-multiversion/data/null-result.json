@@ -1,0 +1,59 @@
+{
+  "activation_q8_sha256": "0c72c165dfe0f132870616f777c165421014249d65f8c1183bcc19bbc6fa4f06",
+  "decision": "PASS_NULL_OVERHEAD",
+  "gate": "null_dispatch",
+  "golden_exact": true,
+  "median_pair_gain_percent": -0.16432463431855082,
+  "median_pair_overhead_percent": 0.16432463431855082,
+  "output_f32_sha256": "359f62fb43af0150cd2043b26c582e97562aaaf2f8a7134ce34ed144dbf1685f",
+  "pair_count": 5,
+  "pairs": [
+    {
+      "comparison_median_us": 11024.333503723145,
+      "comparison_run_id": "e054-null-p01-null",
+      "gain_percent": -151.88519199517265,
+      "overhead_percent": 151.88519199517265,
+      "pair_id": "p01",
+      "stock_median_us": 4376.7294998168945,
+      "stock_run_id": "e054-null-p01-stock"
+    },
+    {
+      "comparison_median_us": 4458.0,
+      "comparison_run_id": "e054-null-p02-null",
+      "gain_percent": -2.065299817090355,
+      "overhead_percent": 2.065299817090355,
+      "pair_id": "p02",
+      "stock_median_us": 4367.7919998168945,
+      "stock_run_id": "e054-null-p02-stock"
+    },
+    {
+      "comparison_median_us": 4370.8955001831055,
+      "comparison_run_id": "e054-null-p03-null",
+      "gain_percent": 59.89475399808992,
+      "overhead_percent": -59.89475399808992,
+      "pair_id": "p03",
+      "stock_median_us": 10898.562995910645,
+      "stock_run_id": "e054-null-p03-stock"
+    },
+    {
+      "comparison_median_us": 4384.688003540039,
+      "comparison_run_id": "e054-null-p04-null",
+      "gain_percent": 0.03608988550323931,
+      "overhead_percent": -0.03608988550323931,
+      "pair_id": "p04",
+      "stock_median_us": 4386.2710037231445,
+      "stock_run_id": "e054-null-p04-stock"
+    },
+    {
+      "comparison_median_us": 4368.04150390625,
+      "comparison_run_id": "e054-null-p05-null",
+      "gain_percent": -0.16432463431855082,
+      "overhead_percent": 0.16432463431855082,
+      "pair_id": "p05",
+      "stock_median_us": 4360.875511169434,
+      "stock_run_id": "e054-null-p05-stock"
+    }
+  ],
+  "samples_per_run": 50,
+  "schema_version": "e054-a76-analysis/v1"
+}

@@ -1,0 +1,1 @@
+ERROR: output directory must be outside the repository
