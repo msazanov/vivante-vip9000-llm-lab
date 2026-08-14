@@ -37,10 +37,10 @@
     },
     "transportEvidence": {
       "type": "object",
-      "required": ["schema", "trust_statement", "endpoint_identity", "deployment_root", "lock_path", "exclusive_receipt", "fresh_readback"],
+      "required": ["schema", "trust_statement", "endpoint_identity", "deployment_root", "lock_path", "requests", "exclusive_receipt", "fresh_readback"],
       "properties": {
         "schema": {"const": "e055-transport-evidence/v1"},
-        "trust_statement": {"const": "transport evidence only; no cryptographic device attestation; transport and endpoint remain operationally trusted"},
+        "trust_statement": {"const": "replay-resistant transport evidence only; no cryptographic device attestation; transport and endpoint remain operationally trusted"},
         "endpoint_identity": {
           "type": "object",
           "required": ["trust_mode", "endpoint_label", "board_identity", "host_key_fingerprint"],
@@ -54,12 +54,41 @@
         },
         "deployment_root": {"type": "string", "pattern": "^/tmp/e055-q1-hot-cold/deployments/[0-9a-f]{64}$"},
         "lock_path": {"const": "/tmp/e055-q1-hot-cold/locks/a733-target.lock"},
+        "requests": {
+          "type": "object",
+          "required": ["exclusive_deploy", "fresh_readback"],
+          "properties": {
+            "exclusive_deploy": {
+              "type": "object",
+              "required": ["operation_sequence", "request_id", "request_nonce"],
+              "properties": {
+                "operation_sequence": {"const": 1},
+                "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "request_nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              },
+              "additionalProperties": false
+            },
+            "fresh_readback": {
+              "type": "object",
+              "required": ["operation_sequence", "request_id", "request_nonce"],
+              "properties": {
+                "operation_sequence": {"const": 2},
+                "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                "request_nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "exclusive_receipt": {
           "type": "object",
-          "required": ["schema", "operation_sequence", "lock_acquired_exclusively", "deployment_created_exclusively", "endpoint_identity", "artifacts"],
+          "required": ["schema", "operation_sequence", "request_id", "request_nonce", "lock_acquired_exclusively", "deployment_created_exclusively", "endpoint_identity", "artifacts"],
           "properties": {
             "schema": {"const": "e055-exclusive-deployment-receipt/v1"},
             "operation_sequence": {"const": 1},
+            "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "request_nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
             "lock_acquired_exclusively": {"const": true},
             "deployment_created_exclusively": {"const": true},
             "endpoint_identity": {"$ref": "#/$defs/transportEvidence/properties/endpoint_identity"},
@@ -69,10 +98,12 @@
         },
         "fresh_readback": {
           "type": "object",
-          "required": ["schema", "operation_sequence", "endpoint_identity", "artifacts"],
+          "required": ["schema", "operation_sequence", "request_id", "request_nonce", "endpoint_identity", "artifacts"],
           "properties": {
             "schema": {"const": "e055-fresh-readback-proof/v1"},
             "operation_sequence": {"const": 2},
+            "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "request_nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
             "endpoint_identity": {"$ref": "#/$defs/transportEvidence/properties/endpoint_identity"},
             "artifacts": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/transportObservation"}}
           },

@@ -1,7 +1,8 @@
 """Fail-closed transport evidence for the bounded E055 target phase.
 
-The receipt and readback records prove what an injected transport reported at
-two separate API boundaries. They are not cryptographic device attestation;
+The caller supplies distinct random request IDs/nonces at two API boundaries,
+and each response must echo its exact request. This rejects cached/replayed
+responses at the live boundary, but it is not cryptographic device attestation;
 the transport implementation and its endpoint remain in the trust boundary.
 """
 
@@ -14,6 +15,7 @@ from typing import Any, Mapping, Sequence
 
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+REQUEST_TOKEN_RE = SHA256_RE
 PHASE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 RUN_ID_RE = PHASE_ID_RE
 HOST_KEY_RE = re.compile(r"^SHA256:[A-Za-z0-9+/]{43}$")
@@ -57,6 +59,8 @@ class TargetArtifactObservation:
 class ExclusiveDeploymentReceipt:
     schema: str
     operation_sequence: int
+    request_id: str
+    request_nonce: str
     deployment_root: str
     lock_path: str
     lock_acquired_exclusively: bool
@@ -69,6 +73,8 @@ class ExclusiveDeploymentReceipt:
 class FreshReadbackProof:
     schema: str
     operation_sequence: int
+    request_id: str
+    request_nonce: str
     deployment_root: str
     endpoint_identity: EndpointIdentity
     artifacts: tuple[TargetArtifactObservation, ...]
@@ -180,6 +186,11 @@ def validate_transport_evidence(
     readback: Any,
     layout: DeploymentLayout,
     expected_artifacts: Sequence[Mapping[str, Any]],
+    *,
+    exclusive_request_id: str,
+    exclusive_request_nonce: str,
+    readback_request_id: str,
+    readback_request_nonce: str,
 ) -> dict[str, Any]:
     """Cross-check independent deploy/readback results and serialize evidence."""
 
@@ -188,9 +199,18 @@ def validate_transport_evidence(
     if type(receipt) is not ExclusiveDeploymentReceipt or \
             type(readback) is not FreshReadbackProof:
         raise ValueError("transport must return exact deploy receipt and readback proof")
+    request_tokens = (
+        exclusive_request_id, exclusive_request_nonce,
+        readback_request_id, readback_request_nonce,
+    )
+    if any(not isinstance(token, str) or REQUEST_TOKEN_RE.fullmatch(token) is None
+           for token in request_tokens) or len(set(request_tokens)) != 4:
+        raise ValueError("transport request IDs and nonces must be canonical and distinct")
     if receipt.schema != "e055-exclusive-deployment-receipt/v1" or \
             receipt.operation_sequence != 1 or \
             not _strict_int(receipt.operation_sequence, minimum=1) or \
+            receipt.request_id != exclusive_request_id or \
+            receipt.request_nonce != exclusive_request_nonce or \
             receipt.deployment_root != layout.deployment_root or \
             receipt.lock_path != layout.lock_path or \
             type(receipt.lock_acquired_exclusively) is not bool or \
@@ -201,6 +221,8 @@ def validate_transport_evidence(
     if readback.schema != "e055-fresh-readback-proof/v1" or \
             readback.operation_sequence != 2 or \
             not _strict_int(readback.operation_sequence, minimum=1) or \
+            readback.request_id != readback_request_id or \
+            readback.request_nonce != readback_request_nonce or \
             readback.deployment_root != layout.deployment_root:
         raise ValueError("fresh readback proof is invalid")
     receipt_identity = _validate_identity(receipt.endpoint_identity)
@@ -247,15 +269,29 @@ def validate_transport_evidence(
     return {
         "schema": "e055-transport-evidence/v1",
         "trust_statement": (
-            "transport evidence only; no cryptographic device attestation; "
+            "replay-resistant transport evidence only; no cryptographic device attestation; "
             "transport and endpoint remain operationally trusted"
         ),
         "endpoint_identity": _identity_document(receipt_identity),
         "deployment_root": layout.deployment_root,
         "lock_path": layout.lock_path,
+        "requests": {
+            "exclusive_deploy": {
+                "operation_sequence": 1,
+                "request_id": exclusive_request_id,
+                "request_nonce": exclusive_request_nonce,
+            },
+            "fresh_readback": {
+                "operation_sequence": 2,
+                "request_id": readback_request_id,
+                "request_nonce": readback_request_nonce,
+            },
+        },
         "exclusive_receipt": {
             "schema": receipt.schema,
             "operation_sequence": receipt.operation_sequence,
+            "request_id": receipt.request_id,
+            "request_nonce": receipt.request_nonce,
             "lock_acquired_exclusively": receipt.lock_acquired_exclusively,
             "deployment_created_exclusively": receipt.deployment_created_exclusively,
             "endpoint_identity": _identity_document(receipt_identity),
@@ -264,6 +300,8 @@ def validate_transport_evidence(
         "fresh_readback": {
             "schema": readback.schema,
             "operation_sequence": readback.operation_sequence,
+            "request_id": readback.request_id,
+            "request_nonce": readback.request_nonce,
             "endpoint_identity": _identity_document(readback_identity),
             "artifacts": [readback_documents[role] for role in ordered_roles],
         },
@@ -287,7 +325,7 @@ def validate_serialized_transport_evidence(
         value,
         {
             "schema", "trust_statement", "endpoint_identity", "deployment_root",
-            "lock_path", "exclusive_receipt", "fresh_readback",
+            "lock_path", "requests", "exclusive_receipt", "fresh_readback",
         },
         "transport evidence",
     )
@@ -308,6 +346,26 @@ def validate_serialized_transport_evidence(
         )
 
     identity = identity_from(identity_raw, "transport endpoint identity")
+
+    requests_raw = _exact_mapping(
+        exact.get("requests"), {"exclusive_deploy", "fresh_readback"},
+        "transport requests",
+    )
+    exclusive_request = _exact_mapping(
+        requests_raw.get("exclusive_deploy"),
+        {"operation_sequence", "request_id", "request_nonce"},
+        "exclusive deployment request",
+    )
+    readback_request = _exact_mapping(
+        requests_raw.get("fresh_readback"),
+        {"operation_sequence", "request_id", "request_nonce"},
+        "fresh readback request",
+    )
+    if not _strict_int(exclusive_request.get("operation_sequence"), minimum=1) or \
+            exclusive_request.get("operation_sequence") != 1 or \
+            not _strict_int(readback_request.get("operation_sequence"), minimum=1) or \
+            readback_request.get("operation_sequence") != 2:
+        raise ValueError("transport request operation sequence is invalid")
 
     def observations(raw: Any, label: str) -> tuple[TargetArtifactObservation, ...]:
         if not isinstance(raw, list) or len(raw) != 2:
@@ -330,17 +388,22 @@ def validate_serialized_transport_evidence(
         exact.get("exclusive_receipt"),
         {
             "schema", "operation_sequence", "lock_acquired_exclusively",
-            "deployment_created_exclusively", "endpoint_identity", "artifacts",
+            "request_id", "request_nonce", "deployment_created_exclusively",
+            "endpoint_identity", "artifacts",
         },
         "exclusive deployment receipt",
     )
     readback_raw = _exact_mapping(
         exact.get("fresh_readback"),
-        {"schema", "operation_sequence", "endpoint_identity", "artifacts"},
+        {
+            "schema", "operation_sequence", "request_id", "request_nonce",
+            "endpoint_identity", "artifacts",
+        },
         "fresh readback proof",
     )
     receipt = ExclusiveDeploymentReceipt(
         receipt_raw.get("schema"), receipt_raw.get("operation_sequence"),
+        receipt_raw.get("request_id"), receipt_raw.get("request_nonce"),
         exact.get("deployment_root"), exact.get("lock_path"),
         receipt_raw.get("lock_acquired_exclusively"),
         receipt_raw.get("deployment_created_exclusively"),
@@ -354,11 +417,16 @@ def validate_serialized_transport_evidence(
     )
     readback = FreshReadbackProof(
         readback_raw.get("schema"), readback_raw.get("operation_sequence"),
+        readback_raw.get("request_id"), readback_raw.get("request_nonce"),
         exact.get("deployment_root"), readback_identity,
         observations(readback_raw.get("artifacts"), "fresh readback"),
     )
     canonical = validate_transport_evidence(
-        receipt, readback, layout, expected_artifacts
+        receipt, readback, layout, expected_artifacts,
+        exclusive_request_id=exclusive_request.get("request_id"),
+        exclusive_request_nonce=exclusive_request.get("request_nonce"),
+        readback_request_id=readback_request.get("request_id"),
+        readback_request_nonce=readback_request.get("request_nonce"),
     )
     if dict(exact) != canonical:
         raise ValueError("transport evidence is not the exact canonical document")

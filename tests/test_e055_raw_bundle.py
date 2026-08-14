@@ -115,11 +115,13 @@ class BundleFixture:
         self.transport_evidence = validate_transport_evidence(
             ExclusiveDeploymentReceipt(
                 "e055-exclusive-deployment-receipt/v1", 1,
+                "a" * 64, "b" * 64,
                 self.layout.deployment_root, self.layout.lock_path, True, True,
                 endpoint, receipt_observations,
             ),
             FreshReadbackProof(
                 "e055-fresh-readback-proof/v1", 2,
+                "c" * 64, "d" * 64,
                 self.layout.deployment_root,
                 EndpointIdentity(
                     "test_fixture", "sealed-bundle-fixture", "fake-a733", None
@@ -127,6 +129,10 @@ class BundleFixture:
                 readback_observations,
             ),
             self.layout, expected,
+            exclusive_request_id="a" * 64,
+            exclusive_request_nonce="b" * 64,
+            readback_request_id="c" * 64,
+            readback_request_nonce="d" * 64,
         )
         run_entries = [self._write_run(spec) for spec in self.run_specs]
         self.run_dir = self.phase / "runs" / self.run_specs[0]["run_id"]
@@ -704,6 +710,18 @@ class E055RawParserTest(unittest.TestCase):
             "readback mismatch": lambda raw: raw["fresh_readback"]["artifacts"][0].update(
                 inode=9999
             ),
+            "copied deploy nonce as readback challenge": lambda raw: raw["requests"][
+                "fresh_readback"
+            ].update(request_nonce=raw["requests"]["exclusive_deploy"]["request_nonce"]),
+            "receipt replay ignores caller nonce": lambda raw: raw[
+                "exclusive_receipt"
+            ].update(request_nonce="e" * 64),
+            "readback replay ignores caller request ID": lambda raw: raw[
+                "fresh_readback"
+            ].update(request_id="f" * 64),
+            "Boolean request sequence": lambda raw: raw["requests"][
+                "exclusive_deploy"
+            ].update(operation_sequence=True),
             "nonexclusive lock": lambda raw: raw["exclusive_receipt"].update(
                 lock_acquired_exclusively=False
             ),

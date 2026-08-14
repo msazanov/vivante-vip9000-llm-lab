@@ -7,6 +7,7 @@ from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -38,6 +39,7 @@ class FakeTransport:
         self.captures = []
         self.restored = 0
         self.actions = []
+        self.requests = []
 
     def _observations(self, artifacts: tuple) -> tuple[TargetArtifactObservation, ...]:
         observations = []
@@ -56,8 +58,10 @@ class FakeTransport:
 
     def prepare(
         self, artifacts: tuple, *, deployment_root: str, lock_path: str,
+        request_id: str, request_nonce: str,
     ) -> ExclusiveDeploymentReceipt:
         self.actions.append("prepare")
+        self.requests.append(("exclusive_deploy", request_id, request_nonce))
         self.prepared.extend(artifacts)
         for artifact in artifacts:
             if artifact.target_path in self.deployed:
@@ -67,6 +71,8 @@ class FakeTransport:
         return ExclusiveDeploymentReceipt(
             schema="e055-exclusive-deployment-receipt/v1",
             operation_sequence=1,
+            request_id=request_id,
+            request_nonce=request_nonce,
             deployment_root=deployment_root,
             lock_path=lock_path,
             lock_acquired_exclusively=True,
@@ -83,11 +89,15 @@ class FakeTransport:
 
     def readback(
         self, artifacts: tuple, *, deployment_root: str,
+        request_id: str, request_nonce: str,
     ) -> FreshReadbackProof:
         self.actions.append("readback")
+        self.requests.append(("fresh_readback", request_id, request_nonce))
         return FreshReadbackProof(
             schema="e055-fresh-readback-proof/v1",
             operation_sequence=2,
+            request_id=request_id,
+            request_nonce=request_nonce,
             deployment_root=deployment_root,
             endpoint_identity=EndpointIdentity(
                 "test_fixture", "fake-transport", "fake-a733", None
@@ -241,11 +251,17 @@ class MalformedTransport(FakeTransport):
 
 
 class NoProofTransport(FakeTransport):
-    def prepare(self, artifacts: tuple, *, deployment_root: str, lock_path: str):
+    def prepare(
+        self, artifacts: tuple, *, deployment_root: str, lock_path: str,
+        request_id: str, request_nonce: str,
+    ):
         self.prepared.extend(artifacts)
         return None
 
-    def readback(self, artifacts: tuple, *, deployment_root: str):
+    def readback(
+        self, artifacts: tuple, *, deployment_root: str,
+        request_id: str, request_nonce: str,
+    ):
         return None
 
 
@@ -255,9 +271,13 @@ class MutatingProofTransport(FakeTransport):
         self.mutation = mutation
         self.receipt = None
 
-    def prepare(self, artifacts: tuple, *, deployment_root: str, lock_path: str):
+    def prepare(
+        self, artifacts: tuple, *, deployment_root: str, lock_path: str,
+        request_id: str, request_nonce: str,
+    ):
         receipt = super().prepare(
-            artifacts, deployment_root=deployment_root, lock_path=lock_path
+            artifacts, deployment_root=deployment_root, lock_path=lock_path,
+            request_id=request_id, request_nonce=request_nonce,
         )
         if self.mutation == "fabricated_mapping":
             return {"schema": receipt.schema}
@@ -269,11 +289,21 @@ class MutatingProofTransport(FakeTransport):
         elif self.mutation == "forged_mode_type":
             forged = replace(receipt.artifacts[0], mode=True)
             receipt = replace(receipt, artifacts=(forged, receipt.artifacts[1]))
+        elif self.mutation == "receipt_request_id_mismatch":
+            receipt = replace(receipt, request_id="f" * 64)
+        elif self.mutation == "receipt_nonce_mismatch":
+            receipt = replace(receipt, request_nonce="e" * 64)
         self.receipt = receipt
         return receipt
 
-    def readback(self, artifacts: tuple, *, deployment_root: str):
-        proof = super().readback(artifacts, deployment_root=deployment_root)
+    def readback(
+        self, artifacts: tuple, *, deployment_root: str,
+        request_id: str, request_nonce: str,
+    ):
+        proof = super().readback(
+            artifacts, deployment_root=deployment_root,
+            request_id=request_id, request_nonce=request_nonce,
+        )
         if self.mutation == "readback_hash_mismatch":
             forged = replace(proof.artifacts[0], sha256="d" * 64)
             proof = replace(proof, artifacts=(forged, proof.artifacts[1]))
@@ -286,6 +316,10 @@ class MutatingProofTransport(FakeTransport):
             )
         elif self.mutation == "reused_observations" and self.receipt is not None:
             proof = replace(proof, artifacts=self.receipt.artifacts)
+        elif self.mutation == "readback_request_id_mismatch":
+            proof = replace(proof, request_id="d" * 64)
+        elif self.mutation == "replayed_receipt_nonce" and self.receipt is not None:
+            proof = replace(proof, request_nonce=self.receipt.request_nonce)
         return proof
 
 class E055TargetExecutorTest(unittest.TestCase):
@@ -354,7 +388,9 @@ class E055TargetExecutorTest(unittest.TestCase):
         mutations = (
             "fabricated_mapping", "exclusive_false", "forged_receipt_hash",
             "forged_mode_type", "readback_hash_mismatch", "identity_mismatch",
-            "reused_observations",
+            "reused_observations", "receipt_request_id_mismatch",
+            "receipt_nonce_mismatch", "readback_request_id_mismatch",
+            "replayed_receipt_nonce",
         )
         for index, mutation in enumerate(mutations):
             with self.subTest(mutation=mutation):
@@ -380,6 +416,17 @@ class E055TargetExecutorTest(unittest.TestCase):
         self.assertEqual(transport.restored, 1)
         self.assertEqual(transport.actions[:3], ["prepare", "readback", "capture"])
         self.assertEqual(transport.actions[-1], "restore")
+        self.assertEqual(
+            [operation for operation, _, _ in transport.requests],
+            ["exclusive_deploy", "fresh_readback"],
+        )
+        request_tokens = [
+            token for _, request_id, request_nonce in transport.requests
+            for token in (request_id, request_nonce)
+        ]
+        self.assertEqual(len(set(request_tokens)), 4)
+        self.assertTrue(all(re.fullmatch(r"[0-9a-f]{64}", token)
+                            for token in request_tokens))
         manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(len(manifest["runs"]), 20)
         self.assertTrue(manifest["target_workload_executed"])
@@ -413,6 +460,22 @@ class E055TargetExecutorTest(unittest.TestCase):
                          ))
         self.assertEqual(
             runner["transport_evidence"], manifest["transport_evidence"]
+        )
+        self.assertEqual(
+            manifest["transport_evidence"]["requests"]["exclusive_deploy"],
+            {
+                "operation_sequence": 1,
+                "request_id": transport.requests[0][1],
+                "request_nonce": transport.requests[0][2],
+            },
+        )
+        self.assertEqual(
+            manifest["transport_evidence"]["requests"]["fresh_readback"],
+            {
+                "operation_sequence": 2,
+                "request_id": transport.requests[1][1],
+                "request_nonce": transport.requests[1][2],
+            },
         )
         stdout_envelope = json.loads(
             (run_dir / "harness.stdout.capture.json").read_text(encoding="utf-8")

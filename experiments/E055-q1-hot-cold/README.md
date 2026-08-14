@@ -257,8 +257,10 @@ and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks
 regular-file and single-link invariants, records the original device/inode and
 role size bound, and closes all descriptors on success or partial failure. If
 any reservation or post-open validation fails, it unlinks only pathnames that
-still resolve to inodes created by that invocation and removes only its empty
-new directories. Pre-existing or concurrently replaced data is not removed.
+still resolve to inodes created by that invocation. Every created directory is
+recorded with its owner, device, and inode; rollback removes it only when the
+current path has that same identity and owner and remains empty. Pre-existing,
+moved-original, or concurrently replaced data is not removed.
 `populate_reserved()` reopens one original inode without following links,
 takes a nonblocking exclusive lock, requires a zero-length placeholder, writes
 and synchronizes one bounded nonempty payload, and refuses a second population
@@ -289,26 +291,36 @@ Before the first capture, the executor derives a phase-unique deployment root
 from the phase ID plus the exact harness and PMU SHA-256 values. Both executable
 paths include their content hashes. It passes a fixed target-concurrency lock
 path to the transport and requires two independent API results: first an
-exclusive-deployment receipt, then a fresh readback/stat/hash proof. Each result
-must report the exact role, path, SHA-256, byte size, mode, device and inode for
-both executables, and both observations must agree exactly. The endpoint
+exclusive-deployment receipt, then a fresh readback/stat/hash proof. The caller
+creates a cryptographically random 256-bit request ID and nonce for each API
+step. All four tokens are distinct, each response must echo the exact requested
+tokens, and the request/response sequence is sealed into the bundle and every
+runner record. This makes copied or cached prior observations fail the live
+request check. Each result must report the exact role, path, SHA-256, byte size,
+mode, device and inode for both executables, and both observations must agree
+exactly. A future real transport must perform a new remote stat/read/hash for
+every readback request and must never return a cached observation. The endpoint
 identity must also agree. A real SSH transport must pin the board identity and
 host-key fingerprint when available; otherwise it must explicitly use the
 `operationally_trusted` classification. The current module still contains no
 SSH implementation.
 
-These records are transport evidence, not cryptographic device attestation. An
-injected transport and its remote endpoint can lie consistently, so both remain
-inside the operational trust boundary. Git later makes the reported bytes and
-records immutable; it does not turn them into independently attested device
-truth.
+These records are replay-resistant transport evidence, not cryptographic device
+attestation. An injected transport and its remote endpoint can lie consistently,
+so both remain inside the operational trust boundary. Git later makes the
+reported bytes and records immutable; it does not turn them into independently
+attested device truth.
 
 The E049c wrapper itself ignores parent `SIGPIPE`, converts a closed ACK channel
 to a recorded failure, and handles `TERM`, `HUP`, and `INT` by terminating and
 reaping the complete child process group before returning the signal-derived
 status. The child sets a Linux parent-death signal as defense in depth. A
 nonzero or signaled child after `E` also fails the sample and terminates any
-remaining descendants.
+remaining descendants. The wrapper performs the same session-bound group
+quiescence after an exit-zero leader in both immediate and S/A/E modes, and it
+cannot report success until adopted descendants are terminated and reaped. The
+cleanup verifies the child-established session identity before group signaling,
+so a recycled numeric process-group ID from another session is not targeted.
 
 ## Reproduction of revised Stage 1
 

@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import stat
 import subprocess
 from typing import Any, Mapping, Protocol
@@ -109,10 +110,12 @@ class TargetTransport(Protocol):
     def prepare(
         self, artifacts: tuple[TargetArtifact, ...], *,
         deployment_root: str, lock_path: str,
+        request_id: str, request_nonce: str,
     ) -> ExclusiveDeploymentReceipt: ...
 
     def readback(
         self, artifacts: tuple[TargetArtifact, ...], *, deployment_root: str,
+        request_id: str, request_nonce: str,
     ) -> FreshReadbackProof: ...
 
     def capture(
@@ -180,6 +183,17 @@ def _json_bytes(value: Mapping[str, Any]) -> bytes:
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
         allow_nan=False,
     ).encode("ascii") + b"\n"
+
+
+def _fresh_transport_requests() -> tuple[tuple[str, str], tuple[str, str]]:
+    """Create caller-side 256-bit IDs/nonces for two distinct observations."""
+
+    tokens: list[str] = []
+    while len(tokens) < 4:
+        candidate = secrets.token_hex(32)
+        if candidate not in tokens:
+            tokens.append(candidate)
+    return (tokens[0], tokens[1]), (tokens[2], tokens[3])
 
 
 def _stream_envelope(
@@ -383,12 +397,17 @@ class E055TargetExecutor:
         deployment_evidence: dict[str, Any] | None = None
         primary_failure: BaseException | None = None
         try:
+            exclusive_request, readback_request = _fresh_transport_requests()
             receipt = self.transport.prepare(
                 prepared, deployment_root=layout.deployment_root,
                 lock_path=layout.lock_path,
+                request_id=exclusive_request[0],
+                request_nonce=exclusive_request[1],
             )
             readback = self.transport.readback(
                 prepared, deployment_root=layout.deployment_root,
+                request_id=readback_request[0],
+                request_nonce=readback_request[1],
             )
             deployment_evidence = validate_transport_evidence(
                 receipt, readback, layout,
@@ -399,6 +418,10 @@ class E055TargetExecutor:
                     "size_bytes": len(artifact.payload),
                     "mode": artifact.mode,
                 } for artifact in prepared),
+                exclusive_request_id=exclusive_request[0],
+                exclusive_request_nonce=exclusive_request[1],
+                readback_request_id=readback_request[0],
+                readback_request_nonce=readback_request[1],
             )
             for run in plan:
                 run_dir = phase_dir / "runs" / run.run_id
