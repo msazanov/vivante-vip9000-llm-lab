@@ -150,6 +150,8 @@ def validate_trace_ab_result(value: dict[str, Any]) -> list[str]:
     sides: list[dict[str, Any]] = []
     pair_sets: list[set[str]] = []
     token_hashes: set[str] = set()
+    token_artifact_paths: set[str] = set()
+    execution_artifact_paths: set[str] = set()
     for side_name in ("trace_off", "trace_on"):
         side = value.get(side_name)
         if not isinstance(side, dict):
@@ -178,7 +180,42 @@ def validate_trace_ab_result(value: dict[str, Any]) -> list[str]:
             token_hash = sample.get("token_ids_sha256")
             if isinstance(token_hash, str):
                 token_hashes.add(token_hash)
+            token_link = sample.get("token_capture_artifact")
+            execution_link = sample.get("execution_artifact")
+            token_path = token_link.get("path") if isinstance(token_link, dict) else None
+            execution_path = (
+                execution_link.get("path") if isinstance(execution_link, dict) else None
+            )
+            raw_artifacts = sample.get("raw_artifacts")
+            if (
+                not isinstance(raw_artifacts, list)
+                or len(raw_artifacts) != 2
+                or not isinstance(token_path, str)
+                or not isinstance(execution_path, str)
+                or set(raw_artifacts) != {token_path, execution_path}
+            ):
+                errors.append(
+                    f"{side_name}: raw_artifacts должны точно связывать distinct per-run "
+                    "token/execution artifacts"
+                )
+            if isinstance(token_path, str):
+                if token_path in token_artifact_paths:
+                    errors.append(
+                        "trace A/B: token capture artifacts должны иметь distinct per-run paths"
+                    )
+                token_artifact_paths.add(token_path)
+            if isinstance(execution_path, str):
+                if execution_path in execution_artifact_paths:
+                    errors.append(
+                        "trace A/B: execution artifacts должны иметь distinct per-run paths"
+                    )
+                execution_artifact_paths.add(execution_path)
         pair_sets.append(side_pairs)
+
+    if token_artifact_paths & execution_artifact_paths:
+        errors.append(
+            "trace A/B: token capture и execution artifacts должны иметь distinct per-run paths"
+        )
 
     if len(pair_sets) == 2 and pair_sets[0] != pair_sets[1]:
         errors.append("trace_off/trace_on: наборы pair_id не совпадают")
@@ -912,7 +949,16 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
     upstream_ref = active.get("upstream_ref")
     current_head = ref_commit(repository, "HEAD")
     git_repository = current_head is not None
-    if active_ref is None and git_repository:
+    symbolic_ref = subprocess.run(
+        ["git", "-C", str(repository), "symbolic-ref", "-q", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    current_active_ref = (
+        symbolic_ref.stdout.strip() if symbolic_ref.returncode == 0 else None
+    )
+    if current_active_ref is None and git_repository:
         errors.append(
             "data/branch-preflight.json: detached HEAD запрещён; "
             "явный immutable commit mode не поддерживается"
@@ -1008,7 +1054,11 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
         )
 
     if active_ref is not None:
-        if active_ref not in current_refs or ref_commit(repository, str(active_ref)) != current_head:
+        if (
+            active_ref != current_active_ref
+            or active_ref not in current_refs
+            or ref_commit(repository, str(active_ref)) != current_head
+        ):
             errors.append("data/branch-preflight.json: active HEAD/ref не совпадает")
         if not isinstance(base_commit, str) or not COMMIT_RE.fullmatch(base_commit):
             errors.append("data/branch-preflight.json: некорректный worktree base commit")
@@ -1163,6 +1213,46 @@ def _validate_preflight(root: Path, value: dict[str, Any], summary: dict[str, An
         )
 
 
+def _validate_trace_ab_artifact_link(
+    root: Path,
+    link: object,
+    entries_by_path: dict[str, dict[str, Any]],
+    prefix: str,
+    errors: list[str],
+) -> tuple[str, Path] | None:
+    if not isinstance(link, dict):
+        errors.append(f"{prefix}: artifact link должен быть объектом")
+        return None
+    relative = _safe_relative_path(link.get("path"))
+    if relative is None or not relative.startswith("raw/"):
+        errors.append(f"{prefix}: artifact path небезопасен")
+        return None
+    path = root / relative
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        errors.append(f"{prefix}: artifact path выходит за пределы эксперимента")
+        return None
+    if not path.is_file():
+        errors.append(f"{prefix}: artifact отсутствует: {relative}")
+        return None
+    actual_sha = sha256_file(path)
+    if link.get("sha256") != actual_sha:
+        errors.append(f"{prefix}: artifact sha256 не совпадает")
+    manifest_entry = entries_by_path.get(relative)
+    if not isinstance(manifest_entry, dict):
+        errors.append(f"{prefix}: artifact не включён в manifest: {relative}")
+    else:
+        if manifest_entry.get("sha256") != actual_sha:
+            errors.append(f"{prefix}: artifact hash в manifest не совпадает: {relative}")
+        capture = manifest_entry.get("capture")
+        if not isinstance(capture, dict) or capture.get("captured") is not True:
+            errors.append(
+                f"{prefix}: artifact не имеет capture.captured=true: {relative}"
+            )
+    return relative, path
+
+
 def _validate_trace_ab_links(
     root: Path,
     summary: dict[str, Any],
@@ -1216,6 +1306,9 @@ def _validate_trace_ab_links(
         identity = result.get("workload_identity")
         if not isinstance(identity, dict):
             continue
+        token_paths: set[str] = set()
+        execution_paths: set[str] = set()
+        captured_tokens: dict[str, dict[str, list[int]]] = {"off": {}, "on": {}}
         for side_name, mode in (("trace_off", "off"), ("trace_on", "on")):
             side = result.get(side_name)
             if not isinstance(side, dict) or not isinstance(side.get("samples"), list):
@@ -1251,27 +1344,159 @@ def _validate_trace_ab_links(
                 for field, expected in expected_identity.items():
                     if identity.get(field) != expected:
                         errors.append(f"{sample_prefix}: workload identity {field} не совпадает с run")
+
+                token_artifact = _validate_trace_ab_artifact_link(
+                    root,
+                    sample.get("token_capture_artifact"),
+                    entries_by_path,
+                    f"{sample_prefix} token capture",
+                    errors,
+                )
+                execution_artifact = _validate_trace_ab_artifact_link(
+                    root,
+                    sample.get("execution_artifact"),
+                    entries_by_path,
+                    f"{sample_prefix} execution capture",
+                    errors,
+                )
                 raw_artifacts = sample.get("raw_artifacts")
-                if not isinstance(raw_artifacts, list):
-                    continue
-                for raw_value in raw_artifacts:
-                    raw_relative = _safe_relative_path(raw_value)
-                    if raw_relative is None or not raw_relative.startswith("raw/"):
-                        errors.append(f"{sample_prefix}: trace A/B raw path небезопасен")
-                        continue
-                    raw_path = root / raw_relative
-                    if not raw_path.is_file():
-                        errors.append(f"{sample_prefix}: trace A/B raw отсутствует: {raw_relative}")
-                        continue
-                    raw_entry = entries_by_path.get(raw_relative)
-                    if not isinstance(raw_entry, dict):
-                        errors.append(f"{sample_prefix}: trace A/B raw не включён в manifest: {raw_relative}")
-                        continue
-                    capture = raw_entry.get("capture")
-                    if not isinstance(capture, dict) or capture.get("captured") is not True:
-                        errors.append(f"{sample_prefix}: trace A/B raw не имеет capture.captured=true")
-                    if raw_entry.get("sha256") != sha256_file(raw_path):
-                        errors.append(f"{sample_prefix}: trace A/B raw hash не совпадает: {raw_relative}")
+                linked_paths = {
+                    artifact[0]
+                    for artifact in (token_artifact, execution_artifact)
+                    if artifact is not None
+                }
+                if (
+                    not isinstance(raw_artifacts, list)
+                    or len(raw_artifacts) != 2
+                    or set(raw_artifacts) != linked_paths
+                ):
+                    errors.append(
+                        f"{sample_prefix}: raw_artifacts не являются distinct per-run "
+                        "token/execution links"
+                    )
+
+                if token_artifact is not None:
+                    token_relative, token_path = token_artifact
+                    if token_relative in token_paths:
+                        errors.append(
+                            f"{sample_prefix}: token capture path не distinct per-run"
+                        )
+                    token_paths.add(token_relative)
+                    token_errors: list[str] = []
+                    token_capture = _read_json(token_path, token_errors)
+                    errors.extend(
+                        f"{sample_prefix} token capture: {message}"
+                        for message in token_errors
+                    )
+                    if token_capture is not None:
+                        required_token_fields = {
+                            "schema_version",
+                            "run_id",
+                            "pair_id",
+                            "mode",
+                            "token_ids",
+                        }
+                        if set(token_capture) != required_token_fields:
+                            errors.append(
+                                f"{sample_prefix} token capture: поля должны точно соответствовать схеме"
+                            )
+                        if token_capture.get("schema_version") != "e047-token-capture/v1":
+                            errors.append(
+                                f"{sample_prefix} token capture: неверный schema_version"
+                            )
+                        for field, expected in {
+                            "run_id": run_id,
+                            "pair_id": sample.get("pair_id"),
+                            "mode": mode,
+                        }.items():
+                            if token_capture.get(field) != expected:
+                                errors.append(
+                                    f"{sample_prefix} token capture: {field} не совпадает"
+                                )
+                        token_ids = token_capture.get("token_ids")
+                        if (
+                            not isinstance(token_ids, list)
+                            or not token_ids
+                            or any(not _nonnegative_int(token) for token in token_ids)
+                        ):
+                            errors.append(
+                                f"{sample_prefix} token capture: token_ids должен быть "
+                                "непустым массивом integer >= 0"
+                            )
+                        else:
+                            calculated_token_sha = _canonical_sha256(token_ids)
+                            if sample.get("token_ids_sha256") != calculated_token_sha:
+                                errors.append(
+                                    f"{sample_prefix} token capture: token_ids_sha256 не совпадает"
+                                )
+                            pair_id = sample.get("pair_id")
+                            if isinstance(pair_id, str):
+                                captured_tokens[mode][pair_id] = token_ids
+
+                if execution_artifact is not None:
+                    execution_relative, execution_path = execution_artifact
+                    if execution_relative in execution_paths:
+                        errors.append(
+                            f"{sample_prefix}: execution capture path не distinct per-run"
+                        )
+                    execution_paths.add(execution_relative)
+                    if mode == "on":
+                        trace_errors: list[str] = []
+                        trace_events = _read_jsonl(execution_path, trace_errors)
+                        _validate_trace_events(trace_events, {str(run_id)}, trace_errors)
+                        errors.extend(
+                            f"{sample_prefix} trace-on artifact: {message}"
+                            for message in trace_errors
+                        )
+                    else:
+                        capture_errors: list[str] = []
+                        capture = _read_json(execution_path, capture_errors)
+                        errors.extend(
+                            f"{sample_prefix} trace-off artifact: {message}"
+                            for message in capture_errors
+                        )
+                        if capture is not None:
+                            required_capture_fields = {
+                                "schema_version",
+                                "run_id",
+                                "pair_id",
+                                "mode",
+                                "captured",
+                            }
+                            if set(capture) != required_capture_fields:
+                                errors.append(
+                                    f"{sample_prefix} trace-off artifact: поля должны точно соответствовать схеме"
+                                )
+                            expected_capture = {
+                                "schema_version": "e047-ab-run-capture/v1",
+                                "run_id": run_id,
+                                "pair_id": sample.get("pair_id"),
+                                "mode": "off",
+                                "captured": True,
+                            }
+                            for field, expected in expected_capture.items():
+                                if capture.get(field) != expected:
+                                    errors.append(
+                                        f"{sample_prefix} trace-off artifact: {field} не совпадает"
+                                    )
+        if token_paths & execution_paths:
+            errors.append(
+                f"{prefix}: token/execution artifact paths должны быть distinct per-run"
+            )
+        if len(token_paths) != 10 or len(execution_paths) != 10:
+            errors.append(
+                f"{prefix}: нужны 10 distinct per-run token captures и 10 execution captures"
+            )
+        for pair_id in sorted(set(captured_tokens["off"]) | set(captured_tokens["on"])):
+            if (
+                pair_id not in captured_tokens["off"]
+                or pair_id not in captured_tokens["on"]
+                or captured_tokens["off"].get(pair_id)
+                != captured_tokens["on"].get(pair_id)
+            ):
+                errors.append(
+                    f"{prefix}: off/on token arrays не совпадают для pair_id={pair_id}"
+                )
     bound_runs = {
         run_id
         for run_id, run in runs.items()

@@ -29,6 +29,55 @@ def token_ids_sha256(values: list[int]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def make_trace_event(run_id: str) -> dict:
+    return {
+        "schema_version": "e047-trace-event/v1",
+        "run_id": run_id,
+        "step": 0,
+        "phase": "decode",
+        "token_index": 0,
+        "layer_index": 0,
+        "layer_scope": "layer",
+        "op_index": 0,
+        "op_name": "GEMV",
+        "backend": "cpu",
+        "start_ns": 10,
+        "end_ns": 20,
+        "duration_ns": 10,
+        "inputs": ["weights", "activation"],
+        "outputs": ["result"],
+        "memory": {
+            "logical": {
+                "logical_read_bytes": 1000,
+                "logical_write_bytes": 100,
+                "measurement_method": "static_tensor_accounting",
+                "measurement_source": "ggml graph",
+                "measurement_confidence": "high",
+            },
+            "unique_weights": {
+                "unique_weight_bytes": 900,
+                "measurement_method": "static_tensor_accounting",
+                "measurement_source": "model tensor manifest",
+                "measurement_confidence": "high",
+            },
+            "observed_direct_ddr": {
+                "observed_direct_ddr_read_bytes": 800,
+                "observed_direct_ddr_write_bytes": 80,
+                "measurement_method": "pmu_counter_delta",
+                "measurement_source": "A733 DDR PMU",
+                "measurement_confidence": "medium",
+            },
+            "inferred_ddr": {
+                "inferred_ddr_read_bytes": 820,
+                "inferred_ddr_write_bytes": 90,
+                "measurement_method": "counter_model_fit",
+                "measurement_source": "PMU calibration model",
+                "measurement_confidence": "low",
+            },
+        },
+    }
+
+
 def read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
 
@@ -45,6 +94,18 @@ def refresh_manifest_hash(root: Path, relative: str) -> None:
     entry["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
     entry["size_bytes"] = path.stat().st_size
     manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+
+
+def refresh_trace_ab_hashes(root: Path) -> None:
+    result_path = root / "results/trace-ab.json"
+    summary_path = root / "results/summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["trace_ab_results"][0]["sha256"] = hashlib.sha256(
+        result_path.read_bytes()
+    ).hexdigest()
+    summary_path.write_text(json.dumps(summary) + "\n", encoding="utf-8")
+    refresh_manifest_hash(root, "results/trace-ab.json")
+    refresh_manifest_hash(root, "results/summary.json")
 
 
 def init_test_repository(root: Path) -> None:
@@ -185,15 +246,51 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
     runs = []
     sides = {"trace_off": [], "trace_on": []}
     raw_ab_paths = []
+    generated_token_ids = [11, 22, 33, 44]
+    generated_token_hash = token_ids_sha256(generated_token_ids)
     for mode in ("off", "on"):
         for sample_index in range(1, 6):
             pair_id = f"pair-{sample_index}"
             run_id = f"{mode}-{sample_index}"
-            raw_path = f"raw/ab/{run_id}.{'trace.jsonl' if mode == 'on' else 'stdout.log'}"
-            raw_ab_paths.append(raw_path)
-            path = root / raw_path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(f"artifact {run_id}\n", encoding="utf-8")
+            token_path = f"raw/ab/{run_id}.tokens.json"
+            execution_path = (
+                f"raw/ab/{run_id}.trace.jsonl"
+                if mode == "on"
+                else f"raw/ab/{run_id}.capture.json"
+            )
+            raw_ab_paths.extend((token_path, execution_path))
+            token_artifact = root / token_path
+            token_artifact.parent.mkdir(parents=True, exist_ok=True)
+            token_artifact.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "e047-token-capture/v1",
+                        "run_id": run_id,
+                        "pair_id": pair_id,
+                        "mode": mode,
+                        "token_ids": generated_token_ids,
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            execution_artifact = root / execution_path
+            if mode == "on":
+                write_jsonl(execution_artifact, [make_trace_event(run_id)])
+            else:
+                execution_artifact.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": "e047-ab-run-capture/v1",
+                            "run_id": run_id,
+                            "pair_id": pair_id,
+                            "mode": mode,
+                            "captured": True,
+                        }
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
             runs.append(
                 {
                     "run_id": run_id,
@@ -238,8 +335,16 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
                     "pair_id": pair_id,
                     "run_id": run_id,
                     "latency_ms": 1000.0 if mode == "off" else 1005.0,
-                    "token_ids_sha256": "e" * 64,
-                    "raw_artifacts": [raw_path],
+                    "token_ids_sha256": generated_token_hash,
+                    "token_capture_artifact": {
+                        "path": token_path,
+                        "sha256": hashlib.sha256(token_artifact.read_bytes()).hexdigest(),
+                    },
+                    "execution_artifact": {
+                        "path": execution_path,
+                        "sha256": hashlib.sha256(execution_artifact.read_bytes()).hexdigest(),
+                    },
+                    "raw_artifacts": [token_path, execution_path],
                 }
             )
     trace_ab = {
@@ -280,51 +385,6 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
     (root / "raw/stderr.log").write_text("", encoding="utf-8")
     telemetry_events = []
     trace_events = []
-    trace_template = {
-        "schema_version": "e047-trace-event/v1",
-        "step": 0,
-        "phase": "decode",
-        "token_index": 0,
-        "layer_index": 0,
-        "layer_scope": "layer",
-        "op_index": 0,
-        "op_name": "GEMV",
-        "backend": "cpu",
-        "start_ns": 10,
-        "end_ns": 20,
-        "duration_ns": 10,
-        "inputs": ["weights", "activation"],
-        "outputs": ["result"],
-        "memory": {
-            "logical": {
-                "logical_read_bytes": 1000,
-                "logical_write_bytes": 100,
-                "measurement_method": "static_tensor_accounting",
-                "measurement_source": "ggml graph",
-                "measurement_confidence": "high",
-            },
-            "unique_weights": {
-                "unique_weight_bytes": 900,
-                "measurement_method": "static_tensor_accounting",
-                "measurement_source": "model tensor manifest",
-                "measurement_confidence": "high",
-            },
-            "observed_direct_ddr": {
-                "observed_direct_ddr_read_bytes": 800,
-                "observed_direct_ddr_write_bytes": 80,
-                "measurement_method": "pmu_counter_delta",
-                "measurement_source": "A733 DDR PMU",
-                "measurement_confidence": "medium",
-            },
-            "inferred_ddr": {
-                "inferred_ddr_read_bytes": 820,
-                "inferred_ddr_write_bytes": 90,
-                "measurement_method": "counter_model_fit",
-                "measurement_source": "PMU calibration model",
-                "measurement_confidence": "low",
-            },
-        },
-    }
     for index, run in enumerate(runs, start=1):
         telemetry_events.append(
             {
@@ -338,9 +398,7 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
                 "ddr": dict(run["memory_accounting"]["observed_direct_ddr"]),
             }
         )
-        trace = json.loads(json.dumps(trace_template))
-        trace["run_id"] = run["run_id"]
-        trace_events.append(trace)
+        trace_events.append(make_trace_event(run["run_id"]))
     write_jsonl(root / "raw/telemetry.jsonl", telemetry_events)
     write_jsonl(root / "raw/trace.jsonl", trace_events)
 
@@ -369,6 +427,73 @@ def write_valid_executed_files(root: Path, status: str = "failed") -> None:
 
 
 class E053ExperimentValidatorTest(unittest.TestCase):
+    def test_trace_ab_rejects_arbitrary_ffff_token_hash_without_capture_proof(self):
+        """Заявленный token hash нельзя принять без пересчёта capture JSON."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_valid_executed_files(root)
+            result_path = root / "results/trace-ab.json"
+            trace_ab = json.loads(result_path.read_text(encoding="utf-8"))
+            for side_name in ("trace_off", "trace_on"):
+                for sample in trace_ab[side_name]["samples"]:
+                    sample["token_ids_sha256"] = "f" * 64
+            result_path.write_text(json.dumps(trace_ab) + "\n", encoding="utf-8")
+            refresh_trace_ab_hashes(root)
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any("token capture" in error for error in result["errors"]), result
+            )
+
+    def test_trace_ab_rejects_one_shared_raw_substitute_for_all_samples(self):
+        """Один stdout-like raw path не доказывает десять отдельных запусков."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_valid_executed_files(root)
+            result_path = root / "results/trace-ab.json"
+            trace_ab = json.loads(result_path.read_text(encoding="utf-8"))
+            shared = trace_ab["trace_off"]["samples"][0]["raw_artifacts"][0]
+            for side_name in ("trace_off", "trace_on"):
+                for sample in trace_ab[side_name]["samples"]:
+                    sample["raw_artifacts"] = [shared]
+            result_path.write_text(json.dumps(trace_ab) + "\n", encoding="utf-8")
+            refresh_trace_ab_hashes(root)
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any("distinct per-run" in error for error in result["errors"]), result
+            )
+
+    def test_preflight_rejects_detach_after_evidence_was_captured(self):
+        """Текущее detached-состояние проверяется, а не берётся из manifest."""
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            init_test_repository(repo)
+            root = scaffold_experiment(
+                repo / "experiments",
+                "E047-detached-after",
+                repo_root=repo,
+                hypothesis_query="проверить detach после preflight",
+            )
+            subprocess.run(
+                ["git", "-C", str(repo), "checkout", "--detach", "-q", "HEAD"],
+                check=True,
+            )
+
+            result = validate_experiment(root)
+
+            self.assertFalse(result["valid"], result)
+            self.assertTrue(
+                any("detached HEAD" in error for error in result["errors"]), result
+            )
+
     def test_preflight_rejects_staged_hidden_root_even_with_forged_tree_hash(self):
         """Подмена одного tree hash не скрывает новый root и его stage-0 blobs."""
 

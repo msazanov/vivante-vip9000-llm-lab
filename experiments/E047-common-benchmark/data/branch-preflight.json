@@ -1,10 +1,10 @@
 {
   "schema_version": "e053-branch-preflight/v3",
   "repository_root": "/tmp/vivante-vip9000-llm-lab",
-  "generated_at_utc": "2026-08-14T00:48:56.476166+00:00",
+  "generated_at_utc": "2026-08-14T01:08:05.596757+00:00",
   "search_mode": "local_git_refs_read_only",
   "experiment_id": "E047-COMMON-BENCHMARK",
-  "hypothesis_query": "единый детерминированный протокол Bonsai и LFM2.5 с жёстким послойным профайлингом",
+  "hypothesis_query": "единый детерминированный протокол Bonsai и LFM2.5 с жёстким послойным профилированием",
   "terms": [
     "LFM2.5",
     "LFM",
@@ -858,10 +858,935 @@
           ]
         }
       ],
-      "commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe"
+      "commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed"
     },
     {
       "ref": "refs/heads/codex/e048-per-op-trace",
+      "match_count": 90,
+      "matches": [
+        {
+          "term": "E047",
+          "path": "benchmarks/contracts/e047-common-benchmark.example.json",
+          "occurrences": 3,
+          "first_lines": [
+            2,
+            3,
+            130
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "benchmarks/schema/e047-common-benchmark.schema.json",
+          "occurrences": 5,
+          "first_lines": [
+            3,
+            4,
+            22,
+            26,
+            225
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 3,
+          "first_lines": [
+            1,
+            8,
+            9
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 3,
+          "first_lines": [
+            2,
+            3,
+            5
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 2,
+          "first_lines": [
+            9,
+            14
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 2,
+          "first_lines": [
+            3,
+            12
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            3
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E048-per-op-trace/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            91
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "experiments/E048-per-op-trace/data/partial-summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            60
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e047_contract.py",
+          "occurrences": 2,
+          "first_lines": [
+            10,
+            11
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 8,
+          "first_lines": [
+            15,
+            17,
+            20,
+            28,
+            43
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 3,
+          "first_lines": [
+            11,
+            46,
+            63
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "E047",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            39,
+            50,
+            62
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 10,
+          "first_lines": [
+            2,
+            10,
+            18,
+            24,
+            54
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/data/manifest.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "experiments/E047-common-benchmark/results/summary.json",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 3,
+          "first_lines": [
+            15,
+            20,
+            32
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tests/test_e053_experiment_validator.py",
+          "occurrences": 1,
+          "first_lines": [
+            104
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 2,
+          "first_lines": [
+            21,
+            22
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/experiment_validator.py",
+          "occurrences": 4,
+          "first_lines": [
+            2,
+            21,
+            22,
+            207
+          ]
+        },
+        {
+          "term": "E053",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            2,
+            62,
+            85
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 2,
+          "first_lines": [
+            8,
+            106
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 1,
+          "first_lines": [
+            13
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "LFM",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 1,
+          "first_lines": [
+            62
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "benchmarks/contracts/e047-common-benchmark.example.json",
+          "occurrences": 2,
+          "first_lines": [
+            58,
+            66
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "benchmarks/schema/e047-common-benchmark.schema.json",
+          "occurrences": 2,
+          "first_lines": [
+            5,
+            124
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "occurrences": 1,
+          "first_lines": [
+            5
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/commands.txt",
+          "occurrences": 1,
+          "first_lines": [
+            2
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
+          "occurrences": 4,
+          "first_lines": [
+            7,
+            100,
+            103,
+            109
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "experiments/E047-common-benchmark/hypothesis-preflight.md",
+          "occurrences": 2,
+          "first_lines": [
+            4,
+            11
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tests/test_e053_branch_preflight.py",
+          "occurrences": 4,
+          "first_lines": [
+            15,
+            17,
+            28,
+            31
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tooling/branch_preflight.py",
+          "occurrences": 1,
+          "first_lines": [
+            22
+          ]
+        },
+        {
+          "term": "LFM2.5",
+          "path": "tooling/scaffold_experiment.py",
+          "occurrences": 3,
+          "first_lines": [
+            38,
+            51,
+            62
+          ]
+        }
+      ],
+      "experiment_ids": [
+        "E047",
+        "E047-COMMON-BENCHMARK",
+        "E047-COMMON-BENCHMARK-V1",
+        "E047-HARD-PROFILING",
+        "E047-QUALITY",
+        "E048",
+        "E048-PER-OP-TRACE",
+        "E053",
+        "E053-BRANCH-PREFLIGHT",
+        "E053-EXPERIMENT-MANIFEST",
+        "E053-EXPERIMENT-SUMMARY"
+      ],
+      "experiment_roots": [
+        {
+          "canonical_path": "experiments/E003-q1-packed-carrier",
+          "experiment_ids": [
+            "E003",
+            "E003-Q1-PACKED-CARRIER"
+          ],
+          "paths": [
+            "experiments/E003-q1-packed-carrier/README.md",
+            "experiments/E003-q1-packed-carrier/vxc_nbg_builder.c"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E019-q1-i16-evis-gemm",
+          "experiment_ids": [
+            "E019",
+            "E019-Q1-I16-EVIS-GEMM"
+          ],
+          "paths": [
+            "experiments/E019-q1-i16-evis-gemm/README.md",
+            "experiments/E019-q1-i16-evis-gemm/matrixmul_i16_coordfix.vx",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.c",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract.h",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_contract_cli.c",
+            "experiments/E019-q1-i16-evis-gemm/q1_i16_evis_gemm_nbg_builder.c",
+            "experiments/E019-q1-i16-evis-gemm/results/2026-08-11-a733-target.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E020-q1-unpack-native-fc",
+          "experiment_ids": [
+            "E020",
+            "E020-Q1-UNPACK-NATIVE-FC"
+          ],
+          "paths": [
+            "experiments/E020-q1-unpack-native-fc/README.md",
+            "experiments/E020-q1-unpack-native-fc/q1_unpack_i8.vx",
+            "experiments/E020-q1-unpack-native-fc/q1_unpack_native_fc_nbg_builder.c",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/alternating/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/mixed/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/ones/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/fixture.json",
+            "experiments/E020-q1-unpack-native-fc/results/adversarial/zeros/profile.log",
+            "experiments/E020-q1-unpack-native-fc/results/host_m1024_k128.json",
+            "experiments/E020-q1-unpack-native-fc/results/host_m1024_k5120.json",
+            "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k128.log",
+            "experiments/E020-q1-unpack-native-fc/results/profile_m1024_k5120.log",
+            "experiments/E020-q1-unpack-native-fc/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E020-two-custom-kernel",
+          "experiment_ids": [
+            "E020",
+            "E020-TWO-CUSTOM-KERNEL"
+          ],
+          "paths": [
+            "experiments/E020-two-custom-kernel/README.md",
+            "experiments/E020-two-custom-kernel/results/2026-08-11-a733-two-custom-kernel.json",
+            "experiments/E020-two-custom-kernel/two_custom_kernel_nbg_builder.c",
+            "experiments/E020-two-custom-kernel/two_stage_invert.vx"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E021-q1-unpack-native-matmul",
+          "experiment_ids": [
+            "E021",
+            "E021-Q1-UNPACK-NATIVE-MATMUL"
+          ],
+          "paths": [
+            "experiments/E021-q1-unpack-native-matmul/README.md",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_i8.vx",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_conv1x1_nbg_builder.c",
+            "experiments/E021-q1-unpack-native-matmul/q1_unpack_native_matmul_nbg_builder.c",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/alternating/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/mixed/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/ones/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/fixture.json",
+            "experiments/E021-q1-unpack-native-matmul/results/adversarial/zeros/profile.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k128.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_e021_m1024_k5120.log",
+            "experiments/E021-q1-unpack-native-matmul/results/profile_fc_m96_k5120.log",
+            "experiments/E021-q1-unpack-native-matmul/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E022-fused-q1",
+          "experiment_ids": [
+            "E022",
+            "E022-FUSED-Q1"
+          ],
+          "paths": [
+            "experiments/E022-fused-q1/README.md",
+            "experiments/E022-fused-q1/dp16x2_b_probe.vx",
+            "experiments/E022-fused-q1/dp16x2_b_probe_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_contract.h",
+            "experiments/E022-fused-q1/q1_fused_dp16x1.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales.vx",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_k5120_scales_nbg_builder.c",
+            "experiments/E022-fused-q1/q1_fused_dp16x1_rows4_nbg_builder.c",
+            "experiments/E022-fused-q1/results/k128-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k128-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-host-summary.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k128-rows4-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k5120-m1024/golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-m1024/host_summary.json",
+            "experiments/E022-fused-q1/results/k5120-m1024/profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/alternating.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/mixed.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/ones.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/random.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/k5120-patterns/zeros.golden_i32.json",
+            "experiments/E022-fused-q1/results/k5120-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/k5120-rows4-host-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-generic-target-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-generic.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-host-summary.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/alternating.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/mixed.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/ones.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/random.profile.log",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-k5120-patterns/zeros.profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/generic.profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/generic_target_summary.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/golden_f32.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/host_summary.json",
+            "experiments/E022-fused-q1/results/scaled-m1024/profile.log",
+            "experiments/E022-fused-q1/results/scaled-m1024/thermal_after.txt",
+            "experiments/E022-fused-q1/results/scaled-m1024/thermal_before.txt",
+            "experiments/E022-fused-q1/results/target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E023-ggml-q1-seam",
+          "experiment_ids": [
+            "E023",
+            "E023-GGML-Q1-SEAM"
+          ],
+          "paths": [
+            "experiments/E023-ggml-q1-seam/README.md",
+            "experiments/E023-ggml-q1-seam/results/e023_cpu_variants.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E024-npu-full-projection",
+          "experiment_ids": [
+            "E024",
+            "E024-NPU-FULL-PROJECTION"
+          ],
+          "paths": [
+            "experiments/E024-npu-full-projection/README.md",
+            "experiments/E024-npu-full-projection/results/e024_shape_sweep.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E025-ddr-frequency",
+          "experiment_ids": [
+            "E025",
+            "E025-DDR-FREQUENCY"
+          ],
+          "paths": [
+            "experiments/E025-ddr-frequency/README.md",
+            "experiments/E025-ddr-frequency/results/e025_ddr_frequency.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E026-cpu-decode-screen",
+          "experiment_ids": [
+            "E026",
+            "E026-CPU-DECODE-SCREEN"
+          ],
+          "paths": [
+            "experiments/E026-cpu-decode-screen/README.md",
+            "experiments/E026-cpu-decode-screen/results/e026_cpu_decode_screen.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E027-poll-scheduling",
+          "experiment_ids": [
+            "E027",
+            "E027-POLL-SCHEDULING"
+          ],
+          "paths": [
+            "experiments/E027-poll-scheduling/README.md",
+            "experiments/E027-poll-scheduling/results/e027_poll_scheduling.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E028-lto",
+          "experiment_ids": [
+            "E028",
+            "E028-LTO"
+          ],
+          "paths": [
+            "experiments/E028-lto/README.md",
+            "experiments/E028-lto/results/e028_lto.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E029-mtune-a55",
+          "experiment_ids": [
+            "E029",
+            "E029-MTUNE-A55"
+          ],
+          "paths": [
+            "experiments/E029-mtune-a55/README.md",
+            "experiments/E029-mtune-a55/results/e029_mtune_a55.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E030-q1-paired-reuse",
+          "experiment_ids": [
+            "E030",
+            "E030-Q1-PAIRED-REUSE"
+          ],
+          "paths": [
+            "experiments/E030-q1-paired-reuse/README.md",
+            "experiments/E030-q1-paired-reuse/patches/0001-q1-paired-activation-reuse.patch",
+            "experiments/E030-q1-paired-reuse/results/e030_q1_paired.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E031-q1-noinline-reuse",
+          "experiment_ids": [
+            "E031",
+            "E031-Q1-NOINLINE-REUSE"
+          ],
+          "paths": [
+            "experiments/E031-q1-noinline-reuse/README.md",
+            "experiments/E031-q1-noinline-reuse/patches/0001-q1-half-noinline-reuse.patch",
+            "experiments/E031-q1-noinline-reuse/results/e031_q1_noinline.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E032-q1-block4-reuse",
+          "experiment_ids": [
+            "E032",
+            "E032-Q1-BLOCK4-REUSE"
+          ],
+          "paths": [
+            "experiments/E032-q1-block4-reuse/0001-q1-block4-reuse.patch",
+            "experiments/E032-q1-block4-reuse/README.md",
+            "experiments/E032-q1-block4-reuse/results/e032_q1_block4.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E033-scheduler-strict0",
+          "experiment_ids": [
+            "E033",
+            "E033-SCHEDULER-STRICT0"
+          ],
+          "paths": [
+            "experiments/E033-scheduler-strict0/README.md",
+            "experiments/E033-scheduler-strict0/results/e033_scheduler_strict0.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E034-worker-count-strict0",
+          "experiment_ids": [
+            "E034",
+            "E034-WORKER-COUNT-STRICT0"
+          ],
+          "paths": [
+            "experiments/E034-worker-count-strict0/README.md",
+            "experiments/E034-worker-count-strict0/results/e034_worker_count.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E035-poll-screen",
+          "experiment_ids": [
+            "E035",
+            "E035-POLL-SCREEN"
+          ],
+          "paths": [
+            "experiments/E035-poll-screen/README.md",
+            "experiments/E035-poll-screen/results/e035_poll.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E039-q1-pair-wholek",
+          "experiment_ids": [
+            "E039",
+            "E039-Q1-PAIR-WHOLEK"
+          ],
+          "paths": [
+            "experiments/E039-q1-pair-wholek/README.md",
+            "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+            "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
+            "experiments/E039-q1-pair-wholek/results/e039_target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E040-q1-register-lut",
+          "experiment_ids": [
+            "E040",
+            "E040-Q1-REGISTER-LUT"
+          ],
+          "paths": [
+            "experiments/E040-q1-register-lut/README.md",
+            "experiments/E040-q1-register-lut/e040_q1_group_harness.cpp",
+            "experiments/E040-q1-register-lut/e040_q1_group_wholek.S",
+            "experiments/E040-q1-register-lut/results/e040_target_summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E044-cluster-prfm",
+          "experiment_ids": [
+            "E044",
+            "E044-CLUSTER-PRFM"
+          ],
+          "paths": [
+            "experiments/E044-cluster-prfm/README.md",
+            "experiments/E044-cluster-prfm/data/full_temperature_1s.csv",
+            "experiments/E044-cluster-prfm/data/manifest.json",
+            "experiments/E044-cluster-prfm/data/screen_results.csv",
+            "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.png",
+            "experiments/E044-cluster-prfm/generated/e044_full_reset_temperature.svg",
+            "experiments/E044-cluster-prfm/generated/e044_screen_throughput.png",
+            "experiments/E044-cluster-prfm/generated/e044_screen_throughput.svg",
+            "experiments/E044-cluster-prfm/plot_e044.py",
+            "experiments/E044-cluster-prfm/test_plot_e044.py"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E045-dspark-stock-oom",
+          "experiment_ids": [
+            "E045",
+            "E045-DSPARK-STOCK-OOM"
+          ],
+          "paths": [
+            "experiments/E045-dspark-stock-oom/README.md",
+            "experiments/E045-dspark-stock-oom/data/manifest.json",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_b_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_c_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_e_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/memory_thermal_f_1s.csv",
+            "experiments/E045-dspark-stock-oom/data/metrics.json",
+            "experiments/E045-dspark-stock-oom/data/speculation_comparison.csv",
+            "experiments/E045-dspark-stock-oom/data/speculation_smoke.csv",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_comparison.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_memory_oom.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature.svg",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.png",
+            "experiments/E045-dspark-stock-oom/generated/e045_temperature_comparison.svg",
+            "experiments/E045-dspark-stock-oom/plot_e045.py",
+            "experiments/E045-dspark-stock-oom/test_plot_e045.py"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E047-common-benchmark",
+          "experiment_ids": [
+            "E047",
+            "E047-COMMON-BENCHMARK"
+          ],
+          "paths": [
+            "experiments/E047-common-benchmark/README.md",
+            "experiments/E047-common-benchmark/commands.txt",
+            "experiments/E047-common-benchmark/data/branch-preflight.json",
+            "experiments/E047-common-benchmark/data/manifest.json",
+            "experiments/E047-common-benchmark/device.json",
+            "experiments/E047-common-benchmark/environment.json",
+            "experiments/E047-common-benchmark/hypothesis-preflight.md",
+            "experiments/E047-common-benchmark/results/summary.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/README.md",
+            "experiments/E048-per-op-trace/commands.txt",
+            "experiments/E048-per-op-trace/data/compat-ab-ledger.json",
+            "experiments/E048-per-op-trace/data/compat-ab-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-packed-manifest.tsv",
+            "experiments/E048-per-op-trace/data/compat-ab-summary.json",
+            "experiments/E048-per-op-trace/data/compat-ab-workload-identity.json",
+            "experiments/E048-per-op-trace/data/partial-summary.json",
+            "experiments/E048-per-op-trace/data/trace-v2-allocation-identity-requirement.json",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-off-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-driver.rc.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-metadata.json.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-phases.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stderr.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-stdout.log.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-profile-telemetry.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-thermal-guard.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-token-ids.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair01-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair02-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair03-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair04-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-off-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/pair05-on-token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/compat-ab/token-ids.jsonl",
+            "experiments/E048-per-op-trace/raw/trace-capacity4096.jsonl",
+            "experiments/E048-per-op-trace/raw/trace-capacity65536.jsonl"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-SOURCE-PROVENANCE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-source-provenance.json"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TARGET-VS-BASELINE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/data/e048-target-vs-baseline.diff"
+          ]
+        },
+        {
+          "canonical_path": "experiments/E048-per-op-trace",
+          "experiment_ids": [
+            "E048",
+            "E048-PER-OP-TRACE",
+            "E048-TRACE"
+          ],
+          "paths": [
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair01-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair02-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair03-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair04-on-e048-trace.jsonl.zst",
+            "experiments/E048-per-op-trace/raw/compat-ab/compressed/pair05-on-e048-trace.jsonl.zst"
+          ]
+        }
+      ],
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
+    },
+    {
+      "ref": "refs/heads/codex/e049b-trace-analysis",
       "match_count": 90,
       "matches": [
         {
@@ -2389,7 +3314,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-      "match_count": 538,
+      "match_count": 563,
       "matches": [
         {
           "term": "E047",
@@ -2455,7 +3380,7 @@
         {
           "term": "E047",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 249,
+          "occurrences": 268,
           "first_lines": [
             6,
             11,
@@ -2515,13 +3440,13 @@
         {
           "term": "E047",
           "path": "tests/test_e053_experiment_validator.py",
-          "occurrences": 19,
+          "occurrences": 23,
           "first_lines": [
-            51,
-            71,
+            65,
             85,
-            87,
-            232
+            99,
+            101,
+            246
           ]
         },
         {
@@ -2537,11 +3462,11 @@
           "path": "tooling/experiment_validator.py",
           "occurrences": 5,
           "first_lines": [
-            57,
-            525,
-            527,
-            617,
-            711
+            61,
+            529,
+            531,
+            621,
+            715
           ]
         },
         {
@@ -2634,11 +3559,11 @@
           "path": "tests/test_e053_experiment_validator.py",
           "occurrences": 7,
           "first_lines": [
-            58,
-            62,
-            70,
-            112,
-            124
+            72,
+            76,
+            84,
+            126,
+            138
           ]
         },
         {
@@ -2656,10 +3581,10 @@
           "occurrences": 8,
           "first_lines": [
             2,
-            45,
-            46,
-            53,
-            330
+            49,
+            50,
+            57,
+            334
           ]
         },
         {
@@ -2676,13 +3601,13 @@
         {
           "term": "LFM",
           "path": "experiments/E047-common-benchmark/data/branch-preflight.json",
-          "occurrences": 15,
+          "occurrences": 17,
           "first_lines": [
             10,
             302,
-            310,
-            1057,
-            1065
+            314,
+            322,
+            1085
           ]
         },
         {
@@ -2742,9 +3667,9 @@
           "first_lines": [
             7,
             9,
-            318,
-            327,
-            336
+            330,
+            339,
+            348
           ]
         },
         {
@@ -2773,11 +3698,11 @@
           "path": "tests/test_e053_experiment_validator.py",
           "occurrences": 5,
           "first_lines": [
-            85,
-            88,
-            374,
-            382,
-            666
+            99,
+            102,
+            512,
+            520,
+            804
           ]
         },
         {
@@ -2804,8 +3729,11 @@
         "E047",
         "E047-COMMON-BENCHMARK",
         "E047-COMMON-BENCHMARK-V1",
+        "E047-DETACHED",
+        "E047-DETACHED-DIRTY",
         "E047-EXISTING",
         "E047-HARD-PROFILING",
+        "E047-INDEX-BOUND",
         "E047-QUALITY",
         "E047-REVIEW",
         "E047-REVIEW-HIDDEN",
@@ -2813,6 +3741,7 @@
         "E047-TRACE-AB-RESULT",
         "E047-TRACE-AB-RESULT-V1",
         "E047-TRACE-EVENT",
+        "E047-VISIBLE",
         "E049",
         "E049-NSI-CALIBRATION",
         "E053",
@@ -3229,7 +4158,7 @@
           ]
         }
       ],
-      "commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3"
+      "commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed"
     },
     {
       "ref": "refs/remotes/origin/codex/e048-per-op-trace",
@@ -4594,7 +5523,7 @@
           ]
         }
       ],
-      "commit": "a8b435f6ec3fb29ff33e883d0a2bb93c6babe9ba"
+      "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -4781,6 +5710,10 @@
       "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
     },
     {
+      "ref": "refs/heads/codex/e049b-trace-analysis",
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
+    },
+    {
       "ref": "refs/heads/main",
       "commit": "426d1467563da211f9621cc2692ec25cf065880d"
     },
@@ -4798,7 +5731,7 @@
     },
     {
       "ref": "refs/remotes/origin/codex/e049-nsi-calibration",
-      "commit": "a8b435f6ec3fb29ff33e883d0a2bb93c6babe9ba"
+      "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0"
     },
     {
       "ref": "refs/remotes/origin/codex/profiling-foundation",
@@ -4811,11 +5744,11 @@
   ],
   "active_worktree": {
     "ref": "refs/heads/codex/e047-hard-profiling",
-    "base_commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe",
+    "base_commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed",
     "upstream_ref": "refs/remotes/origin/codex/e047-hard-profiling",
-    "upstream_base_commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3",
+    "upstream_base_commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed",
     "tree_binding_source": "git-index-stage0",
-    "tree_binding_sha256": "4fd22a13e292900364ea54e746d3853e5fd2dafb2b74fc79f8717935c91a203a",
+    "tree_binding_sha256": "72f78b3cdac560a703be2cfce3a9a1fda7ed8c38568fb220ab2388dcd79659a1",
     "binding_excludes": [
       "experiments/E047-common-benchmark/data/branch-preflight.json",
       "experiments/E047-common-benchmark/data/manifest.json"
@@ -6148,21 +7081,21 @@
     "refs/remotes/origin/codex/profiling-foundation",
     "refs/remotes/origin/main"
   ],
-  "searched_ref_count": 10,
-  "match_count": 1282,
+  "searched_ref_count": 11,
+  "match_count": 1397,
   "match_found": true,
   "duplicate_found": true,
   "duplicate_decision": {
     "status": "duplicate_found",
     "experiment_id": "E047-COMMON-BENCHMARK",
-    "candidate_count": 4,
+    "candidate_count": 5,
     "candidates": [
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/heads/codex/e047-hard-profiling",
-        "commit": "5ffad03106611e4c00397a0773a0ef7fbc8ec1fe"
+        "commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
@@ -6175,8 +7108,15 @@
         "experiment_id": "E047-COMMON-BENCHMARK",
         "canonical_path": "experiments/E047-common-benchmark",
         "path": "experiments/E047-common-benchmark/README.md",
+        "ref": "refs/heads/codex/e049b-trace-analysis",
+        "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5"
+      },
+      {
+        "experiment_id": "E047-COMMON-BENCHMARK",
+        "canonical_path": "experiments/E047-common-benchmark",
+        "path": "experiments/E047-common-benchmark/README.md",
         "ref": "refs/remotes/origin/codex/e047-hard-profiling",
-        "commit": "1986109192c68d9d75dcbb6c1c9de5c8c1f34da3"
+        "commit": "4cc50fa241a8a06c78ce19d7762ccce3e74c63ed"
       },
       {
         "experiment_id": "E047-COMMON-BENCHMARK",
