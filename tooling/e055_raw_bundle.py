@@ -529,10 +529,13 @@ def _decode_stream(
 def _publication_contract() -> tuple[Mapping[str, Any], str]:
     # Local import avoids an import cycle when e055_q1_hotcold exposes the
     # bundle-only promotion entry point.
-    from tooling.e055_q1_hotcold import PUBLICATION_MANIFEST, load_publication_contract
+    from tooling.e055_q1_hotcold import (
+        load_publication_contract,
+        runtime_qualification_sha256,
+    )
 
     contract = load_publication_contract()
-    return contract, _sha256(PUBLICATION_MANIFEST.read_bytes())
+    return contract, runtime_qualification_sha256(contract)
 
 
 def canonical_harness_argv(
@@ -576,7 +579,7 @@ def canonical_e049c_launcher_argv(
 
 
 def _validate_qualification(
-    qualification: Any, contract: Mapping[str, Any], publication_sha256: str,
+    qualification: Any, contract: Mapping[str, Any], qualification_sha256: str,
 ) -> tuple[tuple[str, Any], ...]:
     expected = {
         "source_sha256": contract.get("source_sha256"),
@@ -586,7 +589,7 @@ def _validate_qualification(
         "upstream_commit": contract.get("upstream_commit"),
         "upstream_ref": contract.get("upstream_ref"),
         "upstream_repack_sha256": contract.get("upstream_repack_sha256"),
-        "publication_manifest_sha256": publication_sha256,
+        "runtime_qualification_sha256": qualification_sha256,
     }
     exact = _exact_keys(qualification, set(expected), "bundle qualification")
     if dict(exact) != expected:
@@ -954,9 +957,9 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
     files = seal_bundle_files(manifest_path)
     document = files.document
     _validate_manifest_shape(document)
-    contract, publication_sha256 = _publication_contract()
+    contract, qualification_sha256 = _publication_contract()
     identity = _validate_qualification(
-        document.get("qualification"), contract, publication_sha256
+        document.get("qualification"), contract, qualification_sha256
     )
     qualification = dict(identity)
     build_files: dict[str, SealedArtifact] = {}

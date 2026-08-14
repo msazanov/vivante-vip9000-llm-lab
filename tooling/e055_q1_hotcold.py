@@ -171,6 +171,29 @@ def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def runtime_qualification_sha256(contract: Mapping[str, Any]) -> str:
+    """Hash only the immutable runtime contract, never publication metadata.
+
+    The publication manifest changes whenever a new raw phase is added because
+    its staged-tree binding changes.  Hashing the complete manifest from a raw
+    bundle would therefore create a cycle: the manifest binds the bundle while
+    the bundle binds the manifest.  This canonical digest covers the exact
+    source/compiler/build/PMU/upstream qualification object without depending
+    on its mutable publication envelope.
+    """
+
+    if not isinstance(contract, Mapping):
+        raise TypeError("runtime qualification contract must be a mapping")
+    try:
+        payload = json.dumps(
+            dict(contract), sort_keys=True, separators=(",", ":"),
+            ensure_ascii=True, allow_nan=False,
+        ).encode("ascii")
+    except (TypeError, ValueError, UnicodeEncodeError) as exc:
+        raise ValueError("runtime qualification contract is not canonical JSON") from exc
+    return hashlib.sha256(payload).hexdigest()
+
+
 def load_publication_contract() -> dict[str, Any]:
     """Load the immutable runtime qualifier from committed E055 artifacts.
 

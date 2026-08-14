@@ -34,7 +34,8 @@ runs/<run-id>/runner.json
 ```
 
 `bundle.json` has schema `e055-raw-bundle/v1`. It contains the phase ID,
-qualification/publication hashes, one shared executable artifact per build,
+qualification hashes, the canonical digest of the immutable runtime
+qualification object, one shared executable artifact per build,
 and one run entry per measurement. Each run entry binds its run ID, pair ID,
 pair index/order, exact cell coordinates, build name, and five distinct raw
 artifact roles. Every non-manifest artifact entry records a canonical
@@ -51,7 +52,7 @@ than reusing its path as a run role.
 `runner.json` has schema `e055-runner-capture/v1`. It records the exact harness
 argv, a minimal explicitly non-secret environment, process exit status,
 affinity, endpoint CPUs, migration count, build name, and exact
-source/binary/compiler/upstream/publication hashes. The only permitted
+source/binary/compiler/upstream/runtime-contract hashes. The only permitted
 environment keys are `LC_ALL`, `LANG`, and `E055_BUILD_NAME`, with fixed safe
 values; unknown keys and secret-shaped keys are rejected. It also records the
 SHA-256 of the other four run artifacts so swapping roles or pairs breaks a
@@ -103,8 +104,16 @@ metadata. It cross-checks:
   pass, event group size, exact event names/configs/count semantics, integer
   counts, enabled/running times, and float running ratio exactly 1.0;
 - source, executable, compiler, upstream commit/ref/repack, PMU source, and
-  publication artifact hashes against the committed E055 qualification
-  artifacts.
+  runtime-contract digest against the committed E055 qualification artifacts.
+
+The raw phase remains part of the staged-tree binding. Only the preflight and
+publication manifest are excluded because they contain that binding. A raw
+bundle must not hash the complete publication manifest: the manifest binds the
+bundle's Git blob while its own bytes change with the resulting tree, which
+would create an unsatisfiable hash cycle. Instead, the bundle hashes the
+canonical `runtime_qualification` object; source, compiler, binaries, PMU
+configuration, and upstream provenance remain exact while publication-envelope
+metadata can be regenerated.
 
 Only after every cross-check passes does the loader construct a private derived
 sample. The public `infer_bottleneck` entry point accepts committed manifest

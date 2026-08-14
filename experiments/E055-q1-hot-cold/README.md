@@ -136,7 +136,10 @@ Raw qualification requires:
 - source, allowed O3/O3-LTO binary, compiler, immutable upstream commit/ref,
   and repack SHA-256 provenance loaded from the committed publication
   manifest, disassembly report, source binding, and committed executables.
-  Callers cannot supply substitute expected hashes.
+  Callers cannot supply substitute expected hashes. The bundle and runner bind
+  the canonical SHA-256 of the complete `runtime_qualification` object, not the
+  mutable publication-manifest bytes. This avoids a hash cycle when the
+  manifest's staged-tree binding is regenerated to include a new raw phase.
 
 The exact E049c event/config groups are:
 
@@ -203,7 +206,8 @@ the publication:
 
 1. With every non-self-referential artifact staged, branch preflight binds the
    exact stage-0 index tree while excluding only `branch-preflight.json` and
-   `manifest.json`.
+   `manifest.json`. Every raw phase path remains included; excluding raw
+   evidence would weaken provenance and is forbidden.
 2. The manifest copies that base commit, tree binding, local ref, and upstream
    ref without claiming a future commit hash.
 3. After commit and push, `python3 tooling/verify_e055_publication.py` verifies
@@ -220,6 +224,9 @@ source/compiler provenance, and disassembly checks are publication-bound.
 `infer_bottleneck()` invokes this global verifier unconditionally before it
 loads the phase-scoped sealed bundle. A locally sealed phase cannot bypass a
 stale ref, mismatched publication tree, or unrelated dirty replacement file.
+The raw bundle's runtime-contract digest is stable across regeneration of the
+publication timestamp and tree-binding envelope, but changes if any runtime
+qualification field changes.
 
 `tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
 and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks

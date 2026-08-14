@@ -52,7 +52,7 @@
       "required": [
         "source_sha256", "compiler_sha256", "compiler_id", "pmu_source_sha256",
         "upstream_commit", "upstream_ref", "upstream_repack_sha256",
-        "publication_manifest_sha256"
+        "runtime_qualification_sha256"
       ],
       "properties": {
         "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -62,7 +62,7 @@
         "upstream_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
         "upstream_ref": {"type": "string", "minLength": 1, "maxLength": 512},
         "upstream_repack_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "publication_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        "runtime_qualification_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       },
       "additionalProperties": false
     },

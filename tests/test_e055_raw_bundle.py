@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 import unittest
 
+import tooling.e055_q1_hotcold as e055_q1_hotcold
 from tooling.e055_q1_hotcold import load_publication_contract
 from tooling.e055_raw_bundle import (
     derived_sample_document,
@@ -48,8 +49,8 @@ class BundleFixture:
         self.run_dir = self.phase / "runs/run-a"
         self.manifest = self.phase / "bundle.json"
         self.contract = load_publication_contract()
-        self.publication_manifest_sha256 = sha256(
-            ROOT / "experiments/E055-q1-hot-cold/data/manifest.json"
+        self.runtime_qualification_sha256 = (
+            e055_q1_hotcold.runtime_qualification_sha256(self.contract)
         )
         self.git("init", "-q")
         self.git("config", "user.email", "e055-test@example.invalid")
@@ -265,7 +266,7 @@ class BundleFixture:
             "upstream_commit": self.contract["upstream_commit"],
             "upstream_ref": self.contract["upstream_ref"],
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
-            "publication_manifest_sha256": self.publication_manifest_sha256,
+            "runtime_qualification_sha256": self.runtime_qualification_sha256,
         }
         e049c_argv = [
             "/tmp/a733-pmu-exec", "-o", e049c_path.relative_to(self.root).as_posix(),
@@ -341,7 +342,7 @@ class BundleFixture:
             "upstream_commit": self.contract["upstream_commit"],
             "upstream_ref": self.contract["upstream_ref"],
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
-            "publication_manifest_sha256": self.publication_manifest_sha256,
+            "runtime_qualification_sha256": self.runtime_qualification_sha256,
         }
         return {
             "schema": "e055-raw-bundle/v1",
@@ -461,6 +462,46 @@ class E055SealedArtifactTest(unittest.TestCase):
 
 
 class E055RawParserTest(unittest.TestCase):
+    def test_qualification_uses_cycle_free_runtime_contract_digest(self) -> None:
+        digest_function = getattr(
+            e055_q1_hotcold, "runtime_qualification_sha256", None
+        )
+        self.assertTrue(
+            callable(digest_function),
+            "E055 needs a canonical runtime-contract digest independent of manifest bytes",
+        )
+        contract = load_publication_contract()
+        digest = digest_function(contract)
+        self.assertRegex(digest, r"^[0-9a-f]{64}$")
+
+        changed_envelope = {
+            "schema": "e055-q1-hot-cold-manifest/v2",
+            "generated_at_utc": "2099-01-01T00:00:00+00:00",
+            "publication_binding": {"staged_tree_binding_sha256": "f" * 64},
+            "runtime_qualification": copy.deepcopy(contract),
+        }
+        self.assertEqual(
+            digest,
+            digest_function(changed_envelope["runtime_qualification"]),
+        )
+        changed_envelope["runtime_qualification"]["golden_cases"] = 17
+        self.assertNotEqual(
+            digest,
+            digest_function(changed_envelope["runtime_qualification"]),
+        )
+
+        raw_schema = json.loads((
+            ROOT / "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json"
+        ).read_text(encoding="utf-8"))
+        runner_schema = json.loads((
+            ROOT / "experiments/E055-q1-hot-cold/data/runner-capture.schema.json"
+        ).read_text(encoding="utf-8"))
+        raw_required = raw_schema["properties"]["qualification"]["required"]
+        runner_required = runner_schema["properties"]["provenance"]["required"]
+        for required in (raw_required, runner_required):
+            self.assertIn("runtime_qualification_sha256", required)
+            self.assertNotIn("publication_manifest_sha256", required)
+
     def test_canonical_argv_uses_real_harness_options_and_cold_contract(self) -> None:
         from tooling.e055_raw_bundle import (
             canonical_e049c_launcher_argv,
