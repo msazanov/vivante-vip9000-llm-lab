@@ -8,6 +8,7 @@ import json
 import math
 import os
 import pathlib
+import signal
 import subprocess
 import tempfile
 import time
@@ -25,7 +26,10 @@ class A733PmuExecContractTest(unittest.TestCase):
         cls.launcher = cls.tmp / "a733-pmu-exec"
         cls.control = cls.tmp / "a733-pmu-control"
         cls.result_index = 0
-        common = ["cc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror"]
+        common = [
+            "cc", "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror",
+            "-DE049C_TESTING",
+        ]
         subprocess.run(
             [*common, str(TOOLING / "a733_pmu_exec.c"), "-o", str(cls.launcher)],
             check=True,
@@ -49,6 +53,42 @@ class A733PmuExecContractTest(unittest.TestCase):
     def next_output(self) -> pathlib.Path:
         type(self).result_index += 1
         return self.tmp / f"result-{self.result_index}.json"
+
+    def wait_for_pid_file(self, path: pathlib.Path, timeout: float = 5.0) -> int:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if path.exists() and path.read_text(encoding="ascii").strip():
+                return int(path.read_text(encoding="ascii").strip())
+            time.sleep(0.01)
+        self.fail(f"timed out waiting for PID file: {path}")
+
+    def wait_for_pid_pair(
+        self, path: pathlib.Path, timeout: float = 5.0,
+    ) -> tuple[int, int]:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if path.exists():
+                fields = path.read_text(encoding="ascii").split()
+                if len(fields) == 2:
+                    return int(fields[0]), int(fields[1])
+            time.sleep(0.01)
+        self.fail(f"timed out waiting for PID pair: {path}")
+
+    def assert_process_gone(self, pid: int, timeout: float = 5.0) -> None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                return
+            status_path = pathlib.Path(f"/proc/{pid}/stat")
+            if status_path.exists():
+                fields = status_path.read_text(encoding="ascii").split()
+                if len(fields) > 2 and fields[2] == "Z":
+                    time.sleep(0.01)
+                    continue
+            time.sleep(0.01)
+        self.fail(f"process {pid} survived launcher cleanup")
 
     def run_launcher(
         self, *args: str, thermal_guard: bool = False
@@ -352,6 +392,27 @@ class A733PmuExecContractTest(unittest.TestCase):
         self.assertEqual(output.read_text(encoding="utf-8"), "keep")
         self.assertFalse(marker.exists())
 
+    def test_post_open_validation_failure_unlinks_only_new_output(self) -> None:
+        output = self.tmp / "validation-failure.json"
+        marker = self.tmp / "validation-failure.ran"
+        sentinel = self.tmp / "validation-failure.sentinel"
+        sentinel.write_text("keep", encoding="utf-8")
+        environment = dict(os.environ)
+        environment["E049C_TEST_FAIL_OUTPUT_VALIDATION"] = str(output)
+        proc = subprocess.run(
+            [
+                str(self.launcher), "--no-drop", "--no-thermal-guard",
+                "--output", str(output), "--event-group", "core",
+                "--start-immediately", "--", "/bin/sh", "-c",
+                f"printf ran > '{marker}'",
+            ],
+            text=True, capture_output=True, timeout=15, env=environment,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertFalse(output.exists())
+        self.assertFalse(marker.exists())
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
+
     def test_child_stdout_and_stderr_are_separate_from_wrapper_streams(self) -> None:
         child_stdout = self.tmp / "child-separated.stdout"
         child_stderr = self.tmp / "child-separated.stderr"
@@ -449,6 +510,98 @@ class A733PmuExecContractTest(unittest.TestCase):
         self.assertEqual(child_stdout.read_bytes(), b"")
         self.assertIn("execvp", child_stderr.read_text(encoding="utf-8"))
         self.assertEqual(result["exit"]["code"], 127)
+
+    def test_external_sigterm_terminates_and_reaps_child_process_group(self) -> None:
+        output = self.next_output()
+        child_stdout = self.tmp / "signal-child.stdout"
+        child_stderr = self.tmp / "signal-child.stderr"
+        pid_file = self.tmp / "signal-child.pids"
+        command = [
+            str(self.launcher), "--no-drop", "--no-thermal-guard",
+            "--output", str(output), "--child-stdout", str(child_stdout),
+            "--child-stderr", str(child_stderr), "--event-group", "core",
+            "--start-immediately", "--", "/bin/sh", "-c",
+            f"sleep 30 & printf '%s %s' $$ $! > '{pid_file}'; wait",
+        ]
+        launcher = subprocess.Popen(command, text=True, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        child_pid = descendant_pid = 0
+        try:
+            child_pid, descendant_pid = self.wait_for_pid_pair(pid_file)
+            launcher.send_signal(signal.SIGTERM)
+            _, wrapper_stderr = launcher.communicate(timeout=10)
+            self.assertEqual(launcher.returncode, 128 + signal.SIGTERM, wrapper_stderr)
+            self.assertGreater(output.stat().st_size, 0)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["failure_reason"], "parent_cancelled")
+            self.assert_process_gone(descendant_pid)
+            self.assert_process_gone(child_pid)
+        finally:
+            if launcher.poll() is None:
+                launcher.kill()
+                launcher.wait(timeout=5)
+            if child_pid > 0:
+                try:
+                    os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_post_end_nonzero_exit_kills_remaining_descendant(self) -> None:
+        pid_file = self.tmp / "post-end-nonzero.pids"
+        child_stdout = self.tmp / "post-end-nonzero.stdout"
+        child_stderr = self.tmp / "post-end-nonzero.stderr"
+        proc = None
+        child_pid = descendant_pid = 0
+        try:
+            proc, result = self.run_launcher(
+                "--child-stdout", str(child_stdout), "--child-stderr",
+                str(child_stderr), "--event-group", "core", "--start-on-ready",
+                "--sync-timeout-ms", "1000", "--", "/bin/sh", "-c",
+                f"printf S >&9; read ack <&8; sleep 30 & "
+                f"printf '%s %s' $$ $! > '{pid_file}'; printf E >&9; exit 7",
+            )
+            child_pid, descendant_pid = self.wait_for_pid_pair(pid_file)
+            self.assertEqual(proc.returncode, 7)
+            self.assertEqual(result["exit"]["code"], 7)
+            self.assertEqual(result["failure_reason"], "child_exit_nonzero")
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if child_pid > 0:
+                try:
+                    os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_closed_ack_pipe_is_failure_not_sigpipe_and_cleans_descendants(self) -> None:
+        output = self.next_output()
+        child_stdout = self.tmp / "closed-ack.stdout"
+        child_stderr = self.tmp / "closed-ack.stderr"
+        pid_file = self.tmp / "closed-ack.pids"
+        command = [
+            str(self.launcher), "--no-drop", "--no-thermal-guard",
+            "--output", str(output), "--child-stdout", str(child_stdout),
+            "--child-stderr", str(child_stderr), "--event-group", "core",
+            "--start-on-ready", "--sync-timeout-ms", "1000", "--",
+            "/bin/sh", "-c", f"exec 8<&-; sleep 30 & "
+            f"printf '%s %s' $$ $! > '{pid_file}'; printf S >&9; wait",
+        ]
+        child_pid = descendant_pid = 0
+        try:
+            proc = subprocess.run(command, text=True, capture_output=True, timeout=10)
+            child_pid, descendant_pid = self.wait_for_pid_pair(pid_file)
+            self.assertNotEqual(proc.returncode, -signal.SIGPIPE)
+            self.assertGreater(output.stat().st_size, 0)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["failure_reason"], "ack_write_failed")
+            self.assert_process_gone(descendant_pid)
+        finally:
+            if child_pid > 0:
+                try:
+                    os.killpg(child_pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
     def test_capacity_provenance_does_not_claim_hardware_capacity(self) -> None:
         main_readme = (

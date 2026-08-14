@@ -63,6 +63,8 @@
 #define MAX_GROUP_EVENTS SOFTWARE_GROUP_SIZE_LIMIT
 #define EVENT_DEFINITION_COUNT 8
 
+static volatile sig_atomic_t parent_cancel_signal = 0;
+
 struct event_definition {
     const char *name;
     uint64_t config;
@@ -173,6 +175,56 @@ static void set_failure(struct run_state *run, const char *reason) {
     if (run->failure_reason[0] == '\0') {
         (void)snprintf(run->failure_reason, sizeof(run->failure_reason), "%s", reason);
     }
+}
+
+static void parent_signal_handler(int signal_number) {
+    if (parent_cancel_signal == 0) {
+        parent_cancel_signal = signal_number;
+    }
+}
+
+static int install_parent_signal_handlers(void) {
+    const int cancellation_signals[] = {SIGTERM, SIGHUP, SIGINT};
+    struct sigaction action;
+    struct sigaction ignored;
+    size_t index;
+    memset(&action, 0, sizeof(action));
+    sigemptyset(&action.sa_mask);
+    action.sa_handler = parent_signal_handler;
+    memset(&ignored, 0, sizeof(ignored));
+    sigemptyset(&ignored.sa_mask);
+    ignored.sa_handler = SIG_IGN;
+    for (index = 0; index < sizeof(cancellation_signals) /
+                                sizeof(cancellation_signals[0]); ++index) {
+        if (sigaction(cancellation_signals[index], &action, NULL) != 0) {
+            return -1;
+        }
+    }
+    return sigaction(SIGPIPE, &ignored, NULL);
+}
+
+static int reset_child_signal_handlers(void) {
+    const int signals[] = {SIGTERM, SIGHUP, SIGINT, SIGPIPE};
+    struct sigaction action;
+    size_t index;
+    memset(&action, 0, sizeof(action));
+    sigemptyset(&action.sa_mask);
+    action.sa_handler = SIG_DFL;
+    for (index = 0; index < sizeof(signals) / sizeof(signals[0]); ++index) {
+        if (sigaction(signals[index], &action, NULL) != 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static int observe_parent_cancellation(struct run_state *run) {
+    if (parent_cancel_signal == 0) {
+        return 0;
+    }
+    run->internal_failure = 1;
+    set_failure(run, "parent_cancelled");
+    return -1;
 }
 
 static int parse_positive_int(const char *text, int *value) {
@@ -695,6 +747,9 @@ static int wait_for_marker(struct run_state *run, const struct options *options,
         pid_t waited;
         int timeout = 100;
         uint64_t now = monotonic_ns();
+        if (observe_parent_cancellation(run) != 0) {
+            return -1;
+        }
         if (now >= deadline) {
             run->timed_out = 1;
             run->sync_failed = 1;
@@ -722,6 +777,9 @@ static int wait_for_marker(struct run_state *run, const struct options *options,
         }
         if (poll(&descriptor, 1, timeout) < 0) {
             if (errno == EINTR) {
+                if (observe_parent_cancellation(run) != 0) {
+                    return -1;
+                }
                 continue;
             }
             run->sync_failed = 1;
@@ -763,6 +821,9 @@ static int send_ack(struct run_state *run) {
         ssize_t written = write(run->ack_write_fd, ack + offset,
                                 sizeof(ack) - 1U - offset);
         if (written < 0 && errno == EINTR) {
+            if (observe_parent_cancellation(run) != 0) {
+                return -1;
+            }
             continue;
         }
         if (written <= 0) {
@@ -783,6 +844,9 @@ static int wait_for_child(struct run_state *run, const struct options *options) 
     }
     for (;;) {
         int status;
+        if (observe_parent_cancellation(run) != 0) {
+            return -1;
+        }
         pid_t waited = waitpid(run->child_pid, &status, WNOHANG);
         if (waited == run->child_pid) {
             run->child_status_valid = 1;
@@ -791,6 +855,9 @@ static int wait_for_child(struct run_state *run, const struct options *options) 
         }
         if (waited < 0) {
             if (errno == EINTR) {
+                if (observe_parent_cancellation(run) != 0) {
+                    return -1;
+                }
                 continue;
             }
             run->internal_failure = 1;
@@ -916,16 +983,26 @@ static void json_string(FILE *stream, const char *value) {
     fputc('"', stream);
 }
 
+static void discard_new_output(const char *path, int *fd);
+
 static int reserve_output_safely(const char *path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
     struct stat status;
+    int injected_failure = 0;
     if (fd < 0) {
         fprintf(stderr, "safe open(%s): %s\n", path, strerror(errno));
         return -1;
     }
-    if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) || status.st_nlink != 1) {
+#ifdef E049C_TESTING
+    {
+        const char *requested = getenv("E049C_TEST_FAIL_OUTPUT_VALIDATION");
+        injected_failure = requested != NULL && strcmp(requested, path) == 0;
+    }
+#endif
+    if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) || status.st_nlink != 1 ||
+        injected_failure) {
         fprintf(stderr, "unsafe output target: %s\n", path);
-        close(fd);
+        discard_new_output(path, &fd);
         return -1;
     }
     return fd;
@@ -1098,9 +1175,19 @@ static int release_setup_gate(int fd) {
 
 static int child_main(const struct options *options, char **command, int setup_read_fd,
                       int marker_write_fd, int ack_read_fd, int child_stdout_fd,
-                      int child_stderr_fd, uid_t uid, gid_t gid) {
+                      int child_stderr_fd, uid_t uid, gid_t gid,
+                      pid_t expected_parent_pid) {
     char gate;
     ssize_t bytes;
+    if (reset_child_signal_handlers() != 0 ||
+        prctl(PR_SET_PDEATHSIG, SIGTERM) != 0) {
+        dprintf(STDERR_FILENO, "child lifecycle setup failed: %s\n", strerror(errno));
+        return 126;
+    }
+    if (getppid() != expected_parent_pid) {
+        (void)raise(SIGTERM);
+        return 126;
+    }
     if (setsid() < 0) {
         dprintf(STDERR_FILENO, "setsid failed: %s\n", strerror(errno));
         return 126;
@@ -1150,6 +1237,7 @@ int main(int argc, char **argv) {
     int output_fd;
     int child_stdout_fd = -1;
     int child_stderr_fd = -1;
+    pid_t parent_pid;
 
     memset(&run, 0, sizeof(run));
     run.max_temp_mc = -1;
@@ -1160,6 +1248,11 @@ int main(int argc, char **argv) {
     if (parse_status != 0) {
         return parse_status > 0 ? 0 : 2;
     }
+    if (install_parent_signal_handlers() != 0) {
+        fprintf(stderr, "cannot install parent signal handlers: %s\n", strerror(errno));
+        return 2;
+    }
+    parent_pid = getpid();
     init_event_states(&run, options.event_group);
     if (set_child_identity(&options, &child_uid, &child_gid) != 0) {
         return 2;
@@ -1235,10 +1328,11 @@ int main(int argc, char **argv) {
             close(ack_pipe[1]);
             status = child_main(&options, command, setup_pipe[0], marker_pipe[1],
                                 ack_pipe[0], child_stdout_fd, child_stderr_fd,
-                                child_uid, child_gid);
+                                child_uid, child_gid, parent_pid);
         } else {
             status = child_main(&options, command, setup_pipe[0], -1, -1,
-                                child_stdout_fd, child_stderr_fd, child_uid, child_gid);
+                                child_stdout_fd, child_stderr_fd, child_uid, child_gid,
+                                parent_pid);
         }
         _exit(status);
     }
@@ -1283,6 +1377,10 @@ int main(int argc, char **argv) {
                     run.measured_elapsed_valid = 1;
                     if (wait_for_child(&run, &options) != 0) {
                         failed = 1;
+                    } else if (command_exit_code(&run) != 0) {
+                        run.internal_failure = 1;
+                        set_failure(&run, "child_exit_nonzero");
+                        failed = 1;
                     }
                 }
             }
@@ -1297,11 +1395,20 @@ int main(int argc, char **argv) {
                 failed = 1;
             } else {
                 run.ended = 1;
+                if (command_exit_code(&run) != 0) {
+                    run.internal_failure = 1;
+                    set_failure(&run, "child_exit_nonzero");
+                    failed = 1;
+                }
             }
             disable_group(&run);
             run.measured_elapsed_ns = monotonic_ns() - measured_start;
             run.measured_elapsed_valid = 1;
         }
+    }
+
+    if (observe_parent_cancellation(&run) != 0) {
+        failed = 1;
     }
 
     if (failed) {
@@ -1323,7 +1430,10 @@ int main(int argc, char **argv) {
     result_write_status = write_result(&options, &run, argc, argv, output_fd);
     close_event_fds(&run);
     if (result_write_status != 0) {
-        return 2;
+        return parent_cancel_signal != 0 ? 128 + parent_cancel_signal : 2;
+    }
+    if (parent_cancel_signal != 0) {
+        return 128 + parent_cancel_signal;
     }
     if (strcmp(result_status(&run), "failed") == 0) {
         return final_code != 0 ? final_code : 2;
