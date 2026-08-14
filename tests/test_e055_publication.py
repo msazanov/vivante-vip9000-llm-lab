@@ -189,6 +189,7 @@ class E055PublicationBindingTest(unittest.TestCase):
             "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
             "tooling/e055_raw_bundle.py",
             "tooling/e055_capture_scaffold.py",
+            "tooling/e055_transport_evidence.py",
             "tests/test_e055_raw_bundle.py",
             "tests/test_e055_sealed_promotion.py",
             "tests/test_e055_capture_scaffold.py",

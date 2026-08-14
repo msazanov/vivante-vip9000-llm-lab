@@ -20,6 +20,12 @@ import stat
 import subprocess
 from typing import Any, Mapping
 
+from tooling.e055_transport_evidence import (
+    canonical_deployment_layout,
+    canonical_remote_output_path,
+    validate_serialized_transport_evidence,
+)
+
 
 BUNDLE_SCHEMA = "e055-raw-bundle/v1"
 PHASE_PREFIX = PurePosixPath("experiments/E055-q1-hot-cold/raw")
@@ -46,7 +52,6 @@ CACHE_LINE_BYTES = 64
 COLD_THRASH_LINES = COLD_THRASH_BYTES // CACHE_LINE_BYTES
 COLD_THRASH_CHECKSUM = "0x8d3ea13d15850279"
 HOT_WARMUP_CALLS = 16
-E049C_EXECUTABLE = "/tmp/a733-pmu-exec"
 E049C_SYNC_TIMEOUT_MS = 5000
 E049C_MAX_TEMP_C = 85.0
 E049C_MIN_RUNNING_RATIO = 0.95
@@ -561,19 +566,22 @@ def canonical_harness_argv(
 
 def canonical_e049c_launcher_argv(
     cell: Mapping[str, Any], output_path: str,
-    harness_argv: tuple[str, ...],
+    harness_argv: tuple[str, ...], pmu_executable_path: str,
 ) -> tuple[str, ...]:
     """Return the exact E049c wrapper command accepted for E055."""
 
     if not isinstance(output_path, str) or not output_path:
         raise ValueError("E049c output path must be a nonempty string")
     output = PurePosixPath(output_path)
-    if output.is_absolute() or ".." in output.parts or output.name != "e049c.json":
-        raise ValueError("E049c output path must be the canonical run-relative path")
+    executable = PurePosixPath(pmu_executable_path)
+    if not output.is_absolute() or ".." in output.parts or output.name != "e049c.json" or \
+            not executable.is_absolute() or ".." in executable.parts or \
+            executable.name != "a733-pmu-exec-aarch64":
+        raise ValueError("E049c executable/output paths must be canonical remote paths")
     child_stdout_path = (output.parent / "target-harness.stdout.raw").as_posix()
     child_stderr_path = (output.parent / "target-harness.stderr.raw").as_posix()
     return (
-        E049C_EXECUTABLE, "-o", output_path,
+        pmu_executable_path, "-o", output_path,
         "--child-stdout", child_stdout_path,
         "--child-stderr", child_stderr_path,
         "--event-group", str(cell["pmu_group"]),
@@ -594,6 +602,7 @@ def _validate_qualification(
         "compiler_id": contract.get("compiler_id"),
         "pmu_source_sha256": contract.get("pmu_source_sha256"),
         "pmu_binary_sha256": contract.get("pmu_binary_sha256"),
+        "pmu_binary_size_bytes": contract.get("pmu_binary_size_bytes"),
         "pmu_compiler_sha256": contract.get("pmu_compiler_sha256"),
         "pmu_compiler_id": contract.get("pmu_compiler_id"),
         "upstream_commit": contract.get("upstream_commit"),
@@ -612,7 +621,8 @@ def _validate_manifest_shape(document: Mapping[str, Any]) -> None:
         document,
         {
             "schema", "experiment", "phase_id", "qualification",
-            "build_artifacts", "runs", "target_workload_executed",
+            "build_artifacts", "runs", "transport_evidence",
+            "target_workload_executed",
         },
         "raw bundle manifest",
     )
@@ -894,13 +904,14 @@ def _validate_runner(
     raw: Mapping[str, Any], run: Mapping[str, Any], cell: Mapping[str, Any],
     argv: tuple[str, ...], e049c_argv: tuple[str, ...],
     provenance: Mapping[str, Any], artifact_map: Mapping[str, SealedArtifact],
+    transport_evidence: Mapping[str, Any],
 ) -> None:
     exact = _exact_keys(
         raw,
         {
             "schema", "run_id", "pair_id", "pair_index", "pair_order", "order_index",
             "build_name", "argv", "e049c_argv", "environment", "affinity",
-            "exit", "provenance",
+            "exit", "provenance", "transport_evidence",
             "artifact_sha256", "target_workload_executed",
         },
         "runner metadata",
@@ -952,6 +963,8 @@ def _validate_runner(
         raise ValueError("runner process terminated by a signal")
     if exact.get("provenance") != provenance:
         raise ValueError("runner provenance does not match publication artifacts/build")
+    if exact.get("transport_evidence") != transport_evidence:
+        raise ValueError("runner transport evidence does not match its sealed bundle")
     hashes = _exact_keys(
         exact.get("artifact_sha256"),
         {"harness_stdout", "harness_stderr", "e049c_json", "e049c_stderr"},
@@ -983,6 +996,33 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
                 artifact.sha256 != allowed[name] or declaration.get("role") != "harness_executable":
             raise ValueError("sealed executable does not match an allowed publication build")
         build_files[name] = artifact
+
+    if len(build_files) != 1:
+        raise ValueError("one raw phase must deploy exactly one qualified harness build")
+    deployed_build = next(iter(build_files.values()))
+    layout = canonical_deployment_layout(
+        str(document["phase_id"]), deployed_build.sha256,
+        str(contract["pmu_binary_sha256"]),
+    )
+    transport_evidence = validate_serialized_transport_evidence(
+        document.get("transport_evidence"), layout,
+        (
+            {
+                "role": "harness_executable",
+                "target_path": layout.harness_path,
+                "sha256": deployed_build.sha256,
+                "size_bytes": deployed_build.size_bytes,
+                "mode": 0o755,
+            },
+            {
+                "role": "pmu_executable",
+                "target_path": layout.pmu_path,
+                "sha256": contract["pmu_binary_sha256"],
+                "size_bytes": contract["pmu_binary_size_bytes"],
+                "mode": 0o755,
+            },
+        ),
+    )
 
     samples: list[DerivedSample] = []
     for run in document["runs"]:
@@ -1038,7 +1078,7 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
         harness = _parse_json_object(stdout_payload, "E055 harness stdout payload")
         iterations, calls, elapsed_ns, checksum = _validate_harness(harness, exact_run, cell)
         executable = build_files[build_name]
-        argv = canonical_harness_argv(cell, executable.relative_path, iterations)
+        argv = canonical_harness_argv(cell, layout.harness_path, iterations)
         e049c = _parse_json_object(artifact_map["e049c_json"].payload, "E049c raw JSON")
         measured_ns, thermal_limit, max_temp, pmu_events = _validate_e049c(
             e049c, cell, argv, elapsed_ns, contract
@@ -1051,10 +1091,12 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
             artifact_map["runner_metadata"].payload, "runner metadata"
         )
         e049c_argv = canonical_e049c_launcher_argv(
-            cell, artifact_map["e049c_json"].relative_path, argv
+            cell, canonical_remote_output_path(layout, run_id), argv,
+            layout.pmu_path,
         )
         _validate_runner(
-            runner, exact_run, cell, argv, e049c_argv, provenance, artifact_map
+            runner, exact_run, cell, argv, e049c_argv, provenance, artifact_map,
+            transport_evidence,
         )
         samples.append(DerivedSample(
             run_id=run_id,

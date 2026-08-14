@@ -273,6 +273,7 @@ def load_publication_contract() -> dict[str, Any]:
     pmu_fields = {
         "pmu_artifact_path": pmu_artifact_relative,
         "pmu_binary_sha256": pmu_review.get("binary_sha256"),
+        "pmu_binary_size_bytes": PMU_ARTIFACT.stat().st_size,
         "pmu_compiler_sha256": pmu_review.get("compiler_sha256"),
         "pmu_compiler_id": pmu_review.get("compiler_id"),
     }

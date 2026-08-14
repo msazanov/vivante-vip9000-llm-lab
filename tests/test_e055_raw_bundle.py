@@ -21,6 +21,15 @@ from tooling.e055_raw_bundle import (
     load_sealed_bundle,
     seal_bundle_files,
 )
+from tooling.e055_transport_evidence import (
+    EndpointIdentity,
+    ExclusiveDeploymentReceipt,
+    FreshReadbackProof,
+    TargetArtifactObservation,
+    canonical_deployment_layout,
+    canonical_remote_output_path,
+    validate_transport_evidence,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +80,54 @@ class BundleFixture:
                 else "e055-O3-flto-aarch64"
             )
             shutil.copyfile(source, artifact_dir / f"harness-{build_name}.bin")
+        deployed_name = sorted({spec["build_name"] for spec in self.run_specs})[0]
+        deployed_binary = artifact_dir / f"harness-{deployed_name}.bin"
+        self.layout = canonical_deployment_layout(
+            "phase-a", sha256(deployed_binary), self.contract["pmu_binary_sha256"]
+        )
+        expected = (
+            {
+                "role": "harness_executable", "target_path": self.layout.harness_path,
+                "sha256": sha256(deployed_binary),
+                "size_bytes": deployed_binary.stat().st_size, "mode": 0o755,
+            },
+            {
+                "role": "pmu_executable", "target_path": self.layout.pmu_path,
+                "sha256": self.contract["pmu_binary_sha256"],
+                "size_bytes": self.contract["pmu_binary_size_bytes"], "mode": 0o755,
+            },
+        )
+        endpoint = EndpointIdentity(
+            "test_fixture", "sealed-bundle-fixture", "fake-a733", None
+        )
+        receipt_observations = tuple(
+            TargetArtifactObservation(
+                item["role"], item["target_path"], item["sha256"],
+                item["size_bytes"], item["mode"], 7, 1001 + index,
+            ) for index, item in enumerate(expected)
+        )
+        readback_observations = tuple(
+            TargetArtifactObservation(
+                item["role"], item["target_path"], item["sha256"],
+                item["size_bytes"], item["mode"], 7, 1001 + index,
+            ) for index, item in enumerate(expected)
+        )
+        self.transport_evidence = validate_transport_evidence(
+            ExclusiveDeploymentReceipt(
+                "e055-exclusive-deployment-receipt/v1", 1,
+                self.layout.deployment_root, self.layout.lock_path, True, True,
+                endpoint, receipt_observations,
+            ),
+            FreshReadbackProof(
+                "e055-fresh-readback-proof/v1", 2,
+                self.layout.deployment_root,
+                EndpointIdentity(
+                    "test_fixture", "sealed-bundle-fixture", "fake-a733", None
+                ),
+                readback_observations,
+            ),
+            self.layout, expected,
+        )
         run_entries = [self._write_run(spec) for spec in self.run_specs]
         self.run_dir = self.phase / "runs" / self.run_specs[0]["run_id"]
         self.payload = self._payload(run_entries)
@@ -184,9 +241,7 @@ class BundleFixture:
             },
             "qualification": "unqualified_harness_output_requires_E049c_join",
         }
-        binary_relative = (
-            PHASE_RELATIVE / "artifacts" / f"harness-{spec['build_name']}.bin"
-        ).as_posix()
+        binary_relative = self.layout.harness_path
         argv = [
             "taskset", "-c", str(spec["cpu"]), binary_relative,
             "--mode", spec["mode"], "--cache-state", spec["cache_state"],
@@ -264,6 +319,7 @@ class BundleFixture:
             "compiler_id": self.contract["compiler_id"],
             "pmu_source_sha256": self.contract["pmu_source_sha256"],
             "pmu_binary_sha256": self.contract["pmu_binary_sha256"],
+            "pmu_binary_size_bytes": self.contract["pmu_binary_size_bytes"],
             "pmu_compiler_sha256": self.contract["pmu_compiler_sha256"],
             "pmu_compiler_id": self.contract["pmu_compiler_id"],
             "upstream_commit": self.contract["upstream_commit"],
@@ -271,8 +327,9 @@ class BundleFixture:
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
             "runtime_qualification_sha256": self.runtime_qualification_sha256,
         }
+        remote_output = canonical_remote_output_path(self.layout, run_id)
         e049c_argv = [
-            "/tmp/a733-pmu-exec", "-o", e049c_path.relative_to(self.root).as_posix(),
+            self.layout.pmu_path, "-o", remote_output,
             "--child-stdout", (run_dir / "target-harness.stdout.raw").relative_to(
                 self.root
             ).as_posix(),
@@ -284,6 +341,12 @@ class BundleFixture:
             "--sync-timeout-ms", "5000", "--max-temp-c", "85", "--",
             *argv,
         ]
+        e049c_argv[e049c_argv.index("--child-stdout") + 1] = remote_output.replace(
+            "e049c.json", "target-harness.stdout.raw"
+        )
+        e049c_argv[e049c_argv.index("--child-stderr") + 1] = remote_output.replace(
+            "e049c.json", "target-harness.stderr.raw"
+        )
         runner = {
             "schema": "e055-runner-capture/v1",
             "run_id": run_id,
@@ -304,6 +367,7 @@ class BundleFixture:
             },
             "exit": {"code": 0, "signal": None},
             "provenance": provenance,
+            "transport_evidence": self.transport_evidence,
             "artifact_sha256": {
                 "harness_stdout": sha256(harness_stdout),
                 "harness_stderr": sha256(harness_stderr),
@@ -349,6 +413,7 @@ class BundleFixture:
             "compiler_id": self.contract["compiler_id"],
             "pmu_source_sha256": self.contract["pmu_source_sha256"],
             "pmu_binary_sha256": self.contract["pmu_binary_sha256"],
+            "pmu_binary_size_bytes": self.contract["pmu_binary_size_bytes"],
             "pmu_compiler_sha256": self.contract["pmu_compiler_sha256"],
             "pmu_compiler_id": self.contract["pmu_compiler_id"],
             "upstream_commit": self.contract["upstream_commit"],
@@ -361,6 +426,7 @@ class BundleFixture:
             "experiment": "E055-Q1-HOT-COLD",
             "phase_id": "phase-a",
             "qualification": qualification,
+            "transport_evidence": self.transport_evidence,
             "build_artifacts": build_artifacts,
             "runs": run_entries,
             "target_workload_executed": True,
@@ -418,6 +484,24 @@ class BundleFixture:
             encoding="utf-8",
         )
         self.reseal_roles({"runner_metadata"}, run_index)
+
+    def mutate_transport_evidence(self, mutate: object) -> None:
+        mutate(self.payload["transport_evidence"])
+        for index, run in enumerate(self.payload["runs"]):
+            runner_path = self.role_path("runner_metadata", index)
+            runner = json.loads(runner_path.read_text(encoding="utf-8"))
+            runner["transport_evidence"] = copy.deepcopy(
+                self.payload["transport_evidence"]
+            )
+            runner_path.write_text(
+                json.dumps(runner, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            run["artifacts"]["runner_metadata"] = self.artifact(
+                "runner_metadata", runner_path
+            )
+        self.write_manifest()
+        self.commit("reseal adversarial transport evidence mutation")
 
     def mutate_harness_stdout(self, mutate: object, run_index: int = 0) -> None:
         path = self.role_path("harness_stdout", run_index)
@@ -513,6 +597,7 @@ class E055RawParserTest(unittest.TestCase):
         for required in (raw_required, runner_required):
             self.assertIn("runtime_qualification_sha256", required)
             self.assertIn("pmu_binary_sha256", required)
+            self.assertIn("pmu_binary_size_bytes", required)
             self.assertIn("pmu_compiler_sha256", required)
             self.assertIn("pmu_compiler_id", required)
             self.assertNotIn("publication_manifest_sha256", required)
@@ -543,13 +628,19 @@ class E055RawParserTest(unittest.TestCase):
         self.assertEqual(cold_argv[cold_argv.index("--iterations") + 1], "1")
         self.assertEqual(cold_argv[cold_argv.index("--budget-ms") + 1], "0")
         self.assertEqual(cold_argv[cold_argv.index("--warmup") + 1], "0")
+        layout = canonical_deployment_layout("phase-a", "a" * 64, "b" * 64)
+        remote_output = canonical_remote_output_path(layout, "run-a")
         launcher = canonical_e049c_launcher_argv(
-            base, "raw/phase-a/runs/run-a/e049c.json", hot_argv,
+            base, remote_output, hot_argv, layout.pmu_path,
         )
         self.assertEqual(launcher, (
-            "/tmp/a733-pmu-exec", "-o", "raw/phase-a/runs/run-a/e049c.json",
-            "--child-stdout", "raw/phase-a/runs/run-a/target-harness.stdout.raw",
-            "--child-stderr", "raw/phase-a/runs/run-a/target-harness.stderr.raw",
+            layout.pmu_path, "-o", remote_output,
+            "--child-stdout", remote_output.replace(
+                "e049c.json", "target-harness.stdout.raw"
+            ),
+            "--child-stderr", remote_output.replace(
+                "e049c.json", "target-harness.stderr.raw"
+            ),
             "--event-group", "core", "--min-running-ratio", "0.95",
             "--start-on-ready", "--sync-timeout-ms", "5000",
             "--max-temp-c", "85", "--", *hot_argv,
@@ -593,6 +684,42 @@ class E055RawParserTest(unittest.TestCase):
                 fixture.role_path("runner_metadata").read_text(encoding="utf-8")
             )
             jsonschema.validate(runner_document, runner_schema)
+            raw_schema = json.loads((
+                ROOT / "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json"
+            ).read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator.check_schema(raw_schema)
+            jsonschema.validate(fixture.payload, raw_schema)
+
+    def test_resealed_forged_transport_receipt_or_readback_fails_closed(self) -> None:
+        mutations = {
+            "receipt hash": lambda raw: raw["exclusive_receipt"]["artifacts"][0].update(
+                sha256="f" * 64
+            ),
+            "receipt size": lambda raw: raw["exclusive_receipt"]["artifacts"][0].update(
+                size_bytes=1
+            ),
+            "Boolean mode": lambda raw: raw["exclusive_receipt"]["artifacts"][0].update(
+                mode=True
+            ),
+            "readback mismatch": lambda raw: raw["fresh_readback"]["artifacts"][0].update(
+                inode=9999
+            ),
+            "nonexclusive lock": lambda raw: raw["exclusive_receipt"].update(
+                lock_acquired_exclusively=False
+            ),
+            "forged endpoint": lambda raw: raw["endpoint_identity"].update(
+                endpoint_label="different-endpoint"
+            ),
+            "attestation overclaim": lambda raw: raw.update(
+                trust_statement="cryptographic device attestation"
+            ),
+            "unknown field": lambda raw: raw.update(extra="forged"),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), BundleFixture() as fixture:
+                fixture.mutate_transport_evidence(mutate)
+                with self.assertRaises(ValueError):
+                    load_sealed_bundle(fixture.manifest)
 
     def test_launcher_floor_does_not_relax_qualification_ratio(self) -> None:
         with BundleFixture() as fixture:

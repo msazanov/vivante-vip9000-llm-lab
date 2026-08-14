@@ -126,6 +126,27 @@ class E055CaptureScaffoldTest(unittest.TestCase):
         self.assertFalse(self.phase.exists())
         self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
 
+    def test_new_path_is_rolled_back_if_an_external_hardlink_appears(self) -> None:
+        real_fstat = os.fstat
+        external_link = self.root / "external-link"
+        injected = False
+
+        def hardlink_before_validation(descriptor: int) -> os.stat_result:
+            nonlocal injected
+            if not injected:
+                injected = True
+                os.link(self.phase / "bundle.json", external_link)
+            return real_fstat(descriptor)
+
+        with mock.patch(
+            "tooling.e055_capture_scaffold.os.fstat",
+            side_effect=hardlink_before_validation,
+        ):
+            with self.assertRaisesRegex(OSError, "regular file"):
+                reserve_phase(self.phase, self.plans)
+        self.assertFalse(self.phase.exists())
+        self.assertTrue(external_link.is_file())
+
     def test_environment_is_exact_and_non_secret(self) -> None:
         self.assertEqual(
             safe_environment("O3"),

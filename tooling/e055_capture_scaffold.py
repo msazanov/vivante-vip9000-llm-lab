@@ -110,7 +110,7 @@ def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
             # the already-open inode; never unlink from the pathname alone.
             opened = os.stat(descriptor)
             current = path.lstat()
-            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+            if stat.S_ISREG(current.st_mode) and \
                     (current.st_dev, current.st_ino) == (
                         opened.st_dev, opened.st_ino
                     ):
@@ -123,7 +123,7 @@ def _reserve(path: Path, maximum_size_bytes: int) -> tuple[int, ReservedOutput]:
     if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
         try:
             current = path.lstat()
-            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+            if stat.S_ISREG(current.st_mode) and \
                     (current.st_dev, current.st_ino) == (status.st_dev, status.st_ino):
                 path.unlink()
         finally:
@@ -145,7 +145,7 @@ def _rollback_reservations(
     for reservation in reversed(tuple(reservations)):
         try:
             current = reservation.path.lstat()
-            if stat.S_ISREG(current.st_mode) and current.st_nlink == 1 and \
+            if stat.S_ISREG(current.st_mode) and \
                     (current.st_dev, current.st_ino) == (
                         reservation.device, reservation.inode
                     ):

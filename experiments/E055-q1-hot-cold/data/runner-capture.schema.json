@@ -2,11 +2,73 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/msazanov/vivante-vip9000-llm-lab/e055-runner-capture/v1",
   "title": "E055 runner capture metadata",
+  "$defs": {
+    "transportObservation": {
+      "type": "object",
+      "required": ["role", "target_path", "sha256", "size_bytes", "mode", "device", "inode"],
+      "properties": {
+        "role": {"enum": ["harness_executable", "pmu_executable"]},
+        "target_path": {"type": "string", "pattern": "^/tmp/e055-q1-hot-cold/deployments/[0-9a-f]{64}/artifacts/[0-9a-f]{64}/[A-Za-z0-9._-]+$", "maxLength": 4096},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
+        "mode": {"const": 493},
+        "device": {"type": "integer", "minimum": 0},
+        "inode": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "transportEvidence": {
+      "type": "object",
+      "required": ["schema", "trust_statement", "endpoint_identity", "deployment_root", "lock_path", "exclusive_receipt", "fresh_readback"],
+      "properties": {
+        "schema": {"const": "e055-transport-evidence/v1"},
+        "trust_statement": {"const": "transport evidence only; no cryptographic device attestation; transport and endpoint remain operationally trusted"},
+        "endpoint_identity": {
+          "type": "object",
+          "required": ["trust_mode", "endpoint_label", "board_identity", "host_key_fingerprint"],
+          "properties": {
+            "trust_mode": {"enum": ["test_fixture", "pinned_host_key", "operationally_trusted"]},
+            "endpoint_label": {"type": "string", "minLength": 1, "maxLength": 256},
+            "board_identity": {"type": "string", "minLength": 1, "maxLength": 256},
+            "host_key_fingerprint": {"type": ["string", "null"], "pattern": "^SHA256:[A-Za-z0-9+/]{43}$"}
+          },
+          "additionalProperties": false
+        },
+        "deployment_root": {"type": "string", "pattern": "^/tmp/e055-q1-hot-cold/deployments/[0-9a-f]{64}$"},
+        "lock_path": {"const": "/tmp/e055-q1-hot-cold/locks/a733-target.lock"},
+        "exclusive_receipt": {
+          "type": "object",
+          "required": ["schema", "operation_sequence", "lock_acquired_exclusively", "deployment_created_exclusively", "endpoint_identity", "artifacts"],
+          "properties": {
+            "schema": {"const": "e055-exclusive-deployment-receipt/v1"},
+            "operation_sequence": {"const": 1},
+            "lock_acquired_exclusively": {"const": true},
+            "deployment_created_exclusively": {"const": true},
+            "endpoint_identity": {"$ref": "#/$defs/transportEvidence/properties/endpoint_identity"},
+            "artifacts": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/transportObservation"}}
+          },
+          "additionalProperties": false
+        },
+        "fresh_readback": {
+          "type": "object",
+          "required": ["schema", "operation_sequence", "endpoint_identity", "artifacts"],
+          "properties": {
+            "schema": {"const": "e055-fresh-readback-proof/v1"},
+            "operation_sequence": {"const": 2},
+            "endpoint_identity": {"$ref": "#/$defs/transportEvidence/properties/endpoint_identity"},
+            "artifacts": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/transportObservation"}}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "type": "object",
   "required": [
     "schema", "run_id", "pair_id", "pair_index", "pair_order",
     "order_index", "build_name", "argv", "e049c_argv", "environment", "affinity",
-    "exit", "provenance", "artifact_sha256", "target_workload_executed"
+    "exit", "provenance", "transport_evidence", "artifact_sha256", "target_workload_executed"
   ],
   "properties": {
     "schema": {"const": "e055-runner-capture/v1"},
@@ -56,7 +118,7 @@
       "type": "object",
       "required": [
         "source_sha256", "binary_sha256", "compiler_sha256", "compiler_id",
-        "pmu_source_sha256", "pmu_binary_sha256", "pmu_compiler_sha256",
+        "pmu_source_sha256", "pmu_binary_sha256", "pmu_binary_size_bytes", "pmu_compiler_sha256",
         "pmu_compiler_id", "upstream_commit", "upstream_ref",
         "upstream_repack_sha256", "runtime_qualification_sha256"
       ],
@@ -67,6 +129,7 @@
         "compiler_id": {"type": "string", "minLength": 1, "maxLength": 256},
         "pmu_source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "pmu_binary_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "pmu_binary_size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
         "pmu_compiler_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "pmu_compiler_id": {"type": "string", "minLength": 1, "maxLength": 256},
         "upstream_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
@@ -76,6 +139,7 @@
       },
       "additionalProperties": false
     },
+    "transport_evidence": {"$ref": "#/$defs/transportEvidence"},
     "artifact_sha256": {
       "type": "object",
       "required": ["harness_stdout", "harness_stderr", "e049c_json", "e049c_stderr"],

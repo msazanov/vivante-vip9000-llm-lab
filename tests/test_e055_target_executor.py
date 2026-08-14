@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -10,6 +11,7 @@ import subprocess
 import tempfile
 import unittest
 
+import tooling.e055_target_executor as target_executor
 from tooling.e055_target_executor import (
     E055TargetExecutor,
     TargetCapture,
@@ -17,6 +19,12 @@ from tooling.e055_target_executor import (
     limited_o3_microgate_plan,
 )
 from tooling.e055_raw_bundle import load_sealed_bundle
+from tooling.e055_transport_evidence import (
+    EndpointIdentity,
+    ExclusiveDeploymentReceipt,
+    FreshReadbackProof,
+    TargetArtifactObservation,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,13 +34,69 @@ class FakeTransport:
     def __init__(self, fail_at: int | None = None) -> None:
         self.fail_at = fail_at
         self.prepared = []
+        self.deployed = {}
         self.captures = []
         self.restored = 0
+        self.actions = []
 
-    def prepare(self, artifacts: tuple) -> None:
+    def _observations(self, artifacts: tuple) -> tuple[TargetArtifactObservation, ...]:
+        observations = []
+        for index, artifact in enumerate(artifacts, 1):
+            payload, mode = self.deployed[artifact.target_path]
+            observations.append(TargetArtifactObservation(
+                role=artifact.role,
+                target_path=artifact.target_path,
+                sha256=hashlib.sha256(payload).hexdigest(),
+                size_bytes=len(payload),
+                mode=mode,
+                device=7,
+                inode=1000 + index,
+            ))
+        return tuple(observations)
+
+    def prepare(
+        self, artifacts: tuple, *, deployment_root: str, lock_path: str,
+    ) -> ExclusiveDeploymentReceipt:
+        self.actions.append("prepare")
         self.prepared.extend(artifacts)
+        for artifact in artifacts:
+            if artifact.target_path in self.deployed:
+                raise FileExistsError(artifact.target_path)
+            self.assert_artifact(artifact)
+            self.deployed[artifact.target_path] = (bytes(artifact.payload), artifact.mode)
+        return ExclusiveDeploymentReceipt(
+            schema="e055-exclusive-deployment-receipt/v1",
+            operation_sequence=1,
+            deployment_root=deployment_root,
+            lock_path=lock_path,
+            lock_acquired_exclusively=True,
+            deployment_created_exclusively=True,
+            endpoint_identity=EndpointIdentity(
+                "test_fixture", "fake-transport", "fake-a733", None
+            ),
+            artifacts=self._observations(artifacts),
+        )
+
+    def assert_artifact(self, artifact) -> None:
+        if hashlib.sha256(artifact.payload).hexdigest() != artifact.sha256:
+            raise ValueError("test transport received inconsistent bytes")
+
+    def readback(
+        self, artifacts: tuple, *, deployment_root: str,
+    ) -> FreshReadbackProof:
+        self.actions.append("readback")
+        return FreshReadbackProof(
+            schema="e055-fresh-readback-proof/v1",
+            operation_sequence=2,
+            deployment_root=deployment_root,
+            endpoint_identity=EndpointIdentity(
+                "test_fixture", "fake-transport", "fake-a733", None
+            ),
+            artifacts=self._observations(artifacts),
+        )
 
     def capture(self, *, run, e049c_argv, environment) -> TargetCapture:
+        self.actions.append("capture")
         self.captures.append((run, e049c_argv, dict(environment)))
         ordinal = len(self.captures)
         failed = self.fail_at == ordinal
@@ -147,6 +211,7 @@ class FakeTransport:
         )
 
     def restore(self) -> None:
+        self.actions.append("restore")
         self.restored += 1
 
 
@@ -158,6 +223,7 @@ class RaisingTransport(FakeTransport):
 
 class RaisingAndRestoreFailingTransport(RaisingTransport):
     def restore(self) -> None:
+        self.actions.append("restore")
         self.restored += 1
         raise RuntimeError("injected restore failure")
 
@@ -173,6 +239,54 @@ class MalformedTransport(FakeTransport):
             migration_count=0,
         )
 
+
+class NoProofTransport(FakeTransport):
+    def prepare(self, artifacts: tuple, *, deployment_root: str, lock_path: str):
+        self.prepared.extend(artifacts)
+        return None
+
+    def readback(self, artifacts: tuple, *, deployment_root: str):
+        return None
+
+
+class MutatingProofTransport(FakeTransport):
+    def __init__(self, mutation: str) -> None:
+        super().__init__()
+        self.mutation = mutation
+        self.receipt = None
+
+    def prepare(self, artifacts: tuple, *, deployment_root: str, lock_path: str):
+        receipt = super().prepare(
+            artifacts, deployment_root=deployment_root, lock_path=lock_path
+        )
+        if self.mutation == "fabricated_mapping":
+            return {"schema": receipt.schema}
+        if self.mutation == "exclusive_false":
+            receipt = replace(receipt, lock_acquired_exclusively=False)
+        elif self.mutation == "forged_receipt_hash":
+            forged = replace(receipt.artifacts[0], sha256="c" * 64)
+            receipt = replace(receipt, artifacts=(forged, receipt.artifacts[1]))
+        elif self.mutation == "forged_mode_type":
+            forged = replace(receipt.artifacts[0], mode=True)
+            receipt = replace(receipt, artifacts=(forged, receipt.artifacts[1]))
+        self.receipt = receipt
+        return receipt
+
+    def readback(self, artifacts: tuple, *, deployment_root: str):
+        proof = super().readback(artifacts, deployment_root=deployment_root)
+        if self.mutation == "readback_hash_mismatch":
+            forged = replace(proof.artifacts[0], sha256="d" * 64)
+            proof = replace(proof, artifacts=(forged, proof.artifacts[1]))
+        elif self.mutation == "identity_mismatch":
+            proof = replace(
+                proof,
+                endpoint_identity=EndpointIdentity(
+                    "test_fixture", "different-endpoint", "fake-a733", None
+                ),
+            )
+        elif self.mutation == "reused_observations" and self.receipt is not None:
+            proof = replace(proof, artifacts=self.receipt.artifacts)
+        return proof
 
 class E055TargetExecutorTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -215,32 +329,91 @@ class E055TargetExecutorTest(unittest.TestCase):
             executor.execute("phase-a")
         self.assertFalse((self.root / "experiments/E055-q1-hot-cold/raw").exists())
 
+    def test_deployment_layout_is_phase_unique_and_content_addressed(self) -> None:
+        layout_function = getattr(target_executor, "canonical_deployment_layout", None)
+        self.assertTrue(callable(layout_function))
+        first = layout_function("phase-a", "a" * 64, "b" * 64)
+        repeated = layout_function("phase-a", "a" * 64, "b" * 64)
+        different_phase = layout_function("phase-b", "a" * 64, "b" * 64)
+        self.assertEqual(first, repeated)
+        self.assertNotEqual(first.deployment_root, different_phase.deployment_root)
+        self.assertIn("a" * 64, first.harness_path)
+        self.assertIn("b" * 64, first.pmu_path)
+        self.assertTrue(first.harness_path.startswith(first.deployment_root + "/"))
+        self.assertTrue(first.pmu_path.startswith(first.deployment_root + "/"))
+        self.assertNotEqual(first.lock_path, first.deployment_root)
+
+    def test_missing_deploy_and_readback_proof_refuses_before_capture(self) -> None:
+        transport = NoProofTransport()
+        with self.assertRaisesRegex(ValueError, "proof|receipt|prepare"):
+            E055TargetExecutor(self.root, transport=transport).execute("phase-no-proof")
+        self.assertEqual(transport.captures, [])
+        self.assertEqual(transport.restored, 1)
+
+    def test_forged_or_nonindependent_transport_proof_refuses_before_capture(self) -> None:
+        mutations = (
+            "fabricated_mapping", "exclusive_false", "forged_receipt_hash",
+            "forged_mode_type", "readback_hash_mismatch", "identity_mismatch",
+            "reused_observations",
+        )
+        for index, mutation in enumerate(mutations):
+            with self.subTest(mutation=mutation):
+                transport = MutatingProofTransport(mutation)
+                with self.assertRaises(ValueError):
+                    E055TargetExecutor(self.root, transport=transport).execute(
+                        f"phase-forged-{index}"
+                    )
+                self.assertEqual(transport.captures, [])
+                self.assertEqual(transport.restored, 1)
+
     def test_fake_transport_populates_exact_streams_runner_and_manifest(self) -> None:
         transport = FakeTransport()
         result = E055TargetExecutor(self.root, transport=transport).execute("phase-a")
         self.assertEqual(result.run_count, 20)
         self.assertEqual(len(transport.prepared), 2)
-        self.assertEqual({item.target_path for item in transport.prepared}, {
-            "/tmp/a733-pmu-exec",
-            "experiments/E055-q1-hot-cold/raw/phase-a/artifacts/harness-O3.bin",
-        })
+        for artifact in transport.prepared:
+            self.assertTrue(artifact.target_path.startswith(
+                "/tmp/e055-q1-hot-cold/deployments/"
+            ))
+            self.assertIn(artifact.sha256, artifact.target_path)
         self.assertEqual(len(transport.captures), 20)
         self.assertEqual(transport.restored, 1)
+        self.assertEqual(transport.actions[:3], ["prepare", "readback", "capture"])
+        self.assertEqual(transport.actions[-1], "restore")
         manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(len(manifest["runs"]), 20)
         self.assertTrue(manifest["target_workload_executed"])
+        self.assertEqual(
+            manifest["transport_evidence"]["exclusive_receipt"]["artifacts"],
+            manifest["transport_evidence"]["fresh_readback"]["artifacts"],
+        )
+        self.assertEqual(
+            manifest["transport_evidence"]["endpoint_identity"],
+            manifest["transport_evidence"]["exclusive_receipt"]["endpoint_identity"],
+        )
+        self.assertEqual(
+            manifest["transport_evidence"]["endpoint_identity"],
+            manifest["transport_evidence"]["fresh_readback"]["endpoint_identity"],
+        )
         first = manifest["runs"][0]
         run_dir = result.phase_dir / "runs" / first["run_id"]
         runner = json.loads((run_dir / "runner.json").read_text(encoding="utf-8"))
         launcher = runner["e049c_argv"]
+        remote_output = launcher[launcher.index("-o") + 1]
+        self.assertTrue(remote_output.startswith(
+            manifest["transport_evidence"]["deployment_root"] + "/captures/"
+        ))
         self.assertEqual(launcher[launcher.index("--child-stdout") + 1],
-                         first["artifacts"]["e049c_json"]["path"].replace(
+                         remote_output.replace(
                              "e049c.json", "target-harness.stdout.raw"
                          ))
         self.assertEqual(launcher[launcher.index("--child-stderr") + 1],
-                         first["artifacts"]["e049c_json"]["path"].replace(
+                         remote_output.replace(
                              "e049c.json", "target-harness.stderr.raw"
                          ))
+        self.assertEqual(
+            runner["transport_evidence"], manifest["transport_evidence"]
+        )
         stdout_envelope = json.loads(
             (run_dir / "harness.stdout.capture.json").read_text(encoding="utf-8")
         )

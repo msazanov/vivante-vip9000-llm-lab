@@ -100,6 +100,8 @@ directory. The loader derives every sample from these exact roles:
 - harness stdout and stderr stream envelopes;
 - E049c raw JSON and stderr stream envelope;
 - runner argv, minimal environment, exit, affinity, migration, and provenance;
+- one exact transport-evidence object duplicated in the bundle and every
+  successful runner record;
 - the exact committed O3 or O3-LTO executable.
 
 Each non-manifest file has a declared SHA-256, byte size, and Git blob object
@@ -119,9 +121,10 @@ Raw qualification requires:
   nonempty exact `core`, `cache`, or `memory` group, supported/valid events,
   exact name/config bindings from `tooling/a733_pmu_exec.c`, and runtime-float
   `running_ratio == 1.0` for every event;
-- the exact launcher sequence `/tmp/a733-pmu-exec -o <sealed-e049c-path>
-  --child-stdout <run>/target-harness.stdout.raw
-  --child-stderr <run>/target-harness.stderr.raw --event-group <group>
+- the exact launcher sequence `<content-addressed-pmu-path> -o
+  <phase-addressed-remote-e049c-path> --child-stdout
+  <remote-run>/target-harness.stdout.raw --child-stderr
+  <remote-run>/target-harness.stderr.raw --event-group <group>
   --min-running-ratio 0.95 --start-on-ready
   --sync-timeout-ms 5000 --max-temp-c 85 -- <exact-harness-argv>`; the 0.95
   launcher floor never relaxes the accepted runtime ratio of exactly 1.0;
@@ -140,8 +143,9 @@ Raw qualification requires:
   commit/ref, and repack SHA-256 provenance loaded from the committed
   publication manifest, disassembly/build reports, source binding, and
   committed executables. The E049c artifact is built twice in unrelated clean
-  directories from one fixed object with no linker build ID; both SHA-256
-  values must equal the committed artifact.
+directories from one fixed object with no linker build ID; both SHA-256
+  values must equal the committed artifact, and its exact byte size is part of
+  the runtime contract.
   Callers cannot supply substitute expected hashes. The bundle and runner bind
   the canonical SHA-256 of the complete `runtime_qualification` object, not the
   mutable publication-manifest bytes. This avoids a hash cycle when the
@@ -251,7 +255,10 @@ phase executable names
 `tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
 and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks
 regular-file and single-link invariants, records the original device/inode and
-role size bound, and closes all descriptors on success or partial failure.
+role size bound, and closes all descriptors on success or partial failure. If
+any reservation or post-open validation fails, it unlinks only pathnames that
+still resolve to inodes created by that invocation and removes only its empty
+new directories. Pre-existing or concurrently replaced data is not removed.
 `populate_reserved()` reopens one original inode without following links,
 takes a nonblocking exclusive lock, requires a zero-length placeholder, writes
 and synchronizes one bounded nonempty payload, and refuses a second population
@@ -269,12 +276,39 @@ pair indexes 1–5, odd pairs hot→cold, even pairs cold→hot, 64 KiB,
 `full_dotprod`, and the `core` PMU group. It reserves the complete local phase
 before transport preparation, deploys only the publication-bound harness and
 E049c bytes through the injected interface, records child stdout/stderr
-separately from wrapper stderr, and restores transport-owned target state in a
-`finally` path. A failed run leaves the bundle manifest empty, preserves every
+separately from wrapper stderr, and always invokes transport restoration. If
+execution and restoration both fail, both exceptions are retained in order
+rather than letting restoration hide the primary failure. A failed run leaves
+the bundle manifest empty, preserves every
 available captured byte plus a failure runner record, and stops before the
 next run. A successful uncommitted bundle is still not evidence: all files
 must be staged, committed, pushed, publication-verified, and reloaded by the
 sealed analyzer.
+
+Before the first capture, the executor derives a phase-unique deployment root
+from the phase ID plus the exact harness and PMU SHA-256 values. Both executable
+paths include their content hashes. It passes a fixed target-concurrency lock
+path to the transport and requires two independent API results: first an
+exclusive-deployment receipt, then a fresh readback/stat/hash proof. Each result
+must report the exact role, path, SHA-256, byte size, mode, device and inode for
+both executables, and both observations must agree exactly. The endpoint
+identity must also agree. A real SSH transport must pin the board identity and
+host-key fingerprint when available; otherwise it must explicitly use the
+`operationally_trusted` classification. The current module still contains no
+SSH implementation.
+
+These records are transport evidence, not cryptographic device attestation. An
+injected transport and its remote endpoint can lie consistently, so both remain
+inside the operational trust boundary. Git later makes the reported bytes and
+records immutable; it does not turn them into independently attested device
+truth.
+
+The E049c wrapper itself ignores parent `SIGPIPE`, converts a closed ACK channel
+to a recorded failure, and handles `TERM`, `HUP`, and `INT` by terminating and
+reaping the complete child process group before returning the signal-derived
+status. The child sets a Linux parent-death signal as defense in depth. A
+nonzero or signaled child after `E` also fails the sample and terminates any
+remaining descendants.
 
 ## Reproduction of revised Stage 1
 

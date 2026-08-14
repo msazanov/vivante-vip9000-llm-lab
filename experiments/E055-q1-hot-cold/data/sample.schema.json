@@ -74,7 +74,15 @@
         "tree": {"$ref": "#/$defs/git_oid"},
         "manifest_path": {"type": "string", "pattern": "^experiments/E055-q1-hot-cold/raw/[a-z0-9][a-z0-9._-]{0,127}/bundle\\.json$"},
         "manifest_blob_oid": {"$ref": "#/$defs/git_oid"},
-        "publication_identity": {"type": "object", "minProperties": 9, "additionalProperties": {"type": "string"}},
+        "publication_identity": {
+          "type": "object", "minProperties": 12,
+          "additionalProperties": {
+            "anyOf": [
+              {"type": "string", "minLength": 1},
+              {"type": "integer", "minimum": 1}
+            ]
+          }
+        },
         "raw_artifacts": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"$ref": "#/$defs/raw_artifact"}}
       },
       "additionalProperties": false

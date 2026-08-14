@@ -36,12 +36,18 @@ from tooling.e055_raw_bundle import (
     canonical_e049c_launcher_argv,
     canonical_harness_argv,
 )
+from tooling.e055_transport_evidence import (
+    ExclusiveDeploymentReceipt,
+    FreshReadbackProof,
+    canonical_deployment_layout,
+    canonical_remote_output_path,
+    validate_transport_evidence,
+)
 
 
 PHASE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 RAW_RELATIVE = Path("experiments/E055-q1-hot-cold/raw")
 O3_ARTIFACT = PUBLICATION_ROOT / "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64"
-PMU_TARGET_PATH = "/tmp/a733-pmu-exec"
 
 
 @dataclass(frozen=True)
@@ -75,6 +81,7 @@ class LimitedRun:
 
 @dataclass(frozen=True)
 class TargetArtifact:
+    role: str
     target_path: str
     payload: bytes
     sha256: str
@@ -99,7 +106,14 @@ class TargetCapture:
 
 
 class TargetTransport(Protocol):
-    def prepare(self, artifacts: tuple[TargetArtifact, ...]) -> None: ...
+    def prepare(
+        self, artifacts: tuple[TargetArtifact, ...], *,
+        deployment_root: str, lock_path: str,
+    ) -> ExclusiveDeploymentReceipt: ...
+
+    def readback(
+        self, artifacts: tuple[TargetArtifact, ...], *, deployment_root: str,
+    ) -> FreshReadbackProof: ...
 
     def capture(
         self, *, run: LimitedRun, e049c_argv: tuple[str, ...],
@@ -336,9 +350,18 @@ class E055TargetExecutor:
         harness_relative = harness_reservation.path.relative_to(
             self.repository_root
         ).as_posix()
+        layout = canonical_deployment_layout(
+            phase_id, _sha256(harness_payload), _sha256(pmu_payload)
+        )
         prepared = (
-            TargetArtifact(harness_relative, harness_payload, _sha256(harness_payload), 0o755),
-            TargetArtifact(PMU_TARGET_PATH, pmu_payload, _sha256(pmu_payload), 0o755),
+            TargetArtifact(
+                "harness_executable", layout.harness_path, harness_payload,
+                _sha256(harness_payload), 0o755,
+            ),
+            TargetArtifact(
+                "pmu_executable", layout.pmu_path, pmu_payload,
+                _sha256(pmu_payload), 0o755,
+            ),
         )
         qualification_sha256 = runtime_qualification_sha256(contract)
         qualification = {
@@ -347,6 +370,7 @@ class E055TargetExecutor:
             "compiler_id": contract["compiler_id"],
             "pmu_source_sha256": contract["pmu_source_sha256"],
             "pmu_binary_sha256": contract["pmu_binary_sha256"],
+            "pmu_binary_size_bytes": contract["pmu_binary_size_bytes"],
             "pmu_compiler_sha256": contract["pmu_compiler_sha256"],
             "pmu_compiler_id": contract["pmu_compiler_id"],
             "upstream_commit": contract["upstream_commit"],
@@ -356,9 +380,26 @@ class E055TargetExecutor:
         }
         object_format = _git_object_format(self.repository_root)
         run_entries: list[dict[str, Any]] = []
+        deployment_evidence: dict[str, Any] | None = None
         primary_failure: BaseException | None = None
         try:
-            self.transport.prepare(prepared)
+            receipt = self.transport.prepare(
+                prepared, deployment_root=layout.deployment_root,
+                lock_path=layout.lock_path,
+            )
+            readback = self.transport.readback(
+                prepared, deployment_root=layout.deployment_root,
+            )
+            deployment_evidence = validate_transport_evidence(
+                receipt, readback, layout,
+                tuple({
+                    "role": artifact.role,
+                    "target_path": artifact.target_path,
+                    "sha256": artifact.sha256,
+                    "size_bytes": len(artifact.payload),
+                    "mode": artifact.mode,
+                } for artifact in prepared),
+            )
             for run in plan:
                 run_dir = phase_dir / "runs" / run.run_id
                 role_reservations = {
@@ -370,13 +411,11 @@ class E055TargetExecutor:
                 }
                 cell = run.cell()
                 harness_argv = canonical_harness_argv(
-                    cell, harness_relative, run.iterations
+                    cell, layout.harness_path, run.iterations
                 )
-                e049c_relative = role_reservations["e049c_json"].path.relative_to(
-                    self.repository_root
-                ).as_posix()
+                e049c_remote = canonical_remote_output_path(layout, run.run_id)
                 e049c_argv = canonical_e049c_launcher_argv(
-                    cell, e049c_relative, harness_argv
+                    cell, e049c_remote, harness_argv, layout.pmu_path
                 )
                 environment = safe_environment(run.build_name)
                 try:
@@ -466,6 +505,7 @@ class E055TargetExecutor:
                         **qualification,
                         "binary_sha256": contract["allowed_builds"]["O3"],
                     },
+                    "transport_evidence": deployment_evidence,
                     "artifact_sha256": {
                         role: declaration["sha256"]
                         for role, declaration in role_declarations.items()
@@ -500,6 +540,8 @@ class E055TargetExecutor:
             raise
         if primary_failure is not None:
             raise primary_failure.with_traceback(primary_failure.__traceback__)
+        if deployment_evidence is None:
+            raise AssertionError("validated transport evidence was not retained")
         build_declaration = _artifact_declaration(
             self.repository_root, harness_reservation, "harness_executable",
             object_format,
@@ -509,6 +551,7 @@ class E055TargetExecutor:
             "experiment": "E055-Q1-HOT-COLD",
             "phase_id": phase_id,
             "qualification": qualification,
+            "transport_evidence": deployment_evidence,
             "build_artifacts": [{
                 "build_name": "O3", "artifact": build_declaration,
             }],
