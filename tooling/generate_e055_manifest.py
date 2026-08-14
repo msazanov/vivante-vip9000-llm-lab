@@ -43,6 +43,7 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage5-f8acab9.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
+    ROOT / "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
     ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json",
     ROOT / "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
@@ -50,10 +51,12 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
     ROOT / "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
     ROOT / "experiments/E055-q1-hot-cold/artifacts/e055-O3-flto-aarch64",
+    ROOT / "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
     ROOT / "tooling/e055_q1_hotcold.cpp",
     ROOT / "tooling/e055_q1_hotcold.py",
     ROOT / "tooling/e055_raw_bundle.py",
     ROOT / "tooling/e055_capture_scaffold.py",
+    ROOT / "tooling/build_e055_pmu_artifact.py",
     ROOT / "tooling/a733_pmu_exec.c",
     ROOT / "tooling/check_e055_disassembly.py",
     ROOT / "tooling/verify_e055_publication.py",
@@ -102,6 +105,9 @@ def build_payload(
     upstream = json.loads(
         (experiment / "data/upstream-source-binding.json").read_text(encoding="utf-8")
     )
+    pmu_review = json.loads(
+        (experiment / "data/pmu-build-review.json").read_text(encoding="utf-8")
+    )
     if disassembly.get("status") != "PASS" or not disassembly.get("builds") or any(
         item.get("golden_pass") is not True or item.get("golden_cases") != 18
         for item in disassembly.get("builds", []) if isinstance(item, dict)
@@ -111,6 +117,15 @@ def build_payload(
     allowed_builds = {
         item["name"]: item["binary_sha256"] for item in disassembly["builds"]
     }
+    pmu_artifact = root / "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64"
+    if pmu_review.get("schema") != "e055-pmu-build-review/v1" or \
+            pmu_review.get("status") != "PASS" or \
+            pmu_review.get("source_sha256") != sha256(root / "tooling/a733_pmu_exec.c") or \
+            pmu_review.get("binary_sha256") != sha256(pmu_artifact) or \
+            pmu_review.get("independent_build_sha256") != [
+                pmu_review.get("binary_sha256"), pmu_review.get("binary_sha256")
+            ]:
+        raise ValueError("PMU artifact lacks a valid reproducible-build review")
     files = []
     for path in published:
         files.append({
@@ -154,6 +169,10 @@ def build_payload(
             "upstream_repack_sha256": UPSTREAM_REPACK_SHA256,
             "pmu_group_configs": PMU_GROUP_CONFIGS,
             "pmu_source_sha256": sha256(root / "tooling/a733_pmu_exec.c"),
+            "pmu_artifact_path": pmu_artifact.relative_to(root).as_posix(),
+            "pmu_binary_sha256": pmu_review["binary_sha256"],
+            "pmu_compiler_sha256": pmu_review["compiler_sha256"],
+            "pmu_compiler_id": pmu_review["compiler_id"],
         },
         "sample_provenance_contract": (
             "infer_bottleneck accepts only a committed raw-bundle manifest path. "

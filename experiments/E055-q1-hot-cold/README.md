@@ -120,7 +120,9 @@ Raw qualification requires:
   exact name/config bindings from `tooling/a733_pmu_exec.c`, and runtime-float
   `running_ratio == 1.0` for every event;
 - the exact launcher sequence `/tmp/a733-pmu-exec -o <sealed-e049c-path>
-  --event-group <group> --min-running-ratio 0.95 --start-on-ready
+  --child-stdout <run>/target-harness.stdout.raw
+  --child-stderr <run>/target-harness.stderr.raw --event-group <group>
+  --min-running-ratio 0.95 --start-on-ready
   --sync-timeout-ms 5000 --max-temp-c 85 -- <exact-harness-argv>`; the 0.95
   launcher floor never relaxes the accepted runtime ratio of exactly 1.0;
 - readable thermal telemetry with no trip and maximum temperature at or below
@@ -133,9 +135,13 @@ Raw qualification requires:
 - `golden_pass=true`, exactly 18 golden cases, a nonzero output checksum, and
   the exact harness stdout artifact cross-bound by the runner's raw-artifact
   hashes;
-- source, allowed O3/O3-LTO binary, compiler, immutable upstream commit/ref,
-  and repack SHA-256 provenance loaded from the committed publication
-  manifest, disassembly report, source binding, and committed executables.
+- harness source, allowed O3/O3-LTO binary and compiler, E049c source,
+  reproducible E049c AArch64 binary and compiler, immutable upstream
+  commit/ref, and repack SHA-256 provenance loaded from the committed
+  publication manifest, disassembly/build reports, source binding, and
+  committed executables. The E049c artifact is built twice in unrelated clean
+  directories from one fixed object with no linker build ID; both SHA-256
+  values must equal the committed artifact.
   Callers cannot supply substitute expected hashes. The bundle and runner bind
   the canonical SHA-256 of the complete `runtime_qualification` object, not the
   mutable publication-manifest bytes. This avoids a hash cycle when the
@@ -155,6 +161,13 @@ non-finite running ratios, a thermal failure, CPU migration, an unverified hot
 or cold conditioning state, malformed checksum, or unbound provenance fails
 closed. PMU values are event counts, not bytes. E055 has no direct DDR-byte
 counter and never relabels refill or access events as traffic.
+
+The wrapper reserves the two child capture files before pipes, perf setup, or
+fork using exclusive no-follow opens. A collision therefore cannot start the
+workload. Child stdout/stderr are redirected only after `setsid`; wrapper
+stderr remains a distinct stream. Fixed synchronization descriptors 8 and 9
+cannot alias capture descriptors, and only one final successful invocation may
+populate each reserved local role.
 
 E049c starts the PMU group immediately before ACK and stops it immediately
 after the `E` marker, but its clocks are not interchangeable. Let `H` be the

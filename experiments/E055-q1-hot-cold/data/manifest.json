@@ -2,7 +2,7 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T09:58:44.322318+00:00",
+  "generated_at_utc": "2026-08-14T10:30:08.627983+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
     "preflight_base_commit": "6a8810520dfd5a5d7bda863e98da6e7fa6535c4c",
@@ -53,7 +53,11 @@
         "bus_access": "0x19"
       }
     },
-    "pmu_source_sha256": "f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0"
+    "pmu_source_sha256": "5e3e4879140f17dbc1b361e69bf8a7fac156bde6e12345af73b4a83ebb4d7bfb",
+    "pmu_artifact_path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
+    "pmu_binary_sha256": "bb9b7bda3c96146271711d81d6ac3b64d76c616b5a98ff81d78992c83cbbd878",
+    "pmu_compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
+    "pmu_compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0"
   },
   "sample_provenance_contract": "infer_bottleneck accepts only a committed raw-bundle manifest path. It derives rows from Git-sealed artifacts and publication-bound source, binary, compiler, PMU config, and upstream identities; caller-created sample mappings are never measurement evidence.",
   "model_payload_included": false,
@@ -61,8 +65,8 @@
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 16882,
-      "sha256": "4d6a243c6d4e3efdfaac806cd6b2f2c9d6a12b0c84fa600c4267bad8ed0512ea",
+      "size_bytes": 17655,
+      "sha256": "dadf283047f6211d7e286b0af1b308662b32b9edb4d73a047ee18885753dd757",
       "role": "e055-stage1"
     },
     {
@@ -114,6 +118,12 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/data/pmu-build-review.json",
+      "size_bytes": 902,
+      "sha256": "617041f647170c92d86c98006d77dd20aecef56eff2301cb836c2c5a67ef31de",
+      "role": "e055-stage1"
+    },
+    {
       "path": "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
       "size_bytes": 686,
       "sha256": "461dc732c176eca7cabf815fb99411c52ff4ca5c1518821ee3e40c2491717187",
@@ -127,14 +137,14 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
-      "size_bytes": 4806,
-      "sha256": "921de52dcfccca0efbf336db7c82d6d3a3bfda7657d7d13f05c60cdbdf5a4290",
+      "size_bytes": 5116,
+      "sha256": "8e74214fc74b7d579c365c564532eba17d03d873bd6072740ddc1a45dd1db3c2",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
-      "size_bytes": 3854,
-      "sha256": "2d7dcbf586921e8b3a8755fef5ac4c07938046bbb7487e1e31f1e7ce45f6e8eb",
+      "size_bytes": 4164,
+      "sha256": "37a903edc24548e629cbb01bcb4de40533d5f3a6e783b9eadea4c5314956509e",
       "role": "e055-stage1"
     },
     {
@@ -156,6 +166,12 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64",
+      "size_bytes": 74112,
+      "sha256": "bb9b7bda3c96146271711d81d6ac3b64d76c616b5a98ff81d78992c83cbbd878",
+      "role": "e055-stage1"
+    },
+    {
       "path": "tooling/e055_q1_hotcold.cpp",
       "size_bytes": 26068,
       "sha256": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281",
@@ -163,14 +179,14 @@
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 27040,
-      "sha256": "f3ae8516c2c6d0e379352276ac1229ad46863991ddbf88f5c1a3f631dfafc9f9",
+      "size_bytes": 28367,
+      "sha256": "e8a5ce10acc1d05efc3e830c5a40ad1ef1f8ad414f30ed61396a18172e74b2b0",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/e055_raw_bundle.py",
-      "size_bytes": 50201,
-      "sha256": "c7e099c8bc08054ed4ad7b30ecf416adbbf89e1dd804f97ae11f1060d3c5956f",
+      "size_bytes": 50855,
+      "sha256": "6bc0ca83fb29dcbcba13e03ed8c351011ef8e94fabe63b2703a05a8d5d3f98e0",
       "role": "e055-stage1"
     },
     {
@@ -180,9 +196,15 @@
       "role": "e055-stage1"
     },
     {
+      "path": "tooling/build_e055_pmu_artifact.py",
+      "size_bytes": 5657,
+      "sha256": "991505a3e4be25b8e583268a6cbf34f9adc4b31a6435a51f99c8bdf54d704e8d",
+      "role": "e055-stage1"
+    },
+    {
       "path": "tooling/a733_pmu_exec.c",
-      "size_bytes": 40165,
-      "sha256": "f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0",
+      "size_bytes": 44595,
+      "sha256": "5e3e4879140f17dbc1b361e69bf8a7fac156bde6e12345af73b4a83ebb4d7bfb",
       "role": "e055-stage1"
     },
     {
@@ -199,8 +221,8 @@
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 7649,
-      "sha256": "9f45067e27637d9031824ef3ab5a7e5143c0704ce05211ae3db636aa54b75916",
+      "size_bytes": 8831,
+      "sha256": "d99087bd9d177ea88ce962c92f3c43a09ccf658bf2605f68cef73f5f37a0f5a4",
       "role": "e055-stage1"
     },
     {
@@ -217,8 +239,8 @@
     },
     {
       "path": "tests/test_e055_raw_bundle.py",
-      "size_bytes": 42440,
-      "sha256": "c6935d1563576606af2a5d8f273690a1155b6c8879f827c11125c853057227ba",
+      "size_bytes": 43875,
+      "sha256": "08929d715b371eb2c033692ea264947b336d94de99b2443fad9e77116a73bbdc",
       "role": "e055-stage1"
     },
     {
@@ -235,14 +257,14 @@
     },
     {
       "path": "tests/test_e055_aarch64_gate.py",
-      "size_bytes": 7413,
-      "sha256": "6319e2e60d0f1d7fb52f39eeac7aacca01487cba1be54a4ff2f67c030e914a0a",
+      "size_bytes": 8717,
+      "sha256": "f0a03e8b77e5cd3ccc7271a53c3b1ec4670c2909548a6a44a2c3244580b513c4",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 18223,
-      "sha256": "72f3916e936f94d26c1253af254de89dc1d9e1ff07d44feca1d5a3b47bd9d89f",
+      "size_bytes": 19414,
+      "sha256": "327f5549e7ea5595defbb095e0740a03cea6a5c720c1b562cf1abbd4a156df4d",
       "role": "e055-stage1"
     },
     {

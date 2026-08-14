@@ -236,6 +236,14 @@ class E055PublicationBindingTest(unittest.TestCase):
             (root / "tooling/a733_pmu_exec.c").write_text(
                 "/* PMU fixture */\n", encoding="utf-8"
             )
+            artifact_dir = experiment / "artifacts"
+            artifact_dir.mkdir()
+            pmu_artifact = artifact_dir / "a733-pmu-exec-aarch64"
+            pmu_artifact.write_bytes(b"PMU fixture executable\n")
+            pmu_source_sha256 = hashlib.sha256(
+                (root / "tooling/a733_pmu_exec.c").read_bytes()
+            ).hexdigest()
+            pmu_binary_sha256 = hashlib.sha256(pmu_artifact.read_bytes()).hexdigest()
             preflight = {
                 "active_worktree": {
                     "base_commit": "a" * 40,
@@ -272,6 +280,15 @@ class E055PublicationBindingTest(unittest.TestCase):
                     "6a96da05d38f693bcf259ef063c0e4adf762c006a92252fd83133f7cf626b76d"
                 ),
             }), encoding="utf-8")
+            (data / "pmu-build-review.json").write_text(json.dumps({
+                "schema": "e055-pmu-build-review/v1",
+                "status": "PASS",
+                "source_sha256": pmu_source_sha256,
+                "binary_sha256": pmu_binary_sha256,
+                "compiler_sha256": "4" * 64,
+                "compiler_id": "aarch64-linux-gnu-gcc test",
+                "independent_build_sha256": [pmu_binary_sha256, pmu_binary_sha256],
+            }), encoding="utf-8")
             payload = generator.build_payload(
                 root=root,
                 experiment=experiment,
@@ -296,6 +313,10 @@ class E055PublicationBindingTest(unittest.TestCase):
             self.assertEqual(runtime["pmu_source_sha256"], hashlib.sha256(
                 (root / "tooling/a733_pmu_exec.c").read_bytes()
             ).hexdigest())
+            self.assertEqual(runtime["pmu_binary_sha256"], pmu_binary_sha256)
+            self.assertEqual(runtime["pmu_compiler_sha256"], "4" * 64)
+            self.assertEqual(runtime["pmu_compiler_id"],
+                             "aarch64-linux-gnu-gcc test")
 
     def test_post_commit_verifier_requires_head_local_and_upstream_exact_commit(self) -> None:
         with tempfile.TemporaryDirectory(prefix="e055-binding-") as raw:

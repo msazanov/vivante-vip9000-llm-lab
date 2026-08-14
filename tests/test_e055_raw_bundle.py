@@ -263,6 +263,9 @@ class BundleFixture:
             "compiler_sha256": self.contract["compiler_sha256"],
             "compiler_id": self.contract["compiler_id"],
             "pmu_source_sha256": self.contract["pmu_source_sha256"],
+            "pmu_binary_sha256": self.contract["pmu_binary_sha256"],
+            "pmu_compiler_sha256": self.contract["pmu_compiler_sha256"],
+            "pmu_compiler_id": self.contract["pmu_compiler_id"],
             "upstream_commit": self.contract["upstream_commit"],
             "upstream_ref": self.contract["upstream_ref"],
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
@@ -270,6 +273,12 @@ class BundleFixture:
         }
         e049c_argv = [
             "/tmp/a733-pmu-exec", "-o", e049c_path.relative_to(self.root).as_posix(),
+            "--child-stdout", (run_dir / "target-harness.stdout.raw").relative_to(
+                self.root
+            ).as_posix(),
+            "--child-stderr", (run_dir / "target-harness.stderr.raw").relative_to(
+                self.root
+            ).as_posix(),
             "--event-group", spec["pmu_group"],
             "--min-running-ratio", "0.95", "--start-on-ready",
             "--sync-timeout-ms", "5000", "--max-temp-c", "85", "--",
@@ -339,6 +348,9 @@ class BundleFixture:
             "compiler_sha256": self.contract["compiler_sha256"],
             "compiler_id": self.contract["compiler_id"],
             "pmu_source_sha256": self.contract["pmu_source_sha256"],
+            "pmu_binary_sha256": self.contract["pmu_binary_sha256"],
+            "pmu_compiler_sha256": self.contract["pmu_compiler_sha256"],
+            "pmu_compiler_id": self.contract["pmu_compiler_id"],
             "upstream_commit": self.contract["upstream_commit"],
             "upstream_ref": self.contract["upstream_ref"],
             "upstream_repack_sha256": self.contract["upstream_repack_sha256"],
@@ -500,6 +512,9 @@ class E055RawParserTest(unittest.TestCase):
         runner_required = runner_schema["properties"]["provenance"]["required"]
         for required in (raw_required, runner_required):
             self.assertIn("runtime_qualification_sha256", required)
+            self.assertIn("pmu_binary_sha256", required)
+            self.assertIn("pmu_compiler_sha256", required)
+            self.assertIn("pmu_compiler_id", required)
             self.assertNotIn("publication_manifest_sha256", required)
 
     def test_canonical_argv_uses_real_harness_options_and_cold_contract(self) -> None:
@@ -533,6 +548,8 @@ class E055RawParserTest(unittest.TestCase):
         )
         self.assertEqual(launcher, (
             "/tmp/a733-pmu-exec", "-o", "raw/phase-a/runs/run-a/e049c.json",
+            "--child-stdout", "raw/phase-a/runs/run-a/target-harness.stdout.raw",
+            "--child-stderr", "raw/phase-a/runs/run-a/target-harness.stderr.raw",
             "--event-group", "core", "--min-running-ratio", "0.95",
             "--start-on-ready", "--sync-timeout-ms", "5000",
             "--max-temp-c", "85", "--", *hot_argv,
@@ -837,6 +854,15 @@ class E055RawParserTest(unittest.TestCase):
             "migration": lambda raw: raw["affinity"].update(migration_count=1),
             "forged build hash": lambda raw: raw["provenance"].update(
                 binary_sha256="f" * 64
+            ),
+            "forged PMU binary hash": lambda raw: raw["provenance"].update(
+                pmu_binary_sha256="f" * 64
+            ),
+            "forged PMU compiler hash": lambda raw: raw["provenance"].update(
+                pmu_compiler_sha256="f" * 64
+            ),
+            "forged PMU compiler ID": lambda raw: raw["provenance"].update(
+                pmu_compiler_id="arbitrary compiler"
             ),
         }
         for name, mutate in mutations.items():

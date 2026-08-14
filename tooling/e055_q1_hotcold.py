@@ -75,6 +75,8 @@ DISASSEMBLY_REVIEW = EXPERIMENT_DATA / "disassembly-review.json"
 UPSTREAM_BINDING = EXPERIMENT_DATA / "upstream-source-binding.json"
 HARNESS_SOURCE = ROOT / "tooling/e055_q1_hotcold.cpp"
 PMU_SOURCE = ROOT / "tooling/a733_pmu_exec.c"
+PMU_ARTIFACT = ROOT / "experiments/E055-q1-hot-cold/artifacts/a733-pmu-exec-aarch64"
+PMU_BUILD_REVIEW = EXPERIMENT_DATA / "pmu-build-review.json"
 
 
 def _require_global_publication_state() -> None:
@@ -206,6 +208,7 @@ def load_publication_contract() -> dict[str, Any]:
         manifest = json.loads(PUBLICATION_MANIFEST.read_text(encoding="utf-8"))
         disassembly = json.loads(DISASSEMBLY_REVIEW.read_text(encoding="utf-8"))
         upstream = json.loads(UPSTREAM_BINDING.read_text(encoding="utf-8"))
+        pmu_review = json.loads(PMU_BUILD_REVIEW.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise ValueError(f"cannot load E055 publication contract: {exc}") from exc
     runtime = manifest.get("runtime_qualification")
@@ -260,6 +263,24 @@ def load_publication_contract() -> dict[str, Any]:
         raise ValueError("manifest PMU configs do not match E049c definitions")
     if runtime.get("pmu_source_sha256") != _sha256_file(PMU_SOURCE):
         raise ValueError("manifest does not pin the exact E049c PMU source")
+    if pmu_review.get("schema") != "e055-pmu-build-review/v1" or \
+            pmu_review.get("status") != "PASS" or \
+            pmu_review.get("independent_build_sha256") != [
+                pmu_review.get("binary_sha256"), pmu_review.get("binary_sha256")
+            ]:
+        raise ValueError("PMU publication lacks two identical clean builds")
+    pmu_artifact_relative = PMU_ARTIFACT.relative_to(ROOT).as_posix()
+    pmu_fields = {
+        "pmu_artifact_path": pmu_artifact_relative,
+        "pmu_binary_sha256": pmu_review.get("binary_sha256"),
+        "pmu_compiler_sha256": pmu_review.get("compiler_sha256"),
+        "pmu_compiler_id": pmu_review.get("compiler_id"),
+    }
+    if any(runtime.get(key) != value for key, value in pmu_fields.items()) or \
+            pmu_review.get("source_sha256") != runtime.get("pmu_source_sha256") or \
+            not PMU_ARTIFACT.is_file() or \
+            _sha256_file(PMU_ARTIFACT) != runtime.get("pmu_binary_sha256"):
+        raise ValueError("manifest PMU binary/compiler provenance is not publication-bound")
     if upstream.get("commit") != UPSTREAM_COMMIT or upstream.get("immutable_ref") != UPSTREAM_REF \
             or upstream.get("sha256") != UPSTREAM_REPACK_SHA256:
         raise ValueError("upstream source binding is not the reviewed immutable blob")
@@ -270,7 +291,8 @@ def load_publication_contract() -> dict[str, Any]:
         if isinstance(item, Mapping)
     }
     relevant = (
-        HARNESS_SOURCE, PMU_SOURCE, DISASSEMBLY_REVIEW, UPSTREAM_BINDING,
+        HARNESS_SOURCE, PMU_SOURCE, PMU_ARTIFACT, PMU_BUILD_REVIEW,
+        DISASSEMBLY_REVIEW, UPSTREAM_BINDING,
         *build_artifact_paths,
     )
     for path in relevant:

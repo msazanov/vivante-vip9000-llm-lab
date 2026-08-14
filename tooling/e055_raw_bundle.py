@@ -567,8 +567,15 @@ def canonical_e049c_launcher_argv(
 
     if not isinstance(output_path, str) or not output_path:
         raise ValueError("E049c output path must be a nonempty string")
+    output = PurePosixPath(output_path)
+    if output.is_absolute() or ".." in output.parts or output.name != "e049c.json":
+        raise ValueError("E049c output path must be the canonical run-relative path")
+    child_stdout_path = (output.parent / "target-harness.stdout.raw").as_posix()
+    child_stderr_path = (output.parent / "target-harness.stderr.raw").as_posix()
     return (
         E049C_EXECUTABLE, "-o", output_path,
+        "--child-stdout", child_stdout_path,
+        "--child-stderr", child_stderr_path,
         "--event-group", str(cell["pmu_group"]),
         "--min-running-ratio", "0.95",
         "--start-on-ready",
@@ -586,6 +593,9 @@ def _validate_qualification(
         "compiler_sha256": contract.get("compiler_sha256"),
         "compiler_id": contract.get("compiler_id"),
         "pmu_source_sha256": contract.get("pmu_source_sha256"),
+        "pmu_binary_sha256": contract.get("pmu_binary_sha256"),
+        "pmu_compiler_sha256": contract.get("pmu_compiler_sha256"),
+        "pmu_compiler_id": contract.get("pmu_compiler_id"),
         "upstream_commit": contract.get("upstream_commit"),
         "upstream_ref": contract.get("upstream_ref"),
         "upstream_repack_sha256": contract.get("upstream_repack_sha256"),

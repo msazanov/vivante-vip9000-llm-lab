@@ -1,0 +1,28 @@
+{
+  "binary_sha256": "bb9b7bda3c96146271711d81d6ac3b64d76c616b5a98ff81d78992c83cbbd878",
+  "compile_flags": [
+    "-std=c11",
+    "-O2",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-fno-record-gcc-switches",
+    "-ffile-prefix-map=<root>=.",
+    "-fdebug-prefix-map=<root>=.",
+    "-c"
+  ],
+  "compiler_id": "aarch64-linux-gnu-gcc (GCC) 16.1.0",
+  "compiler_sha256": "2fcae05bfafdfc6c0c3453431ce4538fdb8b481169c4670ae48be48a28e4fbe9",
+  "fixed_object_name": "a733_pmu_exec.o",
+  "independent_build_sha256": [
+    "bb9b7bda3c96146271711d81d6ac3b64d76c616b5a98ff81d78992c83cbbd878",
+    "bb9b7bda3c96146271711d81d6ac3b64d76c616b5a98ff81d78992c83cbbd878"
+  ],
+  "link_flags": [
+    "-Wl,--build-id=none"
+  ],
+  "schema": "e055-pmu-build-review/v1",
+  "source_path": "tooling/a733_pmu_exec.c",
+  "source_sha256": "5e3e4879140f17dbc1b361e69bf8a7fac156bde6e12345af73b4a83ebb4d7bfb",
+  "status": "PASS"
+}
