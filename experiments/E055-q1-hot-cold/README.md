@@ -1,6 +1,6 @@
 # E055 — cache-hot/cold Q1 microbenchmark
 
-Status: **REVISED STAGE 1 IMPLEMENTED; NO TARGET RUN**.
+Status: **REVISED STAGE 1 IMPLEMENTED WITH GIT-SEALED RAW INGESTION; NO TARGET RUN**.
 
 E055 is a bounded experiment designed to distinguish cache/data-carrier cost
 from unpack/compute cost in the stock Q1_0 4×4 kernel on A733. It is not a
@@ -21,6 +21,9 @@ The rejected `bba62cb` revision and its defects are preserved separately in
 [`data/review-rejection-stage2-bba62cb.md`](data/review-rejection-stage2-bba62cb.md).
 The rejected `0ed991b` target qualifier is preserved in
 [`data/review-rejection-stage3-0ed991b.md`](data/review-rejection-stage3-0ed991b.md).
+The rejected `7679828` caller-created-row qualifier is preserved in
+[`data/review-rejection-stage4-7679828.md`](data/review-rejection-stage4-7679828.md).
+Rejected revisions remain evidence of failed approaches; none is target data.
 
 ## Exact kernel and controls
 
@@ -81,11 +84,31 @@ penalty first and then takes the median of those penalties; it never divides
 independent hot and cold medians. A ratio-of-ratios may show whether the full-
 kernel penalty tracks its controls, but it remains a directional inference.
 
-## Qualification contract
+## Git-sealed raw qualification contract
 
 The standalone harness emits `e055-q1-hot-cold-harness/v1`, explicitly marked
-unqualified. A target runner must join it with E049c and produce strict
-`e055-q1-hot-cold/v2`. Qualification requires:
+unqualified. The analyzer does not accept a caller-created joined sample
+mapping, even if all fields and an unkeyed JSON hash are internally
+consistent. Its only input is the path to a committed
+`e055-raw-bundle/v1` manifest under this experiment's `raw/<phase>/`
+directory. The loader derives every sample from these exact roles:
+
+- harness stdout and stderr stream envelopes;
+- E049c raw JSON and stderr stream envelope;
+- runner argv, minimal environment, exit, affinity, migration, and provenance;
+- the exact committed O3 or O3-LTO executable.
+
+Each non-manifest file has a declared SHA-256, byte size, and Git blob object
+ID. The loader requires unique canonical relative paths and roles, regular
+single-link files, no symlinks, no hardlink aliases, no duplicate blob reuse,
+bounded sizes, and no undeclared files in the phase. It then verifies that the
+worktree bytes, stage-0 index, and `HEAD` blob are identical. The manifest is
+not self-referential: its containing commit, tree, and own blob ID are derived
+from Git and attached to every derived row. Git proves byte immutability, not
+that a device produced those bytes; this limitation is deliberate and must be
+reported with every result.
+
+Raw qualification requires:
 
 - exact fd9 `S`, fd8 `ACK`, fd9 `E` synchronization;
 - E049c v2 `sample_valid=true`, `event_source=armv8_pmuv3_raw_config`, one
@@ -98,12 +121,13 @@ unqualified. A target runner must join it with E049c and produce strict
   and zero migrations, with every identifier/count an integer rather than a
   Boolean or floating-point lookalike;
 - exact full cache-conditioning coverage metadata and checksum;
-- `golden_pass=true`, exactly 18 golden cases, and a canonical SHA-256 binding
-  of every joined field to the exact harness result;
+- `golden_pass=true`, exactly 18 golden cases, a nonzero output checksum, and
+  the exact harness stdout artifact cross-bound by the runner's raw-artifact
+  hashes;
 - source, allowed O3/O3-LTO binary, compiler, immutable upstream commit/ref,
-  and repack SHA-256 provenance loaded from the committed manifest,
-  disassembly report, and source binding. Callers cannot supply substitute
-  expected hashes.
+  and repack SHA-256 provenance loaded from the committed publication
+  manifest, disassembly report, source binding, and committed executables.
+  Callers cannot supply substitute expected hashes.
 
 The exact E049c event/config groups are:
 
@@ -113,11 +137,17 @@ The exact E049c event/config groups are:
 | `cache` | `l1d_cache_refill=0x3`, `l2d_cache_refill=0x17`, `l3d_cache_refill=0x2a` |
 | `memory` | `mem_access=0x13`, `bus_access=0x19` |
 
-`sync=false`, missing/empty PMU events, negative or Boolean counts, non-float or
+`sync=false`, nonempty stderr, missing/empty PMU events, wrong raw event config,
+negative or Boolean counts, non-float or
 non-finite running ratios, a thermal failure, CPU migration, an unverified hot
 or cold conditioning state, malformed checksum, or unbound provenance fails
 closed. PMU values are event counts, not bytes. E055 has no direct DDR-byte
 counter and never relabels refill or access events as traffic.
+
+The publication-only `sample.schema.json` describes analyzer-derived output
+and carries `x-e055-analyzer-input=false`. Its evidence object includes the
+containing commit/tree, manifest path/blob, publication identity, and all five
+raw paths/hashes/sizes/blob IDs. It is never an alternate analyzer input.
 
 ## Planned board matrix
 
@@ -157,6 +187,18 @@ the publication:
    ancestor, every manifested file hash/size matches, and both local and
    remote-tracking refs equal the exact containing commit.
 
+The verifier also requires the excluded preflight and manifest worktree/index
+bytes to equal their committed `HEAD` blobs. This closes the self-reference
+gap without writing a stale parent SHA into either file. Both deterministic
+AArch64 executables are committed under `artifacts/`; their SHA-256 values,
+source/compiler provenance, and disassembly checks are publication-bound.
+
+`tooling/e055_capture_scaffold.py` is reservation-only. It creates a new phase
+and every planned output with `O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`, checks
+regular-file and single-link invariants, and closes all descriptors on success
+or partial failure. It contains no process, remote-login, harness, or board
+execution path. Actual capture remains disabled until independent acceptance.
+
 ## Reproduction of revised Stage 1
 
 Run the adversarial host, cross/QEMU, and disassembly gates:
@@ -164,7 +206,9 @@ Run the adversarial host, cross/QEMU, and disassembly gates:
 ```text
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
   tests.test_e055_q1_hotcold tests.test_e055_harness_contract \
-  tests.test_e055_aarch64_gate tests.test_e055_publication -v
+  tests.test_e055_raw_bundle tests.test_e055_sealed_promotion \
+  tests.test_e055_capture_scaffold tests.test_e055_aarch64_gate \
+  tests.test_e055_publication -v
 ```
 
 The cross build deliberately compiles fixed-name objects before linking. A
@@ -194,4 +238,6 @@ it was a harness initialization bug, was rejected, and must not be interpreted
 as a hardware or mathematical result.
 
 No board workload, model run, OPP/DDR change, NPU run, or full-model bottleneck
-claim is part of this revised Stage 1.
+claim is part of this revised Stage 1. After a fourth independent acceptance,
+the first hardware phase is limited to CPU0 and CPU6, 64 KiB,
+`full_dotprod`, the `core` PMU group, and five alternating hot/cold pairs.

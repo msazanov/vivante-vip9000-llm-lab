@@ -21,6 +21,37 @@ def git(root: pathlib.Path, *args: str) -> str:
 
 
 class E055PublicationBindingTest(unittest.TestCase):
+    def test_publication_includes_every_sealed_bundle_component_and_binary(self) -> None:
+        relative = {
+            path.relative_to(generator.ROOT).as_posix() for path in generator.PUBLISHED
+        }
+        required = {
+            "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
+            "experiments/E055-q1-hot-cold/artifacts/e055-O3-flto-aarch64",
+            "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
+            "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
+            "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
+            "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
+            "tooling/e055_raw_bundle.py",
+            "tooling/e055_capture_scaffold.py",
+            "tests/test_e055_raw_bundle.py",
+            "tests/test_e055_sealed_promotion.py",
+            "tests/test_e055_capture_scaffold.py",
+        }
+        self.assertTrue(required.issubset(relative), sorted(required - relative))
+
+    def test_sample_schema_is_derived_output_not_an_analyzer_input(self) -> None:
+        schema = json.loads((
+            generator.ROOT
+            / "experiments/E055-q1-hot-cold/data/sample.schema.json"
+        ).read_text(encoding="utf-8"))
+        self.assertEqual(schema["properties"]["schema"]["const"],
+                         "e055-derived-sample/v1")
+        self.assertFalse(schema["x-e055-analyzer-input"])
+        evidence = schema["properties"]["evidence"]
+        self.assertTrue({"commit", "tree", "manifest_path", "manifest_blob_oid",
+                         "raw_artifacts"}.issubset(evidence["required"]))
+
     def test_documented_scripts_bootstrap_when_executed_from_tooling(self) -> None:
         tooling = pathlib.Path(__file__).resolve().parents[1] / "tooling"
         for name in ("generate_e055_manifest.py", "verify_e055_publication.py"):
@@ -162,6 +193,10 @@ class E055PublicationBindingTest(unittest.TestCase):
             head = git(root, "rev-parse", "HEAD")
             git(root, "update-ref", "refs/remotes/origin/codex/e055-q1-hot-cold", head)
             self.assertEqual(verifier.verify_publication(root, preflight_path, manifest_path), [])
+            manifest_path.write_text(json.dumps({**manifest, "dirty": True}), encoding="utf-8")
+            errors = verifier.verify_publication(root, preflight_path, manifest_path)
+            self.assertTrue(any("manifest worktree" in error for error in errors), errors)
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             git(root, "update-ref", "refs/remotes/origin/codex/e055-q1-hot-cold", base)
             errors = verifier.verify_publication(root, preflight_path, manifest_path)
             self.assertTrue(any("upstream" in error for error in errors), errors)

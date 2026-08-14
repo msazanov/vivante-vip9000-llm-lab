@@ -78,9 +78,10 @@ def reserve_phase(
     phase = Path(phase_dir)
     if RUN_ID_RE.fullmatch(phase.name) is None:
         raise ValueError("phase directory name must be canonical and bounded")
-    parent_status = phase.parent.stat()
-    if not stat.S_ISDIR(parent_status.st_mode):
-        raise ValueError("phase parent must be an existing directory")
+    parent_status = phase.parent.lstat()
+    if not stat.S_ISDIR(parent_status.st_mode) or \
+            phase.parent.resolve(strict=True) != phase.parent.absolute():
+        raise ValueError("phase parent must be one existing non-symlink directory")
 
     os.mkdir(phase, 0o700)
     artifact_dir = phase / "artifacts"

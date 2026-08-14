@@ -2,11 +2,11 @@
   "schema": "e055-q1-hot-cold-manifest/v2",
   "experiment": "E055-Q1-HOT-COLD",
   "status": "revised_stage1_source_only_no_target_workload",
-  "generated_at_utc": "2026-08-14T07:08:55.934730+00:00",
+  "generated_at_utc": "2026-08-14T08:17:51.348637+00:00",
   "publication_binding": {
     "mode": "e047-staged-index-plus-post-commit-ref-verification",
-    "preflight_base_commit": "0ed991b1b17c46f46b09ea9ed6731eb585cf60f5",
-    "staged_tree_binding_sha256": "fe15946dc83b70174319656ac7d180c518262e84940966e70b8096890f562011",
+    "preflight_base_commit": "ddd5a0589d9f779cde8012b33fd72b7b2cd12a10",
+    "staged_tree_binding_sha256": "e3e1957f22606043a71cc5b032802063dbbfad34aec0f2ed43fd3b5cbb15ab33",
     "active_ref": "refs/heads/codex/e055-q1-hot-cold",
     "upstream_ref": "refs/remotes/origin/codex/e055-q1-hot-cold",
     "binding_excludes": [
@@ -55,20 +55,20 @@
     },
     "pmu_source_sha256": "f754845e60b22f118cf82b2f462537e02f5c404e1f1d7b43de657930b8bb6dc0"
   },
-  "sample_provenance_contract": "validate_sample loads exact source, binary, compiler, PMU config and upstream identities from these committed publication artifacts; callers cannot inject an expected provenance mapping.",
+  "sample_provenance_contract": "infer_bottleneck accepts only a committed raw-bundle manifest path. It derives rows from Git-sealed artifacts and publication-bound source, binary, compiler, PMU config, and upstream identities; caller-created sample mappings are never measurement evidence.",
   "model_payload_included": false,
   "target_workload_executed": false,
   "files": [
     {
       "path": "experiments/E055-q1-hot-cold/README.md",
-      "size_bytes": 10504,
-      "sha256": "599c44583e349094949d5e52b3d354b05e9c9580f1cdc34e83e31623e10217eb",
+      "size_bytes": 13354,
+      "sha256": "386267ea01b269c36c712fc6a29afa9bc323fafc1aa293211bf363f922b79e85",
       "role": "e055-stage1"
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/branch-preflight.json",
-      "size_bytes": 2422271,
-      "sha256": "3c618f5e09d64ed0c8216d0a9f3841eefc55d36f7c48517cf90643d6abb9eadc",
+      "size_bytes": 2786992,
+      "sha256": "e77848907f558ad0162f76651f1a462be747836d609cad0a2438a9f719c52063",
       "role": "e055-stage1"
     },
     {
@@ -96,9 +96,15 @@
       "role": "e055-stage1"
     },
     {
+      "path": "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
+      "size_bytes": 1002,
+      "sha256": "c70bca4a7356ea74b62159991d5c0ad4925ae011ddad277120db548b233a7b3c",
+      "role": "e055-stage1"
+    },
+    {
       "path": "experiments/E055-q1-hot-cold/data/disassembly-review.json",
-      "size_bytes": 2380,
-      "sha256": "5ec94362aed0c259bcc38e2c7f395e3e1d66387a141cf51231251df308f84773",
+      "size_bytes": 2592,
+      "sha256": "bc7050681fce7fcac0ed53b5913ec9ea7af4193c7155eda0adc98f280054ebf7",
       "role": "e055-stage1"
     },
     {
@@ -109,8 +115,38 @@
     },
     {
       "path": "experiments/E055-q1-hot-cold/data/sample.schema.json",
-      "size_bytes": 7255,
-      "sha256": "c0202ab6922ec959595a34c96e997c70cf3345df0cf21a991f87ba64196cdf52",
+      "size_bytes": 4379,
+      "sha256": "fc284705c483c2c9bb9c4f3a928763ce9524036ada11369062e4b0eb328a6c99",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
+      "size_bytes": 4804,
+      "sha256": "aa59460b48b82d9b40f3a0418e9eb4a887ee8776a4c5cae8d8f89ef269161e8a",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
+      "size_bytes": 3687,
+      "sha256": "b5d5e12064303b53773b0934532061b3c4515096e8678b031003072b5ff14ebe",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
+      "size_bytes": 903,
+      "sha256": "ac911d5d4791934af647740cd85de253ed82d36da4301e33e9bc080fa141b6fa",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
+      "size_bytes": 75240,
+      "sha256": "9c3ea8fed87fec1f3f8cf84d6a941a135daf276174e4f52c78174c66cfe600f9",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-flto-aarch64",
+      "size_bytes": 74248,
+      "sha256": "884069f79c782ef2196e5462c73448f178a22686472b68abd100730a13987f97",
       "role": "e055-stage1"
     },
     {
@@ -121,8 +157,20 @@
     },
     {
       "path": "tooling/e055_q1_hotcold.py",
-      "size_bytes": 38335,
-      "sha256": "2f7feb89b0d334d6b43df0048cc8f67b19508d628fa1305f38fb6e0a7671b58b",
+      "size_bytes": 25223,
+      "sha256": "78ae7ca40ee3153fd477fa93e79f40168d844df680f0cf7008b43d8dad7b1c4e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_raw_bundle.py",
+      "size_bytes": 45353,
+      "sha256": "54a3edd6340d1c05cd7880f8ab41f7d9e1a8918b91457e2bc33f738ca44097d7",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tooling/e055_capture_scaffold.py",
+      "size_bytes": 4196,
+      "sha256": "a3913b26927a1aaf54782eabdbaa201a44ffb4d9e5fd2f3a3abc59f833671e17",
       "role": "e055-stage1"
     },
     {
@@ -139,26 +187,44 @@
     },
     {
       "path": "tooling/verify_e055_publication.py",
-      "size_bytes": 4665,
-      "sha256": "8079976ca372e6fe5a376e2fc068705c5f94ef0f609bcd5ff27d12d814e3e755",
+      "size_bytes": 6594,
+      "sha256": "85fd8cedc172ea4143dab4f16c6843f70eb3fec37e0d7366c1cfda9a8d1c307d",
       "role": "e055-stage1"
     },
     {
       "path": "tooling/generate_e055_manifest.py",
-      "size_bytes": 6636,
-      "sha256": "36d81441f069671e4141fe9eab913fda643fb353d041bd00c1f42f7cbfc9c420",
+      "size_bytes": 7566,
+      "sha256": "989bcd1973db38932363e2e3a26a10e9408143780dcb2c3a29a983b3d6bc98cb",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_harness_contract.py",
-      "size_bytes": 4865,
-      "sha256": "8a8c400fe7fff35c861e3931fcb38e8bf963d5fff7d409938b0f6f1f3154e6a8",
+      "size_bytes": 6227,
+      "sha256": "fd90262b55ae3b0f3866ff929a1b273c1132f265741cec7ec25e3f762ae27260",
       "role": "e055-stage1"
     },
     {
       "path": "tests/test_e055_q1_hotcold.py",
-      "size_bytes": 16682,
-      "sha256": "d2d4c7794db95fee2c0636af899db7fc945378cd23b582705b7e4175d125262c",
+      "size_bytes": 16490,
+      "sha256": "b5a7660c9b22a01c1570257fc9731948b76f1643a24cc22645f0700c15c375cb",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_raw_bundle.py",
+      "size_bytes": 29503,
+      "sha256": "0926982bed528e6744e744ac699818aa15120f5bec348057215eb7d58abf8875",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_sealed_promotion.py",
+      "size_bytes": 5499,
+      "sha256": "02e61a41a9bbc9e99734c6422be619952cdda5cb4e20ce20ca9cac061d65b09e",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "tests/test_e055_capture_scaffold.py",
+      "size_bytes": 4024,
+      "sha256": "565ffb9b839fdbdcf01a64d799407b4ac95d6c31ddbbcfeea2889951c803fce5",
       "role": "e055-stage1"
     },
     {
@@ -169,8 +235,8 @@
     },
     {
       "path": "tests/test_e055_publication.py",
-      "size_bytes": 8474,
-      "sha256": "abf2ff044120ced725ffd9fde5855e908aafa5f29a79c4729bfdddc72b52336b",
+      "size_bytes": 10467,
+      "sha256": "b8b5644a32bccafe521b8bc09dc10b74be8297238e2f57d8bb270deb1cd3a68e",
       "role": "e055-stage1"
     },
     {
@@ -184,6 +250,18 @@
       "size_bytes": 7044,
       "sha256": "3338df3dfedf683247ef0da3975db371667add1c2552f77219718a444687143f",
       "role": "stock-reference"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
+      "size_bytes": 7221,
+      "sha256": "8c6323c8e84952619feac701ca6c5abe0494244486d044694bbdcbddd18a1a4a",
+      "role": "e055-stage1"
+    },
+    {
+      "path": "docs/superpowers/plans/2026-08-14-e055-git-sealed-raw-bundles.md",
+      "size_bytes": 16623,
+      "sha256": "ddb5fc204d4fe60dc77d757c09b80a06c5735b79329642320363a9f29ef01a2a",
+      "role": "e055-stage1"
     }
   ]
 }

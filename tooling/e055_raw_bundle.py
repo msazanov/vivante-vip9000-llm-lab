@@ -445,7 +445,7 @@ def _parse_json_object(payload: bytes, label: str) -> Mapping[str, Any]:
         value, end = decoder.raw_decode(text)
     except (UnicodeDecodeError, ValueError) as exc:
         raise ValueError(f"{label} is not one exact UTF-8 JSON object: {exc}") from exc
-    if text[end:].strip() or not isinstance(value, Mapping):
+    if text[end:] != "\n" or not isinstance(value, Mapping):
         raise ValueError(f"{label} must contain exactly one JSON object")
     return value
 
@@ -970,3 +970,63 @@ def load_sealed_bundle(manifest_path: str | Path) -> SealedBundle:
             ),
         ))
     return SealedBundle(files=files, samples=tuple(samples))
+
+
+def derived_sample_document(sample: DerivedSample) -> dict[str, Any]:
+    """Serialize an internally derived row for publication, never ingestion."""
+
+    if not isinstance(sample, DerivedSample):
+        raise TypeError("only an analyzer-derived E055 sample can be published")
+    return {
+        "schema": "e055-derived-sample/v1",
+        "run_id": sample.run_id,
+        "pair_id": sample.pair_id,
+        "pair_index": sample.pair_index,
+        "pair_order": sample.pair_order,
+        "order_index": sample.order_index,
+        "build_name": sample.build_name,
+        "mode": sample.mode,
+        "cache_state": sample.cache_state,
+        "cpu": sample.cpu,
+        "target_working_set_bytes": sample.target_working_set_bytes,
+        "actual_working_set_bytes": sample.actual_working_set_bytes,
+        "blocks": sample.blocks,
+        "iterations": sample.iterations,
+        "calls": sample.calls,
+        "elapsed_ns": sample.elapsed_ns,
+        "checksum": sample.checksum,
+        "pmu_group": sample.pmu_group,
+        "measured_elapsed_ns": sample.measured_elapsed_ns,
+        "thermal_limit_c": sample.thermal_limit_c,
+        "max_temp_c": sample.max_temp_c,
+        "pmu_events": [
+            {
+                "name": event.name,
+                "config": event.config,
+                "value": event.value,
+                "time_enabled_ns": event.time_enabled_ns,
+                "time_running_ns": event.time_running_ns,
+                "running_ratio": event.running_ratio,
+            }
+            for event in sample.pmu_events
+        ],
+        "golden_pass": True,
+        "golden_cases": 18,
+        "evidence": {
+            "commit": sample.commit,
+            "tree": sample.tree,
+            "manifest_path": sample.manifest_path,
+            "manifest_blob_oid": sample.manifest_blob_oid,
+            "publication_identity": dict(sample.publication_identity),
+            "raw_artifacts": [
+                {
+                    "role": artifact.role,
+                    "relative_path": artifact.relative_path,
+                    "sha256": artifact.sha256,
+                    "size_bytes": artifact.size_bytes,
+                    "git_blob_oid": artifact.git_blob_oid,
+                }
+                for artifact in sample.raw_artifacts
+            ],
+        },
+    }

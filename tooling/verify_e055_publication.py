@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any, Mapping
@@ -27,6 +28,31 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _metadata_matches_head(root: Path, path: Path) -> bool:
+    """Require one regular metadata file identical in worktree, index, and HEAD."""
+
+    try:
+        relative = path.relative_to(root).as_posix()
+        status = path.lstat()
+    except (OSError, ValueError):
+        return False
+    if not stat.S_ISREG(status.st_mode) or status.st_nlink != 1:
+        return False
+    head = _git(root, "ls-tree", "HEAD", "--", relative)
+    index = _git(root, "ls-files", "--stage", "--", relative)
+    worktree_oid = _git(root, "hash-object", "--", relative)
+    if not head or not index or not worktree_oid:
+        return False
+    head_fields = head.partition("\t")[0].split()
+    index_fields = index.partition("\t")[0].split()
+    return (
+        len(head_fields) == 3 and head_fields[0] in ("100644", "100755")
+        and head_fields[1] == "blob" and len(index_fields) == 3
+        and index_fields[0] == head_fields[0] and index_fields[1] == head_fields[2]
+        and index_fields[2] == "0" and worktree_oid == head_fields[2]
+    )
+
+
 def verify_publication(
     root: Path,
     preflight_path: Path,
@@ -38,6 +64,10 @@ def verify_publication(
         manifest: Mapping[str, Any] = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         return [f"cannot read publication metadata: {exc}"]
+    if not _metadata_matches_head(root, manifest_path):
+        errors.append("manifest worktree/index bytes do not match committed HEAD")
+    if not _metadata_matches_head(root, preflight_path):
+        errors.append("preflight worktree/index bytes do not match committed HEAD")
     if manifest.get("schema") != "e055-q1-hot-cold-manifest/v2":
         errors.append("manifest schema must be e055-q1-hot-cold-manifest/v2")
     active = preflight.get("active_worktree")
@@ -79,15 +109,26 @@ def verify_publication(
     if not isinstance(files, list):
         errors.append("manifest files must be a list")
     else:
+        seen_paths: set[str] = set()
         for item in files:
             if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
                 errors.append("manifest file entry is malformed")
                 continue
-            path = root / item["path"]
+            relative = item["path"]
+            parsed = Path(relative)
+            if parsed.is_absolute() or parsed.as_posix() != relative or \
+                    any(part in ("", ".", "..") for part in parsed.parts) or \
+                    relative in seen_paths:
+                errors.append(f"manifest file path is noncanonical or duplicated: {relative}")
+                continue
+            seen_paths.add(relative)
+            path = root / relative
             if not path.is_file():
-                errors.append(f"manifest file is missing: {item['path']}")
+                errors.append(f"manifest file is missing: {relative}")
             elif _sha256(path) != item.get("sha256") or path.stat().st_size != item.get("size_bytes"):
-                errors.append(f"manifest file binding mismatch: {item['path']}")
+                errors.append(f"manifest file binding mismatch: {relative}")
+            elif not _metadata_matches_head(root, path):
+                errors.append(f"manifested file worktree/index mismatch: {relative}")
     return errors
 
 

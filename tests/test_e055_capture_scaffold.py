@@ -44,6 +44,15 @@ class E055CaptureScaffoldTest(unittest.TestCase):
                 with self.assertRaises(FileExistsError):
                     reserve_phase(phase, self.plans)
 
+    def test_symlink_parent_is_refused_before_any_reservation(self) -> None:
+        target = self.root / "real-parent"
+        target.mkdir()
+        alias = self.root / "parent-alias"
+        alias.symlink_to(target, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "parent"):
+            reserve_phase(alias / "phase-a", self.plans)
+        self.assertFalse((target / "phase-a").exists())
+
     def test_invalid_or_duplicate_run_and_build_names_fail_before_reservation(self) -> None:
         cases = (
             (RunPlan("../escape", "O3"),),

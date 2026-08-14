@@ -6,6 +6,7 @@ import base64
 import copy
 import hashlib
 import json
+import jsonschema
 import os
 from pathlib import Path
 import shutil
@@ -14,7 +15,11 @@ import tempfile
 import unittest
 
 from tooling.e055_q1_hotcold import load_publication_contract
-from tooling.e055_raw_bundle import load_sealed_bundle, seal_bundle_files
+from tooling.e055_raw_bundle import (
+    derived_sample_document,
+    load_sealed_bundle,
+    seal_bundle_files,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -491,6 +496,17 @@ class E055RawParserTest(unittest.TestCase):
             self.assertEqual(sample.measured_elapsed_ns, 250_001_000)
             self.assertEqual(sample.thermal_limit_c, 80.0)
             self.assertEqual(sample.max_temp_c, 55.0)
+            published = derived_sample_document(sample)
+            self.assertEqual(published["schema"], "e055-derived-sample/v1")
+            self.assertTrue(published["golden_pass"])
+            self.assertEqual(published["golden_cases"], 18)
+            self.assertEqual(published["evidence"]["commit"], sample.commit)
+            self.assertEqual(len(published["evidence"]["raw_artifacts"]), 5)
+            schema = json.loads((
+                ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json"
+            ).read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator.check_schema(schema)
+            jsonschema.validate(published, schema)
 
     def test_launcher_floor_does_not_relax_qualification_ratio(self) -> None:
         with BundleFixture() as fixture:
@@ -529,6 +545,14 @@ class E055RawParserTest(unittest.TestCase):
                 mutate(fixture)
                 with self.assertRaises(ValueError):
                     load_sealed_bundle(fixture.manifest)
+
+    def test_semantic_append_is_rejected_even_when_resealed_and_committed(self) -> None:
+        with BundleFixture() as fixture:
+            path = fixture.role_path("e049c_json")
+            path.write_bytes(path.read_bytes() + b"\n")
+            fixture.reseal_roles({"e049c_json"})
+            with self.assertRaisesRegex(ValueError, "exactly one JSON object"):
+                load_sealed_bundle(fixture.manifest)
 
     def test_runner_unknown_or_secret_environment_and_cpu_forgery_fail_closed(self) -> None:
         mutations = {

@@ -39,14 +39,18 @@ class E055HarnessContractTest(unittest.TestCase):
             (ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json")
             .read_text(encoding="utf-8")
         )
-        self.assertEqual(schema["properties"]["schema"]["const"], "e055-q1-hot-cold/v2")
+        self.assertEqual(schema["properties"]["schema"]["const"],
+                         "e055-derived-sample/v1")
+        self.assertFalse(schema["x-e055-analyzer-input"])
         self.assertEqual(schema["properties"]["cpu"]["enum"], [0, 6])
-        self.assertEqual(schema["properties"]["observed_ddr_read_bytes"]["type"], "null")
+        self.assertNotIn("observed_ddr_read_bytes", json.dumps(schema))
         self.assertEqual(schema["properties"]["golden_cases"]["const"], 18)
-        event = schema["properties"]["pmu"]["properties"]["events"]["items"]
+        event = schema["$defs"]["pmu_event"]
         self.assertIn("config", event["required"])
         self.assertIn("0x2a", event["properties"]["config"]["enum"])
-        self.assertIn("harness_result_sha256", schema["required"])
+        evidence = schema["properties"]["evidence"]
+        self.assertIn("manifest_blob_oid", evidence["required"])
+        self.assertIn("raw_artifacts", evidence["required"])
 
     def test_all_three_controls_and_checksum_are_present(self) -> None:
         for mode in ("packed_stream", "unpack_scale", "full_dotprod"):

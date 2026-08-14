@@ -6,12 +6,13 @@
     "source_sha256": "7dcdab617cfee84468c25e70a9e130107de4b3a1c4361f0949353446be89c281",
     "compiler_sha256": "02c0ad2419ba416252e76336155e26b6d8009224909be2669ee0fa8fe31dd4b6",
     "compiler_id": "aarch64-linux-gnu-g++ (GCC) 16.1.0",
-    "binary_publication": "temporary deterministic split-object builds inspected locally; binaries not committed",
+    "binary_publication": "deterministic split-object builds are committed under experiments/E055-q1-hot-cold/artifacts and bound by the publication manifest",
     "determinism_check": "two clean directories produced identical linked binary SHA-256 values"
   },
   "builds": [
     {
       "name": "O3",
+      "artifact_path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
       "commands": [
         "aarch64-linux-gnu-g++ -std=c++17 -O3 -Wall -Wextra -Werror -march=armv8.2-a+dotprod -c tooling/e055_q1_hotcold.cpp -o e055_cpp.o",
         "aarch64-linux-gnu-g++ -march=armv8.2-a+dotprod -c experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S -o e055_asm.o",
@@ -31,6 +32,7 @@
     },
     {
       "name": "O3-flto",
+      "artifact_path": "experiments/E055-q1-hot-cold/artifacts/e055-O3-flto-aarch64",
       "commands": [
         "aarch64-linux-gnu-g++ -std=c++17 -O3 -flto -Wall -Wextra -Werror -march=armv8.2-a+dotprod -c tooling/e055_q1_hotcold.cpp -o e055_lto_cpp.o",
         "aarch64-linux-gnu-g++ -march=armv8.2-a+dotprod -c experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S -o e055_asm.o",

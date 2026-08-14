@@ -40,21 +40,34 @@ PUBLISHED = (
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage1-51d1c1c.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage2-bba62cb.md",
     ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage3-0ed991b.md",
+    ROOT / "experiments/E055-q1-hot-cold/data/review-rejection-stage4-7679828.md",
     ROOT / "experiments/E055-q1-hot-cold/data/disassembly-review.json",
     ROOT / "experiments/E055-q1-hot-cold/data/upstream-source-binding.json",
     ROOT / "experiments/E055-q1-hot-cold/data/sample.schema.json",
+    ROOT / "experiments/E055-q1-hot-cold/data/raw-bundle.schema.json",
+    ROOT / "experiments/E055-q1-hot-cold/data/runner-capture.schema.json",
+    ROOT / "experiments/E055-q1-hot-cold/data/stream-capture.schema.json",
+    ROOT / "experiments/E055-q1-hot-cold/artifacts/e055-O3-aarch64",
+    ROOT / "experiments/E055-q1-hot-cold/artifacts/e055-O3-flto-aarch64",
     ROOT / "tooling/e055_q1_hotcold.cpp",
     ROOT / "tooling/e055_q1_hotcold.py",
+    ROOT / "tooling/e055_raw_bundle.py",
+    ROOT / "tooling/e055_capture_scaffold.py",
     ROOT / "tooling/a733_pmu_exec.c",
     ROOT / "tooling/check_e055_disassembly.py",
     ROOT / "tooling/verify_e055_publication.py",
     ROOT / "tooling/generate_e055_manifest.py",
     ROOT / "tests/test_e055_harness_contract.py",
     ROOT / "tests/test_e055_q1_hotcold.py",
+    ROOT / "tests/test_e055_raw_bundle.py",
+    ROOT / "tests/test_e055_sealed_promotion.py",
+    ROOT / "tests/test_e055_capture_scaffold.py",
     ROOT / "tests/test_e055_aarch64_gate.py",
     ROOT / "tests/test_e055_publication.py",
     ROOT / "experiments/E039-q1-pair-wholek/e039_wholek_harness.cpp",
     ROOT / "experiments/E039-q1-pair-wholek/e039_q1_pair_wholek.S",
+    ROOT / "docs/superpowers/specs/2026-08-14-e055-git-sealed-raw-bundles-design.md",
+    ROOT / "docs/superpowers/plans/2026-08-14-e055-git-sealed-raw-bundles.md",
 )
 
 
@@ -142,9 +155,10 @@ def build_payload(
             "pmu_source_sha256": sha256(root / "tooling/a733_pmu_exec.c"),
         },
         "sample_provenance_contract": (
-            "validate_sample loads exact source, binary, compiler, PMU config and "
-            "upstream identities from these committed publication artifacts; callers "
-            "cannot inject an expected provenance mapping."
+            "infer_bottleneck accepts only a committed raw-bundle manifest path. "
+            "It derives rows from Git-sealed artifacts and publication-bound source, "
+            "binary, compiler, PMU config, and upstream identities; caller-created "
+            "sample mappings are never measurement evidence."
         ),
         "model_payload_included": False,
         "target_workload_executed": False,

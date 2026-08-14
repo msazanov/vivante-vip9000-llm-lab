@@ -57,7 +57,6 @@ UPSTREAM_REF = (
     "38c66ad0241da4f9fcce541cda8edc219086cec5"
 )
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
-CHECKSUM_RE = re.compile(r"^0x[0-9a-f]+$")
 PMU_GROUP_CONFIGS = {
     "core": {"cpu_cycles": "0x11", "instructions": "0x8", "stall_backend": "0x24"},
     "cache": {
@@ -147,17 +146,8 @@ def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
-def _is_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
-
-
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _canonical_mapping_sha256(value: Mapping[str, Any]) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()
 
 
 def load_publication_contract() -> dict[str, Any]:
@@ -190,6 +180,15 @@ def load_publication_contract() -> dict[str, Any]:
         item.get("name"): item.get("binary_sha256")
         for item in builds if isinstance(item, Mapping)
     }
+    build_artifact_paths: list[Path] = []
+    for item in builds:
+        artifact_value = item.get("artifact_path")
+        if not isinstance(artifact_value, str):
+            raise ValueError("allowed harness build has no committed artifact path")
+        artifact = ROOT / artifact_value
+        if not artifact.is_file() or _sha256_file(artifact) != item.get("binary_sha256"):
+            raise ValueError("allowed harness binary does not match its committed artifact")
+        build_artifact_paths.append(artifact)
     publication_hashes = [
         provenance.get("source_sha256"), provenance.get("compiler_sha256"),
         upstream.get("sha256"), *expected_builds.values(),
@@ -226,7 +225,10 @@ def load_publication_contract() -> dict[str, Any]:
         item.get("path"): item for item in manifest.get("files", [])
         if isinstance(item, Mapping)
     }
-    relevant = (HARNESS_SOURCE, PMU_SOURCE, DISASSEMBLY_REVIEW, UPSTREAM_BINDING)
+    relevant = (
+        HARNESS_SOURCE, PMU_SOURCE, DISASSEMBLY_REVIEW, UPSTREAM_BINDING,
+        *build_artifact_paths,
+    )
     for path in relevant:
         relative = path.relative_to(ROOT).as_posix()
         item = manifested.get(relative)
@@ -268,261 +270,6 @@ def validate_sample(
         "sealed raw-bundle manifest path"
     ]
 
-
-def _validate_sample(sample: Mapping[str, Any], contract: Mapping[str, Any]) -> list[str]:
-    """Validate one sample against an already verified publication contract."""
-
-    errors: list[str] = []
-    if sample.get("schema") != SCHEMA:
-        errors.append("schema must be e055-q1-hot-cold/v2")
-    if sample.get("mode") not in MODES:
-        errors.append(f"mode must be one of {MODES}")
-    if sample.get("cache_state") not in CACHE_STATES:
-        errors.append(f"cache_state must be one of {CACHE_STATES}")
-    if not _is_int(sample.get("cpu")) or int(sample["cpu"]) not in CPUS:
-        errors.append("cpu must be A55 CPU0 or A76 CPU6")
-    cpu = sample.get("cpu")
-    for key in ("pinned_cpu", "cpu_start", "cpu_end"):
-        if not _is_int(sample.get(key)):
-            errors.append(f"{key} must be an integer CPU identifier")
-    if sample.get("pinned_cpu") != cpu or sample.get("cpu_start") != cpu or \
-            sample.get("cpu_end") != cpu:
-        errors.append("sample must remain pinned to the declared CPU")
-    affinity = sample.get("affinity_cpus")
-    if not isinstance(affinity, list) or len(affinity) != 1 or not _is_int(affinity[0]) \
-            or affinity != [cpu]:
-        errors.append("affinity must contain one exact integer CPU")
-    if not _is_int(sample.get("cpu_migration_count")) or \
-            sample.get("cpu_migration_count") != 0:
-        errors.append("affinity must contain exactly the declared CPU with no migration")
-    if not isinstance(sample.get("run_id"), str) or not sample["run_id"]:
-        errors.append("run_id is required")
-    if not isinstance(sample.get("pair_id"), str) or not sample["pair_id"]:
-        errors.append("pair_id is required")
-    if not _is_int(sample.get("pair_index")) or sample.get("pair_index", 0) <= 0:
-        errors.append("pair_index must be a positive integer")
-    if sample.get("pair_order") not in ("hot_then_cold", "cold_then_hot"):
-        errors.append("pair_order is invalid")
-    if not _is_int(sample.get("order_index")) or sample.get("order_index") not in (1, 2):
-        errors.append("order_index must be 1 or 2")
-    expected_order = {
-        ("hot_then_cold", "hot_repeat"): 1,
-        ("hot_then_cold", "cold_conditioned"): 2,
-        ("cold_then_hot", "cold_conditioned"): 1,
-        ("cold_then_hot", "hot_repeat"): 2,
-    }.get((sample.get("pair_order"), sample.get("cache_state")))
-    if expected_order is not None and sample.get("order_index") != expected_order:
-        errors.append("order_index does not match pair_order and cache_state")
-    if sample.get("golden_pass") is not True:
-        errors.append("golden_pass must be true for a qualified sample")
-    if sample.get("golden_cases") != 18 or not _is_int(sample.get("golden_cases")):
-        errors.append("golden_cases must be exactly 18")
-    conditioning = sample.get("cold_conditioning")
-    if not isinstance(conditioning, Mapping):
-        errors.append("cold_conditioning metadata is required")
-    else:
-        required = {
-            "strategy", "requested_bytes", "actual_bytes", "line_bytes",
-            "lines_touched", "checksum", "verified_touched",
-        }
-        if not required.issubset(conditioning):
-            errors.append("cold_conditioning is missing full coverage fields")
-        if conditioning.get("verified_touched") is not True:
-            errors.append("cache conditioning must be verified for both hot and cold samples")
-        for key in ("requested_bytes", "actual_bytes", "line_bytes", "lines_touched"):
-            if not _is_int(conditioning.get(key)) or conditioning.get(key, 0) <= 0:
-                errors.append(f"cold_conditioning {key} must be a positive integer")
-        condition_checksum = conditioning.get("checksum")
-        if not isinstance(condition_checksum, str) or \
-                CHECKSUM_RE.fullmatch(condition_checksum) is None or \
-                int(condition_checksum, 16) == 0:
-            errors.append("cold_conditioning checksum must be nonzero lowercase hexadecimal")
-        if conditioning.get("line_bytes") != 64:
-            errors.append("cold_conditioning line_bytes must be 64")
-        requested = conditioning.get("requested_bytes")
-        actual = conditioning.get("actual_bytes")
-        lines = conditioning.get("lines_touched")
-        if all(_is_int(value) for value in (requested, actual, lines)):
-            if requested != actual:
-                errors.append("cold_conditioning requested and actual bytes must match")
-            if sample.get("cache_state") == "cold_conditioned":
-                if conditioning.get("strategy") != "verified_write_read_each_64B_line":
-                    errors.append("cold sample requires exact verified thrash strategy")
-                if actual % 64 != 0 or lines * 64 != actual:
-                    errors.append("cold conditioning must cover every requested 64-byte line")
-            elif sample.get("cache_state") == "hot_repeat":
-                if conditioning.get("strategy") != "verified_kernel_warmup":
-                    errors.append("hot sample requires exact verified warmup strategy")
-                if not _is_int(conditioning.get("warmup_calls")) or \
-                        conditioning.get("warmup_calls", 0) <= 0:
-                    errors.append("hot conditioning requires positive integer warmup_calls")
-                if actual != sample.get("actual_working_set_bytes") or \
-                        lines != (actual + 63) // 64:
-                    errors.append("hot conditioning coverage must match the working set")
-    for key in ("target_working_set_bytes", "actual_working_set_bytes", "blocks",
-                "iterations", "elapsed_ns", "calls"):
-        if not _is_int(sample.get(key)) or int(sample[key]) <= 0:
-            errors.append(f"{key} must be a positive integer")
-    target_working_set = sample.get("target_working_set_bytes")
-    if _is_int(target_working_set) and target_working_set not in WORKING_SET_BYTES:
-        errors.append("target_working_set_bytes is outside the documented seven-size matrix")
-    checksum = sample.get("checksum")
-    if not isinstance(checksum, str) or CHECKSUM_RE.fullmatch(checksum) is None:
-        errors.append("checksum must use exact lowercase hexadecimal 0x schema")
-    elif int(checksum, 16) == 0:
-        errors.append("checksum must be non-zero")
-    if sample.get("cache_state") == "cold_conditioned" and (
-        sample.get("iterations") != 1 or sample.get("calls") != 1
-    ):
-        errors.append("cold_conditioned requires exactly one iteration and one call")
-    if _is_int(sample.get("iterations")) and _is_int(sample.get("calls")) \
-            and sample["iterations"] != sample["calls"]:
-        errors.append("iterations and calls must match")
-    sync = sample.get("sync")
-    if not isinstance(sync, Mapping) or sync.get("requested") is not True or sync.get("started") is not True \
-            or sync.get("acknowledged") is not True or sync.get("ended") is not True \
-            or sync.get("sequence") != "S/A/E":
-        errors.append("qualified sample requires exact S/ACK/E synchronization")
-    pmu = sample.get("pmu")
-    if not isinstance(pmu, Mapping):
-        errors.append("pmu metadata is required")
-    else:
-        if pmu.get("schema_version") != "e049c-arm-pmu/v2" or pmu.get("sample_valid") is not True \
-                or pmu.get("status") != "ok":
-            errors.append("PMU must be a valid E049c v2 sample")
-        group = pmu.get("event_group")
-        if group not in PMU_GROUP_EVENTS:
-            errors.append("PMU event_group must be core, cache, or memory")
-        if pmu.get("event_source") != "armv8_pmuv3_raw_config":
-            errors.append("PMU event_source must be armv8_pmuv3_raw_config")
-        if pmu.get("values_are_event_counts") is not True:
-            errors.append("PMU values must be explicitly labelled event counts")
-        events = pmu.get("events")
-        if not isinstance(events, list) or not events:
-            errors.append("pmu.events must be a non-empty list")
-        else:
-            names = {event.get("name") for event in events if isinstance(event, Mapping)}
-            if group in PMU_GROUP_EVENTS and (
-                names != PMU_GROUP_EVENTS[group] or len(events) != len(PMU_GROUP_EVENTS[group])
-            ):
-                errors.append("PMU events must exactly match the selected group")
-            if (
-                not _is_int(pmu.get("event_group_size"))
-                or pmu.get("event_group_size") != len(events)
-            ):
-                errors.append("PMU event_group_size must match the exact event list")
-            for event in events:
-                if not isinstance(event, Mapping):
-                    errors.append("pmu event must be an object")
-                    continue
-                if event.get("support") != "supported" or event.get("sample_valid") is not True:
-                    errors.append("every PMU event must be supported and sample_valid")
-                if group in PMU_GROUP_CONFIGS and \
-                        event.get("config") != PMU_GROUP_CONFIGS[group].get(event.get("name")):
-                    errors.append("PMU event config must exactly match E049c a733_pmu_exec.c")
-                if not _is_int(event.get("value")) or event.get("value", -1) < 0:
-                    errors.append("PMU event value must be a non-negative integer count")
-                ratio = event.get("running_ratio")
-                if type(ratio) is not float or not math.isfinite(ratio) or ratio != 1.0:
-                    errors.append("every PMU event must have finite float running_ratio exactly 1.0")
-                if any(key in event for key in ("bytes", "ddr_bytes", "bandwidth_bytes")):
-                    errors.append("PMU event counts must never be named bytes")
-    for key in ("observed_ddr_read_bytes", "observed_ddr_write_bytes"):
-        if key in sample and sample[key] is not None:
-            errors.append(f"{key} is forbidden: E055 has no direct DDR-byte counter")
-    if _is_int(sample.get("actual_working_set_bytes")) and _is_int(sample.get("blocks")):
-        if int(sample["actual_working_set_bytes"]) != int(sample["blocks"]) * NATIVE_CARRIER_BYTES:
-            errors.append("actual_working_set_bytes does not match native carrier blocks")
-    if _is_int(target_working_set) and target_working_set > 0:
-        expected_layout = actual_working_set(target_working_set)
-        if sample.get("actual_working_set_bytes") != expected_layout["actual_bytes"] or \
-                sample.get("blocks") != expected_layout["blocks"]:
-            errors.append("working-set layout does not match the documented target size")
-    thermal = sample.get("thermal")
-    if not isinstance(thermal, Mapping) or thermal.get("readable") is not True \
-            or thermal.get("tripped") is not False:
-        errors.append("thermal gate must be readable and pass")
-    elif not _is_number(thermal.get("max_temp_c")) \
-            or not _is_number(thermal.get("limit_c")) \
-            or not math.isfinite(float(thermal["max_temp_c"])) \
-            or not math.isfinite(float(thermal["limit_c"])) \
-            or thermal["max_temp_c"] > thermal["limit_c"]:
-        errors.append("thermal maximum must not exceed its limit")
-    provenance = sample.get("provenance")
-    provenance_keys = (
-        "build_name", "source_sha256", "binary_sha256", "compiler_sha256",
-        "compiler_id", "upstream_commit", "upstream_ref", "upstream_repack_sha256",
-    )
-    if not isinstance(provenance, Mapping):
-        errors.append("provenance is required")
-    else:
-        if set(provenance) != set(provenance_keys):
-            errors.append("provenance must contain the exact publication-bound fields")
-        for key in ("source_sha256", "binary_sha256", "compiler_sha256", "upstream_repack_sha256"):
-            value = provenance.get(key)
-            if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None or value == "0" * 64:
-                errors.append(f"{key} must be a nonzero lowercase SHA-256")
-        if not isinstance(provenance.get("compiler_id"), str) or not provenance["compiler_id"]:
-            errors.append("compiler_id is required")
-        build_name = provenance.get("build_name")
-        allowed_builds = contract.get("allowed_builds")
-        expected_provenance = {
-            "build_name": build_name,
-            "source_sha256": contract.get("source_sha256"),
-            "binary_sha256": (
-                allowed_builds.get(build_name) if isinstance(allowed_builds, Mapping) else None
-            ),
-            "compiler_sha256": contract.get("compiler_sha256"),
-            "compiler_id": contract.get("compiler_id"),
-            "upstream_commit": contract.get("upstream_commit"),
-            "upstream_ref": contract.get("upstream_ref"),
-            "upstream_repack_sha256": contract.get("upstream_repack_sha256"),
-        }
-        if not isinstance(build_name, str) or not isinstance(allowed_builds, Mapping) or \
-                build_name not in allowed_builds:
-            errors.append("build_name is not allowed by the publication manifest")
-        for key in provenance_keys:
-            if provenance.get(key) != expected_provenance.get(key):
-                errors.append(f"{key} does not match immutable publication provenance")
-    harness_result = sample.get("harness_result")
-    harness_result_sha256 = sample.get("harness_result_sha256")
-    if not isinstance(harness_result, Mapping):
-        errors.append("exact harness_result is required")
-    else:
-        expected_result_keys = {
-            "schema", "mode", "cache_state", "cpu", "target_working_set_bytes",
-            "actual_working_set_bytes", "blocks", "iterations", "calls", "elapsed_ns",
-            "checksum", "golden_pass", "golden_cases", "conditioning", "provenance",
-        }
-        if set(harness_result) != expected_result_keys:
-            errors.append("harness_result has unexpected or missing fields")
-        result_matches = {
-            "schema": HARNESS_SCHEMA,
-            "mode": sample.get("mode"),
-            "cache_state": sample.get("cache_state"),
-            "cpu": sample.get("cpu"),
-            "target_working_set_bytes": sample.get("target_working_set_bytes"),
-            "actual_working_set_bytes": sample.get("actual_working_set_bytes"),
-            "blocks": sample.get("blocks"),
-            "iterations": sample.get("iterations"),
-            "calls": sample.get("calls"),
-            "elapsed_ns": sample.get("elapsed_ns"),
-            "checksum": sample.get("checksum"),
-            "golden_pass": sample.get("golden_pass"),
-            "golden_cases": sample.get("golden_cases"),
-            "conditioning": sample.get("cold_conditioning"),
-            "provenance": sample.get("provenance"),
-        }
-        if dict(harness_result) != result_matches:
-            errors.append("sample fields do not match the exact harness_result")
-        calculated_result_hash = _canonical_mapping_sha256(harness_result)
-        if not isinstance(harness_result_sha256, str) or \
-                SHA256_RE.fullmatch(harness_result_sha256) is None or \
-                harness_result_sha256 != calculated_result_hash:
-            errors.append("harness_result_sha256 does not bind the exact harness result")
-    if not _is_int(sample.get("exit_code")) or sample.get("exit_code") != 0:
-        errors.append("exit_code must be zero")
-    return errors
 
 
 def _comparison_key(sample: Mapping[str, Any]) -> tuple[Any, ...]:
