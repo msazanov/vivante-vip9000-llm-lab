@@ -1,0 +1,18 @@
+E049c recovery validation — 2026-08-14
+
+Host command:
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_a733_pmu_exec tests.test_e053_branch_preflight tests.test_e053_experiment_validator -v
+Result: 42 tests, 0 failures, 0 errors (OK).
+
+Fresh branch preflight:
+tooling/branch_preflight.py --experiment-id E049-arm-pmu
+Result: 14 refs scanned, 8 remote-tracking refs, duplicate_found=false,
+candidate_count=0. Machine-readable result: data/e049c-all-branch-preflight.json.
+
+Validator command:
+PYTHONDONTWRITEBYTECODE=1 python3 tooling/experiment_validator.py --experiment experiments/E049c-arm-pmu --json
+Result: rejected by the E053 validator because this legacy E049c control
+layout does not yet contain data/manifest.json, results/summary.json,
+environment.json, device.json, commands.txt and the mandatory E053 raw
+telemetry/trace streams. This is an explicit schema-gate result, not a claim
+that the PMU controls failed. The 42 validator unit tests above pass.

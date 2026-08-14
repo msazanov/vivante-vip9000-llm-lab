@@ -1,0 +1,16 @@
+experiment=E049c-arm-pmu
+capture_date_utc=2026-08-14
+board=Orange Pi Zero 3W
+soc=Allwinner A733
+kernel=Linux orangepizero3w 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr 7 04:26:52 UTC 2026 aarch64
+user_before=uid=1000(orangepi) gid=1000(orangepi)
+perf_event_paranoid=2
+counter_privilege=root-assisted sudo; child=orangepi:orangepi
+thermal_abort_c=85
+target_launcher_sha256=698bea97c77ff2dbe0d9e8782683d1cacd3eb85946645af65e945f0e3b0d3cb5
+target_control_sha256=ca90a8192e160fa0a20d1830982077f7aef4ae786514b0528a06a580347e8fbb
+target_command_cpu=/tmp/a733-pmu-exec --output /tmp/e049c-cpu-rN.json --start-on-ready --sync-timeout-ms 5000 -- /tmp/a733-pmu-control --mode cpu --iterations 10000000
+target_command_memory_small=/tmp/a733-pmu-exec --output /tmp/e049c-memory-small.json --start-on-ready --sync-timeout-ms 5000 -- /tmp/a733-pmu-control --mode memory --bytes 1048576 --iterations 16
+target_command_memory_large=/tmp/a733-pmu-exec --output /tmp/e049c-memory-large.json --start-on-ready --sync-timeout-ms 5000 -- /tmp/a733-pmu-control --mode memory --bytes 67108864 --iterations 4
+pmu_event_source=Linux arm_pmuv3.h common raw event encodings
+pmu_bytes_claim=forbidden; event counts are not DDR bytes

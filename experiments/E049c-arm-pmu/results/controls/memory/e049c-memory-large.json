@@ -1,0 +1,23 @@
+{
+  "schema_version": "e049c-arm-pmu/v1",
+  "status": "ok",
+  "event_source": "armv8_pmuv3_raw_config",
+  "counter_semantics": "event counts only; no DDR-byte conversion",
+  "pid": 160774,
+  "command": ["/tmp/a733-pmu-control", "--mode", "memory", "--bytes", "67108864", "--iterations", "4"],
+  "sync": {"mode": "ready_markers", "started": true, "ended": true},
+  "measured_elapsed_ns": 115460352,
+  "thermal": {"guard_enabled": true, "limit_c": 85.000, "max_observed_c": 36.828, "tripped": false},
+  "exit": {"code": 0, "raw_wait_status": 0},
+  "failure_reason": null,
+  "events": [
+    {"name": "cpu_cycles", "config": "0x11", "meaning": "ARMv8 PMUv3 CPU_CYCLES event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 192283846, "time_enabled_ns": 115331627, "time_running_ns": 99488084, "scaled_value": 222905175, "errno": 0, "error": null},
+    {"name": "instructions", "config": "0x8", "meaning": "ARMv8 PMUv3 INST_RETIRED event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 106844117, "time_enabled_ns": 115317585, "time_running_ns": 99332668, "scaled_value": 124037799, "errno": 0, "error": null},
+    {"name": "l1d_cache_refill", "config": "0x3", "meaning": "ARMv8 PMUv3 L1D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 2947599, "time_enabled_ns": 115310835, "time_running_ns": 99306879, "scaled_value": 3422624, "errno": 0, "error": null},
+    {"name": "l2d_cache_refill", "config": "0x17", "meaning": "ARMv8 PMUv3 L2D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 2417502, "time_enabled_ns": 115304543, "time_running_ns": 99299001, "scaled_value": 2807168, "errno": 0, "error": null},
+    {"name": "l3d_cache_refill", "config": "0x2a", "meaning": "ARMv8 PMUv3 L3D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 4253763, "time_enabled_ns": 115298085, "time_running_ns": 101937459, "scaled_value": 4811290, "errno": 0, "error": null},
+    {"name": "mem_access", "config": "0x13", "meaning": "ARMv8 PMUv3 MEM_ACCESS event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 46293724, "time_enabled_ns": 115290876, "time_running_ns": 103288501, "scaled_value": 51673167, "errno": 0, "error": null},
+    {"name": "bus_access", "config": "0x19", "meaning": "ARMv8 PMUv3 BUS_ACCESS event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 38329069, "time_enabled_ns": 115283918, "time_running_ns": 103265376, "scaled_value": 42789998, "errno": 0, "error": null},
+    {"name": "stall_backend", "config": "0x24", "meaning": "ARMv8 PMUv3 STALL_BACKEND event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 113774102, "time_enabled_ns": 115276668, "time_running_ns": 85375958, "scaled_value": 153620524, "errno": 0, "error": null}
+  ]
+}

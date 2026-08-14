@@ -1,0 +1,17 @@
+experiment=E049c-arm-pmu-recovery
+captured_utc=2026-08-14T02:17:10Z
+board=Orange Pi Zero 3W
+soc=Allwinner A733
+kernel=Linux orangepizero3w 6.6.98-sun60iw2 #1.0.0 SMP PREEMPT Tue Apr 7 04:26:52 UTC 2026 aarch64
+user_before=uid=1000(orangepi) gid=1000(orangepi)
+perf_event_paranoid=2
+perf_command=absent
+cc=/usr/bin/cc
+sudo_nopass=no
+counter_privilege=root-assisted sudo; child=orangepi:orangepi
+thermal_abort_c=85
+target_launcher_sha256=ef822720805ae3edd53cde164df8c24f3e7b928b8b03f0d02faa23bf0853cfa7
+target_control_sha256=ca90a8192e160fa0a20d1830982077f7aef4ae786514b0528a06a580347e8fbb
+pmu_event_source=Linux arm_pmuv3.h common raw event encodings
+pmu_bytes_claim=forbidden; event counts are not DDR bytes
+bonsai_started=false

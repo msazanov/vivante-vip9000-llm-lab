@@ -1,0 +1,23 @@
+{
+  "schema_version": "e049c-arm-pmu/v1",
+  "status": "ok",
+  "event_source": "armv8_pmuv3_raw_config",
+  "counter_semantics": "event counts only; no DDR-byte conversion",
+  "pid": 168073,
+  "command": ["/tmp/a733-pmu-sync-exec", "python3", "/home/orangepi/vip9000-lab/thermal_exec_guard.py", "--trace", "/tmp/e049c-bonsai-compat-002/thermal.jsonl", "--interval-ms", "100", "--limit-mc", "85000", "--", "taskset", "-c", "0-7", "/home/orangepi/vip9000-lab/build/cpu-38c66-native-git/bin/llama-completion", "-m", "/home/orangepi/vip9000-lab/models/Bonsai-27B-Q1_0.gguf", "-ngl", "0", "-c", "512", "-b", "512", "-ub", "512", "-t", "8", "-tb", "8", "--cpu-strict", "1", "--cpu-strict-batch", "1", "-np", "1", "-n", "4", "--seed", "123", "--temp", "0", "--top-k", "0", "--top-p", "1", "--min-p", "0", "--repeat-penalty", "1", "--flash-attn", "on", "--mmap", "--no-display-prompt", "--perf", "-p", "Explain the A733 memory bottleneck in one short sentence."],
+  "sync": {"mode": "ready_markers", "started": false, "ended": false},
+  "measured_elapsed_ns": 0,
+  "thermal": {"guard_enabled": true, "limit_c": 85.000, "max_observed_c": 70.564, "tripped": false},
+  "exit": {"code": 0, "raw_wait_status": 0},
+  "failure_reason": "sync_pipe_closed",
+  "events": [
+    {"name": "cpu_cycles", "config": "0x11", "meaning": "ARMv8 PMUv3 CPU_CYCLES event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "instructions", "config": "0x8", "meaning": "ARMv8 PMUv3 INST_RETIRED event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "l1d_cache_refill", "config": "0x3", "meaning": "ARMv8 PMUv3 L1D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "l2d_cache_refill", "config": "0x17", "meaning": "ARMv8 PMUv3 L2D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "l3d_cache_refill", "config": "0x2a", "meaning": "ARMv8 PMUv3 L3D_CACHE_REFILL event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "mem_access", "config": "0x13", "meaning": "ARMv8 PMUv3 MEM_ACCESS event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "bus_access", "config": "0x19", "meaning": "ARMv8 PMUv3 BUS_ACCESS event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null},
+    {"name": "stall_backend", "config": "0x24", "meaning": "ARMv8 PMUv3 STALL_BACKEND event count", "support": "supported", "count_semantics": "event_count_not_bytes", "value": 0, "time_enabled_ns": 0, "time_running_ns": 0, "scaled_value": null, "errno": 0, "error": null}
+  ]
+}
