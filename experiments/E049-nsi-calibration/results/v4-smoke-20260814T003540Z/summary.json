@@ -1,0 +1,148 @@
+{
+  "alignment_gate": {
+    "accepted_points": 2,
+    "rejected_points": 0,
+    "requirements": [
+      "bytes_read == planned_bytes",
+      "workload_fully_contained == true",
+      "1.0 <= elapsed_programmed_ratio <= 1.01",
+      "finite active_us > 0",
+      "finite idle_tail_us >= 0"
+    ]
+  },
+  "interpretation_ru": {
+    "bandwidth_data_unit": "числа уже масштабированы data-unit; деление на timer не подтверждено",
+    "classification": "volume fit uses exact contained bytes; rate fit uses exact bytes / active_us",
+    "idle_ratio": "медиана idle-сигнала / медиана read-сигнала; это не физическая единица",
+    "pmu_timer": "kernel computes clk_hz/1_000_000*value: sysfs value is microseconds"
+  },
+  "master_names": [
+    "gmac",
+    "msi_list0",
+    "de",
+    "eink",
+    "di",
+    "g2d",
+    "gpu",
+    "ve0",
+    "ve1",
+    "ve2",
+    "gic",
+    "msi_lite1",
+    "msi_lite2",
+    "usb_pcie",
+    "iommu0",
+    "iommu1",
+    "isp",
+    "csi",
+    "npu",
+    "cpu0",
+    "cpu1",
+    "total"
+  ],
+  "original_pmu_timer_raw": 0,
+  "point_count": 4,
+  "schema": "a733-sunxi-nsi-calibration/v1",
+  "selected_channel_index": 21,
+  "selected_channel_name": "total",
+  "selected_channel_role": "reported aggregate channel; not proven sum",
+  "signals": {
+    "pmu_bandwidth": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.06593087423758351,
+      "idle_ratio": 0.07696836018420543,
+      "n": 2,
+      "read_cv": 0.35295607982235205
+    },
+    "pmu_bandwidth_rd": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.06996625421822272,
+      "idle_ratio": 0.06922112606965716,
+      "n": 2,
+      "read_cv": 0.35340149031760737
+    },
+    "pmu_bandwidth_wr": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.04105775922059847,
+      "idle_ratio": 0.24917634818796602,
+      "n": 2,
+      "read_cv": 0.34315935495058086
+    },
+    "pmu_cmd_rd": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.07792497435211204,
+      "idle_ratio": 0.06627552573932631,
+      "n": 2,
+      "read_cv": 0.35460367418893607
+    },
+    "pmu_cmd_wr": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.04341687257324391,
+      "idle_ratio": 0.24868328651685392,
+      "n": 2,
+      "read_cv": 0.3432672050561798
+    },
+    "pmu_latency_rd": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.007194244604316547,
+      "idle_ratio": 0.5743801652892562,
+      "n": 2,
+      "read_cv": 0.4380165289256198
+    },
+    "pmu_latency_wr": {
+      "cell_cv": {
+        "32MiB@100000us": 0.0,
+        "64MiB@100000us": 0.0
+      },
+      "classification": "insufficient",
+      "confidence": "low",
+      "idle_cv": 0.06666666666666667,
+      "idle_ratio": 0.9574468085106383,
+      "n": 2,
+      "read_cv": 0.44680851063829785
+    }
+  },
+  "status": "complete",
+  "thermal_limit_c": 85.0,
+  "thermal_max_c": {
+    "cpub_idle_zone": 35.898,
+    "cpub_thermal_zone": 36.952,
+    "cpul_idle_zone": 36.952,
+    "cpul_thermal_zone": 35.898,
+    "ddr_thermal_zone": 34.844,
+    "gpu_thermal_zone": 34.72,
+    "npu_thermal_zone": 34.224,
+    "skin_zone": 31.179
+  },
+  "thermal_max_source": "all telemetry-bearing events in raw.jsonl"
+}

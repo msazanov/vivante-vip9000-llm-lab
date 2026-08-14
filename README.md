@@ -71,6 +71,7 @@ experiments/E039-q1-pair-wholek/                      Target golden and rejected
 experiments/E040-q1-register-lut/                     Target golden and rejected register-only Q1 nibble-LUT
 experiments/E044-cluster-prfm/                        Short PRFM ranking and sustained-load reset evidence
 experiments/E045-dspark-stock-oom/                    DSpark memory/functional preflight sequence and graphs
+experiments/E049-nsi-calibration/                     End-synchronized A733 NSI PMU calibration and raw traces
 experiments/README.md                                 Experiment template and reproducibility rules
 research/decisions/002-packed-ternary-research-direction.md Research direction record
 research/open-questions.md                            Unresolved technical and legal questions
@@ -188,6 +189,11 @@ Confirmed from official, BSP and upstream source:
   один внутренний eval-шаг при 1.12 ток/с. Области timer различаются, поэтому
   направленный разрыв 4.26× является только диагностикой; ещё нужны точные
   token IDs/golden и повторный benchmark с одинаковыми timers.
+- E049 v4 выполнил end-synchronized калибровку `sunxi-nsi`: 48/48 read-точек
+  имеют точный объём load целиком внутри PMU-окна, 0 отклонено, timer
+  восстановлен в `0`, максимум 42.284 °C. Строгий fit оказался
+  `inconclusive`, поэтому прежние высокие v2/v3 R² больше не считаются
+  доказательством единицы счётчика; raw нельзя называть MB/s.
 
 The next hard gates are:
 
@@ -209,6 +215,9 @@ The next hard gates are:
 - [`E045a`](experiments/E045-dspark-stock-oom/README.md): официальный
   Bonsai-27B DSpark, kernel OOM и доказанный конфаундер полного контекста.
   Следующий корректный gate использует явный `-c 512`.
+- [`E049`](experiments/E049-nsi-calibration/README.md): fail-closed
+  калибровка A733 NSI PMU с exact-byte helper, end-sync timestamps,
+  watchdog-восстановлением `pmu_timer` и полными target raw trace.
 
 ## Текущие графики
 
