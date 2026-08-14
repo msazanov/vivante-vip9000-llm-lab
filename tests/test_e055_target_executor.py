@@ -41,7 +41,10 @@ class FakeTransport:
         self.actions = []
         self.requests = []
 
-    def _observations(self, artifacts: tuple) -> tuple[TargetArtifactObservation, ...]:
+    def _observations(
+        self, artifacts: tuple, *, operation_sequence: int,
+        request_id: str, request_nonce: str,
+    ) -> tuple[TargetArtifactObservation, ...]:
         observations = []
         for index, artifact in enumerate(artifacts, 1):
             payload, mode = self.deployed[artifact.target_path]
@@ -53,6 +56,9 @@ class FakeTransport:
                 mode=mode,
                 device=7,
                 inode=1000 + index,
+                operation_sequence=operation_sequence,
+                request_id=request_id,
+                request_nonce=request_nonce,
             ))
         return tuple(observations)
 
@@ -80,7 +86,10 @@ class FakeTransport:
             endpoint_identity=EndpointIdentity(
                 "test_fixture", "fake-transport", "fake-a733", None
             ),
-            artifacts=self._observations(artifacts),
+            artifacts=self._observations(
+                artifacts, operation_sequence=1,
+                request_id=request_id, request_nonce=request_nonce,
+            ),
         )
 
     def assert_artifact(self, artifact) -> None:
@@ -102,7 +111,10 @@ class FakeTransport:
             endpoint_identity=EndpointIdentity(
                 "test_fixture", "fake-transport", "fake-a733", None
             ),
-            artifacts=self._observations(artifacts),
+            artifacts=self._observations(
+                artifacts, operation_sequence=2,
+                request_id=request_id, request_nonce=request_nonce,
+            ),
         )
 
     def capture(self, *, run, e049c_argv, environment) -> TargetCapture:
@@ -430,10 +442,23 @@ class E055TargetExecutorTest(unittest.TestCase):
         manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(len(manifest["runs"]), 20)
         self.assertTrue(manifest["target_workload_executed"])
+        receipt_artifacts = manifest["transport_evidence"]["exclusive_receipt"][
+            "artifacts"
+        ]
+        readback_artifacts = manifest["transport_evidence"]["fresh_readback"][
+            "artifacts"
+        ]
         self.assertEqual(
-            manifest["transport_evidence"]["exclusive_receipt"]["artifacts"],
-            manifest["transport_evidence"]["fresh_readback"]["artifacts"],
+            [{key: value for key, value in item.items()
+              if key not in {"operation_sequence", "request_id", "request_nonce"}}
+             for item in receipt_artifacts],
+            [{key: value for key, value in item.items()
+              if key not in {"operation_sequence", "request_id", "request_nonce"}}
+             for item in readback_artifacts],
         )
+        self.assertEqual({item["operation_sequence"] for item in receipt_artifacts}, {1})
+        self.assertEqual({item["operation_sequence"] for item in readback_artifacts}, {2})
+        self.assertNotEqual(receipt_artifacts, readback_artifacts)
         self.assertEqual(
             manifest["transport_evidence"]["endpoint_identity"],
             manifest["transport_evidence"]["exclusive_receipt"]["endpoint_identity"],

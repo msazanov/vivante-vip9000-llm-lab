@@ -23,7 +23,7 @@
     },
     "transportObservation": {
       "type": "object",
-      "required": ["role", "target_path", "sha256", "size_bytes", "mode", "device", "inode"],
+      "required": ["role", "target_path", "sha256", "size_bytes", "mode", "device", "inode", "operation_sequence", "request_id", "request_nonce"],
       "properties": {
         "role": {"enum": ["harness_executable", "pmu_executable"]},
         "target_path": {"type": "string", "pattern": "^/tmp/e055-q1-hot-cold/deployments/[0-9a-f]{64}/artifacts/[0-9a-f]{64}/[A-Za-z0-9._-]+$", "maxLength": 4096},
@@ -31,7 +31,10 @@
         "size_bytes": {"type": "integer", "minimum": 1, "maximum": 33554432},
         "mode": {"const": 493},
         "device": {"type": "integer", "minimum": 0},
-        "inode": {"type": "integer", "minimum": 1}
+        "inode": {"type": "integer", "minimum": 1},
+        "operation_sequence": {"enum": [1, 2]},
+        "request_id": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "request_nonce": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       },
       "additionalProperties": false
     },

@@ -53,6 +53,9 @@ class TargetArtifactObservation:
     mode: int
     device: int
     inode: int
+    operation_sequence: int
+    request_id: str
+    request_nonce: str
 
 
 @dataclass(frozen=True)
@@ -147,7 +150,8 @@ def _identity_document(identity: EndpointIdentity) -> dict[str, Any]:
 
 
 def _observation_document(
-    observation: Any, expected: Mapping[str, Any],
+    observation: Any, expected: Mapping[str, Any], *,
+    operation_sequence: int, request_id: str, request_nonce: str,
 ) -> dict[str, Any]:
     if type(observation) is not TargetArtifactObservation:
         raise ValueError("transport artifact observation has a noncanonical type")
@@ -155,7 +159,11 @@ def _observation_document(
             observation.target_path != expected.get("target_path") or \
             observation.sha256 != expected.get("sha256") or \
             observation.size_bytes != expected.get("size_bytes") or \
-            observation.mode != expected.get("mode"):
+            observation.mode != expected.get("mode") or \
+            observation.operation_sequence != operation_sequence or \
+            not _strict_int(observation.operation_sequence, minimum=1) or \
+            observation.request_id != request_id or \
+            observation.request_nonce != request_nonce:
         raise ValueError("transport proof does not match exact deployed bytes/path/mode")
     if not isinstance(observation.target_path, str) or \
             not observation.target_path.startswith(DEPLOYMENT_BASE + "/") or \
@@ -178,6 +186,9 @@ def _observation_document(
         "mode": observation.mode,
         "device": observation.device,
         "inode": observation.inode,
+        "operation_sequence": observation.operation_sequence,
+        "request_id": observation.request_id,
+        "request_nonce": observation.request_nonce,
     }
 
 
@@ -248,7 +259,8 @@ def validate_transport_evidence(
         if observation.role in receipt_documents or observation.role not in expected_by_role:
             raise ValueError("exclusive receipt has duplicate or unknown artifact roles")
         receipt_documents[observation.role] = _observation_document(
-            observation, expected_by_role[observation.role]
+            observation, expected_by_role[observation.role], operation_sequence=1,
+            request_id=exclusive_request_id, request_nonce=exclusive_request_nonce,
         )
     for observation in readback.artifacts:
         if observation.role in readback_documents or observation.role not in expected_by_role:
@@ -256,12 +268,26 @@ def validate_transport_evidence(
         if any(observation is prior for prior in receipt.artifacts):
             raise ValueError("readback must be a fresh transport observation")
         readback_documents[observation.role] = _observation_document(
-            observation, expected_by_role[observation.role]
+            observation, expected_by_role[observation.role], operation_sequence=2,
+            request_id=readback_request_id, request_nonce=readback_request_nonce,
         )
-    if receipt_documents != readback_documents:
+    observation_binding_fields = {
+        "operation_sequence", "request_id", "request_nonce",
+    }
+    receipt_payloads = {
+        role: {key: value for key, value in document.items()
+               if key not in observation_binding_fields}
+        for role, document in receipt_documents.items()
+    }
+    readback_payloads = {
+        role: {key: value for key, value in document.items()
+               if key not in observation_binding_fields}
+        for role, document in readback_documents.items()
+    }
+    if receipt_payloads != readback_payloads:
         raise ValueError("exclusive receipt and fresh readback disagree")
     identities = {
-        (item["device"], item["inode"]) for item in receipt_documents.values()
+        (item["device"], item["inode"]) for item in receipt_payloads.values()
     }
     if len(identities) != 2:
         raise ValueError("remote artifact inode identity is reused")
@@ -374,13 +400,19 @@ def validate_serialized_transport_evidence(
         for item in raw:
             document = _exact_mapping(
                 item,
-                {"role", "target_path", "sha256", "size_bytes", "mode", "device", "inode"},
+                {
+                    "role", "target_path", "sha256", "size_bytes", "mode",
+                    "device", "inode", "operation_sequence", "request_id",
+                    "request_nonce",
+                },
                 f"{label} artifact",
             )
             result.append(TargetArtifactObservation(
                 document.get("role"), document.get("target_path"),
                 document.get("sha256"), document.get("size_bytes"),
                 document.get("mode"), document.get("device"), document.get("inode"),
+                document.get("operation_sequence"), document.get("request_id"),
+                document.get("request_nonce"),
             ))
         return tuple(result)
 

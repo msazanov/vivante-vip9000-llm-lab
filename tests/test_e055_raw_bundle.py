@@ -104,12 +104,14 @@ class BundleFixture:
             TargetArtifactObservation(
                 item["role"], item["target_path"], item["sha256"],
                 item["size_bytes"], item["mode"], 7, 1001 + index,
+                1, "a" * 64, "b" * 64,
             ) for index, item in enumerate(expected)
         )
         readback_observations = tuple(
             TargetArtifactObservation(
                 item["role"], item["target_path"], item["sha256"],
                 item["size_bytes"], item["mode"], 7, 1001 + index,
+                2, "c" * 64, "d" * 64,
             ) for index, item in enumerate(expected)
         )
         self.transport_evidence = validate_transport_evidence(
@@ -710,6 +712,9 @@ class E055RawParserTest(unittest.TestCase):
             "readback mismatch": lambda raw: raw["fresh_readback"]["artifacts"][0].update(
                 inode=9999
             ),
+            "copied receipt observation": lambda raw: raw["fresh_readback"][
+                "artifacts"
+            ].__setitem__(0, copy.deepcopy(raw["exclusive_receipt"]["artifacts"][0])),
             "copied deploy nonce as readback challenge": lambda raw: raw["requests"][
                 "fresh_readback"
             ].update(request_nonce=raw["requests"]["exclusive_deploy"]["request_nonce"]),
