@@ -1,0 +1,868 @@
+{
+  "files": [
+    {
+      "bytes": 83373405,
+      "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair01-on/e048-trace.jsonl",
+      "sha256": "985391689395a065a8080466053dbbbbaf6e09cf9abcf8a30cd1a29eed822c66"
+    },
+    {
+      "bytes": 83373405,
+      "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair02-on/e048-trace.jsonl",
+      "sha256": "3d2970c4588f7f0ceea6e1d6be7b079b4d913cd9fb25b0056a0df9948e4a2d30"
+    },
+    {
+      "bytes": 83373405,
+      "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair03-on/e048-trace.jsonl",
+      "sha256": "6854efc710abd5b54d94d29ab9511faba2b8b66711255be9ad7493627aa02593"
+    },
+    {
+      "bytes": 83373405,
+      "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair04-on/e048-trace.jsonl",
+      "sha256": "ab132abccb53612217934e4f631d557b7d7d6d67dbc238289e48401ce03d5d48"
+    },
+    {
+      "bytes": 83373405,
+      "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair05-on/e048-trace.jsonl",
+      "sha256": "0a025a1fa05bdd4efaa0cb6d2709b46fc2f148787f6f712b09e053571ee46184"
+    }
+  ],
+  "nodes_by_run": [
+    {
+      "by_op": {
+        "ADD": {
+          "duration_ns": 8802666749,
+          "events": 7040,
+          "logical_read_bytes": 99835904,
+          "logical_write_bytes": 49982464,
+          "unique_read_bytes": 99835904,
+          "unique_write_bytes": 49982464
+        },
+        "CONCAT": {
+          "duration_ns": 85839013,
+          "events": 1920,
+          "logical_read_bytes": 66846720,
+          "logical_write_bytes": 66846720,
+          "unique_read_bytes": 66846720,
+          "unique_write_bytes": 66846720
+        },
+        "CONT": {
+          "duration_ns": 13640398,
+          "events": 640,
+          "logical_read_bytes": 14860288,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 14860288,
+          "unique_write_bytes": 7471104
+        },
+        "CPY": {
+          "duration_ns": 1549693508,
+          "events": 7680,
+          "logical_read_bytes": 1606283712,
+          "logical_write_bytes": 784465920,
+          "unique_read_bytes": 1606283712,
+          "unique_write_bytes": 784465920
+        },
+        "FLASH_ATTN_EXT": {
+          "duration_ns": 102351670,
+          "events": 640,
+          "logical_read_bytes": 91512832,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 91512832,
+          "unique_write_bytes": 7471104
+        },
+        "GATED_DELTA_NET": {
+          "duration_ns": 3235307120,
+          "events": 1920,
+          "logical_read_bytes": 803690496,
+          "logical_write_bytes": 777388032,
+          "unique_read_bytes": 803690496,
+          "unique_write_bytes": 777388032
+        },
+        "GET_ROWS": {
+          "duration_ns": 166909814,
+          "events": 7760,
+          "logical_read_bytes": 2463274976,
+          "logical_write_bytes": 784957440,
+          "unique_read_bytes": 2463274976,
+          "unique_write_bytes": 784957440
+        },
+        "GLU": {
+          "duration_ns": 183047974,
+          "events": 2560,
+          "logical_read_bytes": 169345024,
+          "logical_write_bytes": 84672512,
+          "unique_read_bytes": 169345024,
+          "unique_write_bytes": 84672512
+        },
+        "L2_NORM": {
+          "duration_ns": 47497783,
+          "events": 3840,
+          "logical_read_bytes": 58982400,
+          "logical_write_bytes": 14942208,
+          "unique_read_bytes": 58982400,
+          "unique_write_bytes": 14942208
+        },
+        "MUL": {
+          "duration_ns": 42280621,
+          "events": 4480,
+          "logical_read_bytes": 59990016,
+          "logical_write_bytes": 30059520,
+          "unique_read_bytes": 59990016,
+          "unique_write_bytes": 30059520
+        },
+        "MUL_MAT": {
+          "duration_ns": 67227408469,
+          "events": 19880,
+          "logical_read_bytes": 18273292288,
+          "logical_write_bytes": 301670400,
+          "unique_read_bytes": 18273292288,
+          "unique_write_bytes": 301670400
+        },
+        "RMS_NORM": {
+          "duration_ns": 212662666,
+          "events": 8360,
+          "logical_read_bytes": 88715264,
+          "logical_write_bytes": 81326080,
+          "unique_read_bytes": 88715264,
+          "unique_write_bytes": 81326080
+        },
+        "ROPE": {
+          "duration_ns": 17589338,
+          "events": 1280,
+          "logical_read_bytes": 8726016,
+          "logical_write_bytes": 8716288,
+          "unique_read_bytes": 8726016,
+          "unique_write_bytes": 8716288
+        },
+        "SCALE": {
+          "duration_ns": 75515914,
+          "events": 3840,
+          "logical_read_bytes": 313786368,
+          "logical_write_bytes": 313786368,
+          "unique_read_bytes": 313786368,
+          "unique_write_bytes": 313786368
+        },
+        "SET_ROWS": {
+          "duration_ns": 8720145,
+          "events": 1280,
+          "logical_read_bytes": 170267392,
+          "logical_write_bytes": 167772160,
+          "unique_read_bytes": 170267392,
+          "unique_write_bytes": 167772160
+        },
+        "SSM_CONV": {
+          "duration_ns": 209567852,
+          "events": 1920,
+          "logical_read_bytes": 106168320,
+          "logical_write_bytes": 37355520,
+          "unique_read_bytes": 106168320,
+          "unique_write_bytes": 37355520
+        },
+        "UNARY": {
+          "duration_ns": 175985728,
+          "events": 8320,
+          "logical_read_bytes": 67590144,
+          "logical_write_bytes": 67590144,
+          "unique_read_bytes": 67590144,
+          "unique_write_bytes": 67590144
+        }
+      },
+      "duration_ns": 82156684762,
+      "events": 83360,
+      "logical_read_bytes": 24463168160,
+      "logical_write_bytes": 3586473984,
+      "run": "pair01-on",
+      "unique_read_bytes": 24463168160,
+      "unique_write_bytes": 3586473984
+    },
+    {
+      "by_op": {
+        "ADD": {
+          "duration_ns": 64850656,
+          "events": 7040,
+          "logical_read_bytes": 99835904,
+          "logical_write_bytes": 49982464,
+          "unique_read_bytes": 99835904,
+          "unique_write_bytes": 49982464
+        },
+        "CONCAT": {
+          "duration_ns": 72821006,
+          "events": 1920,
+          "logical_read_bytes": 66846720,
+          "logical_write_bytes": 66846720,
+          "unique_read_bytes": 66846720,
+          "unique_write_bytes": 66846720
+        },
+        "CONT": {
+          "duration_ns": 13449261,
+          "events": 640,
+          "logical_read_bytes": 14860288,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 14860288,
+          "unique_write_bytes": 7471104
+        },
+        "CPY": {
+          "duration_ns": 1537514854,
+          "events": 7680,
+          "logical_read_bytes": 1606283712,
+          "logical_write_bytes": 784465920,
+          "unique_read_bytes": 1606283712,
+          "unique_write_bytes": 784465920
+        },
+        "FLASH_ATTN_EXT": {
+          "duration_ns": 114499354,
+          "events": 640,
+          "logical_read_bytes": 91512832,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 91512832,
+          "unique_write_bytes": 7471104
+        },
+        "GATED_DELTA_NET": {
+          "duration_ns": 3290865929,
+          "events": 1920,
+          "logical_read_bytes": 803690496,
+          "logical_write_bytes": 777388032,
+          "unique_read_bytes": 803690496,
+          "unique_write_bytes": 777388032
+        },
+        "GET_ROWS": {
+          "duration_ns": 174453372,
+          "events": 7760,
+          "logical_read_bytes": 2463274976,
+          "logical_write_bytes": 784957440,
+          "unique_read_bytes": 2463274976,
+          "unique_write_bytes": 784957440
+        },
+        "GLU": {
+          "duration_ns": 188664892,
+          "events": 2560,
+          "logical_read_bytes": 169345024,
+          "logical_write_bytes": 84672512,
+          "unique_read_bytes": 169345024,
+          "unique_write_bytes": 84672512
+        },
+        "L2_NORM": {
+          "duration_ns": 49018277,
+          "events": 3840,
+          "logical_read_bytes": 58982400,
+          "logical_write_bytes": 14942208,
+          "unique_read_bytes": 58982400,
+          "unique_write_bytes": 14942208
+        },
+        "MUL": {
+          "duration_ns": 39277628,
+          "events": 4480,
+          "logical_read_bytes": 59990016,
+          "logical_write_bytes": 30059520,
+          "unique_read_bytes": 59990016,
+          "unique_write_bytes": 30059520
+        },
+        "MUL_MAT": {
+          "duration_ns": 67321016795,
+          "events": 19880,
+          "logical_read_bytes": 18273292288,
+          "logical_write_bytes": 301670400,
+          "unique_read_bytes": 18273292288,
+          "unique_write_bytes": 301670400
+        },
+        "RMS_NORM": {
+          "duration_ns": 224520639,
+          "events": 8360,
+          "logical_read_bytes": 88715264,
+          "logical_write_bytes": 81326080,
+          "unique_read_bytes": 88715264,
+          "unique_write_bytes": 81326080
+        },
+        "ROPE": {
+          "duration_ns": 17377418,
+          "events": 1280,
+          "logical_read_bytes": 8726016,
+          "logical_write_bytes": 8716288,
+          "unique_read_bytes": 8726016,
+          "unique_write_bytes": 8716288
+        },
+        "SCALE": {
+          "duration_ns": 71129912,
+          "events": 3840,
+          "logical_read_bytes": 313786368,
+          "logical_write_bytes": 313786368,
+          "unique_read_bytes": 313786368,
+          "unique_write_bytes": 313786368
+        },
+        "SET_ROWS": {
+          "duration_ns": 8707685,
+          "events": 1280,
+          "logical_read_bytes": 170267392,
+          "logical_write_bytes": 167772160,
+          "unique_read_bytes": 170267392,
+          "unique_write_bytes": 167772160
+        },
+        "SSM_CONV": {
+          "duration_ns": 208826022,
+          "events": 1920,
+          "logical_read_bytes": 106168320,
+          "logical_write_bytes": 37355520,
+          "unique_read_bytes": 106168320,
+          "unique_write_bytes": 37355520
+        },
+        "UNARY": {
+          "duration_ns": 177002836,
+          "events": 8320,
+          "logical_read_bytes": 67590144,
+          "logical_write_bytes": 67590144,
+          "unique_read_bytes": 67590144,
+          "unique_write_bytes": 67590144
+        }
+      },
+      "duration_ns": 73573996536,
+      "events": 83360,
+      "logical_read_bytes": 24463168160,
+      "logical_write_bytes": 3586473984,
+      "run": "pair02-on",
+      "unique_read_bytes": 24463168160,
+      "unique_write_bytes": 3586473984
+    },
+    {
+      "by_op": {
+        "ADD": {
+          "duration_ns": 62325929,
+          "events": 7040,
+          "logical_read_bytes": 99835904,
+          "logical_write_bytes": 49982464,
+          "unique_read_bytes": 99835904,
+          "unique_write_bytes": 49982464
+        },
+        "CONCAT": {
+          "duration_ns": 78408315,
+          "events": 1920,
+          "logical_read_bytes": 66846720,
+          "logical_write_bytes": 66846720,
+          "unique_read_bytes": 66846720,
+          "unique_write_bytes": 66846720
+        },
+        "CONT": {
+          "duration_ns": 14548296,
+          "events": 640,
+          "logical_read_bytes": 14860288,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 14860288,
+          "unique_write_bytes": 7471104
+        },
+        "CPY": {
+          "duration_ns": 1545745549,
+          "events": 7680,
+          "logical_read_bytes": 1606283712,
+          "logical_write_bytes": 784465920,
+          "unique_read_bytes": 1606283712,
+          "unique_write_bytes": 784465920
+        },
+        "FLASH_ATTN_EXT": {
+          "duration_ns": 105546527,
+          "events": 640,
+          "logical_read_bytes": 91512832,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 91512832,
+          "unique_write_bytes": 7471104
+        },
+        "GATED_DELTA_NET": {
+          "duration_ns": 3253926294,
+          "events": 1920,
+          "logical_read_bytes": 803690496,
+          "logical_write_bytes": 777388032,
+          "unique_read_bytes": 803690496,
+          "unique_write_bytes": 777388032
+        },
+        "GET_ROWS": {
+          "duration_ns": 169859241,
+          "events": 7760,
+          "logical_read_bytes": 2463274976,
+          "logical_write_bytes": 784957440,
+          "unique_read_bytes": 2463274976,
+          "unique_write_bytes": 784957440
+        },
+        "GLU": {
+          "duration_ns": 188944833,
+          "events": 2560,
+          "logical_read_bytes": 169345024,
+          "logical_write_bytes": 84672512,
+          "unique_read_bytes": 169345024,
+          "unique_write_bytes": 84672512
+        },
+        "L2_NORM": {
+          "duration_ns": 47740521,
+          "events": 3840,
+          "logical_read_bytes": 58982400,
+          "logical_write_bytes": 14942208,
+          "unique_read_bytes": 58982400,
+          "unique_write_bytes": 14942208
+        },
+        "MUL": {
+          "duration_ns": 39898600,
+          "events": 4480,
+          "logical_read_bytes": 59990016,
+          "logical_write_bytes": 30059520,
+          "unique_read_bytes": 59990016,
+          "unique_write_bytes": 30059520
+        },
+        "MUL_MAT": {
+          "duration_ns": 67599406294,
+          "events": 19880,
+          "logical_read_bytes": 18273292288,
+          "logical_write_bytes": 301670400,
+          "unique_read_bytes": 18273292288,
+          "unique_write_bytes": 301670400
+        },
+        "RMS_NORM": {
+          "duration_ns": 214382038,
+          "events": 8360,
+          "logical_read_bytes": 88715264,
+          "logical_write_bytes": 81326080,
+          "unique_read_bytes": 88715264,
+          "unique_write_bytes": 81326080
+        },
+        "ROPE": {
+          "duration_ns": 18070376,
+          "events": 1280,
+          "logical_read_bytes": 8726016,
+          "logical_write_bytes": 8716288,
+          "unique_read_bytes": 8726016,
+          "unique_write_bytes": 8716288
+        },
+        "SCALE": {
+          "duration_ns": 72914696,
+          "events": 3840,
+          "logical_read_bytes": 313786368,
+          "logical_write_bytes": 313786368,
+          "unique_read_bytes": 313786368,
+          "unique_write_bytes": 313786368
+        },
+        "SET_ROWS": {
+          "duration_ns": 9047999,
+          "events": 1280,
+          "logical_read_bytes": 170267392,
+          "logical_write_bytes": 167772160,
+          "unique_read_bytes": 170267392,
+          "unique_write_bytes": 167772160
+        },
+        "SSM_CONV": {
+          "duration_ns": 211107436,
+          "events": 1920,
+          "logical_read_bytes": 106168320,
+          "logical_write_bytes": 37355520,
+          "unique_read_bytes": 106168320,
+          "unique_write_bytes": 37355520
+        },
+        "UNARY": {
+          "duration_ns": 178506169,
+          "events": 8320,
+          "logical_read_bytes": 67590144,
+          "logical_write_bytes": 67590144,
+          "unique_read_bytes": 67590144,
+          "unique_write_bytes": 67590144
+        }
+      },
+      "duration_ns": 73810379113,
+      "events": 83360,
+      "logical_read_bytes": 24463168160,
+      "logical_write_bytes": 3586473984,
+      "run": "pair03-on",
+      "unique_read_bytes": 24463168160,
+      "unique_write_bytes": 3586473984
+    },
+    {
+      "by_op": {
+        "ADD": {
+          "duration_ns": 62319953,
+          "events": 7040,
+          "logical_read_bytes": 99835904,
+          "logical_write_bytes": 49982464,
+          "unique_read_bytes": 99835904,
+          "unique_write_bytes": 49982464
+        },
+        "CONCAT": {
+          "duration_ns": 77009077,
+          "events": 1920,
+          "logical_read_bytes": 66846720,
+          "logical_write_bytes": 66846720,
+          "unique_read_bytes": 66846720,
+          "unique_write_bytes": 66846720
+        },
+        "CONT": {
+          "duration_ns": 13327387,
+          "events": 640,
+          "logical_read_bytes": 14860288,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 14860288,
+          "unique_write_bytes": 7471104
+        },
+        "CPY": {
+          "duration_ns": 1560040943,
+          "events": 7680,
+          "logical_read_bytes": 1606283712,
+          "logical_write_bytes": 784465920,
+          "unique_read_bytes": 1606283712,
+          "unique_write_bytes": 784465920
+        },
+        "FLASH_ATTN_EXT": {
+          "duration_ns": 110366009,
+          "events": 640,
+          "logical_read_bytes": 91512832,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 91512832,
+          "unique_write_bytes": 7471104
+        },
+        "GATED_DELTA_NET": {
+          "duration_ns": 3249729544,
+          "events": 1920,
+          "logical_read_bytes": 803690496,
+          "logical_write_bytes": 777388032,
+          "unique_read_bytes": 803690496,
+          "unique_write_bytes": 777388032
+        },
+        "GET_ROWS": {
+          "duration_ns": 167085985,
+          "events": 7760,
+          "logical_read_bytes": 2463274976,
+          "logical_write_bytes": 784957440,
+          "unique_read_bytes": 2463274976,
+          "unique_write_bytes": 784957440
+        },
+        "GLU": {
+          "duration_ns": 187279592,
+          "events": 2560,
+          "logical_read_bytes": 169345024,
+          "logical_write_bytes": 84672512,
+          "unique_read_bytes": 169345024,
+          "unique_write_bytes": 84672512
+        },
+        "L2_NORM": {
+          "duration_ns": 47459807,
+          "events": 3840,
+          "logical_read_bytes": 58982400,
+          "logical_write_bytes": 14942208,
+          "unique_read_bytes": 58982400,
+          "unique_write_bytes": 14942208
+        },
+        "MUL": {
+          "duration_ns": 40489953,
+          "events": 4480,
+          "logical_read_bytes": 59990016,
+          "logical_write_bytes": 30059520,
+          "unique_read_bytes": 59990016,
+          "unique_write_bytes": 30059520
+        },
+        "MUL_MAT": {
+          "duration_ns": 67000498702,
+          "events": 19880,
+          "logical_read_bytes": 18273292288,
+          "logical_write_bytes": 301670400,
+          "unique_read_bytes": 18273292288,
+          "unique_write_bytes": 301670400
+        },
+        "RMS_NORM": {
+          "duration_ns": 212839961,
+          "events": 8360,
+          "logical_read_bytes": 88715264,
+          "logical_write_bytes": 81326080,
+          "unique_read_bytes": 88715264,
+          "unique_write_bytes": 81326080
+        },
+        "ROPE": {
+          "duration_ns": 18936219,
+          "events": 1280,
+          "logical_read_bytes": 8726016,
+          "logical_write_bytes": 8716288,
+          "unique_read_bytes": 8726016,
+          "unique_write_bytes": 8716288
+        },
+        "SCALE": {
+          "duration_ns": 72665688,
+          "events": 3840,
+          "logical_read_bytes": 313786368,
+          "logical_write_bytes": 313786368,
+          "unique_read_bytes": 313786368,
+          "unique_write_bytes": 313786368
+        },
+        "SET_ROWS": {
+          "duration_ns": 8452729,
+          "events": 1280,
+          "logical_read_bytes": 170267392,
+          "logical_write_bytes": 167772160,
+          "unique_read_bytes": 170267392,
+          "unique_write_bytes": 167772160
+        },
+        "SSM_CONV": {
+          "duration_ns": 226127127,
+          "events": 1920,
+          "logical_read_bytes": 106168320,
+          "logical_write_bytes": 37355520,
+          "unique_read_bytes": 106168320,
+          "unique_write_bytes": 37355520
+        },
+        "UNARY": {
+          "duration_ns": 173672637,
+          "events": 8320,
+          "logical_read_bytes": 67590144,
+          "logical_write_bytes": 67590144,
+          "unique_read_bytes": 67590144,
+          "unique_write_bytes": 67590144
+        }
+      },
+      "duration_ns": 73228301313,
+      "events": 83360,
+      "logical_read_bytes": 24463168160,
+      "logical_write_bytes": 3586473984,
+      "run": "pair04-on",
+      "unique_read_bytes": 24463168160,
+      "unique_write_bytes": 3586473984
+    },
+    {
+      "by_op": {
+        "ADD": {
+          "duration_ns": 61984649,
+          "events": 7040,
+          "logical_read_bytes": 99835904,
+          "logical_write_bytes": 49982464,
+          "unique_read_bytes": 99835904,
+          "unique_write_bytes": 49982464
+        },
+        "CONCAT": {
+          "duration_ns": 84656333,
+          "events": 1920,
+          "logical_read_bytes": 66846720,
+          "logical_write_bytes": 66846720,
+          "unique_read_bytes": 66846720,
+          "unique_write_bytes": 66846720
+        },
+        "CONT": {
+          "duration_ns": 13725753,
+          "events": 640,
+          "logical_read_bytes": 14860288,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 14860288,
+          "unique_write_bytes": 7471104
+        },
+        "CPY": {
+          "duration_ns": 1562531275,
+          "events": 7680,
+          "logical_read_bytes": 1606283712,
+          "logical_write_bytes": 784465920,
+          "unique_read_bytes": 1606283712,
+          "unique_write_bytes": 784465920
+        },
+        "FLASH_ATTN_EXT": {
+          "duration_ns": 111732284,
+          "events": 640,
+          "logical_read_bytes": 91512832,
+          "logical_write_bytes": 7471104,
+          "unique_read_bytes": 91512832,
+          "unique_write_bytes": 7471104
+        },
+        "GATED_DELTA_NET": {
+          "duration_ns": 3210946906,
+          "events": 1920,
+          "logical_read_bytes": 803690496,
+          "logical_write_bytes": 777388032,
+          "unique_read_bytes": 803690496,
+          "unique_write_bytes": 777388032
+        },
+        "GET_ROWS": {
+          "duration_ns": 173047944,
+          "events": 7760,
+          "logical_read_bytes": 2463274976,
+          "logical_write_bytes": 784957440,
+          "unique_read_bytes": 2463274976,
+          "unique_write_bytes": 784957440
+        },
+        "GLU": {
+          "duration_ns": 190491075,
+          "events": 2560,
+          "logical_read_bytes": 169345024,
+          "logical_write_bytes": 84672512,
+          "unique_read_bytes": 169345024,
+          "unique_write_bytes": 84672512
+        },
+        "L2_NORM": {
+          "duration_ns": 46338421,
+          "events": 3840,
+          "logical_read_bytes": 58982400,
+          "logical_write_bytes": 14942208,
+          "unique_read_bytes": 58982400,
+          "unique_write_bytes": 14942208
+        },
+        "MUL": {
+          "duration_ns": 40210836,
+          "events": 4480,
+          "logical_read_bytes": 59990016,
+          "logical_write_bytes": 30059520,
+          "unique_read_bytes": 59990016,
+          "unique_write_bytes": 30059520
+        },
+        "MUL_MAT": {
+          "duration_ns": 67251057283,
+          "events": 19880,
+          "logical_read_bytes": 18273292288,
+          "logical_write_bytes": 301670400,
+          "unique_read_bytes": 18273292288,
+          "unique_write_bytes": 301670400
+        },
+        "RMS_NORM": {
+          "duration_ns": 216564632,
+          "events": 8360,
+          "logical_read_bytes": 88715264,
+          "logical_write_bytes": 81326080,
+          "unique_read_bytes": 88715264,
+          "unique_write_bytes": 81326080
+        },
+        "ROPE": {
+          "duration_ns": 18550436,
+          "events": 1280,
+          "logical_read_bytes": 8726016,
+          "logical_write_bytes": 8716288,
+          "unique_read_bytes": 8726016,
+          "unique_write_bytes": 8716288
+        },
+        "SCALE": {
+          "duration_ns": 73992419,
+          "events": 3840,
+          "logical_read_bytes": 313786368,
+          "logical_write_bytes": 313786368,
+          "unique_read_bytes": 313786368,
+          "unique_write_bytes": 313786368
+        },
+        "SET_ROWS": {
+          "duration_ns": 9404877,
+          "events": 1280,
+          "logical_read_bytes": 170267392,
+          "logical_write_bytes": 167772160,
+          "unique_read_bytes": 170267392,
+          "unique_write_bytes": 167772160
+        },
+        "SSM_CONV": {
+          "duration_ns": 211232931,
+          "events": 1920,
+          "logical_read_bytes": 106168320,
+          "logical_write_bytes": 37355520,
+          "unique_read_bytes": 106168320,
+          "unique_write_bytes": 37355520
+        },
+        "UNARY": {
+          "duration_ns": 176880042,
+          "events": 8320,
+          "logical_read_bytes": 67590144,
+          "logical_write_bytes": 67590144,
+          "unique_read_bytes": 67590144,
+          "unique_write_bytes": 67590144
+        }
+      },
+      "duration_ns": 73453348096,
+      "events": 83360,
+      "logical_read_bytes": 24463168160,
+      "logical_write_bytes": 3586473984,
+      "run": "pair05-on",
+      "unique_read_bytes": 24463168160,
+      "unique_write_bytes": 3586473984
+    }
+  ],
+  "q1_by_run": [
+    {
+      "duration_ns": 34883255122,
+      "events": 97824,
+      "output_write_bytes": 114278400,
+      "q1_packed_weight_read_bytes": 24864030720,
+      "q8_activation_logical_read_bytes": 46965391360,
+      "q8_activation_unique_read_bytes": 734930944,
+      "run": "pair01-on",
+      "steady": {
+        "duration_ns": 15567935876,
+        "events": 41952,
+        "output_write_bytes": 49827840,
+        "q1_packed_weight_read_bytes": 10809262080,
+        "q8_activation_logical_read_bytes": 20417495040,
+        "q8_activation_unique_read_bytes": 315119616
+      },
+      "variants": {
+        "q1_0_4x4_q8_0": 97824
+      }
+    },
+    {
+      "duration_ns": 34616209489,
+      "events": 97824,
+      "output_write_bytes": 114278400,
+      "q1_packed_weight_read_bytes": 24864030720,
+      "q8_activation_logical_read_bytes": 46965391360,
+      "q8_activation_unique_read_bytes": 734930944,
+      "run": "pair02-on",
+      "steady": {
+        "duration_ns": 15717500433,
+        "events": 41952,
+        "output_write_bytes": 49827840,
+        "q1_packed_weight_read_bytes": 10809262080,
+        "q8_activation_logical_read_bytes": 20417495040,
+        "q8_activation_unique_read_bytes": 315119616
+      },
+      "variants": {
+        "q1_0_4x4_q8_0": 97824
+      }
+    },
+    {
+      "duration_ns": 34623110313,
+      "events": 97824,
+      "output_write_bytes": 114278400,
+      "q1_packed_weight_read_bytes": 24864030720,
+      "q8_activation_logical_read_bytes": 46965391360,
+      "q8_activation_unique_read_bytes": 734930944,
+      "run": "pair03-on",
+      "steady": {
+        "duration_ns": 15507079163,
+        "events": 41952,
+        "output_write_bytes": 49827840,
+        "q1_packed_weight_read_bytes": 10809262080,
+        "q8_activation_logical_read_bytes": 20417495040,
+        "q8_activation_unique_read_bytes": 315119616
+      },
+      "variants": {
+        "q1_0_4x4_q8_0": 97824
+      }
+    },
+    {
+      "duration_ns": 34486756213,
+      "events": 97824,
+      "output_write_bytes": 114278400,
+      "q1_packed_weight_read_bytes": 24864030720,
+      "q8_activation_logical_read_bytes": 46965391360,
+      "q8_activation_unique_read_bytes": 734930944,
+      "run": "pair04-on",
+      "steady": {
+        "duration_ns": 15482158935,
+        "events": 41952,
+        "output_write_bytes": 49827840,
+        "q1_packed_weight_read_bytes": 10809262080,
+        "q8_activation_logical_read_bytes": 20417495040,
+        "q8_activation_unique_read_bytes": 315119616
+      },
+      "variants": {
+        "q1_0_4x4_q8_0": 97824
+      }
+    },
+    {
+      "duration_ns": 34594697497,
+      "events": 97824,
+      "output_write_bytes": 114278400,
+      "q1_packed_weight_read_bytes": 24864030720,
+      "q8_activation_logical_read_bytes": 46965391360,
+      "q8_activation_unique_read_bytes": 734930944,
+      "run": "pair05-on",
+      "steady": {
+        "duration_ns": 15673506728,
+        "events": 41952,
+        "output_write_bytes": 49827840,
+        "q1_packed_weight_read_bytes": 10809262080,
+        "q8_activation_logical_read_bytes": 20417495040,
+        "q8_activation_unique_read_bytes": 315119616
+      },
+      "variants": {
+        "q1_0_4x4_q8_0": 97824
+      }
+    }
+  ]
+}

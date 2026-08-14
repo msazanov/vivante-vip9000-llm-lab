@@ -1,0 +1,950 @@
+{
+  "all_return_codes_ok": true,
+  "classification": "TRACE_ONLY",
+  "experiment_id": "E048-per-op-trace",
+  "generated_token_equal": true,
+  "metrics": {
+    "eval": {
+      "median_overhead_fraction": -0.18493833814422678,
+      "off_median_ms": 3599.47,
+      "off_ms": [
+        3592.46,
+        3605.76,
+        5253.87,
+        3586.48,
+        3599.47
+      ],
+      "off_p95_ms": 4924.248,
+      "on_median_ms": 2933.79,
+      "on_ms": [
+        2933.79,
+        3249.55,
+        2859.02,
+        2903.93,
+        3198.99
+      ],
+      "on_p95_ms": 3239.438,
+      "p95_overhead_fraction": -0.3421456433550868
+    },
+    "profile_elapsed_ms": {
+      "median_overhead_fraction": 0.003882145265114101,
+      "off_median_ms": 35485.115469,
+      "off_ms": [
+        35485.115469,
+        35802.434007,
+        37131.00699,
+        35252.477306,
+        35466.296885
+      ],
+      "off_p95_ms": 36865.2923934,
+      "on_median_ms": 35622.873842,
+      "on_ms": [
+        36192.23246,
+        35268.140847,
+        35622.873842,
+        37576.843859,
+        35105.74664
+      ],
+      "on_p95_ms": 37299.9215792,
+      "p95_overhead_fraction": 0.011789657902667727
+    },
+    "prompt_eval": {
+      "median_overhead_fraction": 0.014072892488832478,
+      "off_median_ms": 6281.58,
+      "off_ms": [
+        6329.93,
+        6558.52,
+        5830.46,
+        6276.07,
+        6281.58
+      ],
+      "off_p95_ms": 6512.802000000001,
+      "on_median_ms": 6369.98,
+      "on_ms": [
+        7390.15,
+        6193.97,
+        6459.86,
+        6369.98,
+        6189.01
+      ],
+      "on_p95_ms": 7204.092,
+      "p95_overhead_fraction": 0.10614325447019568
+    },
+    "total": {
+      "median_overhead_fraction": -0.053941428638978994,
+      "off_median_ms": 9939.67,
+      "off_ms": [
+        9939.67,
+        10187.86,
+        11563.49,
+        9881.11,
+        9905.39
+      ],
+      "off_p95_ms": 11288.364,
+      "on_median_ms": 9403.51,
+      "on_ms": [
+        10338.49,
+        9459.51,
+        9336.14,
+        9290.29,
+        9403.51
+      ],
+      "on_p95_ms": 10162.694,
+      "p95_overhead_fraction": -0.09971949876882069
+    }
+  },
+  "overhead_basis": {
+    "description": "profile_command wall elapsed for the identical full workload",
+    "eval_note": "negative on-off eval deltas are treated as run-to-run noise, not as negative instrumentation overhead",
+    "eval_timer_used_for_overhead": false,
+    "timer": "profile_elapsed_ms"
+  },
+  "pairs": 5,
+  "primary_timer": "profile_elapsed_ms",
+  "runs": {
+    "off": [
+      {
+        "driver_rc": 0,
+        "mode": "off",
+        "pair": 1,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair01-off",
+        "profile_elapsed_ms": 35485.115469,
+        "profile_exit_code": 0,
+        "stderr_sha256": "199b8dbe419076237e0a27911e531caadcb1660fcd9c302ef12370df8fd17365",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1085619,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 65224,
+            "cpub_thermal_zone": 65162,
+            "cpul_idle_zone": 65162,
+            "cpul_thermal_zone": 65224,
+            "ddr_thermal_zone": 56420,
+            "gpu_thermal_zone": 57474,
+            "npu_thermal_zone": 53444,
+            "skin_zone": 37044
+          },
+          "sha256": "a2113f5e7298315cf4b1b2ccd2699c7151d783614fb171c64e19f31684a38dab"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3592.46
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6329.93
+          },
+          "total": {
+            "count": 17,
+            "ms": 9939.67
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "off",
+        "pair": 2,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair02-off",
+        "profile_elapsed_ms": 35802.434007,
+        "profile_exit_code": 0,
+        "stderr_sha256": "b817658d5acf44b5fb9272cb5a10ff76dab7bf6e93a5d3e87ac489031958d933",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1094942,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 65195,
+            "cpub_thermal_zone": 65100,
+            "cpul_idle_zone": 65100,
+            "cpul_thermal_zone": 65195,
+            "ddr_thermal_zone": 56730,
+            "gpu_thermal_zone": 60698,
+            "npu_thermal_zone": 54684,
+            "skin_zone": 37039
+          },
+          "sha256": "a8594b62baa6821c47cb33452470c68398eb71b95306afe9f1fc6f6460c3387a"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3605.76
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6558.52
+          },
+          "total": {
+            "count": 17,
+            "ms": 10187.86
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "off",
+        "pair": 3,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair03-off",
+        "profile_elapsed_ms": 37131.00699,
+        "profile_exit_code": 0,
+        "stderr_sha256": "2ab863bf0d1da6a78edbe2401dc54b600b383069ed8a167821be699b8239db44",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1134271,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 68735,
+            "cpub_thermal_zone": 65490,
+            "cpul_idle_zone": 65490,
+            "cpul_thermal_zone": 68735,
+            "ddr_thermal_zone": 58714,
+            "gpu_thermal_zone": 62000,
+            "npu_thermal_zone": 56172,
+            "skin_zone": 37747
+          },
+          "sha256": "1e44edb13bdaba58314ae075925b8da3b7ecbcbdd0348eea8e7925c68bed048f"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 5253.87
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 5830.46
+          },
+          "total": {
+            "count": 17,
+            "ms": 11563.49
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "off",
+        "pair": 4,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair04-off",
+        "profile_elapsed_ms": 35252.477306,
+        "profile_exit_code": 0,
+        "stderr_sha256": "c6eb876d121ea77ba12bdc9c2af5091c72ce01e6a0777070da521de8b59c0795",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1076739,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 67378,
+            "cpub_thermal_zone": 66021,
+            "cpul_idle_zone": 66021,
+            "cpul_thermal_zone": 67378,
+            "ddr_thermal_zone": 58652,
+            "gpu_thermal_zone": 61752,
+            "npu_thermal_zone": 56296,
+            "skin_zone": 37475
+          },
+          "sha256": "10f78ffad6f5db1b9bee5276308778df863d9b530429923033294d04dfa0b6d7"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3586.48
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6276.07
+          },
+          "total": {
+            "count": 17,
+            "ms": 9881.11
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "off",
+        "pair": 5,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair05-off",
+        "profile_elapsed_ms": 35466.296885,
+        "profile_exit_code": 0,
+        "stderr_sha256": "6880f3a161fc6409e09eea4c08eec132e8f767984b41d09ec04bff2e7730bd4c",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1082881,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 67673,
+            "cpub_thermal_zone": 66316,
+            "cpul_idle_zone": 66316,
+            "cpul_thermal_zone": 67673,
+            "ddr_thermal_zone": 58404,
+            "gpu_thermal_zone": 62124,
+            "npu_thermal_zone": 56482,
+            "skin_zone": 37534
+          },
+          "sha256": "651aa82f3fb23f4dc86580ba583e0d18a31c25b4d67177d652acba766bac4f1d"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3599.47
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6281.58
+          },
+          "total": {
+            "count": 17,
+            "ms": 9905.39
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        }
+      }
+    ],
+    "on": [
+      {
+        "driver_rc": 0,
+        "mode": "on",
+        "pair": 1,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair01-on",
+        "profile_elapsed_ms": 36192.23246,
+        "profile_exit_code": 0,
+        "stderr_sha256": "2cabffba36d8d35604d36d0901f87092f21fd0b664a4f8d80e65d832f9eb3244",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1191649,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 64914,
+            "cpub_thermal_zone": 64914,
+            "cpul_idle_zone": 64914,
+            "cpul_thermal_zone": 64914,
+            "ddr_thermal_zone": 57164,
+            "gpu_thermal_zone": 58714,
+            "npu_thermal_zone": 53816,
+            "skin_zone": 36982
+          },
+          "sha256": "7016f2db49ac9061c27956713a72205f100e3b23f940df0fcd1c061f393ed15d"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 2933.79
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 7390.15
+          },
+          "total": {
+            "count": 17,
+            "ms": 10338.49
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        },
+        "trace": {
+          "bytes": 83373405,
+          "counts": {
+            "node_worker": 83360,
+            "q1_kernel": 97824,
+            "token_begin": 5,
+            "token_end": 5
+          },
+          "events": 181194,
+          "max_token_seq": 5,
+          "overflow_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "schema_errors": [],
+          "sha256": "985391689395a065a8080466053dbbbbaf6e09cf9abcf8a30cd1a29eed822c66",
+          "steady_decode_durations_ms": [
+            894.09475,
+            892.002126,
+            959.256959
+          ],
+          "token_begin": 5,
+          "token_end": 5
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "on",
+        "pair": 2,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair02-on",
+        "profile_elapsed_ms": 35268.140847,
+        "profile_exit_code": 0,
+        "stderr_sha256": "8234cd9b94aa6a3e8160475b43ebfa1f929fde8c1b4fad170a4bdfea98b8aef3",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1076687,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 66375,
+            "cpub_thermal_zone": 65726,
+            "cpul_idle_zone": 65726,
+            "cpul_thermal_zone": 66375,
+            "ddr_thermal_zone": 58094,
+            "gpu_thermal_zone": 62372,
+            "npu_thermal_zone": 56482,
+            "skin_zone": 37275
+          },
+          "sha256": "f954c4fac628bcff64752223dfeede9e686b6c1225129cc3d7a127f3640b74a3"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3249.55
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6193.97
+          },
+          "total": {
+            "count": 17,
+            "ms": 9459.51
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        },
+        "trace": {
+          "bytes": 83373405,
+          "counts": {
+            "node_worker": 83360,
+            "q1_kernel": 97824,
+            "token_begin": 5,
+            "token_end": 5
+          },
+          "events": 181194,
+          "max_token_seq": 5,
+          "overflow_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "schema_errors": [],
+          "sha256": "3d2970c4588f7f0ceea6e1d6be7b079b4d913cd9fb25b0056a0df9948e4a2d30",
+          "steady_decode_durations_ms": [
+            1248.190709,
+            901.163542,
+            903.749709
+          ],
+          "token_begin": 5,
+          "token_end": 5
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "on",
+        "pair": 3,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair03-on",
+        "profile_elapsed_ms": 35622.873842,
+        "profile_exit_code": 0,
+        "stderr_sha256": "362d3054990238b03e4b0c5e849ff2ffc3b37548c7c8b26227aa6df7da723862",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1089006,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 67555,
+            "cpub_thermal_zone": 66729,
+            "cpul_idle_zone": 66729,
+            "cpul_thermal_zone": 67555,
+            "ddr_thermal_zone": 58156,
+            "gpu_thermal_zone": 62124,
+            "npu_thermal_zone": 57102,
+            "skin_zone": 37511
+          },
+          "sha256": "87dc57ad4644397a6dd6c136aa31487a8dcfb20370ba3783fac588250654a16c"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 2859.02
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6459.86
+          },
+          "total": {
+            "count": 17,
+            "ms": 9336.14
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        },
+        "trace": {
+          "bytes": 83373405,
+          "counts": {
+            "node_worker": 83360,
+            "q1_kernel": 97824,
+            "token_begin": 5,
+            "token_end": 5
+          },
+          "events": 181194,
+          "max_token_seq": 5,
+          "overflow_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "schema_errors": [],
+          "sha256": "6854efc710abd5b54d94d29ab9511faba2b8b66711255be9ad7493627aa02593",
+          "steady_decode_durations_ms": [
+            884.281417,
+            889.152751,
+            896.409709
+          ],
+          "token_begin": 5,
+          "token_end": 5
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "on",
+        "pair": 4,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair04-on",
+        "profile_elapsed_ms": 37576.843859,
+        "profile_exit_code": 0,
+        "stderr_sha256": "f7b58781cc85950dc3691b1689acfb701e129f99c823d17aab275b42a2d34ce1",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1149421,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 67673,
+            "cpub_thermal_zone": 66434,
+            "cpul_idle_zone": 66434,
+            "cpul_thermal_zone": 67673,
+            "ddr_thermal_zone": 59396,
+            "gpu_thermal_zone": 62868,
+            "npu_thermal_zone": 57350,
+            "skin_zone": 37534
+          },
+          "sha256": "dda758f3f9be99ce2b74eaa72a3d8f355b0291a8b8a69823aec9598bd90229b0"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 2903.93
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6369.98
+          },
+          "total": {
+            "count": 17,
+            "ms": 9290.29
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        },
+        "trace": {
+          "bytes": 83373405,
+          "counts": {
+            "node_worker": 83360,
+            "q1_kernel": 97824,
+            "token_begin": 5,
+            "token_end": 5
+          },
+          "events": 181194,
+          "max_token_seq": 5,
+          "overflow_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "schema_errors": [],
+          "sha256": "ab132abccb53612217934e4f631d557b7d7d6d67dbc238289e48401ce03d5d48",
+          "steady_decode_durations_ms": [
+            893.676875,
+            897.562125,
+            922.453292
+          ],
+          "token_begin": 5,
+          "token_end": 5
+        }
+      },
+      {
+        "driver_rc": 0,
+        "mode": "on",
+        "pair": 5,
+        "path": "/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/pair05-on",
+        "profile_elapsed_ms": 35105.74664,
+        "profile_exit_code": 0,
+        "stderr_sha256": "1fa2949216175a4afb9e24022b33c9da5e1d6d6942a84ee24d009c0680df0210",
+        "stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb",
+        "thermal": {
+          "bytes": 1073701,
+          "child_exit": 0,
+          "guard_exit": 0,
+          "max_temperature_mc_by_type": {
+            "cpub_idle_zone": 67260,
+            "cpub_thermal_zone": 66611,
+            "cpul_idle_zone": 66611,
+            "cpul_thermal_zone": 67260,
+            "ddr_thermal_zone": 59024,
+            "gpu_thermal_zone": 62496,
+            "npu_thermal_zone": 56234,
+            "skin_zone": 37452
+          },
+          "sha256": "24acb4603768cf96684fdc9f6c32785a04abbe2b6822796c23125e255e066043"
+        },
+        "timers": {
+          "eval": {
+            "count": 3,
+            "ms": 3198.99
+          },
+          "prompt_eval": {
+            "count": 14,
+            "ms": 6189.01
+          },
+          "total": {
+            "count": 17,
+            "ms": 9403.51
+          }
+        },
+        "token_ids": {
+          "all": [
+            814,
+            20139,
+            279,
+            357,
+            22,
+            18,
+            18,
+            4779,
+            84810,
+            303,
+            799,
+            2716,
+            11316,
+            13,
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "all_sha256": "97dab51601481b9626b071e27cb6ecaf8e89af7b81369b550cf2e76611d18d65",
+          "generated": [
+            271,
+            248068,
+            198,
+            8160
+          ],
+          "generated_sha256": "e3ec805e0880f833142e95a5c0eebc88a72ad6bd4a3a39fe3bc05709c73b0592"
+        },
+        "trace": {
+          "bytes": 83373405,
+          "counts": {
+            "node_worker": 83360,
+            "q1_kernel": 97824,
+            "token_begin": 5,
+            "token_end": 5
+          },
+          "events": 181194,
+          "max_token_seq": 5,
+          "overflow_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "schema_errors": [],
+          "sha256": "0a025a1fa05bdd4efaa0cb6d2709b46fc2f148787f6f712b09e053571ee46184",
+          "steady_decode_durations_ms": [
+            1226.861876,
+            898.823001,
+            883.532167
+          ],
+          "token_begin": 5,
+          "token_end": 5
+        }
+      }
+    ]
+  },
+  "schema_version": "e048-compat-ab/v1",
+  "status": "complete",
+  "token_equal": true,
+  "trace_overflow_ok": true,
+  "trace_schema_errors": 0
+}

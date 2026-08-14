@@ -1,6 +1,6 @@
 # E048 — per-op/per-layer trace для steady-state decode
 
-Статус: `PARTIAL — latest target smoke PASS, compatibility A/B ещё не выполнен`.
+Статус: `TRACE_ONLY — target smoke, 5 paired A/B и raw publication завершены`.
 
 Цель E048 — получить минимально инвазивный trace одного CPU decode-графа
 llama.cpp 38c66ad (build number 9594) на A733: границы токена, каждый graph
@@ -39,14 +39,76 @@ smoke завершился `RC=0`, `overflow_count=0`; прежнее сообщ
 
 Файлы raw и SHA находятся в `raw/` и `data/partial-summary.json`.
 
+## Compatibility A/B (ровно 5 пар)
+
+После исправления resize выполнены ровно пять пар на Orange Pi: один и тот же
+изолированный бинарник, модель, prompt, seed, affinity, число потоков и
+thermal guard; менялась только переменная trace (`off` против `on`).
+`n_predict=4`, общий prompt:
+`Explain the A733 memory bottleneck in one short sentence.` Все десять
+запусков завершились `RC=0`. Полная команда и идентичность workload записаны
+в raw metadata на плате и опубликованы в packed/provenance manifests.
+
+| Проверка | Результат |
+|---|---:|
+| Пар off/on | 5 / 5 |
+| Полный token stream совпал | да, hash `97dab516...d18d65` |
+| Generated stream совпал | да, `[271, 248068, 198, 8160]` |
+| Trace schema errors | 0 |
+| Overflow в каждом trace-on | 0 |
+| Trace events в каждом trace-on | 181 194 (5 token boundaries) |
+| Thermal guard | 10/10 без срабатывания; max CPU zone ~68.735 °C |
+
+Для overhead используем `profile_elapsed_ms`: wall-clock от
+`profile_command` для полного одинакового workload (prompt + decode), а не
+разницу внутренних llama.cpp фаз. Paired summary:
+
+| Wall timer | off median | on median | median overhead | off p95 | on p95 | p95 overhead |
+|---|---:|---:|---:|---:|---:|---:|
+| полный `profile_elapsed_ms` | 35485.12 ms | 35622.87 ms | **+0.39%** | 36865.29 ms | 37299.92 ms | **+1.18%** |
+
+Итоговая классификация — `TRACE_ONLY`: p95 wall overhead `+1.18%` выше
+порога `1%`. Внутренние llama.cpp числа (`eval`: off median 3599.47 ms,
+on median 2933.79 ms) дают отрицательное delta, но это не может означать
+отрицательную стоимость профайлера: это run-to-run шум/разная фазовая
+вариативность. Поэтому `eval` не используется как overhead basis. `prompt
+eval` отдельно даёт median `+1.41%` и p95 `+10.61%`, что дополнительно
+подтверждает необходимость не называть A/B speedup.
+
+Этот A/B — только compatibility/стоимость instrumentation. Он не является
+измерением ускорения Bonsai, не доказывает улучшение tokens/s и не является
+финальным verdict E047.
+
+### Что trace реально насчитал
+
+В каждом trace-on сохранено 83 373 405 bytes JSONL. Для steady-state portion
+(`token_seq >= 3` в текущем capture) aggregate одного запуска содержит 41 952
+Q1 kernel events: примерно 10.809 GB packed-Q1 logical reads, 20.417 GB
+logical Q8-activation reads, 315.120 MB unique Q8 activation reads и 49.828 MB
+output writes. Это declared/ledger traffic, не измеренный DDR traffic: поля
+`observed_ddr_read_bytes` и `observed_ddr_write_bytes` намеренно `null`,
+`counter_method=none`. Полная агрегация, включая per-op node bytes и все пять
+trace hashes, находится в `data/compat-ab-ledger.json`.
+
+Все десять raw stdout/stderr/telemetry/metadata/thermal/token-id файлов и пять
+полных trace **забраны в git как zstd-артефакты** в
+`raw/compat-ab/compressed/`. Упаковка детерминирована: zstd level 10,
+single-thread, без timestamp. Файл
+`data/compat-ab-packed-manifest.tsv` содержит для каждого из 85 артефактов
+source path, git path, SHA-256/размер до распаковки и SHA-256/размер сжатого
+файла. Все compressed files меньше 20 MB, поэтому split не потребовался.
+
+`data/compat-ab-manifest.tsv` оставлен отдельным provenance manifest исходных
+файлов на плате; он не заменяет опубликованные git artifacts. Target raw path:
+`/home/orangepi/vip9000-lab/results/e048-compat-ab-20260814/`.
+
 ## Acceptance gate
 
-Незавершённый gate: ровно пять пар `trace-off/trace-on` на одном E047
-compatibility workload (`n_predict=4`, seed 123, общий prompt, одинаковые
-threads/affinity/thermal guard). Для каждой пары сохраняются stdout, stderr,
-telemetry, E048 JSONL и exit metadata. Сначала проверяются `overflow_count=0`,
-JSONL schema и одинаковый generated token stream. Затем считается paired
-median/p95 overhead:
+Compatibility A/B выше завершён как диагностический прогон. Для каждой пары
+сохранены stdout, stderr, telemetry, E048 JSONL и exit metadata; compact
+summary/ledger/raw manifest лежат в `data/`. Сначала проверялись
+`overflow_count=0`, JSONL schema и одинаковый generated token stream. Затем
+считался paired median/p95 overhead:
 
 - `PASS` — median и p95 overhead ≤ 1%;
 - `TRACE_ONLY` — trace корректен, но overhead > 1%;

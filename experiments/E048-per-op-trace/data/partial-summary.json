@@ -34,9 +34,22 @@
   "compatibility_ab": {
     "n_predict": 4,
     "pairs_required": 5,
-    "pairs_completed": 0,
-    "status": "pending",
-    "max_allowed_overhead_fraction": 0.01
+    "pairs_completed": 5,
+    "status": "complete_diagnostic",
+    "classification": "TRACE_ONLY_by_profile_wall_p95",
+    "evidence": "data/compat-ab-summary.json",
+    "ledger": "data/compat-ab-ledger.json",
+    "raw_manifest": "data/compat-ab-manifest.tsv",
+    "packed_manifest": "data/compat-ab-packed-manifest.tsv",
+    "token_streams": "raw/compat-ab/",
+    "max_allowed_overhead_fraction": 0.01,
+    "overhead_basis": {
+      "timer": "profile_elapsed_ms",
+      "median_overhead_fraction": 0.003882145265114101,
+      "p95_overhead_fraction": 0.011789657902667727,
+      "classification": "TRACE_ONLY"
+    },
+    "note": "Negative eval deltas are invalid as overhead evidence; full-workload wall p95 exceeds 1%. Instrumentation compatibility evidence only, not a model speedup and not the final E047 contract verdict."
   },
   "latest_local_patch_resize": {
     "status": "target_verified",

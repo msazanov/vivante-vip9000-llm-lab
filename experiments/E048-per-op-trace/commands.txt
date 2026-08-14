@@ -24,3 +24,22 @@ GGML_E048_TRACE_PATH="$RESULT/raw/trace-capacity65536.jsonl" \
   -t 8 -tb 8 -C 0xff --cpu-strict 0 --poll 50 -fa on -nkvo -ngl 0 \
   -ctk f16 -ctv f16 --fit off --device none --mmap --perf \
   --no-conversation --no-display-prompt --simple-io
+
+# Compatibility A/B: exactly five off/on pairs, same command except trace env.
+# The target runner additionally wrapped this command with profile_command.py
+# (telemetry interval 100 ms), thermal_exec_guard.py (85000 mc, 100 ms), and
+# the same LD_PRELOAD token-capture helper for both modes. Raw command outputs
+# remain on the board under results/e048-compat-ab-20260814/.
+PROMPT='Explain the A733 memory bottleneck in one short sentence.'
+env GGML_E048_TRACE_CAPACITY=65536 \
+    GGML_E048_TRACE_PATH="$RUN/e048-trace.jsonl" \
+    E048_TOKEN_IDS_PATH="$RUN/token-ids.jsonl" \
+    LD_PRELOAD=/home/orangepi/vip9000-lab/e048-token-capture.so \
+    taskset -c 0-7 "$BIN" -m "$MODEL" -p "$PROMPT" \
+    -c 512 -b 512 -ub 512 -n 4 --temp 0 --seed 123 \
+    --top-k 0 --top-p 1 --min-p 0 --repeat-penalty 1 --repeat-last-n 0 \
+    -t 8 -tb 8 -C 0xff --cpu-strict 0 --poll 50 -fa on -nkvo -ngl 0 \
+    -ctk f16 -ctv f16 --fit off --device none --mmap --perf \
+    --no-conversation --no-display-prompt --simple-io
+# For trace-off, set both GGML_E048_TRACE_* variables to empty; all other
+# arguments and the token-capture preload stay identical.
