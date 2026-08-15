@@ -36,6 +36,7 @@ writes.
 - [Profiling contract](docs/profiling/profiling-contract.md)
 - [Provenance and promotion gates](docs/profiling/provenance-and-gates.md)
 - [Current best and interpretation boundaries](docs/experiments/current-best.md)
+- [E056 LFM2.5 CPU decode screen](docs/experiments/e056-lfm25-a733-cpu-decode.md)
 - [Machine-readable experiment registry](docs/experiments/registry.json)
 - [Registry schema](docs/experiments/schema.json)
 - [Remote branch inventory](docs/experiments/branch-inventory.md)
