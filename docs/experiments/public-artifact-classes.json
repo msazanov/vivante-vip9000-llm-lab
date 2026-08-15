@@ -114,6 +114,11 @@
       "glob": "docs/superpowers/plans/2026-08-14-repository-index.md",
       "reason": "approved immutable design plan retained as text",
       "provenance": "repository-index design approval"
+    },
+    {
+      "glob": "benchmarks/results/e056-lfm25-a733-cpu-decode/summary.json",
+      "reason": "normalized public benchmark record; raw target telemetry remains outside Git",
+      "provenance": "E056 target screen captured 2026-08-15"
     }
   ]
 }
