@@ -1,1 +1,169 @@
-ewogICJzY2hlbWEiOiAibGZtMjUtYTczMy1jcHUtZGVjb2RlLXNjcmVlbi92MSIsCiAgImV4cGVyaW1lbnRfaWQiOiAiRTA1NiIsCiAgImV2aWRlbmNlX2NsYXNzIjogIlZlcmlmaWVkIG9uIHRhcmdldCIsCiAgInN0YXR1cyI6ICJ1bnF1YWxpZmllZCIsCiAgInJlY29yZGVkX2RhdGUiOiAiMjAyNi0wOC0xNSIsCiAgInNjb3BlIjogewogICAgIm1lYXN1cmVtZW50IjogIkNQVS1vbmx5IGxsYW1hLWJlbmNoIHN0ZWFkeSBkZWNvZGUgc2NyZWVuIiwKICAgICJpbmNsdWRlZCI6ICJwPTAsIG49MzIsIHI9NSBkZWNvZGUgbWVhc3VyZW1lbnRzIHdpdGggdGhlcm1hbC1ndWFyZCB0ZWxlbWV0cnkiLAogICAgImV4Y2x1ZGVkIjogWwogICAgICAicHJvbXB0IG9yIHByZWZpbGwgdGhyb3VnaHB1dCIsCiAgICAgICJ0aW1lIHRvIGZpcnN0IHRva2VuIiwKICAgICAgImRldGVybWluaXN0aWMgZ2VuZXJhdGlvbiBxdWFsaXR5IiwKICAgICAgInZpc2libGUgY2hhcmFjdGVyIG9yIGJ5dGUgcmF0ZSIsCiAgICAgICJMRk0yLjUtVkwgaW1hZ2UgcHJvamVjdG9yIGFuZCBpbWFnZSBwcmVmaWxsIiwKICAgICAgIk5QVSBvciBHUFUgaW5mZXJlbmNlIgogICAgXQogIH0sCiAgInJ1bnRpbWUiOiB7CiAgICAiZXhlY3V0YWJsZSI6ICJsbGFtYS1iZW5jaCIsCiAgICAiYnVpbGRfY29tbWl0IjogIjM4YzY2YWQiLAogICAgImJ1aWxkX251bWJlciI6IDk1OTQsCiAgICAicmVwb3J0ZWRfYmFja2VuZCI6ICJDUFUiCiAgfSwKICAiY29uZmlndXJhdGlvbiI6IHsKICAgICJwcm9tcHRfdG9rZW5zIjogMCwKICAgICJnZW5lcmF0ZWRfdG9rZW5zX3Blcl9yZXBldGl0aW9uIjogMzIsCiAgICAicmVwZXRpdGlvbnMiOiA1LAogICAgInRocmVhZHMiOiA4LAogICAgImNwdV9tYXNrIjogIjB4ZmYiLAogICAgImNwdV9zdHJpY3QiOiBmYWxzZSwKICAgICJwb2xsIjogNTAsCiAgICAiYmF0Y2giOiA1MTIsCiAgICAidWJhdGNoIjogNTEyLAogICAgImt2X3R5cGVfayI6ICJmMTYiLAogICAgImt2X3R5cGVfdiI6ICJmMTYiLAogICAgImZsYXNoX2F0dGVudGlvbiI6IHRydWUsCiAgICAib2JzZXJ2ZWRfY3B1X2dvdmVybm9ycyI6IHsKICAgICAgImNwdTBfNSI6ICJvbmRlbWFuZCIsCiAgICAgICJjcHU2XzciOiAib25kZW1hbmQiCiAgICB9LAogICAgInRoZXJtYWxfZ3VhcmQiOiB7CiAgICAgICJsaW1pdF9tYyI6IDg1MDAwLAogICAgICAiaW50ZXJ2YWxfbXMiOiAxMDAsCiAgICAgICJhbGxfZXhpdF9zdGF0dXNlcyI6IFswXQogICAgfQogIH0sCiAgInJ1bnMiOiBbCiAgICB7CiAgICAgICJydW5faWQiOiAibGZtMjUtMi42Yi1xNGttLWNwdS1kZWNvZGUtMjAyNjA4MTUiLAogICAgICAibW9kZWwiOiB7CiAgICAgICAgInNvdXJjZSI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL0xpcXVpZEFJL0xGTTIuNS0yLjZCLUdHVUYiLAogICAgICAgICJmaWxlbmFtZSI6ICJMRk0yLjUtMi42Qi1RNF9LX00uZ2d1ZiIsCiAgICAgICAgInF1YW50aXphdGlvbiI6ICJRNF9LX00iLAogICAgICAgICJmaWxlX3NpemVfYnl0ZXMiOiAxNjc0NDU0ODQ4LAogICAgICAgICJzaGEyNTYiOiAiNzlmZGYwMDM1MWI0NmNmMjZmMDIwYWVhZDI4ZDAxODg5ODg2YmU4N2M1NWZhMGViOTA3ZTZmOWIwMGJmZWUxNCIsCiAgICAgICAgInJ1bnRpbWVfbW9kZWxfc2l6ZV9ieXRlcyI6IDE2NjYyMTU5MzYsCiAgICAgICAgInJ1bnRpbWVfbW9kZWxfdHlwZSI6ICJsZm0yIDIuNkIgUTRfSyAtIE1lZGl1bSIsCiAgICAgICAgInJ1bnRpbWVfcGFyYW1ldGVyX2NvdW50IjogMjY5NzE5ODU5MgogICAgICB9LAogICAgICAiYmVuY2htYXJrIjogewogICAgICAgICJ0ZXN0X3RpbWVfdXRjIjogIjIwMjYtMDgtMTVUMTg6MjA6MDVaIiwKICAgICAgICAibWVhbl9kZWNvZGVfdG9rX3MiOiAzLjYxMTg5MiwKICAgICAgICAic3RkZGV2X2RlY29kZV90b2tfcyI6IDAuMTU5MDg3LAogICAgICAgICJzYW1wbGVzX2RlY29kZV90b2tfcyI6IFszLjYyNjIsIDMuMzMzMzgsIDMuNzA0OTQsIDMuNjg4NTgsIDMuNzA2MzZdCiAgICAgIH0sCiAgICAgICJ0ZWxlbWV0cnkiOiB7CiAgICAgICAgInBlYWtfcnNzX2h3bV9raWIiOiAzMzM5MTcyLAogICAgICAgICJwZWFrX2NwdWJfdGhlcm1hbF9tYyI6IDYyMzcyLAogICAgICAgICJwZWFrX2NwdWxfdGhlcm1hbF9tYyI6IDYyMjQ4LAogICAgICAgICJwZWFrX2Rkcl90aGVybWFsX21jIjogNTQ0OTgsCiAgICAgICAgInBlYWtfbnB1X3RoZXJtYWxfbWMiOiA1MjgyNCwKICAgICAgICAicGVha19ncHVfdGhlcm1hbF9tYyI6IDU2MjM0LAogICAgICAgICJ0aGVybWFsX2d1YXJkX2V4aXRfc3RhdHVzIjogMAogICAgICB9CiAgICB9LAogICAgewogICAgICAicnVuX2lkIjogImxmbTI1LThiLWExYi1xNGttLWNwdS1kZWNvZGUtMjAyNjA4MTUiLAogICAgICAibW9kZWwiOiB7CiAgICAgICAgInNvdXJjZSI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL2Jyb3duc2F1dG8vTEZNMi41LThCLUExQi1HR1VGIiwKICAgICAgICAiZmlsZW5hbWUiOiAiTEZNMi41LThCLUExQi1RNF9LX00uZ2d1ZiIsCiAgICAgICAgInF1YW50aXphdGlvbiI6ICJRNF9LX00iLAogICAgICAgICJmaWxlX3NpemVfYnl0ZXMiOiA1MTU1NTY0NzY4LAogICAgICAgICJzaGEyNTYiOiAiNDkyM2VjMTRmMDZiOTY4Yjc0ZDY2M2U1OTQ5ODY3ZDJkOWMzYmYxM2EyMGI4YmUxYTlmOWFmMzk5ODliMmJiMCIsCiAgICAgICAgInJ1bnRpbWVfbW9kZWxfc2l6ZV9ieXRlcyI6IDUxNDczMjYyMDgsCiAgICAgICAgInJ1bnRpbWVfbW9kZWxfdHlwZSI6ICJsZm0ybW9lIDhCLkExQiBRNF9LIC0gTWVkaXVtIiwKICAgICAgICAicnVudGltZV9wYXJhbWV0ZXJfY291bnQiOiA4NDY3ODU2ODMyCiAgICAgIH0sCiAgICAgICJiZW5jaG1hcmsiOiB7CiAgICAgICAgInRlc3RfdGltZV91dGMiOiAiMjAyNi0wOC0xNVQxODoxMDowN1oiLAogICAgICAgICJtZWFuX2RlY29kZV90b2tfcyI6IDUuMjAyNTk4LAogICAgICAgICJzdGRkZXZfZGVjb2RlX3Rva19zIjogMC4wNzAwMzUsCiAgICAgICAgInNhbXBsZXNfZGVjb2RlX3Rva19zIjogWzUuMTE3OTIsIDUuMjMyNzQsIDUuMjYxMTIsIDUuMTM2OTQsIDUuMjY0MjddCiAgICAgIH0sCiAgICAgICJ0ZWxlbWV0cnkiOiB7CiAgICAgICAgInBlYWtfcnNzX2h3bV9raWIiOiAxMDEzMjI4MCwKICAgICAgICAicGVha19jcHViX3RoZXJtYWxfbWMiOiA1ODc3NiwKICAgICAgICAicGVha19jcHVsX3RoZXJtYWxfbWMiOiA2MDA3OCwKICAgICAgICAicGVha19kZHJfdGhlcm1hbF9tYyI6IDUxODMyLAogICAgICAgICJwZWFrX25wdV90aGVybWFsX21jIjogNTA5MDIsCiAgICAgICAgInBlYWtfZ3B1X3RoZXJtYWxfbWMiOiA1NDQ5OCwKICAgICAgICAidGhlcm1hbF9ndWFyZF9leGl0X3N0YXR1cyI6IDAKICAgICAgfQogICAgfSwKICAgIHsKICAgICAgInJ1bl9pZCI6ICJib25zYWktMjdiLXExLWNwdS1kZWNvZGUtMjAyNjA4MTUiLAogICAgICAibW9kZWwiOiB7CiAgICAgICAgInNvdXJjZSI6ICJyZXNpZGVudCB0YXJnZXQgYmFzZWxpbmU7IGV4dGVybmFsIG9yaWdpbiB3YXMgbm90IHJldmFsaWRhdGVkIGluIHRoaXMgc2NyZWVuIiwKICAgICAgICAiZmlsZW5hbWUiOiAiQm9uc2FpLTI3Qi1RMV8wLmdndWYiLAogICAgICAgICJxdWFudGl6YXRpb24iOiAiUTFfMCIsCiAgICAgICAgImZpbGVfc2l6ZV9ieXRlcyI6IDM3OTI0NTk3NzYsCiAgICAgICAgInNoYTI1NiI6IG51bGwsCiAgICAgICAgInNoYTI1Nl9zdGF0dXMiOiAibm90IHJldGFpbmVkIGluIHRoaXMgYm91bmRlZCBjYXB0dXJlIiwKICAgICAgICAicnVudGltZV9tb2RlbF9zaXplX2J5dGVzIjogMzc5MjQ1OTc3NiwKICAgICAgICAicnVudGltZV9tb2RlbF90eXBlIjogInF3ZW4zNSAyN0IgUTFfMCIsCiAgICAgICAgInJ1bnRpbWVfcGFyYW1ldGVyX2NvdW50IjogMjY4OTU5OTg0NjQKICAgICAgfSwKICAgICAgImJlbmNobWFyayI6IHsKICAgICAgICAidGVzdF90aW1lX3V0YyI6ICIyMDI2LTA4LTE1VDE4OjE1OjAzWiIsCiAgICAgICAgIm1lYW5fZGVjb2RlX3Rva19zIjogMC45OTEwMjQsCiAgICAgICAgInN0ZGRldl9kZWNvZGVfdG9rX3MiOiAwLjAxNDEzOSwKICAgICAgICAic2FtcGxlc19kZWNvZGVfdG9rX3MiOiBbMC45NzU2MTIsIDAuOTg4NDA4LCAwLjk4NTMwOSwgMS4wMTM4NywgMC45OTE5MjVdCiAgICAgIH0sCiAgICAgICJ0ZWxlbWV0cnkiOiB7CiAgICAgICAgInBlYWtfcnNzX2h3bV9raWIiOiA3MzM5NjUyLAogICAgICAgICJwZWFrX2NwdWJfdGhlcm1hbF9tYyI6IDczNzUwLAogICAgICAgICJwZWFrX2NwdWxfdGhlcm1hbF9tYyI6IDc0OTg5LAogICAgICAgICJwZWFrX2Rkcl90aGVybWFsX21jIjogNjUxNjIsCiAgICAgICAgInBlYWtfbnB1X3RoZXJtYWxfbWMiOiA2NDQxOCwKICAgICAgICAicGVha19ncHVfdGhlcm1hbF9tYyI6IDY2NjExLAogICAgICAgICJ0aGVybWFsX2d1YXJkX2V4aXRfc3RhdHVzIjogMAogICAgICB9CiAgICB9LAogICAgewogICAgICAicnVuX2lkIjogImxmbTI1LXZsM2ItcTRrbS10ZXh0LWNwdS1kZWNvZGUtMjAyNjA4MTUiLAogICAgICAibW9kZWwiOiB7CiAgICAgICAgInNvdXJjZSI6ICJodHRwczovL2h1Z2dpbmdmYWNlLmNvL0xpcXVpZEFJL0xGTTIuNS1WTC0zQi1HR1VGIiwKICAgICAgICAiZmlsZW5hbWUiOiAiTEZNMi41LVZMLTNCLVE0X0tfTS5nZ3VmIiwKICAgICAgICAicXVhbnRpemF0aW9uIjogIlE0X0tfTSIsCiAgICAgICAgImZpbGVfc2l6ZV9ieXRlcyI6IDE2NzQ0NTQyNDAsCiAgICAgICAgInNoYTI1NiI6ICI4M2MxOGRmYmEwMmM3NTc2OWNkZDYzZjczZTM3YzM0MzQwMGU4MmQ0MzRmZjFiMTRiY2MxY2IwMmZjZjJmNWYyIiwKICAgICAgICAicnVudGltZV9tb2RlbF9zaXplX2J5dGVzIjogMTY2NjIxNTkzNiwKICAgICAgICAicnVudGltZV9tb2RlbF90eXBlIjogImxmbTIgMi42QiBRNF9LIC0gTWVkaXVtIiwKICAgICAgICAicnVudGltZV9wYXJhbWV0ZXJfY291bnQiOiAyNjk3MTk4NTkyCiAgICAgIH0sCiAgICAgICJiZW5jaG1hcmsiOiB7CiAgICAgICAgInRlc3RfdGltZV91dGMiOiAiMjAyNi0wOC0xNVQxODoyMzoxOFoiLAogICAgICAgICJtZWFuX2RlY29kZV90b2tfcyI6IDMuNTk2ODY2LAogICAgICAgICJzdGRkZXZfZGVjb2RlX3Rva19zIjogMC4xNDAzMjUsCiAgICAgICAgInNhbXBsZXNfZGVjb2RlX3Rva19zIjogWzMuNjQ5ODUsIDMuNjkwMzYsIDMuNjA5NzEsIDMuMzUyMzQsIDMuNjgyMDZdCiAgICAgIH0sCiAgICAgICJ0ZWxlbWV0cnkiOiB7CiAgICAgICAgInBlYWtfcnNzX2h3bV9raWIiOiAzMzM5MTcyLAogICAgICAgICJwZWFrX2NwdWJfdGhlcm1hbF9tYyI6IDYwODg0LAogICAgICAgICJwZWFrX2NwdWxfdGhlcm1hbF9tYyI6IDYyMDAwLAogICAgICAgICJwZWFrX2Rkcl90aGVybWFsX21jIjogNTQ0OTgsCiAgICAgICAgInBlYWtfbnB1X3RoZXJtYWxfbWMiOiA1MTgzMiwKICAgICAgICAicGVha19ncHVfdGhlcm1hbF9tYyI6IDU2OTE2LAogICAgICAgICJ0aGVybWFsX2d1YXJkX2V4aXRfc3RhdHVzIjogMAogICAgICB9LAogICAgICAiZXhjbHVzaW9ucyI6IFsibW1wcm9qIiwgImltYWdlIGlucHV0IiwgImltYWdlIHByZWZpbGwiXQogICAgfQogIF0sCiAgImNvbXBhcmlzb25zIjogewogICAgImxmbTI1XzhiX2ExYl90b19ib25zYWlfbWVhbl9kZWNvZGVfcmF0aW8iOiA1LjI0OTcsCiAgICAiaW50ZXJwcmV0YXRpb24iOiAiVGhpcyBpcyBhIHNwZWVkLW9ubHkgcmF0aW8gZm9yIGRpZmZlcmVudCBhcmNoaXRlY3R1cmVzIGFuZCBxdWFudGl6YXRpb25zOyBpdCBpcyBub3QgYSBxdWFsaXR5IHJhbmtpbmcuIgogIH0sCiAgInByb3ZlbmFuY2Vfbm90ZSI6ICJUaGUgZm91ciBsbGFtYS1iZW5jaCBKU09OIG91dHB1dHMgYW5kIHRoZXJtYWwtZ3VhcmQgdHJhY2VzIHdlcmUgdmVyaWZpZWQgb24gdGhlIHRhcmdldCBkdXJpbmcgdGhpcyBjYXB0dXJlLiBUaGlzIGNvbXBhY3QgcHVibGljIHN1bW1hcnkgaW50ZW50aW9uYWxseSBvbWl0cyByYXcgdHJhY2VzIGNvbnRhaW5pbmcgdGFyZ2V0LWxvY2FsIHBhdGhzIGFuZCBwcm9jZXNzIGlkZW50aWZpZXJzLiIKfQo=
+{
+  "schema": "lfm25-a733-cpu-decode-screen/v1",
+  "experiment_id": "E056",
+  "evidence_class": "Verified on target",
+  "status": "unqualified",
+  "recorded_date": "2026-08-15",
+  "scope": {
+    "measurement": "CPU-only llama-bench steady decode screen",
+    "included": "p=0, n=32, r=5 decode measurements with thermal-guard telemetry",
+    "excluded": [
+      "prompt or prefill throughput",
+      "time to first token",
+      "deterministic generation quality",
+      "visible character or byte rate",
+      "LFM2.5-VL image projector and image prefill",
+      "NPU or GPU inference"
+    ]
+  },
+  "runtime": {
+    "executable": "llama-bench",
+    "build_commit": "38c66ad",
+    "build_number": 9594,
+    "reported_backend": "CPU"
+  },
+  "configuration": {
+    "prompt_tokens": 0,
+    "generated_tokens_per_repetition": 32,
+    "repetitions": 5,
+    "threads": 8,
+    "cpu_mask": "0xff",
+    "cpu_strict": false,
+    "poll": 50,
+    "batch": 512,
+    "ubatch": 512,
+    "kv_type_k": "f16",
+    "kv_type_v": "f16",
+    "flash_attention": true,
+    "observed_cpu_governors": {
+      "cpu0_5": "ondemand",
+      "cpu6_7": "ondemand"
+    },
+    "thermal_guard": {
+      "limit_mc": 85000,
+      "interval_ms": 100,
+      "all_exit_statuses": [0]
+    }
+  },
+  "runs": [
+    {
+      "run_id": "lfm25-2.6b-q4km-cpu-decode-20260815",
+      "model": {
+        "source": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF",
+        "filename": "LFM2.5-2.6B-Q4_K_M.gguf",
+        "quantization": "Q4_K_M",
+        "file_size_bytes": 1674454848,
+        "sha256": "79fdf00351b46cf26f020aead28d01889886be87c55fa0eb907e6f9b00bfee14",
+        "runtime_model_size_bytes": 1666215936,
+        "runtime_model_type": "lfm2 2.6B Q4_K - Medium",
+        "runtime_parameter_count": 2697198592
+      },
+      "benchmark": {
+        "test_time_utc": "2026-08-15T18:20:05Z",
+        "mean_decode_tok_s": 3.611892,
+        "stddev_decode_tok_s": 0.159087,
+        "samples_decode_tok_s": [3.6262, 3.33338, 3.70494, 3.68858, 3.70636]
+      },
+      "telemetry": {
+        "peak_rss_hwm_kib": 3339172,
+        "peak_cpub_thermal_mc": 62372,
+        "peak_cpul_thermal_mc": 62248,
+        "peak_ddr_thermal_mc": 54498,
+        "peak_npu_thermal_mc": 52824,
+        "peak_gpu_thermal_mc": 56234,
+        "thermal_guard_exit_status": 0
+      }
+    },
+    {
+      "run_id": "lfm25-8b-a1b-q4km-cpu-decode-20260815",
+      "model": {
+        "source": "https://huggingface.co/brownsauto/LFM2.5-8B-A1B-GGUF",
+        "filename": "LFM2.5-8B-A1B-Q4_K_M.gguf",
+        "quantization": "Q4_K_M",
+        "file_size_bytes": 5155564768,
+        "sha256": "4923ec14f06b968b74d663e5949867d2d9c3bf13a20b8be1a9f9af39989b2bb0",
+        "runtime_model_size_bytes": 5147326208,
+        "runtime_model_type": "lfm2moe 8B.A1B Q4_K - Medium",
+        "runtime_parameter_count": 8467856832
+      },
+      "benchmark": {
+        "test_time_utc": "2026-08-15T18:10:07Z",
+        "mean_decode_tok_s": 5.202598,
+        "stddev_decode_tok_s": 0.070035,
+        "samples_decode_tok_s": [5.11792, 5.23274, 5.26112, 5.13694, 5.26427]
+      },
+      "telemetry": {
+        "peak_rss_hwm_kib": 10132280,
+        "peak_cpub_thermal_mc": 58776,
+        "peak_cpul_thermal_mc": 60078,
+        "peak_ddr_thermal_mc": 51832,
+        "peak_npu_thermal_mc": 50902,
+        "peak_gpu_thermal_mc": 54498,
+        "thermal_guard_exit_status": 0
+      }
+    },
+    {
+      "run_id": "bonsai-27b-q1-cpu-decode-20260815",
+      "model": {
+        "source": "resident target baseline; external origin was not revalidated in this screen",
+        "filename": "Bonsai-27B-Q1_0.gguf",
+        "quantization": "Q1_0",
+        "file_size_bytes": 3792459776,
+        "sha256": null,
+        "sha256_status": "not retained in this bounded capture",
+        "runtime_model_size_bytes": 3792459776,
+        "runtime_model_type": "qwen35 27B Q1_0",
+        "runtime_parameter_count": 26895998464
+      },
+      "benchmark": {
+        "test_time_utc": "2026-08-15T18:15:03Z",
+        "mean_decode_tok_s": 0.991024,
+        "stddev_decode_tok_s": 0.014139,
+        "samples_decode_tok_s": [0.975612, 0.988408, 0.985309, 1.01387, 0.991925]
+      },
+      "telemetry": {
+        "peak_rss_hwm_kib": 7339652,
+        "peak_cpub_thermal_mc": 73750,
+        "peak_cpul_thermal_mc": 74989,
+        "peak_ddr_thermal_mc": 65162,
+        "peak_npu_thermal_mc": 64418,
+        "peak_gpu_thermal_mc": 66611,
+        "thermal_guard_exit_status": 0
+      }
+    },
+    {
+      "run_id": "lfm25-vl3b-q4km-text-cpu-decode-20260815",
+      "model": {
+        "source": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF",
+        "filename": "LFM2.5-VL-3B-Q4_K_M.gguf",
+        "quantization": "Q4_K_M",
+        "file_size_bytes": 1674454240,
+        "sha256": "83c18dfba02c75769cdd63f73e37c343400e82d434ff1b14bcc1cb02fcf2f5f2",
+        "runtime_model_size_bytes": 1666215936,
+        "runtime_model_type": "lfm2 2.6B Q4_K - Medium",
+        "runtime_parameter_count": 2697198592
+      },
+      "benchmark": {
+        "test_time_utc": "2026-08-15T18:23:18Z",
+        "mean_decode_tok_s": 3.596866,
+        "stddev_decode_tok_s": 0.140325,
+        "samples_decode_tok_s": [3.64985, 3.69036, 3.60971, 3.35234, 3.68206]
+      },
+      "telemetry": {
+        "peak_rss_hwm_kib": 3339172,
+        "peak_cpub_thermal_mc": 60884,
+        "peak_cpul_thermal_mc": 62000,
+        "peak_ddr_thermal_mc": 54498,
+        "peak_npu_thermal_mc": 51832,
+        "peak_gpu_thermal_mc": 56916,
+        "thermal_guard_exit_status": 0
+      },
+      "exclusions": ["mmproj", "image input", "image prefill"]
+    }
+  ],
+  "comparisons": {
+    "lfm25_8b_a1b_to_bonsai_mean_decode_ratio": 5.2497,
+    "interpretation": "This is a speed-only ratio for different architectures and quantizations; it is not a quality ranking."
+  },
+  "provenance_note": "The four llama-bench JSON outputs and thermal-guard traces were verified on the target during this capture. This compact public summary intentionally omits raw traces containing target-local paths and process identifiers."
+}
