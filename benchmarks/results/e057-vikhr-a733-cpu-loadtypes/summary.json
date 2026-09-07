@@ -1,0 +1,128 @@
+{
+  "schema": "vikhr15b-a733-cpu-loadtypes/v1",
+  "experiment_id": "E057",
+  "evidence_class": "Verified on target",
+  "status": "unqualified",
+  "recorded_date": "2026-09-06",
+  "scope": {
+    "measurement": "CPU-only llama-server decode screen across load types, prompt processing, and assistant-chain end-to-end notes",
+    "included": "single-sample chat-completion decode timings per load type, prompt rates for three prompt sizes, Hermes and GLaDOS TTS integration verification",
+    "excluded": [
+      "repeated-means decode methodology (E056 remains the reference)",
+      "deterministic generation quality comparison",
+      "NPU or GPU inference",
+      "LFM2.5 re-test (covered by E056; file staged for future E058 prefill/TTFT)"
+    ]
+  },
+  "runtime": {
+    "executable": "llama-server",
+    "build_number": 10827,
+    "build_commit": "d03efa5d5",
+    "reported_backend": "CPU",
+    "selected_ggml_variant": "libggml-cpu-armv8.2_2.so"
+  },
+  "hardware": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "big_cores": "cpu6-7 Cortex-A76 cpu_capacity 1024",
+    "little_cores": "cpu0-5 Cortex-A55 cpu_capacity 385",
+    "max_freq_khz": 1794000,
+    "ram_gib": 11.8,
+    "kernel": "6.6.98-sun60iw2"
+  },
+  "configuration": {
+    "server_flags": "--host 0.0.0.0 --port 8081 -c 64000 -t 2",
+    "affinity": "taskset -c 6,7",
+    "memory_max": "4G",
+    "service": "vikhr-llama.service (user systemd, Restart=on-failure)",
+    "governor_final": "performance (pinned via root cpufreq-performance.service)"
+  },
+  "decode_runs": [
+    {
+      "load_type": "all 8 cores, -t 8, no affinity, ondemand",
+      "model_file": "Vikhr-Qwen-2.5-1.5b-Instruct-Q6_K.gguf",
+      "decode_tok_s": 1.480,
+      "ms_per_token": 677.3,
+      "generated_tokens": 42
+    },
+    {
+      "load_type": "taskset -c 4-7, -t 4",
+      "model_file": "Vikhr-Qwen-2.5-1.5b-Instruct-Q6_K.gguf",
+      "decode_tok_s": 3.012,
+      "ms_per_token": 332.4,
+      "generated_tokens": 16
+    },
+    {
+      "load_type": "taskset -c 6-7, -t 2 (A76 only)",
+      "model_file": "Vikhr-Qwen-2.5-1.5b-Instruct-Q6_K.gguf",
+      "decode_tok_s": 4.940,
+      "ms_per_token": 202.5,
+      "generated_tokens": 15
+    },
+    {
+      "load_type": "taskset -c 6-7, -t 2 (A76 only)",
+      "model_file": "Vikhr-Qwen-2.5-1.5b-Instruct-Q4_K_M.gguf",
+      "decode_tok_s": 6.938,
+      "ms_per_token": 144.1,
+      "generated_tokens": 16
+    },
+    {
+      "load_type": "taskset -c 6-7, -t 2, governor performance",
+      "model_file": "Vikhr-Qwen-2.5-1.5b-Instruct-Q4_K_M.gguf",
+      "decode_tok_s": 6.863,
+      "ms_per_token": 145.8,
+      "generated_tokens": 34
+    }
+  ],
+  "prompt_runs": [
+    {
+      "prompt": "minimal chat question",
+      "approx_tokens": 47,
+      "prompt_tok_s": 16.8
+    },
+    {
+      "prompt": "lean Hermes profile (no tools/skills/memory)",
+      "approx_tokens": 605,
+      "prompt_tok_s": 19.3,
+      "first_response_e2e_s": 40
+    },
+    {
+      "prompt": "full Hermes default profile (41 tool schemas)",
+      "approx_tokens": 11400,
+      "prompt_tok_s": 17.7,
+      "note": "unusable on target; motivated the lean profile"
+    }
+  ],
+  "models": [
+    {
+      "source": "https://huggingface.co/Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct-GGUF",
+      "filename": "Vikhr-Qwen-2.5-1.5b-Instruct-Q4_K_M.gguf",
+      "file_size_bytes": 985700992,
+      "sha256": "d82b16244a33dbbde4742e38e42b2b3d74dd883f4b8ff4ae53eca29aabf60662"
+    },
+    {
+      "source": "https://huggingface.co/Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct-GGUF",
+      "filename": "Vikhr-Qwen-2.5-1.5b-Instruct-Q6_K.gguf",
+      "file_size_bytes": 1272392320,
+      "sha256": "48733fdb79be6aa0e5032818d802643d0cb5898d0056f4d228eae262d71bcf5f"
+    }
+  ],
+  "incidents": [
+    {
+      "event": "two spontaneous reboots under llama-server load",
+      "when_local": "2026-09-06 ~21:44 and ~22:00",
+      "cause": "unverified; PSU brownout or thermal protection suspected (peak SoC 86-89C observed)",
+      "evidence_class": "Hypothesis"
+    }
+  ],
+  "integration": {
+    "hermes": "provider orangepi-vikhr + profile vikhr; MINIMUM_CONTEXT_LENGTH 64000 floor verified in agent/model_metadata.py",
+    "glados_tts": "native RU v3-1000 rendered non-silent WAV (Deep 5.49s RMS 0.064, Standard verified); requires verified espeak-ng via GLADOS_ESPEAK_NG"
+  },
+  "lfm25_cross_reference": {
+    "experiment_id": "E056",
+    "mean_decode_tok_s": 5.202598,
+    "model_sha256": "4923ec14f06b968b74d663e5949867d2d9c3bf13a20b8be1a9f9af39989b2bb0",
+    "note": "8-core -t 8 measurement, build 9594; A76-only MoE partition untested; SHA-matched file staged on target for planned E058 prefill/TTFT"
+  }
+}
