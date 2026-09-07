@@ -935,18 +935,18 @@
    "status": "unqualified",
    "claim_class": "screen",
    "branch": "main",
-   "commit": "PENDING",
+   "commit": "fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
    "evidence": [
     {
      "kind": "repository_path",
      "path": "docs/experiments/e057-vikhr-a733-cpu-loadtypes.md",
-     "ref": "main@PENDING",
+     "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
      "note": "Single-sample decode screen across CPU load types with prompt-processing and Hermes/GLaDOS integration notes."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/e057-vikhr-a733-cpu-loadtypes/summary.json",
-     "ref": "main@PENDING",
+     "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
      "note": "Machine-readable load-type matrix, prompt runs, incidents, and integration record."
     }
    ],
