@@ -967,30 +967,30 @@
    "status": "diagnostic",
    "claim_class": "screen",
    "branch": "exp/gigaam-ctc-probe",
-   "commit": "pending-push",
+   "commit": "48fe108387ec6ca1d10b290dda3fc4dfa869d064",
    "evidence": [
     {
      "kind": "repository_path",
      "path": "docs/experiments/e058-gigaam-ctc-vip9000-probe.md",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@48fe108387ec6ca1d10b290dda3fc4dfa869d064",
      "note": "Host matrix, FLEURS quality, ACUITY import probes, custom-kernel and INT8/bus strategy."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/gigaam-ctc-host-matrix-001/summary.json",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@48fe108387ec6ca1d10b290dda3fc4dfa869d064",
      "note": "20-run threads x audio matrix with RTF, load, RSS."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/gigaam-ctc-fleurs-quality-001/summary.json",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@48fe108387ec6ca1d10b290dda3fc4dfa869d064",
      "note": "FLEURS ru/kk/en norm WER."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/gigaam-ctc-acuity-import-001/summary.json",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@48fe108387ec6ca1d10b290dda3fc4dfa869d064",
      "note": "ACUITY import probes P1-P4 and graph anatomy."
     }
    ],
