@@ -4,110 +4,48 @@
   "classes": [
     {
       "name": "weights",
-      "suffixes": [
-        ".gguf",
-        ".safetensors",
-        ".onnx",
-        ".tflite"
-      ],
-      "scope_prefixes": [
-        "models/"
-      ],
-      "lfs_globs": [
-        "*.gguf",
-        "*.safetensors",
-        "*.onnx",
-        "*.tflite"
-      ]
+      "suffixes": [".gguf", ".safetensors", ".onnx", ".tflite"],
+      "scope_prefixes": ["models/"],
+      "lfs_globs": ["*.gguf", "*.safetensors", "*.onnx", "*.tflite"]
     },
     {
       "name": "NBGs",
-      "suffixes": [
-        ".nb",
-        ".nbg"
-      ],
+      "suffixes": [".nb", ".nbg"],
       "scope_prefixes": [],
-      "lfs_globs": [
-        "*.nb",
-        "*.nbg"
-      ]
+      "lfs_globs": ["*.nb", "*.nbg"]
     },
     {
       "name": "binaries",
       "suffixes": [
-        ".bin",
-        ".blob",
-        ".so",
-        ".a",
-        ".ko",
-        ".tar",
-        ".tar.gz",
-        ".tgz",
-        ".tar.xz",
-        ".zip"
+        ".bin", ".blob", ".so", ".a", ".ko", ".tar", ".tar.gz",
+        ".tgz", ".tar.xz", ".zip"
       ],
-      "scope_prefixes": [
-        "artifacts/"
-      ],
+      "scope_prefixes": ["artifacts/"],
       "magic_prefixes": [
-        "7f454c46",
-        "4d5a",
-        "504b0304",
-        "1f8b",
-        "fd377a585a00",
+        "7f454c46", "4d5a", "504b0304", "1f8b", "fd377a585a00",
         "7573746172"
       ],
       "lfs_globs": [
-        "*.bin",
-        "*.blob",
-        "*.so",
-        "*.a",
-        "*.ko",
-        "*.tar",
-        "*.tar.gz",
-        "*.tgz",
-        "*.tar.xz",
-        "*.zip"
+        "*.bin", "*.blob", "*.so", "*.a", "*.ko", "*.tar", "*.tar.gz",
+        "*.tgz", "*.tar.xz", "*.zip"
       ]
     },
     {
       "name": "custom kernels/source",
-      "suffixes": [
-        ".vx",
-        ".cl",
-        ".c",
-        ".cc",
-        ".cpp",
-        ".h",
-        ".hpp"
-      ],
-      "scope_prefixes": [
-        "kernels/"
-      ],
-      "lfs_globs": [
-        "*.vx",
-        "*.cl"
-      ]
+      "suffixes": [".vx", ".cl", ".c", ".cc", ".cpp", ".h", ".hpp"],
+      "scope_prefixes": ["kernels/"],
+      "lfs_globs": ["*.vx", "*.cl"]
     },
     {
       "name": "SDK or kernel patches",
-      "suffixes": [
-        ".patch"
-      ],
-      "scope_prefixes": [
-        "patches/",
-        "sdk/"
-      ],
-      "lfs_globs": [
-        "*.patch"
-      ]
+      "suffixes": [".patch"],
+      "scope_prefixes": ["patches/", "sdk/"],
+      "lfs_globs": ["*.patch"]
     },
     {
       "name": "NPU tools",
       "suffixes": [],
-      "scope_prefixes": [
-        "tooling/"
-      ],
+      "scope_prefixes": ["tooling/"],
       "lfs_globs": []
     }
   ],
