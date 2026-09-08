@@ -1,67 +1,67 @@
 {
- "schema": "repository-branch-inventory/v1",
- "repository": "msazanov/vivante-vip9000-llm-lab",
- "source": "origin ls-remote point-in-time snapshot captured 2026-08-14; live branches may advance",
- "branches": [
-  {
-   "branch": "main",
-   "commit": "426d1467563da211f9621cc2692ec25cf065880d",
-   "role": "historical baseline and original E001/E002 research track"
-  },
-  {
-   "branch": "codex/e022-fused-q1",
-   "commit": "d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
-   "role": "fused packed-Q1 NPU evidence"
-  },
-  {
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "role": "CPU seam and E035/E044/E045 experiment history"
-  },
-  {
-   "branch": "codex/e047-hard-profiling",
-   "commit": "203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
-   "role": "common benchmark contract and E047"
-  },
-  {
-   "branch": "codex/e048-per-op-trace",
-   "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
-   "role": "per-operation and per-layer trace"
-  },
-  {
-   "branch": "codex/e049-nsi-calibration",
-   "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0",
-   "role": "NPU system-identity calibration"
-  },
-  {
-   "branch": "codex/e049b-trace-analysis",
-   "commit": "06a810c2f3330f51ec0a8d97de041c4fdde8a452",
-   "role": "E049b trace analysis"
-  },
-  {
-   "branch": "codex/e049c-arm-pmu",
-   "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-   "role": "E049c PMU controls and E049d-v2 marker profile"
-  },
-  {
-   "branch": "codex/e054-a76-q1-multiversion",
-   "commit": "9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
-   "role": "A76 Q1 multiversion hypothesis"
-  },
-  {
-   "branch": "codex/e055-q1-hot-cold",
-   "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
-   "role": "ongoing E055 Q1 hot/cold work; preserve untouched"
-  },
-  {
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "role": "requested canonical-layer foundation anchor"
-  },
-  {
-   "branch": "exp/gigaam-ctc-probe",
-   "commit": "9afa0aac973dd29662c539a1a38876a9ce38ade7",
-   "role": "E058 GigaAM CTC int8 host screen and AcuityLite import probe"
-  }
- ]
+  "schema": "repository-branch-inventory/v1",
+  "repository": "msazanov/vivante-vip9000-llm-lab",
+  "source": "origin ls-remote point-in-time snapshot captured 2026-08-14; live branches may advance",
+  "branches": [
+    {
+      "branch": "main",
+      "commit": "426d1467563da211f9621cc2692ec25cf065880d",
+      "role": "historical baseline and original E001/E002 research track"
+    },
+    {
+      "branch": "codex/e022-fused-q1",
+      "commit": "d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
+      "role": "fused packed-Q1 NPU evidence"
+    },
+    {
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "role": "CPU seam and E035/E044/E045 experiment history"
+    },
+    {
+      "branch": "codex/e047-hard-profiling",
+      "commit": "203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
+      "role": "common benchmark contract and E047"
+    },
+    {
+      "branch": "codex/e048-per-op-trace",
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
+      "role": "per-operation and per-layer trace"
+    },
+    {
+      "branch": "codex/e049-nsi-calibration",
+      "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0",
+      "role": "NPU system-identity calibration"
+    },
+    {
+      "branch": "codex/e049b-trace-analysis",
+      "commit": "06a810c2f3330f51ec0a8d97de041c4fdde8a452",
+      "role": "E049b trace analysis"
+    },
+    {
+      "branch": "codex/e049c-arm-pmu",
+      "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+      "role": "E049c PMU controls and E049d-v2 marker profile"
+    },
+    {
+      "branch": "codex/e054-a76-q1-multiversion",
+      "commit": "9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
+      "role": "A76 Q1 multiversion hypothesis"
+    },
+    {
+      "branch": "codex/e055-q1-hot-cold",
+      "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
+      "role": "ongoing E055 Q1 hot/cold work; preserve untouched"
+    },
+    {
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "role": "requested canonical-layer foundation anchor"
+    },
+    {
+      "branch": "exp/gigaam-ctc-probe",
+      "commit": "9afa0aac973dd29662c539a1a38876a9ce38ade7",
+      "role": "E058 GigaAM CTC int8 host screen and AcuityLite import probe"
+    }
+  ]
 }
