@@ -60,7 +60,7 @@
     },
     {
       "branch": "exp/gigaam-ctc-probe",
-      "commit": "9afa0aac973dd29662c539a1a38876a9ce38ade7",
+      "commit": "e7fef05270d7021d12422847ff5b95eea2931db1",
       "role": "E058 GigaAM CTC int8 host screen and AcuityLite import probe"
     }
   ]
