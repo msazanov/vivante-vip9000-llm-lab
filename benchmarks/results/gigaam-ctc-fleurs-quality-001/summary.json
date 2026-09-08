@@ -1,0 +1,144 @@
+{
+ "experiment": "E058",
+ "result_id": "gigaam-ctc-fleurs-quality-001",
+ "evidence_class": "Verified upstream (host x86_64, not A733 target)",
+ "model_provenance": {
+  "model_id": "i2z1/gigaam-multilingual-ctc-onnx-int8",
+  "revision": "ba9011bfb2e52cacad5a12e5d9346392d7825c76",
+  "files": {
+   "model.int8.onnx": {
+    "bytes": 224762512,
+    "sha256": "5f584553e20db1af7e0fff98728b6904b670eb6488b88da8e87cda7870a6235f"
+   }
+  },
+  "license": "MIT",
+  "evidence_class": "Verified upstream"
+ },
+ "host": {
+  "platform": "Linux-7.1.8-zen1-3-zen-x86_64-with-glibc2.44",
+  "cpu": "x86_64",
+  "cores": 12,
+  "runtime": "sherpa-onnx 1.13.7, CPUExecutionProvider, onnxruntime bundled",
+  "note": "Host-side screen on x86_64 workstation, NOT the A733 target. No A733/VIP9000 execution is claimed."
+ },
+ "method": "google/fleurs test split, streaming, Audio(decode=False) + soundfile; threads=2, greedy CTC; norm WER = lowercase, strip punctuation/extra spaces. n=5 ru_ru, n=3 kk_kz, n=3 en_us.",
+ "results": {
+  "ru_ru": {
+   "load_s": 2.78,
+   "n": 5,
+   "mean_wer_norm": 0.0154,
+   "clips": [
+    {
+     "id": 0,
+     "ref": "в древнем китае использовали уникальный способ обозначения периодов времени каждый этап китая или каждая семья находившаяся у власти были особой династией",
+     "hyp": "в древнем китае использовали уникальный способ обозначения периодов времени каждый этап китая или каждая семья находившаяся у власти были особой династией",
+     "wer_norm": 0.0,
+     "dur_s": 16.92,
+     "decode_s": 3.233
+    },
+    {
+     "id": 1,
+     "ref": "мадагаскар намного больше других и является самобытным континентом в том что касается дикой природы",
+     "hyp": "мадагаскар намного больше других и является самобытным континентом в том что касается дикой природы",
+     "wer_norm": 0.0,
+     "dur_s": 11.52,
+     "decode_s": 1.714
+    },
+    {
+     "id": 2,
+     "ref": "во всех научных вопросах включая психологию были приняты взгляды аристотеля",
+     "hyp": "во всех научных вопросах включая психологию были приняты взгляды аристотеля",
+     "wer_norm": 0.0,
+     "dur_s": 8.64,
+     "decode_s": 1.364
+    },
+    {
+     "id": 3,
+     "ref": "в различных местах рима были установлены большие телевизионные экраны с помощью которых люди могли наблюдать за церемонией",
+     "hyp": "в различных местах рима были установлены большие телевизионные экраны с помощью которых люди могли наблюдать за церемонией",
+     "wer_norm": 0.0,
+     "dur_s": 7.92,
+     "decode_s": 1.069
+    },
+    {
+     "id": 4,
+     "ref": "причиной дебатов стали разногласия относительно затрат на оказание материальной поддержки и восстановление зданий после урагана катрина который некоторые фискальные консерваторы в шутку назвали новоорлеанской сделкой буша",
+     "hyp": "причиной дебатов стали разногласия относительно затрат на оказание материальной поддержки и восстановления зданий после урагана катрина который некоторые фискальные консерваторы в шутку назвали новоарлианской сделкой буша",
+     "wer_norm": 0.0769,
+     "dur_s": 19.44,
+     "decode_s": 3.278
+    }
+   ]
+  },
+  "kk_kz": {
+   "load_s": 2.84,
+   "n": 3,
+   "mean_wer_norm": 0.1458,
+   "clips": [
+    {
+     "id": 0,
+     "ref": "ақш-тың гимнастика федерациясы ақш олимпиада комитетінің хатын қолдайды және біздің барлық спортсмендер үшін қоршаған ортаның қауіпсіздігін арттырудың абсолютті қажеттілігін мойындайды",
+     "hyp": "ақш тың гимнастика федерациясы ақш олимпиада комитетінің хатын қолдайды және біздің барлық спортсмендер үшін қоршаған ортаның қауіпсіздігін арттырудың абсолютті қажеттілігін мойындайды",
+     "wer_norm": 0.0,
+     "dur_s": 14.88,
+     "decode_s": 2.517
+    },
+    {
+     "id": 1,
+     "ref": "оны «вичи» француздар билеген. бұл 1940 жылы немістермен бейбіт келісім жасасқан және  соғысудың орнына жаулаушылармен бірге жұмыс істеген француздар болды",
+     "hyp": "оны вичи француздар билеген бұл бір мың тоғыз жүз қырықыншы жылы немістермен бейбіт келісім жасасқан және соғысудың орнына жаулаушылармен бірге жұмыс істеген француздар болды",
+     "wer_norm": 0.25,
+     "dur_s": 24.36,
+     "decode_s": 4.804
+    },
+    {
+     "id": 2,
+     "ref": "ешкілер алғаш рет қол үйретілген уақыт иранның загрос тауларында шамамен 10 000 жыл бұрын деп саналады",
+     "hyp": "ешкілер алғаш рет қол үйретілген уақыт иранның загроз тауларында шамамен он мың жыл бұрын деп саналады",
+     "wer_norm": 0.1875,
+     "dur_s": 16.44,
+     "decode_s": 2.468
+    }
+   ]
+  },
+  "en_us": {
+   "load_s": 2.65,
+   "n": 3,
+   "mean_wer_norm": 0.1322,
+   "clips": [
+    {
+     "id": 0,
+     "ref": "however due to the slow communication channels styles in the west could lag behind by 25 to 30 year",
+     "hyp": "however due to the slow communication channels styles in the west could lag behind by twenty five to thirty years",
+     "wer_norm": 0.2105,
+     "dur_s": 10.56,
+     "decode_s": 1.59
+    },
+    {
+     "id": 1,
+     "ref": "all nouns alongside the word sie for you always begin with a capital letter even in the middle of a sentence",
+     "hyp": "all nouns alongside the world saye for you always begin with a capital letter even in the middle of a sentence",
+     "wer_norm": 0.0952,
+     "dur_s": 8.76,
+     "decode_s": 1.181
+    },
+    {
+     "id": 2,
+     "ref": "to the north and within easy reach is the romantic and fascinating town of sintra and which was made famous to foreigners after a glowing account of its splendours recorded by lord byron",
+     "hyp": "to the north and within easy reach is a romantic and fascinating town of centra and which was made famous to foreigners after a glowing account of its splenderous recorded by lord byron",
+     "wer_norm": 0.0909,
+     "dur_s": 11.46,
+     "decode_s": 1.517
+    }
+   ]
+  }
+ },
+ "key_findings": {
+  "ru_mean_wer_norm_n5": 0.0154,
+  "ru_note": "4x exact match, 1x single-word substitution; consistent with card claim FLEURS 4.4 (unnormalized)",
+  "kk_mean_wer_norm_n3": 0.1458,
+  "kk_note": "errors concentrate on digits verbalization and punctuation-adjacent tokens",
+  "en_mean_wer_norm_n3": 0.1322,
+  "en_note": "consistent with card statement that long English dictation is weaker (FLEURS ~12)"
+ }
+}

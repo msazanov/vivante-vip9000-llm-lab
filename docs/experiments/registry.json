@@ -960,6 +960,54 @@
    "is_current_best": false,
    "end_to_end": true,
    "optimization_claim": false
+  },
+  {
+   "id": "E058",
+   "title": "GigaAM Multilingual CTC int8: host decode screen + AcuityLite import probe for VIP9000 path",
+   "status": "diagnostic",
+   "claim_class": "screen",
+   "branch": "exp/gigaam-ctc-probe",
+   "commit": "pending-push",
+   "evidence": [
+    {
+     "kind": "repository_path",
+     "path": "docs/experiments/e058-gigaam-ctc-vip9000-probe.md",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "Host matrix, FLEURS quality, ACUITY import probes, custom-kernel and INT8/bus strategy."
+    },
+    {
+     "kind": "repository_path",
+     "path": "benchmarks/results/gigaam-ctc-host-matrix-001/summary.json",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "20-run threads x audio matrix with RTF, load, RSS."
+    },
+    {
+     "kind": "repository_path",
+     "path": "benchmarks/results/gigaam-ctc-fleurs-quality-001/summary.json",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "FLEURS ru/kk/en norm WER."
+    },
+    {
+     "kind": "repository_path",
+     "path": "benchmarks/results/gigaam-ctc-acuity-import-001/summary.json",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "ACUITY import probes P1-P4 and graph anatomy."
+    }
+   ],
+   "metric": {
+    "host_best_rtf_threads_2_4": "0.14-0.19",
+    "host_load_s": "2.3-4.3",
+    "host_peak_rss_mb_typical": "377-419",
+    "fleurs_ru_mean_wer_norm_n5": 0.0154,
+    "fleurs_kk_mean_wer_norm_n3": 0.1458,
+    "fleurs_en_mean_wer_norm_n3": 0.1322,
+    "acuity_import_int8": "failed",
+    "quality_evidence": true
+   },
+   "notes": "Host-only screen (x86_64 workstation, sherpa-onnx CPU); no A733/VIP9000 execution claimed. espeak fixtures valid for RTF/RAM only (OOD garbage transcripts). ACUITY 6.51 rejects the ORT dynamic-quant graph; FP32 re-export + static INT8 calibration required. Custom EVIS kernels available per capabilities map for residual unsupported ops.",
+   "is_current_best": false,
+   "end_to_end": false,
+   "optimization_claim": false
   }
  ]
 }

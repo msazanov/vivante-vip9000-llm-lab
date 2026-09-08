@@ -1,0 +1,82 @@
+{
+ "experiment": "E058",
+ "result_id": "gigaam-ctc-acuity-import-001",
+ "evidence_class": "Verified in supplied tooling (AcuityLite 6.51.0 docker, x86_64 host)",
+ "model_provenance": {
+  "model_id": "i2z1/gigaam-multilingual-ctc-onnx-int8",
+  "revision": "ba9011bfb2e52cacad5a12e5d9346392d7825c76",
+  "files": {
+   "model.int8.onnx": {
+    "bytes": 224762512,
+    "sha256": "5f584553e20db1af7e0fff98728b6904b670eb6488b88da8e87cda7870a6235f"
+   }
+  },
+  "license": "MIT",
+  "evidence_class": "Verified upstream"
+ },
+ "toolchain": {
+  "image": "acuitylite:ready (AcuityLite 6.51.0)",
+  "confinement": "docker --network none, read-only mount",
+  "api": "acuitylib.interface.importer.OnnxLoader"
+ },
+ "graph_anatomy": {
+  "ir_version": 8,
+  "opset": 17,
+  "inputs": [
+   "features(batch,64,seq_len)",
+   "feature_lengths(batch)"
+  ],
+  "outputs": [
+   "log_probs(batch,seq_len,71)",
+   "encoded_lengths(batch)"
+  ],
+  "nodes": 3662,
+  "optypes_34_top": {
+   "Constant": 922,
+   "Mul": 487,
+   "Cast": 308,
+   "Add": 266,
+   "Unsqueeze": 242,
+   "Transpose": 180,
+   "Reshape": 164,
+   "DynamicQuantizeLinear": 163,
+   "Concat": 131,
+   "MatMulInteger": 128,
+   "Shape": 103,
+   "Gather": 101,
+   "LayerNormalization": 96,
+   "Slice": 66,
+   "Sigmoid": 64,
+   "Where": 52,
+   "ConvInteger": 51,
+   "Div": 35,
+   "MatMul": 32,
+   "Softmax": 16,
+   "LogSoftmax": 1
+  }
+ },
+ "probes": [
+  {
+   "id": "P1",
+   "input": "model.int8.onnx, symbolic dims, outputs=[log_probs]",
+   "result": "IMPORT_FAIL bare AssertionError in smart_node shape inference"
+  },
+  {
+   "id": "P2",
+   "input": "model.int8.fixed.onnx (batch_size=1, seq_len=1000 frozen via onnx API)",
+   "result": "IMPORT_FAIL same bare AssertionError -> symbolic dims are NOT the blocker"
+  },
+  {
+   "id": "P3-control",
+   "input": "mobilenetv2-12.onnx float, same harness",
+   "result": "IMPORT_OK -> harness works; failure isolated to the ORT dynamic-quant graph"
+  },
+  {
+   "id": "P4",
+   "input": "check-model on model.int8.onnx",
+   "result": "exit 0, no diagnostics -> file is valid ONNX; rejection happens in importer shape inference"
+  }
+ ],
+ "conclusion": "AcuityLite 6.51 importer does not ingest onnxruntime dynamic-quantized graphs (DynamicQuantizeLinear x163 / MatMulInteger x128 / ConvInteger x51 are the prime suspects; exact node unconfirmed because the failure is a bare assert). NPU path requires FP32 re-export via export-multilingual-ctc.py (gigaam load_model multilingual_ctc -> to_onnx), fixed input window, then ACUITY static INT8 calibration with Russian-speech mel features. LayerNormalization x96 and Softmax x16 remain custom-EVIS-kernel-or-CPU-fallback candidates per vip9000-capabilities.md.",
+ "custom_kernel_note": "Custom EVIS/VXC kernels inside NBG are Verified-on-target (E003/E019/E020) per docs/npu/vip9000-capabilities.md; SDK headers declare custom-op, matrixmul/fullconnect/rmsnorm interfaces. Unsupported Conformer ops CAN be covered by custom kernels, but each needs a golden + phase-profile gate."
+}

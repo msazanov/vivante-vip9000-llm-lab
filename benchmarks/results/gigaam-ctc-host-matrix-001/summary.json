@@ -1,0 +1,281 @@
+{
+ "experiment": "E058",
+ "result_id": "gigaam-ctc-host-matrix-001",
+ "evidence_class": "Verified upstream (host x86_64, not A733 target)",
+ "model_provenance": {
+  "model_id": "i2z1/gigaam-multilingual-ctc-onnx-int8",
+  "revision": "ba9011bfb2e52cacad5a12e5d9346392d7825c76",
+  "files": {
+   "model.int8.onnx": {
+    "bytes": 224762512,
+    "sha256": "5f584553e20db1af7e0fff98728b6904b670eb6488b88da8e87cda7870a6235f"
+   }
+  },
+  "license": "MIT",
+  "evidence_class": "Verified upstream"
+ },
+ "host": {
+  "platform": "Linux-7.1.8-zen1-3-zen-x86_64-with-glibc2.44",
+  "cpu": "x86_64",
+  "cores": 12,
+  "runtime": "sherpa-onnx 1.13.7, CPUExecutionProvider, onnxruntime bundled",
+  "note": "Host-side screen on x86_64 workstation, NOT the A733 target. No A733/VIP9000 execution is claimed."
+ },
+ "method": "sherpa_onnx OfflineRecognizer.from_nemo_ctc, greedy CTC; fresh process per cell; 1 warmup + N measured reps; peak RSS via getrusage; espeak-ng fixtures are OUT-OF-DISTRIBUTION for this model (robotic formants) so their WER is a fixture-mismatch diagnostic, NOT a model-quality number. Quality evidence comes from natural-speech sets (FLEURS, silero sample).",
+ "threads_variants": [
+  1,
+  2,
+  4,
+  8
+ ],
+ "key_findings": {
+  "best_rtf_threads_2_4": "0.14-0.19 on 3-13s clips",
+  "threads_8_short_clip_rtf": 0.5443,
+  "threads_8_note": "oversubscription regression on short audio; 2-4 threads optimal on 12-core host",
+  "load_s_range": "2.3-4.3 (grows slightly with thread count)",
+  "peak_rss_mb": "377-419 typical; 635-639 on 37.6s clip (linear frame-buffer growth)",
+  "silero_5s_natural_tts": "near-perfect Russian transcript at all thread counts"
+ },
+ "runs": [
+  {
+   "wav": "ru-short.wav",
+   "duration_s": 3.212,
+   "threads": 1,
+   "provider": "cpu",
+   "load_s": 2.57,
+   "decode_s_median": 0.736,
+   "rtf": 0.2293,
+   "peak_rss_mb": 397.6,
+   "wer_norm_espeak_fixture": 0.8333,
+   "text_head": "это ес воспознааниерусског веи"
+  },
+  {
+   "wav": "ru-med.wav",
+   "duration_s": 12.548,
+   "threads": 1,
+   "provider": "cpu",
+   "load_s": 2.36,
+   "decode_s_median": 3.023,
+   "rtf": 0.2409,
+   "peak_rss_mb": 406.1,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "голосовойпомощникб оьюамарабоае дценталным проессом"
+  },
+  {
+   "wav": "en-med.wav",
+   "duration_s": 7.157,
+   "threads": 1,
+   "provider": "cpu",
+   "load_s": 2.384,
+   "decode_s_median": 1.654,
+   "rtf": 0.2311,
+   "peak_rss_mb": 417.0,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "лреконимартокотол"
+  },
+  {
+   "wav": "ru-long.wav",
+   "duration_s": 37.643,
+   "threads": 1,
+   "provider": "cpu",
+   "load_s": 2.444,
+   "decode_s_median": 10.232,
+   "rtf": 0.2718,
+   "peak_rss_mb": 639.4,
+   "wer_norm_espeak_fixture": 0.9506,
+   "text_head": "голосовойпомощникбтоюябнм процесголосовой помощникработает осьютеиае си пяраоает"
+  },
+  {
+   "wav": "silero_test.wav",
+   "duration_s": 5.0,
+   "threads": 1,
+   "provider": "cpu",
+   "load_s": 2.55,
+   "decode_s_median": 1.305,
+   "rtf": 0.261,
+   "peak_rss_mb": 378.1,
+   "wer_norm_espeak_fixture": null,
+   "text_head": "и снова здравствуйте добро пожаловать в компьютеризированный центр обогащения оп"
+  },
+  {
+   "wav": "ru-short.wav",
+   "duration_s": 3.212,
+   "threads": 2,
+   "provider": "cpu",
+   "load_s": 2.668,
+   "decode_s_median": 0.568,
+   "rtf": 0.1769,
+   "peak_rss_mb": 393.6,
+   "wer_norm_espeak_fixture": 0.8333,
+   "text_head": "это ес воспознааниерусског веи"
+  },
+  {
+   "wav": "ru-med.wav",
+   "duration_s": 12.548,
+   "threads": 2,
+   "provider": "cpu",
+   "load_s": 2.303,
+   "decode_s_median": 1.811,
+   "rtf": 0.1443,
+   "peak_rss_mb": 414.5,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "голосовойпомощникб оьюамарабоае дценталным проессом"
+  },
+  {
+   "wav": "en-med.wav",
+   "duration_s": 7.157,
+   "threads": 2,
+   "provider": "cpu",
+   "load_s": 2.318,
+   "decode_s_median": 1.041,
+   "rtf": 0.1454,
+   "peak_rss_mb": 399.4,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "лреконимартокотол"
+  },
+  {
+   "wav": "ru-long.wav",
+   "duration_s": 37.643,
+   "threads": 2,
+   "provider": "cpu",
+   "load_s": 2.807,
+   "decode_s_median": 8.452,
+   "rtf": 0.2245,
+   "peak_rss_mb": 635.5,
+   "wer_norm_espeak_fixture": 0.9506,
+   "text_head": "голосовойпомощникбтоюябнм процесголосовой помощникработает осьютеиае си пяраоает"
+  },
+  {
+   "wav": "silero_test.wav",
+   "duration_s": 5.0,
+   "threads": 2,
+   "provider": "cpu",
+   "load_s": 2.784,
+   "decode_s_median": 0.969,
+   "rtf": 0.1938,
+   "peak_rss_mb": 389.5,
+   "wer_norm_espeak_fixture": null,
+   "text_head": "и снова здравствуйте добро пожаловать в компьютеризированный центр обогащения оп"
+  },
+  {
+   "wav": "ru-short.wav",
+   "duration_s": 3.212,
+   "threads": 4,
+   "provider": "cpu",
+   "load_s": 2.954,
+   "decode_s_median": 0.457,
+   "rtf": 0.1422,
+   "peak_rss_mb": 400.8,
+   "wer_norm_espeak_fixture": 0.8333,
+   "text_head": "это ес воспознааниерусског веи"
+  },
+  {
+   "wav": "ru-med.wav",
+   "duration_s": 12.548,
+   "threads": 4,
+   "provider": "cpu",
+   "load_s": 2.728,
+   "decode_s_median": 1.846,
+   "rtf": 0.1471,
+   "peak_rss_mb": 419.2,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "голосовойпомощникб оьюамарабоае дценталным проессом"
+  },
+  {
+   "wav": "en-med.wav",
+   "duration_s": 7.157,
+   "threads": 4,
+   "provider": "cpu",
+   "load_s": 3.641,
+   "decode_s_median": 1.051,
+   "rtf": 0.1469,
+   "peak_rss_mb": 392.7,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "лреконимартокотол"
+  },
+  {
+   "wav": "ru-long.wav",
+   "duration_s": 37.643,
+   "threads": 4,
+   "provider": "cpu",
+   "load_s": 3.228,
+   "decode_s_median": 7.217,
+   "rtf": 0.1917,
+   "peak_rss_mb": 635.2,
+   "wer_norm_espeak_fixture": 0.9506,
+   "text_head": "голосовойпомощникбтоюябнм процесголосовой помощникработает осьютеиае си пяраоает"
+  },
+  {
+   "wav": "silero_test.wav",
+   "duration_s": 5.0,
+   "threads": 4,
+   "provider": "cpu",
+   "load_s": 3.499,
+   "decode_s_median": 0.915,
+   "rtf": 0.183,
+   "peak_rss_mb": 391.7,
+   "wer_norm_espeak_fixture": null,
+   "text_head": "и снова здравствуйте добро пожаловать в компьютеризированный центр обогащения оп"
+  },
+  {
+   "wav": "ru-short.wav",
+   "duration_s": 3.212,
+   "threads": 8,
+   "provider": "cpu",
+   "load_s": 3.74,
+   "decode_s_median": 1.748,
+   "rtf": 0.5443,
+   "peak_rss_mb": 388.3,
+   "wer_norm_espeak_fixture": 0.8333,
+   "text_head": "это ес воспознааниерусског веи"
+  },
+  {
+   "wav": "ru-med.wav",
+   "duration_s": 12.548,
+   "threads": 8,
+   "provider": "cpu",
+   "load_s": 4.277,
+   "decode_s_median": 3.737,
+   "rtf": 0.2978,
+   "peak_rss_mb": 412.3,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "голосовойпомощникб оьюамарабоае дценталным проессом"
+  },
+  {
+   "wav": "en-med.wav",
+   "duration_s": 7.157,
+   "threads": 8,
+   "provider": "cpu",
+   "load_s": 3.214,
+   "decode_s_median": 1.351,
+   "rtf": 0.1888,
+   "peak_rss_mb": 394.8,
+   "wer_norm_espeak_fixture": 1.0,
+   "text_head": "лреконимартокотол"
+  },
+  {
+   "wav": "ru-long.wav",
+   "duration_s": 37.643,
+   "threads": 8,
+   "provider": "cpu",
+   "load_s": 2.813,
+   "decode_s_median": 7.659,
+   "rtf": 0.2035,
+   "peak_rss_mb": 638.1,
+   "wer_norm_espeak_fixture": 0.9506,
+   "text_head": "голосовойпомощникбтоюябнм процесголосовой помощникработает осьютеиае си пяраоает"
+  },
+  {
+   "wav": "silero_test.wav",
+   "duration_s": 5.0,
+   "threads": 8,
+   "provider": "cpu",
+   "load_s": 2.595,
+   "decode_s_median": 1.137,
+   "rtf": 0.2274,
+   "peak_rss_mb": 377.1,
+   "wer_norm_espeak_fixture": null,
+   "text_head": "и снова здравствуйте добро пожаловать в компьютеризированный центр обогащения оп"
+  }
+ ]
+}
