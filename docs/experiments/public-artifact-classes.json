@@ -134,6 +134,11 @@
       "glob": "benchmarks/results/gigaam-ctc-acuity-import-001/summary.json",
       "reason": "normalized public host-screen record; raw host logs remain outside Git",
       "provenance": "E058 host screen captured 2026-09-09"
+    },
+    {
+      "glob": "benchmarks/results/gigaam-ctc-a733-target-001/summary.json",
+      "reason": "normalized public target-screen record; raw target logs remain outside Git",
+      "provenance": "E059 target screen captured 2026-09-09"
     }
   ]
 }

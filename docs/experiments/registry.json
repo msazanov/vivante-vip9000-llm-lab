@@ -1008,6 +1008,39 @@
    "is_current_best": false,
    "end_to_end": false,
    "optimization_claim": false
+  },
+  {
+   "id": "E059",
+   "title": "GigaAM CTC int8 ON TARGET: A733 CPU decode matrix, FLEURS WER, reboot incident",
+   "status": "diagnostic",
+   "claim_class": "screen",
+   "branch": "exp/gigaam-ctc-probe",
+   "commit": "pending-push",
+   "evidence": [
+    {
+     "kind": "repository_path",
+     "path": "docs/experiments/e059-gigaam-ctc-a733-target.md",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "On-target matrix, quality, incident, RU STT shortlist."
+    },
+    {
+     "kind": "repository_path",
+     "path": "benchmarks/results/gigaam-ctc-a733-target-001/summary.json",
+     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "note": "17 on-target runs with RTF, load, RSS."
+    }
+   ],
+   "metric": {
+    "target_best_rtf_threads_2": "0.12-0.19",
+    "target_load_s": "2.7-5.8",
+    "fleurs_ru_mean_wer_norm_n5": 0.0154,
+    "reboot_incidents": 1,
+    "quality_evidence": true
+   },
+   "notes": "Verified on target (A733 CPU, taskset A76). t2 optimal; t4 regresses. Reboot during t4 phase, cause unknown. Includes HF RU-STT shortlist with NPU-fit ranking.",
+   "is_current_best": false,
+   "end_to_end": false,
+   "optimization_claim": false
   }
  ]
 }

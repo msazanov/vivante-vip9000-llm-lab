@@ -1,0 +1,199 @@
+{
+ "experiment": "E059",
+ "result_id": "gigaam-ctc-a733-target-001",
+ "evidence_class": "Verified on target (Orange Pi Zero 3W / A733, CPU path)",
+ "target": {
+  "host": "orangepizero3w.lan (192.168.31.117)",
+  "kernel": "6.6.98-sun60iw2 aarch64",
+  "cores": 8,
+  "ram_mib": 11884,
+  "npu_node": "/dev/vipcore present, unused in this run (CPU path)",
+  "runtime": "sherpa-onnx 1.13.7 aarch64, CPUExecutionProvider, taskset -c 6,7",
+  "coexistence": "llama-server RSS ~3.5 GiB, python ~1.1 GiB, kodi.bin ~378 MiB, hermes ~239 MiB observed during runs (media appliance kept running)"
+ },
+ "model_provenance": {
+  "model_id": "i2z1/gigaam-multilingual-ctc-onnx-int8",
+  "note": "same file as E058 (sha256 in gigaam-ctc-acuity-import-001)"
+ },
+ "matrix_threads_1_2_4": [
+  {
+   "wav": "audio/ru-short.wav",
+   "threads": 1,
+   "load_s": 4.212,
+   "decode_s_median": 0.631,
+   "rtf": 0.1964,
+   "peak_rss_mb": 377.3
+  },
+  {
+   "wav": "audio/ru-med.wav",
+   "threads": 1,
+   "load_s": 3.426,
+   "decode_s_median": 2.826,
+   "rtf": 0.2252,
+   "peak_rss_mb": 449.8
+  },
+  {
+   "wav": "audio/en-med.wav",
+   "threads": 1,
+   "load_s": 3.039,
+   "decode_s_median": 1.473,
+   "rtf": 0.2058,
+   "peak_rss_mb": 450.1
+  },
+  {
+   "wav": "silero_test.wav",
+   "threads": 1,
+   "load_s": 2.952,
+   "decode_s_median": 1.005,
+   "rtf": 0.2011,
+   "peak_rss_mb": 433.8
+  },
+  {
+   "wav": "audio/ru-short.wav",
+   "threads": 2,
+   "load_s": 3.034,
+   "decode_s_median": 0.389,
+   "rtf": 0.1212,
+   "peak_rss_mb": 349.7
+  },
+  {
+   "wav": "audio/ru-med.wav",
+   "threads": 2,
+   "load_s": 2.889,
+   "decode_s_median": 1.744,
+   "rtf": 0.139,
+   "peak_rss_mb": 452.9
+  },
+  {
+   "wav": "audio/en-med.wav",
+   "threads": 2,
+   "load_s": 2.95,
+   "decode_s_median": 0.902,
+   "rtf": 0.126,
+   "peak_rss_mb": 397.4
+  },
+  {
+   "wav": "silero_test.wav",
+   "threads": 2,
+   "load_s": 2.903,
+   "decode_s_median": 0.605,
+   "rtf": 0.1211,
+   "peak_rss_mb": 420.9
+  },
+  {
+   "wav": "audio/ru-short.wav",
+   "threads": 4,
+   "load_s": 3.005,
+   "decode_s_median": 1.017,
+   "rtf": 0.3166,
+   "peak_rss_mb": 370.0
+  },
+  {
+   "wav": "audio/ru-med.wav",
+   "threads": 4,
+   "load_s": 2.957,
+   "decode_s_median": 3.28,
+   "rtf": 0.2614,
+   "peak_rss_mb": 474.6
+  },
+  {
+   "wav": "audio/en-med.wav",
+   "threads": 4,
+   "load_s": 3.099,
+   "decode_s_median": 1.796,
+   "rtf": 0.2509,
+   "peak_rss_mb": 380.5
+  }
+ ],
+ "long_and_fleurs_threads_2": [
+  {
+   "wav": "audio/ru-long.wav",
+   "duration_s": 37.643,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 5.756,
+   "decode_s_median": 7.125,
+   "rtf": 0.1893,
+   "peak_rss_mb": 737.0
+  },
+  {
+   "wav": "fleurs_wav/ru-0.wav",
+   "duration_s": 16.92,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 2.746,
+   "decode_s_median": 2.549,
+   "rtf": 0.1507,
+   "peak_rss_mb": 486.8
+  },
+  {
+   "wav": "fleurs_wav/ru-1.wav",
+   "duration_s": 11.52,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 2.682,
+   "decode_s_median": 1.553,
+   "rtf": 0.1348,
+   "peak_rss_mb": 453.6
+  },
+  {
+   "wav": "fleurs_wav/ru-2.wav",
+   "duration_s": 8.64,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 2.772,
+   "decode_s_median": 1.115,
+   "rtf": 0.1291,
+   "peak_rss_mb": 382.9
+  },
+  {
+   "wav": "fleurs_wav/ru-3.wav",
+   "duration_s": 7.92,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 2.729,
+   "decode_s_median": 1.005,
+   "rtf": 0.1269,
+   "peak_rss_mb": 441.6
+  },
+  {
+   "wav": "fleurs_wav/ru-4.wav",
+   "duration_s": 19.44,
+   "threads": 2,
+   "provider": "cpu",
+   "reps": 1,
+   "load_s": 2.747,
+   "decode_s_median": 3.762,
+   "rtf": 0.1935,
+   "peak_rss_mb": 571.8
+  }
+ ],
+ "fleurs_ru_wer_norm_device": {
+  "per_clip": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0769
+  ],
+  "mean": 0.0154,
+  "note": "device transcripts identical to host run clip-for-clip; int8 CPU greedy decode is bit-deterministic across x86_64/aarch64 here"
+ },
+ "key_findings": {
+  "threads_2_best": "RTF 0.12-0.19 across 3-38 s clips",
+  "threads_4_regression": "RTF 0.25-0.32 on same files (A55 stragglers/contention)",
+  "load_s": "2.7-5.8 (long clip loads slower: 5.76 s)",
+  "peak_rss_mb": "350-475 typical, 737 on 37.6 s clip"
+ },
+ "incident": {
+  "what": "board rebooted mid-matrix during the threads=4 phase (after t4 en-med, before t4 silero); SSH dropped with 'Connection reset by peer'; uptime showed fresh boot (~2 min) on reconnect",
+  "cause": "unknown: no OOM signature recoverable without elevated journal access; previous-boot err log shows only lircd errors. Correlated with t4 phase, not proven OOM. Consistent with lab history of spontaneous resets under sustained load (E057 notes).",
+  "aftermath": "all subsequent solo runs (ru-long, 5x FLEURS, threads=2, pinned A76) completed cleanly; board stayed up",
+  "guidance": "cap on-device ASR at threads=2 pinned to A76; run solo (no parallel matrix); chunk audio <=15 s to bound RSS under the live 3.5 GiB llama-server"
+ }
+}
