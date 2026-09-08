@@ -1015,18 +1015,18 @@
    "status": "diagnostic",
    "claim_class": "screen",
    "branch": "exp/gigaam-ctc-probe",
-   "commit": "pending-push",
+   "commit": "29296dc92af45a27feea6ab81436df67f48f60f0",
    "evidence": [
     {
      "kind": "repository_path",
      "path": "docs/experiments/e059-gigaam-ctc-a733-target.md",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@29296dc92af45a27feea6ab81436df67f48f60f0",
      "note": "On-target matrix, quality, incident, RU STT shortlist."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/gigaam-ctc-a733-target-001/summary.json",
-     "ref": "exp/gigaam-ctc-probe@pending-push",
+     "ref": "exp/gigaam-ctc-probe@29296dc92af45a27feea6ab81436df67f48f60f0",
      "note": "17 on-target runs with RTF, load, RSS."
     }
    ],
