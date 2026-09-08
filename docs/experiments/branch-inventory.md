@@ -19,6 +19,7 @@ The canonical branch was forked from
 | `codex/e049c-arm-pmu` | `2b33f6fc03878fdd0f992d758efcecb71d3ae0d1` | E049c and E049d-v2 |
 | `codex/e054-a76-q1-multiversion` | `9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0` | A76 Q1 hypothesis |
 | `codex/e055-q1-hot-cold` | `51d1c1cfd3d2e963344e79dc11719c278b234569` | Ongoing E055; do not modify |
+| `exp/gigaam-ctc-probe` | `9afa0aac973dd29662c539a1a38876a9ce38ade7` | E058 GigaAM CTC screen + import probe |
 
 All listed branches remain separate. The canonical layer uses branch/commit
 pointers and does not merge histories or rewrite legacy experiment payloads.
