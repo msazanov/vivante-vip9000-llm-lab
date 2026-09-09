@@ -49,10 +49,10 @@
     },
     {
       "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
-      "sha256": "383db10e9d21749a7a81e21ee9eaa20614cedf48a77271c2fdf3f9af0e2411b4",
-      "byte_size": 10522,
+      "sha256": "d8bd756ded6995394950f8c771a4865bcab47e357c89d5b3f078397d061738ea",
+      "byte_size": 10682,
       "origin": "E058 wake NBG compile machine-readable record; corrected 2026-09-09: phase-3 bisection verdict invalidated (wrapper io-query bug + driver state), post-fix NPU runtime, quantization parity, streaming A/B recorded",
-      "source_commit": "3a02690492ee1f84f2c3b64a9f91bc28692ab04e",
+      "source_commit": "8981ec0fd9a919e998f8dc6a8b7941e72820345c",
       "build_runtime_toolchain": "Python 3 standard library (json)",
       "destination": "git",
       "class": "NPU tools",
