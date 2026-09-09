@@ -967,18 +967,18 @@
    "status": "diagnostic",
    "claim_class": "diagnostic",
    "branch": "codex/e058-wake-nbg-compile",
-   "commit": "unpinned",
+   "commit": "3925df0b15ee60766d8135cbeb2821cb489313ba",
    "evidence": [
     {
      "kind": "repository_path",
      "path": "docs/experiments/e058-wake-glasha-nbg-compile.md",
-     "ref": "codex/e058-wake-nbg-compile@unpinned",
+     "ref": "codex/e058-wake-nbg-compile@3925df0b15ee60766d8135cbeb2821cb489313ba",
      "note": "Wake-chain per-stage A55 costs, embedding NBG compile evidence, and the mel scanner failure record."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
-     "ref": "codex/e058-wake-nbg-compile@unpinned",
+     "ref": "codex/e058-wake-nbg-compile@3925df0b15ee60766d8135cbeb2821cb489313ba",
      "note": "Machine-readable chain costs, NBG hashes, scanner reproduction, and boundaries."
     }
    ],

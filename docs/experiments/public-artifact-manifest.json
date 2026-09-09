@@ -46,6 +46,19 @@
       "status": "published",
       "scientific_use_allowed": false,
       "verification_state": "verified-local"
+    },
+    {
+      "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
+      "sha256": "e9da6d693f28205c0f8acd005a9b1714ab216125d98f32f8dad47868be30d092",
+      "byte_size": 3875,
+      "origin": "E058 wake NBG compile machine-readable record",
+      "source_commit": "3925df0b15ee60766d8135cbeb2821cb489313ba",
+      "build_runtime_toolchain": "Python 3 standard library (json)",
+      "destination": "git",
+      "class": "NPU tools",
+      "status": "published",
+      "scientific_use_allowed": false,
+      "verification_state": "verified-local"
     }
   ]
 }

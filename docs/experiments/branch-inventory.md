@@ -8,6 +8,7 @@ The canonical branch was forked from
 
 | Branch | Head | Role |
 |---|---|---|
+| `codex/e058-wake-nbg-compile` | `3925df0b15ee60766d8135cbeb2821cb489313ba` | Wake-word NBG compile screen and A55 chain breakdown (E058) |
 | `main` | `426d1467563da211f9621cc2692ec25cf065880d` | Original E001/E002 research track |
 | `codex/profiling-foundation` | `c071476773ad0f7fc499b6a39270a98bc1e25878` | Requested foundation anchor |
 | `codex/e022-fused-q1` | `d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4` | Fused Q1 NPU evidence |

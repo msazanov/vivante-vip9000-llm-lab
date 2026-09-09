@@ -1,7 +1,7 @@
 {
   "schema": "repository-branch-inventory/v1",
   "repository": "msazanov/vivante-vip9000-llm-lab",
-  "source": "origin ls-remote point-in-time snapshot captured 2026-08-14; live branches may advance",
+  "source": "origin ls-remote point-in-time snapshot captured 2026-08-14; live branches may advance; codex/e058-wake-nbg-compile added 2026-09-09 by E058",
   "branches": [
     {
       "branch": "main",
@@ -57,6 +57,11 @@
       "branch": "codex/profiling-foundation",
       "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
       "role": "requested canonical-layer foundation anchor"
+    },
+    {
+      "branch": "codex/e058-wake-nbg-compile",
+      "commit": "3925df0b15ee60766d8135cbeb2821cb489313ba",
+      "role": "wake-word NBG compile screen and A55 chain breakdown (E058)"
     }
   ]
 }
