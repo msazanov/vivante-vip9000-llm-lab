@@ -1,0 +1,82 @@
+{
+  "schema": "wake-glasha-nbg-compile/v1",
+  "experiment_id": "E058",
+  "evidence_class": "Verified on target (cost breakdown); Verified in supplied tooling (NBG compile, scanner failure)",
+  "status": "diagnostic",
+  "recorded_date": "2026-09-09",
+  "scope": {
+    "measurement": "Per-stage cost breakdown of the GLaDOS wake-word chain on pinned A55 cores and an NBG compile screen for the openWakeWord embedding model in the same toolchain image as the GLaDOS NBG pipeline",
+    "included": [
+      "mel/embedding/head per-frame cost on target at the 80 ms streaming cadence",
+      "embedding NBG import/quantize/export logs, sizes, and hashes",
+      "mel onnx scanner failure reproduction on the original and onnx-simplified graphs"
+    ],
+    "excluded": [
+      "NBG execution on target (no VIPLite wrapper exists for these shapes)",
+      "score parity CPU vs NPU",
+      "wake accuracy or quality claims",
+      "any Bonsai decode objective or current-best claim"
+    ]
+  },
+  "runtime": {
+    "host_toolchain_image": "ubuntu-npu:v2.0.10.2",
+    "pegasus_steps": "import onnx -> quantize (symmetric_affine int8, 50 iterations) -> export ovxlib --pack-nbg-unify",
+    "target_compile": "VIP9000NANODI_PID0X1000003B",
+    "inference_sessions": "onnxruntime CPUExecutionProvider, intra_op_num_threads=1, resident sessions"
+  },
+  "hardware": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "little_cores": "cpu0-5 Cortex-A55 cpu_capacity 385",
+    "big_cores": "cpu6-7 Cortex-A76 cpu_capacity 1024",
+    "affinity": "taskset -c 0,1",
+    "kernel": "6.6.98-sun60iw2"
+  },
+  "chain_costs_a55": {
+    "mel_ms_per_frame": 10.70,
+    "embedding_ms_per_frame": 20.58,
+    "head_ms_per_frame": 0.21,
+    "total_ms_per_frame": 31.49,
+    "cadence_target_ms": 80,
+    "duty_pct_of_core": 39.4,
+    "note": "An earlier end-to-end loop benchmark reported a misleading 12.8 ms/frame because warm-up frames without stage runs diluted the average; the per-stage table is the honest number."
+  },
+  "service_context": {
+    "wake_hybrid_cpu_pct": 53.0,
+    "vosk_only_cpu_pct": 29.3,
+    "note": "Deployed wake hybrid = oww prefilter -> vosk confirm; telemetry via WAKE-DBG prints once per minute."
+  },
+  "embedding_nbg": {
+    "bytes": 319776,
+    "sha256": "05ab27a034087c7f50f21df6e25d8124a0398a5c7a138bb17528784d9ae36564",
+    "acuity_input_lid": "input_1_68",
+    "acuity_input_shape": [1, 76, 32, 1],
+    "output_shape": [1, 1, 1, 96],
+    "quantize": "symmetric_affine int8, 50 iterations calibrated on real wake-sample mel contexts, 0 errors 0 warnings",
+    "artifact_paths": [
+      "/var/tmp/wake-npu/emb/wksp/emb_nbg_unify/network_binary.nb",
+      "/home/random/wake-glasha/models/npu/emb-network_binary.nb"
+    ],
+    "executed_on_target": false
+  },
+  "mel_scanner_failure": {
+    "image": "ubuntu-npu:v2.0.10.2",
+    "error": "AttributeError: op_type in acuitylib/onnx_ir/scanner/onnx_util.py:63 OnnxNode.__init__",
+    "reproduced_on": [
+      "original static graph (29 nodes, opset 13)",
+      "onnx-simplified graph (18 nodes, Constant/Cast folded)"
+    ],
+    "hypothesis": "Acuity 6.x onnx scanner does not accept the STFT-style op mix (Log/Pow/ReduceMax/MatMul/Transpose); newer acuitylite:ready (AcuityLite 6.51.0) is the untested next probe"
+  },
+  "boundaries": [
+    "no NBG execution on target",
+    "no VIPLite wrapper for these shapes (GLaDOS libglados_vip.so contract is decoder-specific)",
+    "no golden or score parity",
+    "wake chain remains fully CPU (onnxruntime) until wrapper and parity pass"
+  ],
+  "next_steps": [
+    "adapt the VIPLite wrapper (edge_viplite.c GLaDOS pattern; vip_lite.h + libNBGlinker.so per toolchain inventory) to the embedding NBG",
+    "score parity CPU vs NPU over the 106 captured wake samples and the adversarial set",
+    "probe acuitylite:ready (AcuityLite 6.51.0) for the mel import"
+  ]
+}
