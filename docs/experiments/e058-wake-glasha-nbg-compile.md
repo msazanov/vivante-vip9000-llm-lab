@@ -155,8 +155,11 @@ The recalibration experiment (mixed corpus, per-channel quantizer,
 KL-divergence ranges, AcuityLite 6.51.0 via the direct Python API with a
 licence file — the CLI export path demands a simulator config) produced
 **byte-identical IO scales** (in 0.314852/61, out 0.479076/-21) and identical
-parity numbers: the IO ranges are structural (derived from weights and the
-input scale), not calibration-dependent. A head retrained on device-dumped NPU
+parity numbers; `minimize_layer_error=True` (a 2 h compile) also produced
+identical results to 16 digits (cos 0.9868617057800293). Four compiles, two
+toolchains, two range algorithms: the IO ranges are structural (derived from
+weights and the input scale), invariant to calibration data, quantizer,
+range algorithm, and layer-error minimization. A head retrained on device-dumped NPU
 embeddings (78,974 windows) becomes self-consistent but learns the
 quantization noise as positive signal — the pass→FA flips persist.
 
