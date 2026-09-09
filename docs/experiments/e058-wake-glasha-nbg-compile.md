@@ -106,7 +106,7 @@ test, each in a segfault-isolated subprocess):
 | Variant | Compile | Device | Conclusion |
 |---|---|---|---|
 | original, pegasus int8 (319,776 B) | ok | prepare SIGSEGV | baseline |
-| v1: 19× `Max(x, −0.4)` → `LeakyRelu(α=1)` (identity) | ok (385,464 B) | prepare SIGSEGV | Max clamp exonerated (fires only at x < −40) |
+| v1: 19× `Max(x, −0.4)` → `LeakyRelu(alpha=1)` (identity) | ok (385,464 B) | prepare SIGSEGV | Max clamp exonerated (fires only at x < −40) |
 | v4: v1 + input/output `Reshape` dropped, IO `[1,1,76,32] → [1,96,1,1]` | ok (385,464 B) | prepare SIGSEGV | Reshape exonerated → **MaxPool guilty** |
 | float export of the original graph (846,376 B, quantize skipped) | ok | prepare SIGSEGV | **MaxPool broken in float too** |
 | AcuityLite 6.51.0 compile of the original graph (321,808 B, ovxlib 1.1.30) | ok | `vip_create_network` fails at ioctl `VIPDRV_SET_TASK_PROPERTY` (container header byte 4 = 0x05 v5 vs pegasus 0x00); byte-4 patch (0x05→0x00, section table identical) → create_network ok → prepare SIGSEGV | crash is **runtime-level, toolchain-independent** |
