@@ -33,6 +33,32 @@
       "status": "published",
       "scientific_use_allowed": false,
       "verification_state": "verified-local"
+    },
+    {
+      "path": "benchmarks/results/e057-vikhr-a733-cpu-loadtypes/summary.json",
+      "sha256": "f72fb045f1c27ed85749d7e4fb34e65a0d5a11b960537cfd7a05dd4b02b1e160",
+      "byte_size": 4663,
+      "origin": "E057 Vikhr load-type machine-readable record; manifest coverage added by E058 housekeeping",
+      "source_commit": "fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
+      "build_runtime_toolchain": "Python 3 standard library (json)",
+      "destination": "git",
+      "class": "NPU tools",
+      "status": "published",
+      "scientific_use_allowed": true,
+      "verification_state": "verified-local"
+    },
+    {
+      "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
+      "sha256": "98b125e91faba986471f55ef8f00dc29ca154ccf882d80d07af55ce974609ba7",
+      "byte_size": 11860,
+      "origin": "E058 wake NBG compile machine-readable record; corrected 2026-09-09: phase-3 bisection verdict invalidated (wrapper io-query bug + driver state), post-fix NPU runtime, quantization parity, streaming A/B recorded",
+      "source_commit": "162105ff70bb6ce56772970cb2d54b7fdae0f0d8",
+      "build_runtime_toolchain": "Python 3 standard library (json)",
+      "destination": "git",
+      "class": "NPU tools",
+      "status": "published",
+      "scientific_use_allowed": true,
+      "verification_state": "verified-local"
     }
   ]
 }

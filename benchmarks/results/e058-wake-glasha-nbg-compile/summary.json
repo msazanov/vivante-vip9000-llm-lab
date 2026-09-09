@@ -1,0 +1,144 @@
+{
+  "schema": "wake-glasha-nbg-compile/v1",
+  "experiment_id": "E058",
+  "evidence_class": "Verified on target (cost breakdown; NBG runtime failure + bisection); Verified in supplied tooling (NBG compile, scanner failure)",
+  "status": "diagnostic",
+  "recorded_date": "2026-09-09",
+  "scope": {
+    "measurement": "Per-stage cost breakdown of the GLaDOS wake-word chain on pinned A55 cores; an NBG compile screen for the openWakeWord embedding model; and a device-side runtime failure attribution (bisection over graph substitutions, a float probe, and an AcuityLite cross-toolchain compile)",
+    "included": [
+      "mel/embedding/head per-frame cost on target at the 80 ms streaming cadence",
+      "embedding NBG import/quantize/export logs, sizes, and hashes",
+      "mel onnx scanner failure reproduction on pegasus 2.0.10.2, acuitylite 6.51.0, and acuitylite 6.57.1",
+      "device open/prepare results for: pegasus int8 NBG, Max-removed (v1), Reshape-removed (v4), float NBG, AcuityLite NBG (raw and byte-4-patched container)",
+      "VIPLite wrapper construction (edge_wake_viplite.c) with int8 scale/zero plumbing, FP32/FP16 input tolerance, 1..6-dim IO"
+    ],
+    "excluded": [
+      "wake accuracy or quality claims",
+      "any Bonsai decode objective or current-best claim"
+    ]
+  },
+  "runtime": {
+    "host_toolchain_image": "ubuntu-npu:v2.0.10.2",
+    "pegasus_steps": "import onnx -> quantize (symmetric_affine int8, 50 iterations) -> export ovxlib --pack-nbg-unify",
+    "target_compile": "VIP9000NANODI_PID0X1000003B",
+    "inference_sessions": "onnxruntime CPUExecutionProvider, intra_op_num_threads=1, resident sessions"
+  },
+  "hardware": {
+    "board": "Orange Pi Zero 3W",
+    "soc": "Allwinner A733",
+    "little_cores": "cpu0-5 Cortex-A55 cpu_capacity 385",
+    "big_cores": "cpu6-7 Cortex-A76 cpu_capacity 1024",
+    "affinity": "taskset -c 0,1",
+    "kernel": "6.6.98-sun60iw2"
+  },
+  "chain_costs_a55": {
+    "mel_ms_per_frame": 10.70,
+    "embedding_ms_per_frame": 20.58,
+    "head_ms_per_frame": 0.21,
+    "total_ms_per_frame": 31.49,
+    "cadence_target_ms": 80,
+    "duty_pct_of_core": 39.4,
+    "note": "An earlier end-to-end loop benchmark reported a misleading 12.8 ms/frame because warm-up frames without stage runs diluted the average; the per-stage table is the honest number."
+  },
+  "service_context": {
+    "wake_hybrid_cpu_pct": 53.0,
+    "vosk_only_cpu_pct": 29.3,
+    "note": "Deployed wake hybrid = oww prefilter -> vosk confirm; telemetry via WAKE-DBG prints once per minute."
+  },
+  "embedding_nbg": {
+    "bytes": 319776,
+    "sha256": "05ab27a034087c7f50f21df6e25d8124a0398a5c7a138bb17528784d9ae36564",
+    "acuity_input_lid": "input_1_68",
+    "acuity_input_shape": [1, 76, 32, 1],
+    "output_shape": [1, 1, 1, 96],
+    "quantize": "symmetric_affine int8, 50 iterations calibrated on real wake-sample mel contexts, 0 errors 0 warnings",
+    "artifact_paths": [
+      "/var/tmp/wake-npu/emb/wksp/emb_nbg_unify/network_binary.nb",
+      "/home/random/wake-glasha/models/npu/emb-network_binary.nb"
+    ],
+    "executed_on_target": true,
+    "runtime_note": "prepare OK on target after the wrapper io-query fix + driver reset; see emb_nbg_post_fix"
+  },
+  "emb_nbg_post_fix": {
+    "trigger": "phase-3 bisection invalidated: the VIPLite wrapper built mis-shaped buffers from the reversed io-query sizes, and the driver retained poisoned state after the crash series",
+    "wrapper_bug": "vip_query_input/vip_query_output return sizes head-aligned REVERSED (decoder [1,192,1,32] queried as [32,1,192,1,0,0]); edge_wake_viplite.c rebuilt with per-dim reversal (env switches WAKE_VIP_REV/WAKE_VIP_MEM kept for sweeps)",
+    "driver_state_confound": "after ~20 SIGSEGVs the PRODUCTION GLaDOS decoder NBG also segfaulted at prepare in any standalone process (both wrappers) while serving fine inside edge_server; vipcore state clears only on reboot",
+    "positive_control": "decoder NBG (/home/orangepi/npu-current/network_binary.nb) prepare OK post-reboot; then the original pegasus int8 embedding NBG (319776 B) prepare OK",
+    "latency": "int8 wake_vip_run 1.33-1.41 ms/frame vs CPU teacher 20.58 ms; fp16 float-export NBG 20.77 ms (equal to CPU: no speedup on VIP9000NANODI)",
+    "quantization_parity": "200 val windows: int8 cos mean 0.9869 (p10 0.9771), max_abs 17.25 on the +/-100 teacher scale; NPU output range [-51.3, 70.9] clips teacher extremes (clipped_frac 1.0)",
+    "recalibration_note": "[CORRECTED] The AcuityLite recalibrated NBGs were never actually measured: the device parity script used a hardcoded NBG path, and an argv-argument fix was lost with a /tmp wipe (a concurrent agent reboot), so every post-fix parity run silently re-opened the original teacher NBG. nbg_meta.json proves the ranges DID change: recalib input scale 0.354047 vs 0.468131, output range [-54.18, +86.03] vs [-51.3, +70.86]. The original pegasus NBG quantization noise (cos 0.987) stands; the structural-invariance claim is retracted",
+    "streaming_ab": "18 eval clips, fresh wake state per clip: CPU (original head, threshold 0.3) 6/8 pos detected, 3/10 prefilter FA; int8 NPU + original head: 4 clips flip pass->FA, 1 flips pass->miss -> not production-safe as-is",
+    "npu_matched_head_teacher": "head retrained on device-dumped teacher-NPU embeddings (78974 windows, 191 s): self-consistent, but learns quantization noise as positive signal (pass->FA flips persist)",
+    "distilled_student_result": "student v2 (592K params, Conv/LeakyRelu, standardized targets, bounded output [-4.5, +3.9]): int8 NBG 578320 B; SELF-PARITY cos 0.9980 (p10 0.9962), max_abs 0.49, latency 0.20 ms/frame (103x vs CPU teacher); head retrained on device-dumped student-NPU embeddings (hold recall 0.989 / FA 0.008 @0.3); 48-clip A/B: recall 27/32 vs 26/32, prefilter FA 2/16 vs 3/16; FULL-SET A/B (358 clips: 162 pos + 196 neg, production-grade): CPU recall 135/162 vs student 129/162 (both miss 2 raw recordings, different sessions; the delta is concentrated in augmented variants of held-out sessions), prefilter FA 107/196 vs 89/196; excluding the hard-negative set (71/72 fire on BOTH chains - no differential signal) the semantic FA is 36/124 vs 18/124; chain 7.53 vs 3.56 ms/frame (2.1x), embedding 20.58 vs 0.20 ms (100x)",
+    "operational_note": "board auto-rebooted (watchdog) during A/B open/close churn; operator attributed that outage to a concurrent agent breaking the network; production usage is resident-open (single open at service start), heavy open/close churn stays a device risk"
+  },
+  "emb_nbg_runtime_failure": {
+    "driver": "VIPLite 2.0.3.2-AW-2024-08-30 (device)",
+    "symptom": "vip_prepare_network SIGSEGV (EXIT=139) after create_network, io query, and buffer creation all succeed",
+    "bisection": [
+      {
+        "variant": "original, pegasus int8 (319776 B)",
+        "compile": "ok",
+        "device": "prepare SIGSEGV"
+      },
+      {
+        "variant": "v1: 19x Max(x, -0.4) -> LeakyRelu(alpha=1) identity",
+        "compile": "ok (385464 B, sha256 c087eb448db262d90ed497329e1960f738d8f9f0992cf9f76444c18dccf8f00f)",
+        "device": "prepare SIGSEGV",
+        "conclusion": "Max clamp exonerated (numerically near-exact: clamp fires only at x < -40)"
+      },
+      {
+        "variant": "v4: v1 + input/output Reshape dropped, NBG IO [1,1,76,32] -> [1,96,1,1]",
+        "compile": "ok (385464 B, sha256 22d2d0f6e715a415e80e45912586ffc3344377154798b3acd35a78a79c36dd5c)",
+        "device": "prepare SIGSEGV",
+        "conclusion": "Reshape exonerated; MaxPool guilty (119 bytes differ vs v1, genuinely different graph)"
+      },
+      {
+        "variant": "float export of the original graph, quantize skipped",
+        "compile": "ok (846376 B, sha256 54b8455827258bc007aeaa94807cf2dd95686bdc58eb5ad928b6cf455542d2f4)",
+        "device": "prepare SIGSEGV (after wrapper relaxed to FP32/FP16 inputs)",
+        "conclusion": "MaxPool broken in float too"
+      },
+      {
+        "variant": "AcuityLite 6.51.0 compile of the original graph (OvxlibExporter pack_nbg_only, ovxlib 1.1.30)",
+        "compile": "ok (321808 B, sha256 4914912a9967a4cbb6cb61c31d47beded282b755ebf6e9c5544c0c10803d148a)",
+        "device": "create_network fails at ioctl VIPDRV_SET_TASK_PROPERTY (container header byte 4 = 0x05 v5 vs pegasus 0x00); byte-4 patch (0x05->0x00, section table identical) -> create_network ok -> prepare SIGSEGV",
+        "conclusion": "crash is runtime-level, toolchain-independent"
+      }
+    ],
+    "early_probe_failures": "MaxPool->Conv(stride-2) and MaxPool->Slice substitutions died at the pegasus quantize stage (TF-backend layout conventions: onnx 1x1 conv weight must be [c_out, c_in, 1, 1]; slice ends must be positive when steps != 1); not needed for the verdict",
+    "verdict": "[CORRECTED 2026-09-09] Superseded: the prepare crashes were wrapper artifacts (reversed io-query sizes) plus poisoned driver state, not graph topology. Post-fix the original NBG prepares and runs; see emb_nbg_post_fix",
+    "remaining_npu_path": "quantization-aware distilled student (bounded output range so int8 cannot clip); head-parity infrastructure exists (device dump + head retrain + streaming A/B)"
+  },
+  "mel_scanner_failure": {
+    "error": "AttributeError: op_type in acuitylib/onnx_ir/scanner/onnx_util.py:63 OnnxNode.__init__ (OnnxRulerMatcher value inference path)",
+    "reproduced_on": [
+      "ubuntu-npu:v2.0.10.2 pegasus, original static graph (29 nodes, opset 13)",
+      "ubuntu-npu:v2.0.10.2 pegasus, onnx-simplified graph (18 nodes, Constant/Cast folded)",
+      "acuitylite:ready (AcuityLite 6.51.0), onnx-simplified graph",
+      "acuitylite 6.57.1 (newest PyPI 2026-09-09), onnx-simplified graph"
+    ],
+    "hypothesis_resolution": "not op-mix specific and not version-specific: identical crash at the same scanner line in all three toolchains; all involved modules are cythonized (.so, no source on the image or in the VeriSilicon/acuitylite repo) and OnnxLoader.load exposes no flag to skip pattern matching/value inference; unfixable from our side",
+    "mel_frontend": "stays on CPU"
+  },
+  "wrapper": {
+    "source": "/home/random/wake-glasha/bin/edge_wake_viplite.c",
+    "deployed": "/home/orangepi/hugging-voice-device/models/wake-glasha/libwake_vip.so (built on device: gcc -shared -fPIC -O2 -Wall -Wextra -lNBGlinker -lVIPhal -lm)",
+    "capabilities": "open/run per NBG, int8 TF_ASYMM scale/zero plumbing, FP32/FP16 input buffers (identity scale/zero), 1..6-dim IO",
+    "note": "strict superset of the GLaDOS decoder contract; kept deployed"
+  },
+  "boundaries": [
+    "embedding NBG prepares post-fix, but int8 quantization is structurally lossy (output range [-51.3, 70.9] clips teacher extremes; identical across calibrations/algorithms/toolchains)",
+    "the stock teacher graph int8 remains decision-unsafe (5/18 clip flips); the DISTILLED STUDENT chain resolves it: 48-clip A/B recall 27/32 vs 26/32, prefilter FA 2/16 vs 3/16, chain 3.38 vs 7.31 ms/frame - production-viable, pending operator enablement",
+    "fp16 NBG is numerically exact (cos 0.999997) but runs at CPU speed (20.77 ms) - no win",
+    "the student NBG outperforms everything: int8 self-parity cos 0.998 at 0.20 ms/frame (bounded output by design; QAT-style distillation)",
+    "mel frontend remains on CPU (scanner bug, toolchain-wide)",
+    "wake chain remains fully CPU (onnxruntime) in production"
+  ],
+  "next_steps": [
+    "[DONE 2026-09-09 night] the distilled student (bounded output) passed: self-parity cos 0.998 @ 0.20 ms; 48-clip A/B recall 27/32 FA 2/16 vs CPU 26/32 FA 3/16; integration behind HUGGINGVOICE_WAKE_EMB_NPU=1 with CPU fallback, pending operator enablement",
+    "recompile probe with minimize_layer_error=True (in flight at record time)",
+    "keep the wake embedding on CPU until an NPU path passes the streaming A/B vs the CPU baseline"
+  ]
+}
