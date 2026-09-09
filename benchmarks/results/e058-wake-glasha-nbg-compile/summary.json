@@ -1,19 +1,20 @@
 {
   "schema": "wake-glasha-nbg-compile/v1",
   "experiment_id": "E058",
-  "evidence_class": "Verified on target (cost breakdown); Verified in supplied tooling (NBG compile, scanner failure)",
+  "evidence_class": "Verified on target (cost breakdown; NBG runtime failure + bisection); Verified in supplied tooling (NBG compile, scanner failure)",
   "status": "diagnostic",
   "recorded_date": "2026-09-09",
   "scope": {
-    "measurement": "Per-stage cost breakdown of the GLaDOS wake-word chain on pinned A55 cores and an NBG compile screen for the openWakeWord embedding model in the same toolchain image as the GLaDOS NBG pipeline",
+    "measurement": "Per-stage cost breakdown of the GLaDOS wake-word chain on pinned A55 cores; an NBG compile screen for the openWakeWord embedding model; and a device-side runtime failure attribution (bisection over graph substitutions, a float probe, and an AcuityLite cross-toolchain compile)",
     "included": [
       "mel/embedding/head per-frame cost on target at the 80 ms streaming cadence",
       "embedding NBG import/quantize/export logs, sizes, and hashes",
-      "mel onnx scanner failure reproduction on the original and onnx-simplified graphs"
+      "mel onnx scanner failure reproduction on pegasus 2.0.10.2, acuitylite 6.51.0, and acuitylite 6.57.1",
+      "device open/prepare results for: pegasus int8 NBG, Max-removed (v1), Reshape-removed (v4), float NBG, AcuityLite NBG (raw and byte-4-patched container)",
+      "VIPLite wrapper construction (edge_wake_viplite.c) with int8 scale/zero plumbing, FP32/FP16 input tolerance, 1..6-dim IO"
     ],
     "excluded": [
-      "NBG execution on target (no VIPLite wrapper exists for these shapes)",
-      "score parity CPU vs NPU",
+      "score parity CPU vs NPU (unreachable: the embedding NBG cannot prepare on target)",
       "wake accuracy or quality claims",
       "any Bonsai decode objective or current-best claim"
     ]
@@ -57,26 +58,72 @@
       "/var/tmp/wake-npu/emb/wksp/emb_nbg_unify/network_binary.nb",
       "/home/random/wake-glasha/models/npu/emb-network_binary.nb"
     ],
-    "executed_on_target": false
+    "executed_on_target": false,
+    "runtime_note": "prepare SIGSEGV on target; see emb_nbg_runtime_failure"
+  },
+  "emb_nbg_runtime_failure": {
+    "driver": "VIPLite 2.0.3.2-AW-2024-08-30 (device)",
+    "symptom": "vip_prepare_network SIGSEGV (EXIT=139) after create_network, io query, and buffer creation all succeed",
+    "bisection": [
+      {
+        "variant": "original, pegasus int8 (319776 B)",
+        "compile": "ok",
+        "device": "prepare SIGSEGV"
+      },
+      {
+        "variant": "v1: 19x Max(x, -0.4) -> LeakyRelu(alpha=1) identity",
+        "compile": "ok (385464 B, sha256 c087eb448db262d90ed497329e1960f738d8f9f0992cf9f76444c18dccf8f00f)",
+        "device": "prepare SIGSEGV",
+        "conclusion": "Max clamp exonerated (numerically near-exact: clamp fires only at x < -40)"
+      },
+      {
+        "variant": "v4: v1 + input/output Reshape dropped, NBG IO [1,1,76,32] -> [1,96,1,1]",
+        "compile": "ok (385464 B, sha256 22d2d0f6e715a415e80e45912586ffc3344377154798b3acd35a78a79c36dd5c)",
+        "device": "prepare SIGSEGV",
+        "conclusion": "Reshape exonerated; MaxPool guilty (119 bytes differ vs v1, genuinely different graph)"
+      },
+      {
+        "variant": "float export of the original graph, quantize skipped",
+        "compile": "ok (846376 B, sha256 54b8455827258bc007aeaa94807cf2dd95686bdc58eb5ad928b6cf455542d2f4)",
+        "device": "prepare SIGSEGV (after wrapper relaxed to FP32/FP16 inputs)",
+        "conclusion": "MaxPool broken in float too"
+      },
+      {
+        "variant": "AcuityLite 6.51.0 compile of the original graph (OvxlibExporter pack_nbg_only, ovxlib 1.1.30)",
+        "compile": "ok (321808 B, sha256 4914912a9967a4cbb6cb61c31d47beded282b755ebf6e9c5544c0c10803d148a)",
+        "device": "create_network fails at ioctl VIPDRV_SET_TASK_PROPERTY (container header byte 4 = 0x05 v5 vs pegasus 0x00); byte-4 patch (0x05->0x00, section table identical) -> create_network ok -> prepare SIGSEGV",
+        "conclusion": "crash is runtime-level, toolchain-independent"
+      }
+    ],
+    "early_probe_failures": "MaxPool->Conv(stride-2) and MaxPool->Slice substitutions died at the pegasus quantize stage (TF-backend layout conventions: onnx 1x1 conv weight must be [c_out, c_in, 1, 1]; slice ends must be positive when steps != 1); not needed for the verdict",
+    "verdict": "MaxPool crashes vip_prepare_network on this VIPLite build in int8 and float; embedding stays on CPU (20.58 ms); NPU keeps wake head + GLaDOS decoder",
+    "remaining_npu_path": "distill a pool-free embedding (Conv/LeakyRelu only) and retrain the wake head on the distilled embeddings - research-sized, not started"
   },
   "mel_scanner_failure": {
-    "image": "ubuntu-npu:v2.0.10.2",
-    "error": "AttributeError: op_type in acuitylib/onnx_ir/scanner/onnx_util.py:63 OnnxNode.__init__",
+    "error": "AttributeError: op_type in acuitylib/onnx_ir/scanner/onnx_util.py:63 OnnxNode.__init__ (OnnxRulerMatcher value inference path)",
     "reproduced_on": [
-      "original static graph (29 nodes, opset 13)",
-      "onnx-simplified graph (18 nodes, Constant/Cast folded)"
+      "ubuntu-npu:v2.0.10.2 pegasus, original static graph (29 nodes, opset 13)",
+      "ubuntu-npu:v2.0.10.2 pegasus, onnx-simplified graph (18 nodes, Constant/Cast folded)",
+      "acuitylite:ready (AcuityLite 6.51.0), onnx-simplified graph",
+      "acuitylite 6.57.1 (newest PyPI 2026-09-09), onnx-simplified graph"
     ],
-    "hypothesis": "Acuity 6.x onnx scanner does not accept the STFT-style op mix (Log/Pow/ReduceMax/MatMul/Transpose); newer acuitylite:ready (AcuityLite 6.51.0) is the untested next probe"
+    "hypothesis_resolution": "not op-mix specific and not version-specific: identical crash at the same scanner line in all three toolchains; all involved modules are cythonized (.so, no source on the image or in the VeriSilicon/acuitylite repo) and OnnxLoader.load exposes no flag to skip pattern matching/value inference; unfixable from our side",
+    "mel_frontend": "stays on CPU"
+  },
+  "wrapper": {
+    "source": "/home/random/wake-glasha/bin/edge_wake_viplite.c",
+    "deployed": "/home/orangepi/hugging-voice-device/models/wake-glasha/libwake_vip.so (built on device: gcc -shared -fPIC -O2 -Wall -Wextra -lNBGlinker -lVIPhal -lm)",
+    "capabilities": "open/run per NBG, int8 TF_ASYMM scale/zero plumbing, FP32/FP16 input buffers (identity scale/zero), 1..6-dim IO",
+    "note": "strict superset of the GLaDOS decoder contract; kept deployed"
   },
   "boundaries": [
-    "no NBG execution on target",
-    "no VIPLite wrapper for these shapes (GLaDOS libglados_vip.so contract is decoder-specific)",
-    "no golden or score parity",
-    "wake chain remains fully CPU (onnxruntime) until wrapper and parity pass"
+    "embedding NBG cannot prepare on target (MaxPool runtime crash, int8 and float)",
+    "no golden and no score parity: unreachable until a pool-free distilled embedding exists",
+    "mel frontend remains on CPU (scanner bug, toolchain-wide)",
+    "wake chain remains fully CPU (onnxruntime) today"
   ],
   "next_steps": [
-    "adapt the VIPLite wrapper (edge_viplite.c GLaDOS pattern; vip_lite.h + libNBGlinker.so per toolchain inventory) to the embedding NBG",
-    "score parity CPU vs NPU over the 106 captured wake samples and the adversarial set",
-    "probe acuitylite:ready (AcuityLite 6.51.0) for the mel import"
+    "optional research task: distill a pool-free embedding network (Conv/LeakyRelu only, stride-convs instead of MaxPools, plain LeakyRelu instead of Max clamps) on real wake samples, retrain the wake head on the distilled embeddings, then recompile and retry prepare",
+    "re-test MaxPool prepare if a newer VIPLite driver lands on the device (current: 2.0.3.2-AW-2024-08-30)"
   ]
 }

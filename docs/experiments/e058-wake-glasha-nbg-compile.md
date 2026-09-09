@@ -4,8 +4,9 @@
 
 **Claim class:** `diagnostic`
 
-**Evidence class:** *Verified on target* (cost breakdown) and *Verified in supplied
-tooling* (NBG compile). No quality, correctness, or optimization claim is made.
+**Evidence class:** *Verified on target* (cost breakdown; NBG runtime failure +
+bisection) and *Verified in supplied tooling* (NBG compile; scanner failure
+reproduction). No quality, correctness, or optimization claim is made.
 
 This record captures two bounded results from the GLaDOS wake-word assistant
 work (2026-09-09), which are relevant to the lab's VIP9000 capability map:
@@ -82,11 +83,45 @@ AttributeError: op_type
 
 Reproduced on both the original graph (29 nodes) and an onnx-simplifier output
 (18 nodes, `Constant`/`Cast` constant-folded). The failure is in the scanner's
-numpy-backend node walk, not in operator support. **Hypothesis —** the Acuity
-6.x onnx scanner does not handle this op mix or its attribute layout; the
-newer `acuitylite:ready` image (AcuityLite 6.51.0, per
-[toolchain inventory](../toolchain/inventory.md)) is the untested next probe.
-Until then the mel frontend stays on CPU.
+numpy-backend node walk, not in operator support. **Resolution (2026-09-09):**
+the identical crash reproduces at the same scanner line in all three available
+toolchains — pegasus 2.0.10.2 (`ubuntu-npu:v2.0.10.2`), AcuityLite 6.51.0
+(`acuitylite:ready`), and AcuityLite 6.57.1 (newest PyPI). All involved
+modules are cythonized (`.so`, no source on the image or in the
+VeriSilicon/acuitylite repo) and `OnnxLoader.load` exposes no flag to skip
+pattern matching / value inference. The bug is unfixable from our side; the
+mel frontend stays on CPU.
+
+## Result 4 — Verified on target: embedding NBG prepare fails; bisection isolates MaxPool
+
+The phase-2 embedding NBG (int8, 319,776 bytes) **crashes on the device**:
+`vip_prepare_network` raises SIGSEGV (VIPLite driver 2.0.3.2-AW-2024-08-30)
+after `vip_create_network`, the io query, and buffer creation all succeed. A
+VIPLite wrapper (`edge_wake_viplite.c` → `libwake_vip.so`; int8 TF_ASYMM
+scale/zero plumbing) was built on the device to drive the tests.
+
+Bisection over graph substitutions (host edits → docker compile → device open
+test, each in a segfault-isolated subprocess):
+
+| Variant | Compile | Device | Conclusion |
+|---|---|---|---|
+| original, pegasus int8 (319,776 B) | ok | prepare SIGSEGV | baseline |
+| v1: 19× `Max(x, −0.4)` → `LeakyRelu(α=1)` (identity) | ok (385,464 B) | prepare SIGSEGV | Max clamp exonerated (fires only at x < −40) |
+| v4: v1 + input/output `Reshape` dropped, IO `[1,1,76,32] → [1,96,1,1]` | ok (385,464 B) | prepare SIGSEGV | Reshape exonerated → **MaxPool guilty** |
+| float export of the original graph (846,376 B, quantize skipped) | ok | prepare SIGSEGV | **MaxPool broken in float too** |
+| AcuityLite 6.51.0 compile of the original graph (321,808 B, ovxlib 1.1.30) | ok | `vip_create_network` fails at ioctl `VIPDRV_SET_TASK_PROPERTY` (container header byte 4 = 0x05 v5 vs pegasus 0x00); byte-4 patch (0x05→0x00, section table identical) → create_network ok → prepare SIGSEGV | crash is **runtime-level, toolchain-independent** |
+
+Early probe failures (not needed for the verdict): `MaxPool → Conv(stride-2)`
+and `MaxPool → Slice` substitutions die at the pegasus quantize stage
+(TF-backend layout conventions; lessons recorded: an onnx 1×1 conv weight must
+be `[c_out, c_in, 1, 1]`, and Slice ends must be positive when steps ≠ 1).
+
+**Verdict:** MaxPool crashes `vip_prepare_network` on this VIPLite build in
+int8 and float. The embedding stays on CPU (20.58 ms); the NPU keeps the wake
+head + the GLaDOS decoder. The remaining NPU path for the embedding — distill
+a pool-free embedding (Conv/LeakyRelu only, stride-convs instead of MaxPools,
+plain LeakyRelu instead of Max clamps) and retrain the wake head on the
+distilled embeddings — is research-sized and not started.
 
 ## Artifacts
 
@@ -96,6 +131,11 @@ NBG and manifest live outside this repository (recorded, not published):
 |---|---:|---|---|
 | `emb-network_binary.nb` | 319,776 | `05ab27a0…36564` | `/var/tmp/wake-npu/emb/wksp/emb_nbg_unify/network_binary.nb` and `/home/random/wake-glasha/models/npu/emb-network_binary.nb` |
 | `emb-npu.json` (manifest: onnx/graph hashes, lid, shape, calibration) | 963 | — | `/var/tmp/wake-npu/emb/npu.json` and `/home/random/wake-glasha/models/npu/emb-npu.json` |
+| v1 NBG (19× Max → LeakyRelu identity; MaxPool+Reshape kept) | 385,464 | `c087eb44…8f00f` | `/var/tmp/wake-npu/bisect/v1/wksp/v1_nbg_unify/network_binary.nb` |
+| v4 NBG (v1 + both Reshapes dropped; IO `[1,1,76,32]→[1,96,1,1]`) | 385,464 | `22d2d0f6…dd5c` | `/var/tmp/wake-npu/bisect/v4/wksp/v4_nbg_unify/network_binary.nb` |
+| float NBG (original graph, quantize skipped) | 846,376 | `54b84558…d2f4` | `/var/tmp/wake-npu/emb/wksp/emb_float_nbg_unify/network_binary.nb` |
+| AcuityLite NBG (original graph, ovxlib 1.1.30) | 321,808 | `4914912a…148a` | `/var/tmp/wake-npu/emb_al/wksp_al/network_binary.nb` |
+| `nbg_meta.json` (AcuityLite IO scales/zero-points) | 1,043 | — | `/var/tmp/wake-npu/emb_al/wksp_al/nbg_meta.json` |
 
 Origin chain: openWakeWord `embedding_model.onnx` (Apache-2.0) → static-batch
 onnx (`68c0c39d…`) → Acuity graph → int8 quantize → NBG. Adding the NBG to the
@@ -103,21 +143,31 @@ public artifact manifest is a follow-up under the publication policy.
 
 ## Boundaries and remaining work
 
-- The NBG has **not** been executed on the target: no VIPLite wrapper exists
-  for these shapes (the GLaDOS `libglados_vip.so` contract is decoder-
-  specific), no golden, no score-parity validation, no end-to-end timing.
-- int8 quantization error on the wake scores is unknown; parity on the 106
-  captured wake samples is the required gate before any device switch-over.
-- The mel frontend remains on CPU; the wake chain remains fully CPU today.
+- The embedding NBG **cannot run** on the target: `vip_prepare_network`
+  SIGSEGVs (MaxPool runtime crash, int8 and float; Result 4). A VIPLite
+  wrapper now exists (`edge_wake_viplite.c`: int8 TF_ASYMM plumbing,
+  FP32/FP16 input tolerance, 1..6-dim IO) but has no valid embedding NBG to
+  wrap.
+- int8 quantization error on the wake scores is moot for the stock oww
+  embedding (cannot prepare); it becomes relevant again only for a pool-free
+  distilled embedding.
+- The mel frontend remains on CPU (scanner bug, toolchain-wide); the wake
+  chain remains fully CPU today.
 - Wake-domain quality claims live in the wake project's own report
   (`/home/random/wake-glasha/models/REPORT.md`, outside this repository).
 
 ## Next steps
 
-1. Adapt the VIPLite wrapper (`edge_viplite.c` GLaDOS pattern; device runtime
-   libraries `vip_lite.h`, `libNBGlinker.so` per the toolchain inventory) to
-   the embedding NBG; cross-compile aarch64.
-2. Wire the wrapped NPU call into the wake runtime behind a fallback flag;
-   run score parity (CPU vs NPU) over the 106 wake samples and the adversarial
-   set.
-3. Probe `acuitylite:ready` (AcuityLite 6.51.0) for the mel import.
+1. ~~Adapt the VIPLite wrapper~~ — done: `edge_wake_viplite.c` built on the
+   device (int8 TF_ASYMM plumbing, FP32/FP16 inputs, 1..6-dim IO). No valid
+   embedding NBG to wrap (Result 4).
+2. Optional research task: distill a pool-free embedding (Conv/LeakyRelu only,
+   stride-convs instead of MaxPools, plain LeakyRelu instead of Max clamps)
+   on real wake samples, retrain the wake head on the distilled embeddings,
+   recompile, retry prepare; wire behind a fallback flag with score parity
+   over the 106 wake samples and the adversarial set.
+3. ~~Probe `acuitylite:ready` for the mel import~~ — done, negative: the
+   scanner bug reproduces identically in AcuityLite 6.51.0 and 6.57.1
+   (Result 3 resolution).
+4. Re-test MaxPool prepare if a newer VIPLite driver lands on the device
+   (current: 2.0.3.2-AW-2024-08-30).
