@@ -1,1000 +1,1004 @@
 {
- "schema": "repository-experiment-registry/v1",
- "repository": "msazanov/vivante-vip9000-llm-lab",
- "generated_from": "remote branch inventory captured 2026-08-14; raw payloads remain on their authoritative refs",
- "experiments": [
-  {
-   "id": "E001",
-   "title": "VIP9000 SDK and operator capability probe",
-   "status": "planned",
-   "claim_class": "planned",
-   "branch": "main",
-   "commit": "426d1467563da211f9621cc2692ec25cf065880d",
-   "evidence": [
+  "schema": "repository-experiment-registry/v1",
+  "repository": "msazanov/vivante-vip9000-llm-lab",
+  "generated_from": "remote branch inventory captured 2026-08-14; raw payloads remain on their authoritative refs",
+  "experiments": [
     {
-     "kind": "branch_pointer",
-     "path": "experiments/E001-vip9000-capability-probe/README.md",
-     "ref": "main@426d1467563da211f9621cc2692ec25cf065880d",
-     "note": "Original capability-probe plan."
-    }
-   ],
-   "metric": {},
-   "notes": "Retained as the original capability question; target capability is now tracked by the canonical NPU map.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E002",
-   "title": "Packed ternary kernel study",
-   "status": "planned",
-   "claim_class": "planned",
-   "branch": "main",
-   "commit": "426d1467563da211f9621cc2692ec25cf065880d",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E002-packed-ternary-kernel/README.md",
-     "ref": "main@426d1467563da211f9621cc2692ec25cf065880d",
-     "note": "Original packed-ternary study plan."
-    }
-   ],
-   "metric": {},
-   "notes": "Superseded as a plan by the Q1-specific evidence sequence; no result is promoted from this row.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E003",
-   "title": "Packed Q1 carrier and EVIS Q1 x Q8",
-   "status": "accepted",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E003-q1-packed-carrier/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Target EVIS capability and golden evidence; not a full-model claim."
-    }
-   ],
-   "metric": {
-    "exact_quality": true
-   },
-   "notes": "Accepted as a target-verified packed-Q1 operator proof. Large-layer scaling is handled by later rows.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E004",
-   "title": "CPU Q1 operator baseline",
-   "status": "accepted",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E004-q1-cpu-operator-baseline/",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "CPU golden/operator reference."
-    }
-   ],
-   "metric": {
-    "exact_quality": true
-   },
-   "notes": "Reference implementation for Q1 operator correctness and comparison.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E005",
-   "title": "A733 DDR PLL guarded A/B",
-   "status": "failed",
-   "claim_class": "hardware",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E005-a733-ddr-pll-ab/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Guarded PLL attempt retained with reset boundary."
-    }
-   ],
-   "metric": {},
-   "notes": "The run did not establish a supported operating point or a performance result; do not infer safe overclock behavior.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E006",
-   "title": "PowerVR Vulkan Q1 shared-memory gate",
-   "status": "failed",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E006-powervr-vulkan-q1/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Driver failure retained as negative evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "The driver path did not complete the intended Q1 pipeline gate.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E007",
-   "title": "PowerVR OpenCL packed-Q1 GEMV",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E007-powervr-opencl-q1/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Retained baseline and compatibility evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Not promoted to the VIP9000 backend path.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E008",
-   "title": "A733 Q1 DOTPROD 4x4 versus 4x8",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E008-a733-q1-4x8/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Layout candidate evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "The candidate is retained but is not a promoted A733 Q1 path.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E009",
-   "title": "A733 Q1 packed-weight prefetch",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E009-a733-q1-prefetch/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Prefetch candidate evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Retained as a rejected CPU candidate; later cluster-specific work has its own row.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E009-fused",
-   "title": "Packed Q1 to native fully connected",
-   "status": "planned",
-   "claim_class": "planned",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E009-fused-q1-native-fc/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Fused-NBG direction retained for follow-up."
-    }
-   ],
-   "metric": {},
-   "notes": "The fused EVIS-unpack to native-NN gate remains a planned next step.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E019",
-   "title": "Direct EVIS INT16 GEMM",
-   "status": "accepted",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E019-q1-i16-evis-gemm/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Exact target golden path, retained as a capability proof."
-    }
-   ],
-   "metric": {
-    "exact_quality": true
-   },
-   "notes": "The generic INT16 EVIS path is correct but too slow for Bonsai production decode.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E020",
-   "title": "Multiple custom EVIS kernels in one NBG",
-   "status": "accepted",
-   "claim_class": "operator",
-   "branch": "codex/profiling-foundation",
-   "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E020-two-custom-kernel/README.md",
-     "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
-     "note": "Multi-kernel NBG execution proof."
-    }
-   ],
-   "metric": {
-    "exact_quality": true
-   },
-   "notes": "Accepted as a graph-construction and execution capability, not as a full-model speed result.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E020a",
-   "title": "Q1 unpack to native fully connected",
-   "status": "unqualified",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E020-q1-unpack-native-fc/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Native-FC candidate evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Retained without a promoted full-model or native-NN claim.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E021",
-   "title": "Q1 unpack to native matrix multiply",
-   "status": "unqualified",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E021-q1-unpack-native-matmul/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Matrix-multiply candidate evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Shape/layout proof remains bounded and does not qualify a model path.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E022",
-   "title": "Fused packed-Q1 dot on VIP9000",
-   "status": "accepted",
-   "claim_class": "operator",
-   "branch": "codex/e022-fused-q1",
-   "commit": "d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E022-fused-q1/README.md",
-     "ref": "codex/e022-fused-q1@d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
-     "note": "Scale-aware packed-Q1 target gate."
-    }
-   ],
-   "metric": {
-    "exact_quality": true,
-    "tile_total_ms": 13.518054
-   },
-   "notes": "Accepted for an exact Q1 operator tile; DP16x2_b mapping remains unresolved and it is not a full-model result.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E023",
-   "title": "CPU seam for packed Q1",
-   "status": "rejected",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E023-ggml-q1-seam/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Bonsai seam comparison and rejection."
-    }
-   ],
-   "metric": {},
-   "notes": "The candidate did not beat the pinned native path and is not promoted.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": true
-  },
-  {
-   "id": "E024",
-   "title": "Large fused-Q1 projection",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E024-npu-full-projection/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Shape-sweep rejection."
-    }
-   ],
-   "metric": {},
-   "notes": "The required full projection shape was not a valid promoted NBG path.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E025",
-   "title": "DDR frequency raw PLL attempt",
-   "status": "failed",
-   "claim_class": "hardware",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E025-ddr-frequency/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Fail-closed DDR branch evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "The raw attempt did not establish a supported rate or performance gain; keep the secure-firmware boundary.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E026",
-   "title": "CPU decode screen",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E026-cpu-decode-screen/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Short CPU screen."
-    }
-   ],
-   "metric": {},
-   "notes": "Useful ranking evidence, but not the qualified full-model best.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E027",
-   "title": "Polling thread-pool A/B",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E027-poll-scheduling/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Polling candidate history."
-    }
-   ],
-   "metric": {},
-   "notes": "Short scheduler evidence retained without a quality-qualified promotion.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E028",
-   "title": "GCC LTO CPU Q1 decode",
-   "status": "rejected",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E028-lto/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "LTO candidate result."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected as a full-model optimization candidate.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": true
-  },
-  {
-   "id": "E029",
-   "title": "A55-tuned DOTPROD CPU variant",
-   "status": "rejected",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E029-mtune-a55/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "A55 tuning candidate."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected as a promoted full-model improvement.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": true
-  },
-  {
-   "id": "E030",
-   "title": "Paired Q8 activation reuse",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E030-q1-paired-reuse/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Q1 reuse candidate."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected candidate; later variants remain separately classified.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E031",
-   "title": "Noinline half for Q8 reuse",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E031-q1-noinline-reuse/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Noinline candidate evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected on target performance despite host correctness evidence.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E032",
-   "title": "Four-block Q1 reuse call",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E032-q1-block4-reuse/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Block-four reuse candidate."
-    }
-   ],
-   "metric": {},
-   "notes": "Retained as a negative candidate.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E033",
-   "title": "Scheduler strict-zero baseline",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E033-scheduler-strict0/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Reference scheduler history."
-    }
-   ],
-   "metric": {},
-   "notes": "Retained as a comparison lineage; E035 is the qualified full-model row.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E034",
-   "title": "Worker-count strict-zero screen",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E034-worker-count-strict0/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Worker-count screen."
-    }
-   ],
-   "metric": {},
-   "notes": "Screen evidence retained without current-best promotion.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E035",
-   "title": "Poll-50 full Bonsai decode gate",
-   "status": "accepted",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "d012490294a24a17f4ec97707f35911c53e4a2e4",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E035-poll-screen/results/e035_poll.json",
-     "ref": "codex/e023-ggml-q1-seam@d012490294a24a17f4ec97707f35911c53e4a2e4",
-     "note": "Exact full-gate result and token-quality match."
-    }
-   ],
-   "metric": {
-    "decode_tok_s": 0.972497,
-    "exact_quality": true,
-    "quality_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb"
-   },
-   "notes": "Current qualified full-model best. The short 0.991160 screen is not used as the headline result.",
-   "is_current_best": true,
-   "end_to_end": true,
-   "optimization_claim": true,
-   "provenance": {
-    "complete": true,
-    "hardware": "Orange Pi Zero 3W target with pinned A733 read-only inventory",
-    "runtime": "Pinned native CPU Q1 path with declared prompt and decode timing scopes",
-    "toolchain": "Pinned repository commit and reproducible profiling command",
-    "quality": "Exact deterministic token agreement against the pinned CPU reference"
-   },
-   "repeatability": {
-    "runs": 3,
-    "method": "Three measured full-gate samples with identical prompt, model, and quality comparison",
-    "quality_match": true
-   }
-  },
-  {
-   "id": "E039",
-   "title": "Whole-K packed-Q1 pair",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E039-q1-pair-wholek/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Whole-K candidate."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected candidate retained for migration and comparison history.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E040",
-   "title": "Register nibble lookup table",
-   "status": "rejected",
-   "claim_class": "operator",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E040-q1-register-lut/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Register-LUT candidate."
-    }
-   ],
-   "metric": {},
-   "notes": "Rejected candidate retained as negative evidence.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": true
-  },
-  {
-   "id": "E044",
-   "title": "Cluster-aware A76 PRFM",
-   "status": "unqualified",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "3193c0e8bc1b00dfd4cf70c65a193a3482e67ca7",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E044-cluster-prfm/README.md",
-     "ref": "codex/e023-ggml-q1-seam@3193c0e8bc1b00dfd4cf70c65a193a3482e67ca7",
-     "note": "Short screen plus sustained reset evidence."
-    }
-   ],
-   "metric": {
-    "screen_decode_tok_s": 1.018629,
-    "full_decode_tok_s": null,
-    "exact_quality": false
-   },
-   "notes": "Short screen was promising, but sustained attempts reset before throughput and quality. Never label E044 current best.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E045",
-   "title": "DSpark bounded preflight and smoke",
-   "status": "unqualified",
-   "claim_class": "full_model",
-   "branch": "codex/e023-ggml-q1-seam",
-   "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E045-dspark-stock-oom/README.md",
-     "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
-     "note": "Bounded DSpark evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Functional smoke and timer scopes are retained but do not qualify as the Bonsai full-model best.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E047",
-   "title": "Common benchmark contract",
-   "status": "accepted",
-   "claim_class": "tooling",
-   "branch": "codex/e047-hard-profiling",
-   "commit": "203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E047-common-benchmark/README.md",
-     "ref": "codex/e047-hard-profiling@203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
-     "note": "Shared benchmark and gate contract."
-    }
-   ],
-   "metric": {},
-   "notes": "Accepted as profiling infrastructure; it is not itself a throughput result.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E048",
-   "title": "Per-operation steady-state trace",
-   "status": "diagnostic",
-   "claim_class": "diagnostic",
-   "branch": "codex/e048-per-op-trace",
-   "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E048-per-op-trace/README.md",
-     "ref": "codex/e048-per-op-trace@f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
-     "note": "Trace evidence for bottleneck localization."
-    }
-   ],
-   "metric": {},
-   "notes": "Diagnostic trace; not a standalone optimization claim.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E049-nsi",
-   "title": "A733 NSI system-identity calibration",
-   "status": "diagnostic",
-   "claim_class": "hardware",
-   "branch": "codex/e049-nsi-calibration",
-   "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E049-nsi-calibration/README.md",
-     "ref": "codex/e049-nsi-calibration@c8b7e2696c8f5df89d752dd41e55a5855354cca0",
-     "note": "V4 calibration evidence; authoritative raw payload remains on the calibration branch."
-    }
-   ],
-   "metric": {
-    "v4_fit_class": "inconclusive/low",
-    "mb_per_second_established": false,
-    "saturation_established": false
-   },
-   "notes": "V4 end-synchronized fits were inconclusive/low. This bounded diagnostic does not establish MB/s, a data-unit conversion, or memory saturation.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E049b",
-   "title": "Analysis of complete E048 traces",
-   "status": "diagnostic",
-   "claim_class": "diagnostic",
-   "branch": "codex/e049b-trace-analysis",
-   "commit": "06a810c2f3330f51ec0a8d97de041c4fdde8a452",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E049b-trace-analysis/README.md",
-     "ref": "codex/e049b-trace-analysis@06a810c2f3330f51ec0a8d97de041c4fdde8a452",
-     "note": "Trace-analysis evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Diagnostic analysis retained to guide the next controlled measurement.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E049c",
-   "title": "ARM PMU CPU/cache/memory controls",
-   "status": "diagnostic",
-   "claim_class": "diagnostic",
-   "branch": "codex/e049c-arm-pmu",
-   "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E049c-arm-pmu/README.md",
-     "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-     "note": "PMU control and safety evidence."
-    }
-   ],
-   "metric": {},
-   "notes": "Diagnostic counter methodology; event counts must not be presented as DDR bytes.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E049d",
-   "title": "Original three-token PMU marker",
-   "status": "rejected",
-   "claim_class": "diagnostic",
-   "branch": "codex/e049c-arm-pmu",
-   "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E049d-steady-pmu/README.md",
-     "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-     "note": "Superseded marker-boundary attempt."
-    }
-   ],
-   "metric": {},
-   "notes": "The original marker boundary was rejected; E049d-v2 is the corrected diagnostic row.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E049d-v2",
-   "title": "Corrected three-token ARM PMU marker",
-   "status": "diagnostic",
-   "claim_class": "diagnostic",
-   "branch": "codex/e049c-arm-pmu",
-   "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E049d-steady-pmu-v2/data/summary.json",
-     "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
-     "note": "Corrected marker summary; raw payload remains on the authoritative branch."
-    }
-   ],
-   "metric": {
-    "steady_marker_tok_s": 1.11698354,
-    "samples": 15,
-    "exact_token_capture": true
-   },
-   "notes": "Diagnostic only: three steady decode graphs, no model load or prompt, no end-to-end timing, and no optimization claim.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E054",
-   "title": "A76 Q1 multiversion hypothesis",
-   "status": "planned",
-   "claim_class": "planned",
-   "branch": "codex/e054-a76-q1-multiversion",
-   "commit": "9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E054-a76-q1-multiversion/README.md",
-     "ref": "codex/e054-a76-q1-multiversion@9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
-     "note": "Active hypothesis and preflight."
-    }
-   ],
-   "metric": {},
-   "notes": "No qualified target result is imported into the canonical layer.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E055",
-   "title": "Q1 cache-hot and cache-cold microbenchmark",
-   "status": "planned",
-   "claim_class": "planned",
-   "branch": "codex/e055-q1-hot-cold",
-   "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
-   "evidence": [
-    {
-     "kind": "branch_pointer",
-     "path": "experiments/E055-q1-hot-cold/README.md",
-     "ref": "codex/e055-q1-hot-cold@51d1c1cfd3d2e963344e79dc11719c278b234569",
-     "note": "Ongoing work; this canonical branch does not modify its files or worktree."
-    }
-   ],
-   "metric": {},
-   "notes": "Point-in-time snapshot of ongoing E055 work on its own branch; the live branch may advance and must be re-inventoried before any registry promotion.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E056",
-   "title": "LFM2.5 A733 CPU decode screen",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "main",
-   "commit": "f08e03087a101bc69b86d553d5c54cba33b5dbf8",
-   "evidence": [
-    {
-     "kind": "repository_path",
-     "path": "docs/experiments/e056-lfm25-a733-cpu-decode.md",
-     "ref": "main@f08e03087a101bc69b86d553d5c54cba33b5dbf8",
-     "note": "CPU-only p=0,n=32,r=5 LFM2.5 and Bonsai comparison with normalized target evidence."
-    }
-   ],
-   "metric": {
-    "lfm25_8b_a1b_mean_decode_tok_s": 5.202598,
-    "bonsai_mean_decode_tok_s": 0.991024,
-    "repetitions": 5,
-    "quality_evidence": false
-   },
-   "notes": "Completed target CPU screen with five repeats per model and thermal-guard exit=0. Prompt/prefill, TTFT, deterministic generation quality, VL image prefill, and accelerator inference are absent; it is not current-best or an optimization claim.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  },
-  {
-   "id": "E057",
-   "title": "Vikhr-Qwen-2.5-1.5B A733 CPU load-type screen and assistant integration",
-   "status": "unqualified",
-   "claim_class": "screen",
-   "branch": "main",
-   "commit": "fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
-   "evidence": [
-    {
-     "kind": "repository_path",
-     "path": "docs/experiments/e057-vikhr-a733-cpu-loadtypes.md",
-     "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
-     "note": "Single-sample decode screen across CPU load types with prompt-processing and Hermes/GLaDOS integration notes."
+      "id": "E001",
+      "title": "VIP9000 SDK and operator capability probe",
+      "status": "planned",
+      "claim_class": "planned",
+      "branch": "main",
+      "commit": "426d1467563da211f9621cc2692ec25cf065880d",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E001-vip9000-capability-probe/README.md",
+          "ref": "main@426d1467563da211f9621cc2692ec25cf065880d",
+          "note": "Original capability-probe plan."
+        }
+      ],
+      "metric": {},
+      "notes": "Retained as the original capability question; target capability is now tracked by the canonical NPU map.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
     },
     {
-     "kind": "repository_path",
-     "path": "benchmarks/results/e057-vikhr-a733-cpu-loadtypes/summary.json",
-     "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
-     "note": "Machine-readable load-type matrix, prompt runs, incidents, and integration record."
-    }
-   ],
-   "metric": {
-    "q4km_a76_only_decode_tok_s": 6.938,
-    "all_core_decode_tok_s": 1.48,
-    "lean_prompt_tok_s": 19.3,
-    "quality_evidence": false
-   },
-   "notes": "Key finding: 8-core decode is ~4.7x slower than 2xA76-only on this SoC (A55 stragglers). Governor performance made no material decode difference. Two spontaneous reboots under load recorded with unverified cause. Not current-best, not an optimization claim; E056 remains the repeated-means methodology reference.",
-   "is_current_best": false,
-   "end_to_end": true,
-   "optimization_claim": false
-  },
-  {
-   "id": "E058",
-   "title": "GLaDOS wake-word head NBG compile screen and A55 chain cost breakdown",
-   "status": "diagnostic",
-   "claim_class": "diagnostic",
-   "branch": "codex/e058-wake-nbg-compile",
-   "commit": "adbfadb943c8c944b39be2030cd3e53394bae35a",
-   "evidence": [
-    {
-     "kind": "repository_path",
-     "path": "docs/experiments/e058-wake-glasha-nbg-compile.md",
-     "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
-     "note": "Wake-chain per-stage A55 costs, embedding NBG compile evidence, the device-side prepare bisection (MaxPool guilty), and the mel scanner failure record (toolchain-wide)."
+      "id": "E002",
+      "title": "Packed ternary kernel study",
+      "status": "planned",
+      "claim_class": "planned",
+      "branch": "main",
+      "commit": "426d1467563da211f9621cc2692ec25cf065880d",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E002-packed-ternary-kernel/README.md",
+          "ref": "main@426d1467563da211f9621cc2692ec25cf065880d",
+          "note": "Original packed-ternary study plan."
+        }
+      ],
+      "metric": {},
+      "notes": "Superseded as a plan by the Q1-specific evidence sequence; no result is promoted from this row.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
     },
     {
-     "kind": "repository_path",
-     "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
-     "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
-     "note": "Machine-readable chain costs, NBG hashes, prepare bisection, scanner reproduction across three toolchains, and boundaries."
+      "id": "E003",
+      "title": "Packed Q1 carrier and EVIS Q1 x Q8",
+      "status": "accepted",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E003-q1-packed-carrier/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Target EVIS capability and golden evidence; not a full-model claim."
+        }
+      ],
+      "metric": {
+        "exact_quality": true
+      },
+      "notes": "Accepted as a target-verified packed-Q1 operator proof. Large-layer scaling is handled by later rows.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E004",
+      "title": "CPU Q1 operator baseline",
+      "status": "accepted",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E004-q1-cpu-operator-baseline/",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "CPU golden/operator reference."
+        }
+      ],
+      "metric": {
+        "exact_quality": true
+      },
+      "notes": "Reference implementation for Q1 operator correctness and comparison.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E005",
+      "title": "A733 DDR PLL guarded A/B",
+      "status": "failed",
+      "claim_class": "hardware",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E005-a733-ddr-pll-ab/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Guarded PLL attempt retained with reset boundary."
+        }
+      ],
+      "metric": {},
+      "notes": "The run did not establish a supported operating point or a performance result; do not infer safe overclock behavior.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E006",
+      "title": "PowerVR Vulkan Q1 shared-memory gate",
+      "status": "failed",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E006-powervr-vulkan-q1/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Driver failure retained as negative evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "The driver path did not complete the intended Q1 pipeline gate.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E007",
+      "title": "PowerVR OpenCL packed-Q1 GEMV",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E007-powervr-opencl-q1/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Retained baseline and compatibility evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Not promoted to the VIP9000 backend path.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E008",
+      "title": "A733 Q1 DOTPROD 4x4 versus 4x8",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E008-a733-q1-4x8/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Layout candidate evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "The candidate is retained but is not a promoted A733 Q1 path.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E009",
+      "title": "A733 Q1 packed-weight prefetch",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E009-a733-q1-prefetch/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Prefetch candidate evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Retained as a rejected CPU candidate; later cluster-specific work has its own row.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E009-fused",
+      "title": "Packed Q1 to native fully connected",
+      "status": "planned",
+      "claim_class": "planned",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E009-fused-q1-native-fc/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Fused-NBG direction retained for follow-up."
+        }
+      ],
+      "metric": {},
+      "notes": "The fused EVIS-unpack to native-NN gate remains a planned next step.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E019",
+      "title": "Direct EVIS INT16 GEMM",
+      "status": "accepted",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E019-q1-i16-evis-gemm/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Exact target golden path, retained as a capability proof."
+        }
+      ],
+      "metric": {
+        "exact_quality": true
+      },
+      "notes": "The generic INT16 EVIS path is correct but too slow for Bonsai production decode.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E020",
+      "title": "Multiple custom EVIS kernels in one NBG",
+      "status": "accepted",
+      "claim_class": "operator",
+      "branch": "codex/profiling-foundation",
+      "commit": "c071476773ad0f7fc499b6a39270a98bc1e25878",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E020-two-custom-kernel/README.md",
+          "ref": "codex/profiling-foundation@c071476773ad0f7fc499b6a39270a98bc1e25878",
+          "note": "Multi-kernel NBG execution proof."
+        }
+      ],
+      "metric": {
+        "exact_quality": true
+      },
+      "notes": "Accepted as a graph-construction and execution capability, not as a full-model speed result.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E020a",
+      "title": "Q1 unpack to native fully connected",
+      "status": "unqualified",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E020-q1-unpack-native-fc/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Native-FC candidate evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Retained without a promoted full-model or native-NN claim.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E021",
+      "title": "Q1 unpack to native matrix multiply",
+      "status": "unqualified",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E021-q1-unpack-native-matmul/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Matrix-multiply candidate evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Shape/layout proof remains bounded and does not qualify a model path.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E022",
+      "title": "Fused packed-Q1 dot on VIP9000",
+      "status": "accepted",
+      "claim_class": "operator",
+      "branch": "codex/e022-fused-q1",
+      "commit": "d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E022-fused-q1/README.md",
+          "ref": "codex/e022-fused-q1@d5ac6d0a4570b0a5cab761a2f5afd046baaa67a4",
+          "note": "Scale-aware packed-Q1 target gate."
+        }
+      ],
+      "metric": {
+        "exact_quality": true,
+        "tile_total_ms": 13.518054
+      },
+      "notes": "Accepted for an exact Q1 operator tile; DP16x2_b mapping remains unresolved and it is not a full-model result.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E023",
+      "title": "CPU seam for packed Q1",
+      "status": "rejected",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E023-ggml-q1-seam/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Bonsai seam comparison and rejection."
+        }
+      ],
+      "metric": {},
+      "notes": "The candidate did not beat the pinned native path and is not promoted.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": true
+    },
+    {
+      "id": "E024",
+      "title": "Large fused-Q1 projection",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E024-npu-full-projection/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Shape-sweep rejection."
+        }
+      ],
+      "metric": {},
+      "notes": "The required full projection shape was not a valid promoted NBG path.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E025",
+      "title": "DDR frequency raw PLL attempt",
+      "status": "failed",
+      "claim_class": "hardware",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E025-ddr-frequency/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Fail-closed DDR branch evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "The raw attempt did not establish a supported rate or performance gain; keep the secure-firmware boundary.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E026",
+      "title": "CPU decode screen",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E026-cpu-decode-screen/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Short CPU screen."
+        }
+      ],
+      "metric": {},
+      "notes": "Useful ranking evidence, but not the qualified full-model best.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E027",
+      "title": "Polling thread-pool A/B",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E027-poll-scheduling/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Polling candidate history."
+        }
+      ],
+      "metric": {},
+      "notes": "Short scheduler evidence retained without a quality-qualified promotion.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E028",
+      "title": "GCC LTO CPU Q1 decode",
+      "status": "rejected",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E028-lto/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "LTO candidate result."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected as a full-model optimization candidate.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": true
+    },
+    {
+      "id": "E029",
+      "title": "A55-tuned DOTPROD CPU variant",
+      "status": "rejected",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E029-mtune-a55/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "A55 tuning candidate."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected as a promoted full-model improvement.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": true
+    },
+    {
+      "id": "E030",
+      "title": "Paired Q8 activation reuse",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E030-q1-paired-reuse/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Q1 reuse candidate."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected candidate; later variants remain separately classified.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E031",
+      "title": "Noinline half for Q8 reuse",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E031-q1-noinline-reuse/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Noinline candidate evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected on target performance despite host correctness evidence.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E032",
+      "title": "Four-block Q1 reuse call",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E032-q1-block4-reuse/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Block-four reuse candidate."
+        }
+      ],
+      "metric": {},
+      "notes": "Retained as a negative candidate.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E033",
+      "title": "Scheduler strict-zero baseline",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E033-scheduler-strict0/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Reference scheduler history."
+        }
+      ],
+      "metric": {},
+      "notes": "Retained as a comparison lineage; E035 is the qualified full-model row.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E034",
+      "title": "Worker-count strict-zero screen",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E034-worker-count-strict0/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Worker-count screen."
+        }
+      ],
+      "metric": {},
+      "notes": "Screen evidence retained without current-best promotion.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E035",
+      "title": "Poll-50 full Bonsai decode gate",
+      "status": "accepted",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "d012490294a24a17f4ec97707f35911c53e4a2e4",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E035-poll-screen/results/e035_poll.json",
+          "ref": "codex/e023-ggml-q1-seam@d012490294a24a17f4ec97707f35911c53e4a2e4",
+          "note": "Exact full-gate result and token-quality match."
+        }
+      ],
+      "metric": {
+        "decode_tok_s": 0.972497,
+        "exact_quality": true,
+        "quality_stdout_sha256": "f70a3ee296f70c270f0530b3794e06ed1e261f5c04c470fb057d4ec5ce8549eb"
+      },
+      "notes": "Current qualified full-model best. The short 0.991160 screen is not used as the headline result.",
+      "is_current_best": true,
+      "end_to_end": true,
+      "optimization_claim": true,
+      "provenance": {
+        "complete": true,
+        "hardware": "Orange Pi Zero 3W target with pinned A733 read-only inventory",
+        "runtime": "Pinned native CPU Q1 path with declared prompt and decode timing scopes",
+        "toolchain": "Pinned repository commit and reproducible profiling command",
+        "quality": "Exact deterministic token agreement against the pinned CPU reference"
+      },
+      "repeatability": {
+        "runs": 3,
+        "method": "Three measured full-gate samples with identical prompt, model, and quality comparison",
+        "quality_match": true
+      }
+    },
+    {
+      "id": "E039",
+      "title": "Whole-K packed-Q1 pair",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E039-q1-pair-wholek/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Whole-K candidate."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected candidate retained for migration and comparison history.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E040",
+      "title": "Register nibble lookup table",
+      "status": "rejected",
+      "claim_class": "operator",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E040-q1-register-lut/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Register-LUT candidate."
+        }
+      ],
+      "metric": {},
+      "notes": "Rejected candidate retained as negative evidence.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": true
+    },
+    {
+      "id": "E044",
+      "title": "Cluster-aware A76 PRFM",
+      "status": "unqualified",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "3193c0e8bc1b00dfd4cf70c65a193a3482e67ca7",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E044-cluster-prfm/README.md",
+          "ref": "codex/e023-ggml-q1-seam@3193c0e8bc1b00dfd4cf70c65a193a3482e67ca7",
+          "note": "Short screen plus sustained reset evidence."
+        }
+      ],
+      "metric": {
+        "screen_decode_tok_s": 1.018629,
+        "full_decode_tok_s": null,
+        "exact_quality": false
+      },
+      "notes": "Short screen was promising, but sustained attempts reset before throughput and quality. Never label E044 current best.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E045",
+      "title": "DSpark bounded preflight and smoke",
+      "status": "unqualified",
+      "claim_class": "full_model",
+      "branch": "codex/e023-ggml-q1-seam",
+      "commit": "7a79466f7f65a67d64c0624eabf60d63652960b8",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E045-dspark-stock-oom/README.md",
+          "ref": "codex/e023-ggml-q1-seam@7a79466f7f65a67d64c0624eabf60d63652960b8",
+          "note": "Bounded DSpark evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Functional smoke and timer scopes are retained but do not qualify as the Bonsai full-model best.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E047",
+      "title": "Common benchmark contract",
+      "status": "accepted",
+      "claim_class": "tooling",
+      "branch": "codex/e047-hard-profiling",
+      "commit": "203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E047-common-benchmark/README.md",
+          "ref": "codex/e047-hard-profiling@203f3db5454ab99a4b39b2376d43a2ccfdca77f7",
+          "note": "Shared benchmark and gate contract."
+        }
+      ],
+      "metric": {},
+      "notes": "Accepted as profiling infrastructure; it is not itself a throughput result.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E048",
+      "title": "Per-operation steady-state trace",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e048-per-op-trace",
+      "commit": "f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E048-per-op-trace/README.md",
+          "ref": "codex/e048-per-op-trace@f5bd54eebbfc12c7399a64fd0f64ab56fa9172f5",
+          "note": "Trace evidence for bottleneck localization."
+        }
+      ],
+      "metric": {},
+      "notes": "Diagnostic trace; not a standalone optimization claim.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E049-nsi",
+      "title": "A733 NSI system-identity calibration",
+      "status": "diagnostic",
+      "claim_class": "hardware",
+      "branch": "codex/e049-nsi-calibration",
+      "commit": "c8b7e2696c8f5df89d752dd41e55a5855354cca0",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E049-nsi-calibration/README.md",
+          "ref": "codex/e049-nsi-calibration@c8b7e2696c8f5df89d752dd41e55a5855354cca0",
+          "note": "V4 calibration evidence; authoritative raw payload remains on the calibration branch."
+        }
+      ],
+      "metric": {
+        "v4_fit_class": "inconclusive/low",
+        "mb_per_second_established": false,
+        "saturation_established": false
+      },
+      "notes": "V4 end-synchronized fits were inconclusive/low. This bounded diagnostic does not establish MB/s, a data-unit conversion, or memory saturation.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E049b",
+      "title": "Analysis of complete E048 traces",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e049b-trace-analysis",
+      "commit": "06a810c2f3330f51ec0a8d97de041c4fdde8a452",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E049b-trace-analysis/README.md",
+          "ref": "codex/e049b-trace-analysis@06a810c2f3330f51ec0a8d97de041c4fdde8a452",
+          "note": "Trace-analysis evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Diagnostic analysis retained to guide the next controlled measurement.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E049c",
+      "title": "ARM PMU CPU/cache/memory controls",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e049c-arm-pmu",
+      "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E049c-arm-pmu/README.md",
+          "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+          "note": "PMU control and safety evidence."
+        }
+      ],
+      "metric": {},
+      "notes": "Diagnostic counter methodology; event counts must not be presented as DDR bytes.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E049d",
+      "title": "Original three-token PMU marker",
+      "status": "rejected",
+      "claim_class": "diagnostic",
+      "branch": "codex/e049c-arm-pmu",
+      "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E049d-steady-pmu/README.md",
+          "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+          "note": "Superseded marker-boundary attempt."
+        }
+      ],
+      "metric": {},
+      "notes": "The original marker boundary was rejected; E049d-v2 is the corrected diagnostic row.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E049d-v2",
+      "title": "Corrected three-token ARM PMU marker",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e049c-arm-pmu",
+      "commit": "2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E049d-steady-pmu-v2/data/summary.json",
+          "ref": "codex/e049c-arm-pmu@2b33f6fc03878fdd0f992d758efcecb71d3ae0d1",
+          "note": "Corrected marker summary; raw payload remains on the authoritative branch."
+        }
+      ],
+      "metric": {
+        "steady_marker_tok_s": 1.11698354,
+        "samples": 15,
+        "exact_token_capture": true
+      },
+      "notes": "Diagnostic only: three steady decode graphs, no model load or prompt, no end-to-end timing, and no optimization claim.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E054",
+      "title": "A76 Q1 multiversion hypothesis",
+      "status": "planned",
+      "claim_class": "planned",
+      "branch": "codex/e054-a76-q1-multiversion",
+      "commit": "9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E054-a76-q1-multiversion/README.md",
+          "ref": "codex/e054-a76-q1-multiversion@9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
+          "note": "Active hypothesis and preflight."
+        }
+      ],
+      "metric": {},
+      "notes": "No qualified target result is imported into the canonical layer.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E055",
+      "title": "Q1 cache-hot and cache-cold microbenchmark",
+      "status": "planned",
+      "claim_class": "planned",
+      "branch": "codex/e055-q1-hot-cold",
+      "commit": "51d1c1cfd3d2e963344e79dc11719c278b234569",
+      "evidence": [
+        {
+          "kind": "branch_pointer",
+          "path": "experiments/E055-q1-hot-cold/README.md",
+          "ref": "codex/e055-q1-hot-cold@51d1c1cfd3d2e963344e79dc11719c278b234569",
+          "note": "Ongoing work; this canonical branch does not modify its files or worktree."
+        }
+      ],
+      "metric": {},
+      "notes": "Point-in-time snapshot of ongoing E055 work on its own branch; the live branch may advance and must be re-inventoried before any registry promotion.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E056",
+      "title": "LFM2.5 A733 CPU decode screen",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "main",
+      "commit": "f08e03087a101bc69b86d553d5c54cba33b5dbf8",
+      "evidence": [
+        {
+          "kind": "repository_path",
+          "path": "docs/experiments/e056-lfm25-a733-cpu-decode.md",
+          "ref": "main@f08e03087a101bc69b86d553d5c54cba33b5dbf8",
+          "note": "CPU-only p=0,n=32,r=5 LFM2.5 and Bonsai comparison with normalized target evidence."
+        }
+      ],
+      "metric": {
+        "lfm25_8b_a1b_mean_decode_tok_s": 5.202598,
+        "bonsai_mean_decode_tok_s": 0.991024,
+        "repetitions": 5,
+        "quality_evidence": false
+      },
+      "notes": "Completed target CPU screen with five repeats per model and thermal-guard exit=0. Prompt/prefill, TTFT, deterministic generation quality, VL image prefill, and accelerator inference are absent; it is not current-best or an optimization claim.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
+    },
+    {
+      "id": "E057",
+      "title": "Vikhr-Qwen-2.5-1.5B A733 CPU load-type screen and assistant integration",
+      "status": "unqualified",
+      "claim_class": "screen",
+      "branch": "main",
+      "commit": "fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
+      "evidence": [
+        {
+          "kind": "repository_path",
+          "path": "docs/experiments/e057-vikhr-a733-cpu-loadtypes.md",
+          "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
+          "note": "Single-sample decode screen across CPU load types with prompt-processing and Hermes/GLaDOS integration notes."
+        },
+        {
+          "kind": "repository_path",
+          "path": "benchmarks/results/e057-vikhr-a733-cpu-loadtypes/summary.json",
+          "ref": "main@fb46c5837d3211a5228c9144b0dfbe7a861c9ae2",
+          "note": "Machine-readable load-type matrix, prompt runs, incidents, and integration record."
+        }
+      ],
+      "metric": {
+        "q4km_a76_only_decode_tok_s": 6.938,
+        "all_core_decode_tok_s": 1.48,
+        "lean_prompt_tok_s": 19.3,
+        "quality_evidence": false
+      },
+      "notes": "Key finding: 8-core decode is ~4.7x slower than 2xA76-only on this SoC (A55 stragglers). Governor performance made no material decode difference. Two spontaneous reboots under load recorded with unverified cause. Not current-best, not an optimization claim; E056 remains the repeated-means methodology reference.",
+      "is_current_best": false,
+      "end_to_end": true,
+      "optimization_claim": false
+    },
+    {
+      "id": "E058",
+      "title": "GLaDOS wake-word head NBG compile screen and A55 chain cost breakdown",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e058-wake-nbg-compile",
+      "commit": "adbfadb943c8c944b39be2030cd3e53394bae35a",
+      "evidence": [
+        {
+          "kind": "repository_path",
+          "path": "docs/experiments/e058-wake-glasha-nbg-compile.md",
+          "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
+          "note": "Wake-chain per-stage A55 costs, embedding NBG compile evidence, the device-side prepare bisection (corrected 2026-09-09: wrapper io-query bug + driver state; post-fix NPU runtime, quantization parity, streaming A/B), and the mel scanner failure record (toolchain-wide)."
+        },
+        {
+          "kind": "repository_path",
+          "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
+          "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
+          "note": "Machine-readable chain costs, NBG hashes, prepare bisection, scanner reproduction across three toolchains, and boundaries."
+        }
+      ],
+      "metric": {
+        "a55_chain_ms_per_frame": 31.49,
+        "mel_ms_per_frame": 10.7,
+        "embedding_ms_per_frame": 20.58,
+        "head_ms_per_frame": 0.21,
+        "embedding_nbg_bytes": 319776,
+        "mel_import": "failed-scanner",
+        "emb_nbg_prepare": "ok-post-fix (wrapper io-query fix + driver reset)",
+        "emb_int8_ms_per_frame": 1.4,
+        "emb_fp16_ms_per_frame": 20.77,
+        "emb_int8_window_cos": 0.9869,
+        "streaming_ab_verdict": "int8 NPU diverges from CPU on 5/18 clips; not production-safe; wake embedding stays on CPU"
+      },
+      "notes": "Wake-domain diagnostic from the GLaDOS assistant work: the oww embedding model (65% of the chain cost on A55) compiled through the pegasus ovxlib export path that, unlike the native vxGenerateNBG route from E018, completed without errors; the STFT-style mel graph fails the Acuity onnx scanner identically across pegasus 2.0.10.2, AcuityLite 6.51.0, and 6.57.1. Phase 3 (2026-09-09): the compiled embedding NBG SIGSEGVs in vip_prepare_network on target; a substitution bisection (Max-identity, Reshape-removed, float export, AcuityLite cross-compile with container byte-4 patch) isolates MaxPool as a runtime-level crash, toolchain-independent. A VIPLite wrapper exists (int8 plumbing, FP32/FP16 tolerance) but has no valid embedding NBG to wrap; the wake chain remains fully CPU.",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
     }
-   ],
-   "metric": {
-    "a55_chain_ms_per_frame": 31.49,
-    "mel_ms_per_frame": 10.7,
-    "embedding_ms_per_frame": 20.58,
-    "head_ms_per_frame": 0.21,
-    "embedding_nbg_bytes": 319776,
-    "mel_import": "failed-scanner",
-    "emb_nbg_prepare": "failed-maxpool-runtime"
-   },
-   "notes": "Wake-domain diagnostic from the GLaDOS assistant work: the oww embedding model (65% of the chain cost on A55) compiled through the pegasus ovxlib export path that, unlike the native vxGenerateNBG route from E018, completed without errors; the STFT-style mel graph fails the Acuity onnx scanner identically across pegasus 2.0.10.2, AcuityLite 6.51.0, and 6.57.1. Phase 3 (2026-09-09): the compiled embedding NBG SIGSEGVs in vip_prepare_network on target; a substitution bisection (Max-identity, Reshape-removed, float export, AcuityLite cross-compile with container byte-4 patch) isolates MaxPool as a runtime-level crash, toolchain-independent. A VIPLite wrapper exists (int8 plumbing, FP32/FP16 tolerance) but has no valid embedding NBG to wrap; the wake chain remains fully CPU.",
-   "is_current_best": false,
-   "end_to_end": false,
-   "optimization_claim": false
-  }
- ]
+  ]
 }
