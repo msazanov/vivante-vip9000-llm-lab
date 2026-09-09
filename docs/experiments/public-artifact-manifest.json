@@ -44,7 +44,7 @@
       "destination": "git",
       "class": "NPU tools",
       "status": "published",
-      "scientific_use_allowed": false,
+      "scientific_use_allowed": true,
       "verification_state": "verified-local"
     },
     {
@@ -57,7 +57,7 @@
       "destination": "git",
       "class": "NPU tools",
       "status": "published",
-      "scientific_use_allowed": false,
+      "scientific_use_allowed": true,
       "verification_state": "verified-local"
     }
   ]
