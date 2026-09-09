@@ -5,7 +5,8 @@
 **Claim class:** `diagnostic`
 
 **Evidence class:** *Verified on target* (cost breakdown; NBG runtime failure +
-bisection) and *Verified in supplied tooling* (NBG compile; scanner failure
+bisection, **corrected 2026-09-09**: post-fix runtime + quantization parity +
+streaming A/B) and *Verified in supplied tooling* (NBG compile; scanner failure
 reproduction). No quality, correctness, or optimization claim is made.
 
 This record captures two bounded results from the GLaDOS wake-word assistant
@@ -116,12 +117,56 @@ and `MaxPool → Slice` substitutions die at the pegasus quantize stage
 (TF-backend layout conventions; lessons recorded: an onnx 1×1 conv weight must
 be `[c_out, c_in, 1, 1]`, and Slice ends must be positive when steps ≠ 1).
 
-**Verdict:** MaxPool crashes `vip_prepare_network` on this VIPLite build in
-int8 and float. The embedding stays on CPU (20.58 ms); the NPU keeps the wake
-head + the GLaDOS decoder. The remaining NPU path for the embedding — distill
-a pool-free embedding (Conv/LeakyRelu only, stride-convs instead of MaxPools,
-plain LeakyRelu instead of Max clamps) and retrain the wake head on the
-distilled embeddings — is research-sized and not started.
+**Verdict:** ~~MaxPool crashes `vip_prepare_network` on this VIPLite build in
+int8 and float.~~ **Corrected 2026-09-09 (phase 4):** the phase-3 verdict is
+superseded — see the correction below. The prepare crashes were wrapper
+artifacts (reversed io-query sizes) plus poisoned driver state, not graph
+topology.
+
+## Correction (2026-09-09, phase 4) — bisection verdict invalidated; the embedding NBG runs
+
+Two independent defects invalidated the phase-3 bisection:
+
+1. **Wrapper io-query bug.** `vip_query_input`/`vip_query_output` return sizes
+   head-aligned **reversed** (the production decoder queries `[1,192,1,32]` as
+   `[32,1,192,1,0,0]`). `edge_wake_viplite.c` trusted the returned order and
+   built mis-shaped buffers, so every phase-3 prepare SIGSEGV was caused by the
+   wrapper, not by graph topology. Fixed by reversing the query sizes per
+   `num_of_dims` (env switches `WAKE_VIP_REV`/`WAKE_VIP_MEM` kept for sweeps).
+2. **Driver-state confound.** After ~20 SIGSEGVs, even the production GLaDOS
+   decoder NBG segfaulted at prepare in any standalone process (both wrappers)
+   while serving fine inside `edge_server`. The vipcore module retains poisoned
+   state until reboot (positive control post-reboot: decoder prepare OK).
+
+Post-fix results (Verified on target):
+
+| Probe | Result |
+|---|---|
+| decoder NBG, positive control | prepare OK |
+| original pegasus int8 embedding NBG (319,776 B) | prepare OK |
+| int8 `wake_vip_run` latency | **1.33–1.41 ms/frame** vs 20.58 ms CPU |
+| fp16 (float-export) NBG | 20.77 ms/frame — equal to CPU, no speedup |
+| int8 window parity (200 val windows) | cos 0.9869 (p10 0.9771), max_abs 17.25 |
+| output int8 range | [-51.3, 70.9] — clips teacher extremes (±100) |
+| recalibration (1200 mixed samples, perchannel + KL, 368,144 B NBG) | **identical** IO scales and parity numbers |
+| streaming A/B (18 clips, fresh state) | CPU 6/8 pos, 3/10 prefilter FA; int8 NPU: 4 pass→FA, 1 pass→miss |
+
+The recalibration experiment (mixed corpus, per-channel quantizer,
+KL-divergence ranges, AcuityLite 6.51.0 via the direct Python API with a
+licence file — the CLI export path demands a simulator config) produced
+**byte-identical IO scales** (in 0.314852/61, out 0.479076/-21) and identical
+parity numbers: the IO ranges are structural (derived from weights and the
+input scale), not calibration-dependent. A head retrained on device-dumped NPU
+embeddings (78,974 windows) becomes self-consistent but learns the
+quantization noise as positive signal — the pass→FA flips persist.
+
+**Corrected verdict:** the embedding NBG runs on the NPU at ~1.4 ms (15× vs
+CPU), but int8 quantization is structurally lossy and the streaming wake
+decisions diverge from CPU on 5/18 eval clips (one lost wake). No
+production-safe NPU embedding yet; the wake embedding stays on CPU. The
+remaining research path is a quantization-aware distilled student with a
+bounded output range (the dump / head-parity / streaming-A/B infrastructure
+exists).
 
 ## Artifacts
 
@@ -143,31 +188,29 @@ public artifact manifest is a follow-up under the publication policy.
 
 ## Boundaries and remaining work
 
-- The embedding NBG **cannot run** on the target: `vip_prepare_network`
-  SIGSEGVs (MaxPool runtime crash, int8 and float; Result 4). A VIPLite
-  wrapper now exists (`edge_wake_viplite.c`: int8 TF_ASYMM plumbing,
-  FP32/FP16 input tolerance, 1..6-dim IO) but has no valid embedding NBG to
-  wrap.
+- The embedding NBG **does run** on the target post-fix (1.4 ms int8), but the
+  int8 output range clips the teacher's extremes (structural, see the
+  correction) and streaming wake decisions diverge from CPU on 5/18 eval
+  clips. Not production-safe; the production wake chain stays fully CPU.
+- fp16 is numerically exact but runs at CPU speed — no acceleration on this
+  NPU for this graph.
 - int8 quantization error on the wake scores is moot for the stock oww
-  embedding (cannot prepare); it becomes relevant again only for a pool-free
-  distilled embedding.
-- The mel frontend remains on CPU (scanner bug, toolchain-wide); the wake
-  chain remains fully CPU today.
+  embedding; it becomes relevant again only for a pool-free distilled
+  embedding with a bounded output range.
+- The mel frontend remains on CPU (scanner bug, toolchain-wide).
 - Wake-domain quality claims live in the wake project's own report
   (`/home/random/wake-glasha/models/REPORT.md`, outside this repository).
 
 ## Next steps
 
 1. ~~Adapt the VIPLite wrapper~~ — done: `edge_wake_viplite.c` built on the
-   device (int8 TF_ASYMM plumbing, FP32/FP16 inputs, 1..6-dim IO). No valid
-   embedding NBG to wrap (Result 4).
-2. Optional research task: distill a pool-free embedding (Conv/LeakyRelu only,
-   stride-convs instead of MaxPools, plain LeakyRelu instead of Max clamps)
-   on real wake samples, retrain the wake head on the distilled embeddings,
-   recompile, retry prepare; wire behind a fallback flag with score parity
-   over the 106 wake samples and the adversarial set.
+   device; the io-query reversal bug found and fixed (correction above).
+2. Quantization-aware distilled student (bounded output range by design):
+   the remaining research path to a production-safe NPU embedding. The device
+   dump, head-parity, and streaming-A/B infrastructure exist.
 3. ~~Probe `acuitylite:ready` for the mel import~~ — done, negative: the
    scanner bug reproduces identically in AcuityLite 6.51.0 and 6.57.1
    (Result 3 resolution).
-4. Re-test MaxPool prepare if a newer VIPLite driver lands on the device
-   (current: 2.0.3.2-AW-2024-08-30).
+4. Recompile probe with `minimize_layer_error=True` (in flight at record
+   time); if the structural ranges still hold, close the int8 line and keep
+   the embedding on CPU.

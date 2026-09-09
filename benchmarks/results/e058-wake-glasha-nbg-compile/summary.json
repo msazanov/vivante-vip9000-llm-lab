@@ -14,7 +14,6 @@
       "VIPLite wrapper construction (edge_wake_viplite.c) with int8 scale/zero plumbing, FP32/FP16 input tolerance, 1..6-dim IO"
     ],
     "excluded": [
-      "score parity CPU vs NPU (unreachable: the embedding NBG cannot prepare on target)",
       "wake accuracy or quality claims",
       "any Bonsai decode objective or current-best claim"
     ]
@@ -58,8 +57,20 @@
       "/var/tmp/wake-npu/emb/wksp/emb_nbg_unify/network_binary.nb",
       "/home/random/wake-glasha/models/npu/emb-network_binary.nb"
     ],
-    "executed_on_target": false,
-    "runtime_note": "prepare SIGSEGV on target; see emb_nbg_runtime_failure"
+    "executed_on_target": true,
+    "runtime_note": "prepare OK on target after the wrapper io-query fix + driver reset; see emb_nbg_post_fix"
+  },
+  "emb_nbg_post_fix": {
+    "trigger": "phase-3 bisection invalidated: the VIPLite wrapper built mis-shaped buffers from the reversed io-query sizes, and the driver retained poisoned state after the crash series",
+    "wrapper_bug": "vip_query_input/vip_query_output return sizes head-aligned REVERSED (decoder [1,192,1,32] queried as [32,1,192,1,0,0]); edge_wake_viplite.c rebuilt with per-dim reversal (env switches WAKE_VIP_REV/WAKE_VIP_MEM kept for sweeps)",
+    "driver_state_confound": "after ~20 SIGSEGVs the PRODUCTION GLaDOS decoder NBG also segfaulted at prepare in any standalone process (both wrappers) while serving fine inside edge_server; vipcore state clears only on reboot",
+    "positive_control": "decoder NBG (/home/orangepi/npu-current/network_binary.nb) prepare OK post-reboot; then the original pegasus int8 embedding NBG (319776 B) prepare OK",
+    "latency": "int8 wake_vip_run 1.33-1.41 ms/frame vs CPU teacher 20.58 ms; fp16 float-export NBG 20.77 ms (equal to CPU: no speedup on VIP9000NANODI)",
+    "quantization_parity": "200 val windows: int8 cos mean 0.9869 (p10 0.9771), max_abs 17.25 on the +/-100 teacher scale; NPU output range [-51.3, 70.9] clips teacher extremes (clipped_frac 1.0)",
+    "structural_ranges": "recalibration 1200 mixed pos/neg samples + perchannel_symmetric_affine + kl_divergence (AcuityLite 6.51.0, 368144 B) produced IDENTICAL IO scales (in 0.314852/61, out 0.479076/-21) and identical parity numbers -> IO ranges are structural (derived from weights/input scale), not calibration-dependent",
+    "streaming_ab": "18 eval clips, fresh wake state per clip: CPU (original head, threshold 0.3) 6/8 pos detected, 3/10 prefilter FA; int8 NPU + original head: 4 clips flip pass->FA, 1 flips pass->miss -> not production-safe as-is",
+    "npu_matched_head": "head retrained on device-dumped NPU embeddings (78974 windows, chunked device dump, 191 s): self-consistent, but learns quantization noise as positive signal (pass->FA flips persist on adversarial/generic clips)",
+    "operational_note": "board auto-rebooted (watchdog) during A/B open/close churn; operator attributed that outage to a concurrent agent breaking the network; production usage is resident-open (single open at service start), heavy open/close churn stays a device risk"
   },
   "emb_nbg_runtime_failure": {
     "driver": "VIPLite 2.0.3.2-AW-2024-08-30 (device)",
@@ -96,8 +107,8 @@
       }
     ],
     "early_probe_failures": "MaxPool->Conv(stride-2) and MaxPool->Slice substitutions died at the pegasus quantize stage (TF-backend layout conventions: onnx 1x1 conv weight must be [c_out, c_in, 1, 1]; slice ends must be positive when steps != 1); not needed for the verdict",
-    "verdict": "MaxPool crashes vip_prepare_network on this VIPLite build in int8 and float; embedding stays on CPU (20.58 ms); NPU keeps wake head + GLaDOS decoder",
-    "remaining_npu_path": "distill a pool-free embedding (Conv/LeakyRelu only) and retrain the wake head on the distilled embeddings - research-sized, not started"
+    "verdict": "[CORRECTED 2026-09-09] Superseded: the prepare crashes were wrapper artifacts (reversed io-query sizes) plus poisoned driver state, not graph topology. Post-fix the original NBG prepares and runs; see emb_nbg_post_fix",
+    "remaining_npu_path": "quantization-aware distilled student (bounded output range so int8 cannot clip); head-parity infrastructure exists (device dump + head retrain + streaming A/B)"
   },
   "mel_scanner_failure": {
     "error": "AttributeError: op_type in acuitylib/onnx_ir/scanner/onnx_util.py:63 OnnxNode.__init__ (OnnxRulerMatcher value inference path)",
@@ -117,13 +128,15 @@
     "note": "strict superset of the GLaDOS decoder contract; kept deployed"
   },
   "boundaries": [
-    "embedding NBG cannot prepare on target (MaxPool runtime crash, int8 and float)",
-    "no golden and no score parity: unreachable until a pool-free distilled embedding exists",
+    "embedding NBG prepares post-fix, but int8 quantization is structurally lossy (output range [-51.3, 70.9] clips teacher extremes; identical across calibrations/algorithms/toolchains)",
+    "streaming wake decisions diverge from CPU on 5/18 eval clips (4 pass->FA absorbed by vosk, 1 pass->miss = lost wake); no production-safe NPU embedding yet",
+    "fp16 NBG is numerically exact (cos 0.999997) but runs at CPU speed (20.77 ms) - no win",
     "mel frontend remains on CPU (scanner bug, toolchain-wide)",
-    "wake chain remains fully CPU (onnxruntime) today"
+    "wake chain remains fully CPU (onnxruntime) in production"
   ],
   "next_steps": [
-    "optional research task: distill a pool-free embedding network (Conv/LeakyRelu only, stride-convs instead of MaxPools, plain LeakyRelu instead of Max clamps) on real wake samples, retrain the wake head on the distilled embeddings, then recompile and retry prepare",
-    "re-test MaxPool prepare if a newer VIPLite driver lands on the device (current: 2.0.3.2-AW-2024-08-30)"
+    "quantization-aware distilled student (bounded output range by design) is the remaining research path to a production-safe NPU embedding; dump/head-parity/streaming-A/B infrastructure exists",
+    "recompile probe with minimize_layer_error=True (in flight at record time)",
+    "keep the wake embedding on CPU until an NPU path passes the streaming A/B vs the CPU baseline"
   ]
 }
