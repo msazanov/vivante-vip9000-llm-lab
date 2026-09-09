@@ -170,12 +170,16 @@ targets ~[-4.5, +3.9]): int8 NBG 578,320 B with **self-parity cos 0.9980**
 (p10 0.9962, max_abs 0.49, no clipping possible) at **0.20 ms/frame** (103×
 vs the 20.58 ms CPU teacher). Head retrained on device-dumped student-NPU
 embeddings (78,974 windows, 94 s; hold recall 0.989 / FA 0.008 @0.3).
-48-clip streaming A/B vs the CPU production chain: **recall 27/32 vs 26/32**
-(the student fixes two CPU misses: 130749-raw 0.874 vs 0.004,
-130749-pitch_up300 0.462 vs 0.0), **prefilter FA 2/16 vs 3/16** (bg-000
-0.20 vs 0.97), **chain 3.38 vs 7.31 ms/frame**. Production-viable; the
-integration sits behind HUGGINGVOICE_WAKE_EMB_NPU=1 with full CPU fallback,
-pending operator enablement.
+48-clip A/B: recall 27/32 vs 26/32, prefilter FA 2/16 vs 3/16.
+Full-set A/B (358 clips: all 162 positives + 196 negatives): **recall
+135/162 (CPU) vs 129/162 (student)** - both chains miss 2 raw recordings
+(different sessions; the delta concentrates in augmented variants of
+held-out sessions), **prefilter FA 107/196 vs 89/196**; the hard-negative
+set (71/72 firing on BOTH chains) carries no differential signal, so the
+semantic FA is 36/124 vs 18/124; **chain 7.53 vs 3.56 ms/frame**, embedding
+20.58 vs 0.20 ms. Production-viable; the integration sits behind
+HUGGINGVOICE_WAKE_EMB_NPU=1 with full CPU fallback, pending operator
+enablement.
 
 ## Artifacts
 
