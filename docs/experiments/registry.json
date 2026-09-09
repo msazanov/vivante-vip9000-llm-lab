@@ -967,19 +967,19 @@
    "status": "diagnostic",
    "claim_class": "diagnostic",
    "branch": "codex/e058-wake-nbg-compile",
-   "commit": "3925df0b15ee60766d8135cbeb2821cb489313ba",
+   "commit": "adbfadb943c8c944b39be2030cd3e53394bae35a",
    "evidence": [
     {
      "kind": "repository_path",
      "path": "docs/experiments/e058-wake-glasha-nbg-compile.md",
-     "ref": "codex/e058-wake-nbg-compile@3925df0b15ee60766d8135cbeb2821cb489313ba",
-     "note": "Wake-chain per-stage A55 costs, embedding NBG compile evidence, and the mel scanner failure record."
+     "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
+     "note": "Wake-chain per-stage A55 costs, embedding NBG compile evidence, the device-side prepare bisection (MaxPool guilty), and the mel scanner failure record (toolchain-wide)."
     },
     {
      "kind": "repository_path",
      "path": "benchmarks/results/e058-wake-glasha-nbg-compile/summary.json",
-     "ref": "codex/e058-wake-nbg-compile@3925df0b15ee60766d8135cbeb2821cb489313ba",
-     "note": "Machine-readable chain costs, NBG hashes, scanner reproduction, and boundaries."
+     "ref": "codex/e058-wake-nbg-compile@adbfadb943c8c944b39be2030cd3e53394bae35a",
+     "note": "Machine-readable chain costs, NBG hashes, prepare bisection, scanner reproduction across three toolchains, and boundaries."
     }
    ],
    "metric": {
@@ -988,9 +988,10 @@
     "embedding_ms_per_frame": 20.58,
     "head_ms_per_frame": 0.21,
     "embedding_nbg_bytes": 319776,
-    "mel_import": "failed-scanner"
+    "mel_import": "failed-scanner",
+    "emb_nbg_prepare": "failed-maxpool-runtime"
    },
-   "notes": "Wake-domain diagnostic from the GLaDOS assistant work: the oww embedding model (65% of the chain cost on A55) compiled through the pegasus ovxlib export path that, unlike the native vxGenerateNBG route from E018, completed without errors; the STFT-style mel graph still fails the Acuity onnx scanner on original and simplified graphs. No NBG execution, wrapper, golden, or parity exists yet; the wake chain remains fully CPU.",
+   "notes": "Wake-domain diagnostic from the GLaDOS assistant work: the oww embedding model (65% of the chain cost on A55) compiled through the pegasus ovxlib export path that, unlike the native vxGenerateNBG route from E018, completed without errors; the STFT-style mel graph fails the Acuity onnx scanner identically across pegasus 2.0.10.2, AcuityLite 6.51.0, and 6.57.1. Phase 3 (2026-09-09): the compiled embedding NBG SIGSEGVs in vip_prepare_network on target; a substitution bisection (Max-identity, Reshape-removed, float export, AcuityLite cross-compile with container byte-4 patch) isolates MaxPool as a runtime-level crash, toolchain-independent. A VIPLite wrapper exists (int8 plumbing, FP32/FP16 tolerance) but has no valid embedding NBG to wrap; the wake chain remains fully CPU.",
    "is_current_best": false,
    "end_to_end": false,
    "optimization_claim": false
