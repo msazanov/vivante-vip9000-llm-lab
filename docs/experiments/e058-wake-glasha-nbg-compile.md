@@ -151,25 +151,31 @@ Post-fix results (Verified on target):
 | recalibration (1200 mixed samples, perchannel + KL, 368,144 B NBG) | **identical** IO scales and parity numbers |
 | streaming A/B (18 clips, fresh state) | CPU 6/8 pos, 3/10 prefilter FA; int8 NPU: 4 pass→FA, 1 pass→miss |
 
-The recalibration experiment (mixed corpus, per-channel quantizer,
-KL-divergence ranges, AcuityLite 6.51.0 via the direct Python API with a
-licence file — the CLI export path demands a simulator config) produced
-**byte-identical IO scales** (in 0.314852/61, out 0.479076/-21) and identical
-parity numbers; `minimize_layer_error=True` (a 2 h compile) also produced
-identical results to 16 digits (cos 0.9868617057800293). Four compiles, two
-toolchains, two range algorithms: the IO ranges are structural (derived from
-weights and the input scale), invariant to calibration data, quantizer,
-range algorithm, and layer-error minimization. A head retrained on device-dumped NPU
+**Instrumentation retraction.** The AcuityLite recalibrated NBGs were never
+actually measured: the device parity script used a hardcoded NBG path, and an
+argv-argument fix was lost with a `/tmp` wipe (a concurrent agent reboot), so
+every post-fix parity run silently re-opened the original teacher NBG. The
+"identical to 16 digits" numbers were the original NBG measured four times.
+`nbg_meta.json` proves the ranges DID change under recalibration: input scale
+0.468131 -> 0.354047, output range [-51.3, +70.86] -> [-54.18, +86.03]. The
+stock teacher graph int8 noise (cos 0.987) stands; the structural-invariance
+claim is retracted. A head retrained on device-dumped NPU
 embeddings (78,974 windows) becomes self-consistent but learns the
 quantization noise as positive signal — the pass→FA flips persist.
 
-**Corrected verdict:** the embedding NBG runs on the NPU at ~1.4 ms (15× vs
-CPU), but int8 quantization is structurally lossy and the streaming wake
-decisions diverge from CPU on 5/18 eval clips (one lost wake). No
-production-safe NPU embedding yet; the wake embedding stays on CPU. The
-remaining research path is a quantization-aware distilled student with a
-bounded output range (the dump / head-parity / streaming-A/B infrastructure
-exists).
+**Final verdict (student, 2026-09-09 night):** the stock teacher graph int8
+is decision-unsafe (5/18 clip flips). The remedy is the **distilled student
+with a bounded output range** (592K params, Conv/LeakyRelu only, standardized
+targets ~[-4.5, +3.9]): int8 NBG 578,320 B with **self-parity cos 0.9980**
+(p10 0.9962, max_abs 0.49, no clipping possible) at **0.20 ms/frame** (103×
+vs the 20.58 ms CPU teacher). Head retrained on device-dumped student-NPU
+embeddings (78,974 windows, 94 s; hold recall 0.989 / FA 0.008 @0.3).
+48-clip streaming A/B vs the CPU production chain: **recall 27/32 vs 26/32**
+(the student fixes two CPU misses: 130749-raw 0.874 vs 0.004,
+130749-pitch_up300 0.462 vs 0.0), **prefilter FA 2/16 vs 3/16** (bg-000
+0.20 vs 0.97), **chain 3.38 vs 7.31 ms/frame**. Production-viable; the
+integration sits behind HUGGINGVOICE_WAKE_EMB_NPU=1 with full CPU fallback,
+pending operator enablement.
 
 ## Artifacts
 
