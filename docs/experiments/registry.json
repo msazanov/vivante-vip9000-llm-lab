@@ -999,6 +999,49 @@
       "is_current_best": false,
       "end_to_end": false,
       "optimization_claim": false
+    },
+    {
+      "id": "E061",
+      "title": "Supertonic 3 TTS VIP9000 NPU offload, compiler workarounds, and target benchmarks",
+      "status": "diagnostic",
+      "claim_class": "diagnostic",
+      "branch": "codex/e061-supertonic3-npu",
+      "commit": "e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+      "evidence": [
+        {
+          "kind": "repository_path",
+          "path": "docs/experiments/e061-supertonic3-npu-offload.md",
+          "ref": "codex/e061-supertonic3-npu@e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+          "note": "Supertonic 3 TTS per-stage and end-to-end VIP9000 NPU offload benchmarks, failed compiler/quantization paths, Acuity 6.30.22 workarounds (LD_PRELOAD multibranch intercept, Where elimination, backward BatchNormalization folding), and multi-step ODE parity."
+        },
+        {
+          "kind": "repository_path",
+          "path": "benchmarks/results/e061-supertonic3-npu-offload/summary.json",
+          "ref": "codex/e061-supertonic3-npu@e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+          "note": "Machine-readable matrix of failed attempts, working workarounds, NBG hashes, stage latencies, and end-to-end target benchmarks."
+        }
+      ],
+      "metric": {
+        "cpu_int8_s8_wall_s": 2.1619,
+        "cpu_int8_s8_cpu_s": 4.3302,
+        "npu_dfp16_s8_wall_s": 0.658,
+        "npu_dfp16_s8_cpu_s": 0.1224,
+        "npu_dfp16_s8_latent_cos": 0.99793,
+        "npu_dfp16_s8_wav_cos": 0.79929,
+        "npu_dfp16_s4_wall_s": 0.366,
+        "npu_dfp16_s4_cpu_s": 0.1167,
+        "npu_dfp16_s4_latent_cos": 0.99241,
+        "ve_1step_cpu_ms": 245.0,
+        "ve_1step_npu_dfp8_ms": 35.9,
+        "ve_1step_npu_dfp16_ms": 70.68,
+        "vocoder_cpu_ms": 176.0,
+        "vocoder_npu_dfp8_ms": 29.18,
+        "vocoder_npu_dfp16_ms": 47.11
+      },
+      "notes": "TTS offload diagnostic on A733 VIP9000: offloading vector_estimator and vocoder to VIP9000 DFP16 accelerates 8-step synthesis by 3.3x (0.658 s vs 2.162 s) and 4-step synthesis by 5.9x (0.366 s, matching Silero wall time) while reducing CPU time by 35x (0.12 s vs 4.33 s) with 0.997-0.998 8-step latent cosine similarity. Documents 8 failed compiler/quantization paths and 4 reusable fixes (explicit --size-with-batch list, LD_PRELOAD PLT bypass for libOpenVX transform_merging_multibranch_merge_no_joint SIGSEGV, backward residual BatchNorm folding eliminating [-2276, +1335] spikes, and real-trajectory ODE calibration).",
+      "is_current_best": false,
+      "end_to_end": false,
+      "optimization_claim": false
     }
   ]
 }

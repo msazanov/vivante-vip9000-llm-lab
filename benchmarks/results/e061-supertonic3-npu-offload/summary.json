@@ -1,0 +1,228 @@
+{
+  "experiment_id": "E061",
+  "title": "Supertonic 3 TTS VIP9000 NPU offload, compiler workarounds, and target benchmarks",
+  "date": "2026-10-31",
+  "status": "diagnostic",
+  "claim_class": "diagnostic",
+  "target": {
+    "board": "Orange Pi Zero 3W (Allwinner A733)",
+    "npu_cid": "0x1000003b",
+    "viplite_driver": "2.0.3.2-AW-2024-08-30",
+    "npu_freq_hz": 852000000,
+    "cpu_affinity": "6,7 (2x Cortex-A76)",
+    "thermal_zone3_c_range": [61.9, 67.2]
+  },
+  "toolchain": {
+    "acuity_image": "ubuntu-npu:v2.0.10.2",
+    "acuity_version": "6.30.22",
+    "host_prep_venv": "onnx 1.23.2, onnxruntime 1.31.1, onnxsim 0.8.1",
+    "optimize_target": "VIP9000NANODI_PID0X1000003B"
+  },
+  "tried_and_failed": [
+    {
+      "attempt": "Import Sherpa-ONNX pre-quantized INT8 graphs into Acuity pegasus.py",
+      "failure": "Unsupported ONNX Runtime quantization ops (MatMulInteger, DynamicQuantizeLinear, DequantizeLinear)",
+      "resolution": "Use upstream Supertone/supertonic-3 FP32 ONNX graphs as source"
+    },
+    {
+      "attempt": "Downgrade opset 19 -> 17 via onnx.version_converter or run container onnxsim",
+      "failure": "onnx.version_converter lacks Pad adapter for opset 17; container onnxruntime only supports opset <= 15",
+      "resolution": "Relabel opset to 17 + ir_version 8 after verifying Pad attributes, then run modern onnxsim on host"
+    },
+    {
+      "attempt": "Run pegasus.py import onnx without --inputs/--outputs or without per-input --size-with-batch",
+      "failure": "Importonnx.run crashes with TypeError (NoneType has no len); default size_with_batch=False prepends extra batch dim 1 causing Concat_7 AssertionError in ShapeComputation.concat_shape",
+      "resolution": "Pass explicit --inputs, --outputs, and #-separated --size-with-batch True#True#... matching input count"
+    },
+    {
+      "attempt": "Export vocoder 1D Conv (CONV1D) with symmetric_affine int8",
+      "failure": "ovxlib vsi_nn_op_conv1d.c:op_check:260 rejects (ASYM INT8 activation, SYM INT8 weight)",
+      "resolution": "Use asymmetric_affine uint8, dynamic_fixed_point int8, or dynamic_fixed_point int16"
+    },
+    {
+      "attempt": "Export attention mask Equal + Where (VSI_NN_OP_SELECT) in vector_estimator",
+      "failure": "vsi_nn_op_select.c:op_check:178 fails on (BOOL8, FLOAT16, FLOAT16, DFP INT8); replacing pre-softmax Where with Add(-10000) ruins 8-bit scale",
+      "resolution": "Replace post-softmax Where with Mul(probs, latent_mask) and pad shorter text_emb with final token embedding so text_mask is all ones"
+    },
+    {
+      "attempt": "Export vector_estimator in 8-bit (DFP8 or UINT8) with stock libOpenVX.so.1",
+      "failure": "gen_nbg segfaults (exit 35584) in libOpenVX.so.1 transform_merging_multibranch_set_cr_graph_for_no_joint -> cr_op_get_inputs(NULL) on parallel FCL fan-out branches",
+      "resolution": "Preload libskip_mb.so overriding transform_merging_multibranch_merge_no_joint to return 0 via ELF PLT"
+    },
+    {
+      "attempt": "Quantize vocoder with unfused convnext.9 -> BatchNormalization",
+      "failure": "convnext.9 outlier channel reaches [-2276.2, +1334.6] (std 29.28) before BatchNorm divides by ~200x, forcing scale=6.806 and zeroing normal channels",
+      "resolution": "Push BatchNormalization affine parameters (alpha, beta) backward through embed/Conv, depthwise dwconv, and pwconv2, eliminating BatchNormalization with FP32 max_abs=6.22e-6"
+    },
+    {
+      "attempt": "Calibrate vector_estimator on Gaussian random style_ttl or single total_step=8",
+      "failure": "Random style_ttl (std 0.5 vs real 0.0625) causes ODE trajectory explosion to [-12, +12]; single total_step=8 sets @Divide_9 fl=18 (max 0.125), clipping 1/4=0.25 in 4-step mode",
+      "resolution": "Calibrate on 32 real Russian ODE steps using voice.bin and set @Divide_9 / @Reshape_1 fl=15 (max 0.5)"
+    }
+  ],
+  "compiled_nbg_artifacts": {
+    "ve_real_uint8_nb": {
+      "bytes": 56708888,
+      "sha256": "ae03013ea3f19fd2b7bbbce3e3fe956a9a07092b47010526b2d16ed663d7d725",
+      "pool_bytes": 790592
+    },
+    "ve_real_dfp8_nb": {
+      "bytes": 50322976,
+      "sha256": "df2473aff29637fbde8e39f6a71e463d1683d10ecef2b4ff6fedf014a6612805",
+      "pool_bytes": 693056
+    },
+    "ve_real_dfp16_nb": {
+      "bytes": 146100368,
+      "sha256": "5310a68b781878e2ba4e250a2da03bcbc5bffbaf4d49163571f36e76c5b2d44a",
+      "pool_bytes": 1514048
+    },
+    "voc_nobn_uint8_nb": {
+      "bytes": 15499600,
+      "sha256": "6e416d45adf950674af32f2f23ee01502ec342a9f9e747dec404b542a9ae40e8",
+      "pool_bytes": 2163968
+    },
+    "voc_nobn_dfp8_nb": {
+      "bytes": 13801320,
+      "sha256": "079c8d9ca653afadf973fa596eedd34e81f599d7c2a27384b6d0e5c8e365e7c8",
+      "pool_bytes": 2163968
+    },
+    "voc_nobn_dfp16_nb": {
+      "bytes": 38917784,
+      "sha256": "8a91d143f341a0d1227b45295b88a6659279adc51a3ceb76bf8e6c4eff81945e",
+      "pool_bytes": 4326656
+    }
+  },
+  "stage_benchmarks_ms": {
+    "duration_predictor_cpu_int8_ms": 2.7,
+    "text_encoder_cpu_int8_ms": 17.5,
+    "vector_estimator_1step_cpu_int8_ms": 245.0,
+    "vector_estimator_1step_npu_dfp8_ms": 35.9,
+    "vector_estimator_1step_npu_uint8_ms": 37.0,
+    "vector_estimator_1step_npu_dfp16_ms": 70.68,
+    "vocoder_cpu_int8_ms": 176.0,
+    "vocoder_npu_dfp8_ms": 29.18,
+    "vocoder_npu_uint8_ms": 29.15,
+    "vocoder_npu_dfp16_ms": 47.11
+  },
+  "end_to_end_benchmarks": [
+    {
+      "config": "silero_cpu_baseline",
+      "utterance_index": 1,
+      "audio_s": 2.2,
+      "median_wall_s": 0.315,
+      "median_cpu_s": 0.46,
+      "rss_kib": 868924
+    },
+    {
+      "config": "silero_cpu_baseline",
+      "utterance_index": 2,
+      "audio_s": 1.7375,
+      "median_wall_s": 0.2739,
+      "median_cpu_s": 0.38,
+      "rss_kib": 868436
+    },
+    {
+      "config": "supertonic3_cpu_int8_s8",
+      "utterance_index": 1,
+      "audio_s": 2.1493,
+      "median_wall_s": 2.1619,
+      "median_cpu_s": 4.3302,
+      "rss_kib": 334864
+    },
+    {
+      "config": "supertonic3_cpu_int8_s8",
+      "utterance_index": 2,
+      "audio_s": 1.9419,
+      "median_wall_s": 2.1193,
+      "median_cpu_s": 4.2121,
+      "rss_kib": 308736
+    },
+    {
+      "config": "npu_ve_dfp16_voc_nobn_dfp16_s8",
+      "utterance_index": 1,
+      "audio_s": 2.229,
+      "median_wall_s": 0.6594,
+      "median_cpu_s": 0.1234,
+      "fe_cpu_ms": 45.34,
+      "ve_npu_ms": 566.77,
+      "voc_npu_ms": 47.69,
+      "latent_cos": 0.99793,
+      "latent_snr_db": 23.84,
+      "wav_cos": 0.4591,
+      "rss_kib": 345628
+    },
+    {
+      "config": "npu_ve_dfp16_voc_nobn_dfp16_s8",
+      "utterance_index": 2,
+      "audio_s": 2.012,
+      "median_wall_s": 0.658,
+      "median_cpu_s": 0.1224,
+      "fe_cpu_ms": 44.1,
+      "ve_npu_ms": 566.29,
+      "voc_npu_ms": 47.68,
+      "latent_cos": 0.997,
+      "latent_snr_db": 22.21,
+      "wav_cos": 0.79929,
+      "wav_snr_db": 4.15,
+      "rss_kib": 345628
+    },
+    {
+      "config": "npu_ve_dfp16_voc_nobn_dfp16_s4",
+      "utterance_index": 1,
+      "audio_s": 2.229,
+      "median_wall_s": 0.366,
+      "median_cpu_s": 0.1167,
+      "fe_cpu_ms": 34.75,
+      "ve_npu_ms": 282.76,
+      "voc_npu_ms": 47.76,
+      "latent_cos": 0.99241,
+      "latent_snr_db": 18.2,
+      "wav_cos": 0.72407,
+      "wav_snr_db": 2.66,
+      "rss_kib": 345628
+    },
+    {
+      "config": "npu_ve_dfp16_voc_nobn_dfp16_s4",
+      "utterance_index": 2,
+      "audio_s": 2.012,
+      "median_wall_s": 0.3761,
+      "median_cpu_s": 0.1207,
+      "fe_cpu_ms": 44.48,
+      "ve_npu_ms": 282.93,
+      "voc_npu_ms": 47.64,
+      "latent_cos": 0.97584,
+      "latent_snr_db": 13.15,
+      "wav_cos": 0.72744,
+      "wav_snr_db": 2.78,
+      "rss_kib": 345628
+    },
+    {
+      "config": "npu_ve_uint8_voc_nobn_dfp16_s8",
+      "utterance_index": 2,
+      "audio_s": 2.012,
+      "median_wall_s": 0.3904,
+      "median_cpu_s": 0.1362,
+      "fe_cpu_ms": 44.92,
+      "ve_npu_ms": 296.77,
+      "voc_npu_ms": 47.74,
+      "latent_cos": 0.72691,
+      "latent_snr_db": 1.9,
+      "wav_cos": 0.10362,
+      "rss_kib": 334972
+    },
+    {
+      "config": "npu_ve_uint8_voc_nobn_uint8_s4",
+      "utterance_index": 2,
+      "audio_s": 2.012,
+      "median_wall_s": 0.2134,
+      "median_cpu_s": 0.1144,
+      "fe_cpu_ms": 32.24,
+      "ve_npu_ms": 148.75,
+      "voc_npu_ms": 31.85,
+      "latent_cos": 0.23092,
+      "latent_snr_db": -5.57,
+      "wav_cos": 0.01854,
+      "rss_kib": 335740
+    }
+  ]
+}
