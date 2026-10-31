@@ -69,7 +69,7 @@ EXPECTED_BRANCHES = {
     "codex/e054-a76-q1-multiversion": "9ac72e4e7486d85b427ae93d73dcb2ed5ddee8c0",
     "codex/e055-q1-hot-cold": "51d1c1cfd3d2e963344e79dc11719c278b234569",
     "codex/e058-wake-nbg-compile": "3925df0b15ee60766d8135cbeb2821cb489313ba",
-    "codex/e061-supertonic3-npu": "e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+    "codex/e061-supertonic3-npu": "31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
     "codex/profiling-foundation": "c071476773ad0f7fc499b6a39270a98bc1e25878",
 }
 

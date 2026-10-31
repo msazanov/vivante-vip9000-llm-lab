@@ -8,7 +8,7 @@ The canonical branch was forked from
 
 | Branch | Head | Role |
 |---|---|---|
-| `codex/e061-supertonic3-npu` | `e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c` | Supertonic 3 TTS VIP9000 NPU offload and compiler workarounds (E061) |
+| `codex/e061-supertonic3-npu` | `31e7592db68391ccd1ef6cbef1c22f30e6329aa3` | Supertonic 3 TTS VIP9000 NPU offload and compiler workarounds (E061) |
 | `codex/e058-wake-nbg-compile` | `3925df0b15ee60766d8135cbeb2821cb489313ba` | Wake-word NBG compile screen and A55 chain breakdown (E058) |
 | `main` | `426d1467563da211f9621cc2692ec25cf065880d` | Original E001/E002 research track |
 | `codex/profiling-foundation` | `c071476773ad0f7fc499b6a39270a98bc1e25878` | Requested foundation anchor |

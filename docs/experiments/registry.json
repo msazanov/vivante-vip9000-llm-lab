@@ -1006,18 +1006,18 @@
       "status": "diagnostic",
       "claim_class": "diagnostic",
       "branch": "codex/e061-supertonic3-npu",
-      "commit": "e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+      "commit": "31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
       "evidence": [
         {
           "kind": "repository_path",
           "path": "docs/experiments/e061-supertonic3-npu-offload.md",
-          "ref": "codex/e061-supertonic3-npu@e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+          "ref": "codex/e061-supertonic3-npu@31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
           "note": "Supertonic 3 TTS per-stage and end-to-end VIP9000 NPU offload benchmarks, failed compiler/quantization paths, Acuity 6.30.22 workarounds (LD_PRELOAD multibranch intercept, Where elimination, backward BatchNormalization folding), and multi-step ODE parity."
         },
         {
           "kind": "repository_path",
           "path": "benchmarks/results/e061-supertonic3-npu-offload/summary.json",
-          "ref": "codex/e061-supertonic3-npu@e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+          "ref": "codex/e061-supertonic3-npu@31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
           "note": "Machine-readable matrix of failed attempts, working workarounds, NBG hashes, stage latencies, and end-to-end target benchmarks."
         }
       ],

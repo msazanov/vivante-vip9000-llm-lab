@@ -65,7 +65,7 @@
       "sha256": "157b834dd8d2403939a3e6c8d16323d68a091f2480cd50c492e0f59cd96a3195",
       "byte_size": 8423,
       "origin": "E061 Supertonic 3 TTS VIP9000 NPU offload machine-readable record: compiler workarounds, failed and working paths, NBG hashes, stage latencies, and end-to-end target benchmarks",
-      "source_commit": "e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+      "source_commit": "31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
       "build_runtime_toolchain": "Python 3 standard library (json)",
       "destination": "git",
       "class": "NPU tools",

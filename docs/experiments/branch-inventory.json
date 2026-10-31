@@ -65,7 +65,7 @@
     },
     {
       "branch": "codex/e061-supertonic3-npu",
-      "commit": "e8b120b2aeca63a64216ebbe6cbb82e2d33b4d8c",
+      "commit": "31e7592db68391ccd1ef6cbef1c22f30e6329aa3",
       "role": "Supertonic 3 TTS VIP9000 NPU offload, compiler workarounds, and target benchmarks (E061)"
     }
   ]
